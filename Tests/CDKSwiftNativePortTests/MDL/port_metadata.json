@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "suite": "CDK MDL/SDF Port",
+  "cdkReferenceVersion": "2.11",
+  "cdkReferenceTag": "cdk-2.11",
+  "sourceTests": [
+    "storage/io/src/test/java/org/openscience/cdk/io/MDLV2000ReaderTest.java",
+    "storage/io/src/test/java/org/openscience/cdk/io/MDLV3000ReaderTest.java",
+    "storage/io/src/test/java/org/openscience/cdk/io/iterator/IteratingSDFReaderTest.java",
+    "storage/ctab/src/test/java/org/openscience/cdk/io/SDFReaderTest.java"
+  ],
+  "portedCases": [
+    { "id": "mol_v2000_basic_counts", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_atom_block_charge_code", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_m_chg_property", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_m_iso_property", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_m_als_atom_list", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_query_bond_types_5_8", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_additional_m_rad_rgp_apo_sub_uns_rbc", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_query_atom_symbols_a_q_any", "source": "MDLV2000ReaderTest" },
+    { "id": "mol_v3000_scaffold_extract_counts", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_scaffold_extract_atom_bond_blocks", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_basic_parse", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_dispatch_via_mdl_reader", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_atom_bond_attributes_queries", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_continuation_lines", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_collection_and_sgroup_semantics", "source": "MDLV3000ReaderTest" },
+    { "id": "mol_v3000_zero_coordinate_layout_generation", "source": "MDLV3000ReaderTest" },
+    { "id": "sdf_iterating_records_skip_invalid", "source": "IteratingSDFReaderTest" },
+    { "id": "sdf_iterating_single_record_without_delimiter", "source": "IteratingSDFReaderTest" },
+    { "id": "sdf_iterating_file_input", "source": "IteratingSDFReaderTest" }
+  ]
+}

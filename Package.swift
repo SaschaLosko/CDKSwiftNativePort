@@ -2,24 +2,28 @@
 import PackageDescription
 
 let package = Package(
-    name: "CDKPortExperimental",
+    name: "CDKSwiftNativePort",
     platforms: [
         .macOS(.v14)
     ],
     products: [
         .library(
-            name: "CDKPortExperimental",
-            targets: ["CDKPortExperimental"]
+            name: "CDKSwiftNativePort",
+            targets: ["CDKSwiftNativePort"]
         )
     ],
     targets: [
         .target(
-            name: "CDKPortExperimental"
+            name: "CDKSwiftNativePort"
         ),
         .testTarget(
-            name: "CDKPortExperimentalTests",
-            dependencies: ["CDKPortExperimental"],
-            exclude: ["Smiles/port_metadata.json"]
+            name: "CDKSwiftNativePortTests",
+            dependencies: ["CDKSwiftNativePort"],
+            exclude: [
+                "Smiles/port_metadata.json",
+                "MDL/port_metadata.json",
+                "InChI/port_metadata.json"
+            ]
         )
     ]
 )

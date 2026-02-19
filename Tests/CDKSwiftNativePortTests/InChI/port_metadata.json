@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "suite": "CDK InChI Port",
+  "cdkReferenceVersion": "2.11",
+  "cdkReferenceTag": "cdk-2.11",
+  "sourceTests": [
+    "storage/inchi/src/test/java/org/openscience/cdk/inchi/InChIGeneratorTest.java",
+    "storage/inchi/src/test/java/org/openscience/cdk/inchi/InChIToStructureTest.java"
+  ],
+  "portedCases": [
+    { "id": "inchi_ethanol_connectivity_formula", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_benzene_bond_order_inference", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_tetrahedral_layer_t_m_s", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_charge_layer_q", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_isotope_layer_i", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_mobile_hydrogen_layer_h", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_proton_layer_p", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_double_bond_stereo_layer_b", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_non_inchi_rejection", "source": "InChIToStructureTest.java" },
+    { "id": "inchi_native_generator_layer_emission", "source": "InChIGeneratorTest.java" }
+  ]
+}

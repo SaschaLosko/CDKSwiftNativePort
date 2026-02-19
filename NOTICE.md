@@ -1,11 +1,15 @@
-# Notice
+# NOTICE
 
-`CDKPortExperimental` contains code derived from and inspired by the
-Chemistry Development Kit (CDK) project (`org.openscience.cdk`).
+`CDKSwiftNativePort` includes code derived from and inspired by the
+Chemistry Development Kit (CDK), developed by the CDK project contributors.
 
 Upstream project:
 - https://github.com/cdk/cdk
-- Reference version used for parity work: `2.11`
 
-When distributing this package, ensure licensing and attribution obligations
-for CDK-derived work are satisfied.
+Reference target used for parity work in this port:
+- CDK 2.11
+
+Licensing:
+- This repository is distributed under LGPL-2.1-or-later (`LICENSE`).
+- When redistributing binaries or modified source, ensure LGPL obligations
+  (including notice and source availability requirements) are satisfied.

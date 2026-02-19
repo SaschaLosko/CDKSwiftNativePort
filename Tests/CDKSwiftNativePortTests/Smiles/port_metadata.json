@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "suite": "CDK Smiles Port",
+  "cdkReferenceVersion": "2.11",
+  "cdkReferenceTag": "cdk-2.11",
+  "sourceTests": [
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesParserTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesGeneratorTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/BeamToCDKTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesParserTest.java"
+  ],
+  "portedCases": [
+    {
+      "id": "single_double_triple_bonds",
+      "source": "SmilesParserTest.java (C-C / C=C / C#C)"
+    },
+    {
+      "id": "co_plain_atom_tokenization",
+      "source": "SmilesParserTest.java testTransitionMetalAtom + Co fallback semantics"
+    },
+    {
+      "id": "bracket_isotope_and_charge",
+      "source": "SmilesParserTest.java testMassNumberReading + testFormalChargeReading"
+    },
+    {
+      "id": "disconnected_ions",
+      "source": "SmilesParserTest.java testReadingPartionedMolecules"
+    },
+    {
+      "id": "wildcard_atom",
+      "source": "SmilesParserTest.java testAsterisk"
+    },
+    {
+      "id": "ring_percent_indices",
+      "source": "SmilesParserTest.java testPercentRingClosureParsing"
+    },
+    {
+      "id": "chiral_annotations",
+      "source": "SmilesParserTest.java chiral @/@@ examples"
+    },
+    {
+      "id": "directional_double_bond_hint",
+      "source": "BeamToCDKTest.java directional/isomeric conversion coverage"
+    },
+    {
+      "id": "error_unterminated_ring",
+      "source": "SmilesParserTest.java invalid closure examples"
+    },
+    {
+      "id": "error_unbalanced_branch",
+      "source": "SmilesParserTest.java invalid branch examples"
+    },
+    {
+      "id": "reaction_counts_and_agents",
+      "source": "SmilesParserTest.java testReaction + noReactants + noProducts + noReaction + onlyAgents + testReactionWithAgents"
+    },
+    {
+      "id": "cx_atom_labels_and_fragments",
+      "source": "CxSmilesParserTest.java atomLabels + atomOrderingWithNonContiguousFragments + loadRacComponentsWithFragGrouping"
+    },
+    {
+      "id": "cx_racemic_layer_parsing",
+      "source": "CxSmilesParserTest.java loadRacGlobal + stereogroups_rac"
+    },
+    {
+      "id": "strict_bracket_decorators_degree_valence_ring_atommap",
+      "source": "SmilesParserTest.java bracket query/decorator compatibility (D/X/v/R/r/map)"
+    },
+    {
+      "id": "reaction_fragment_group_cross_side_partitioning",
+      "source": "CxSmilesParserTest.java fragment grouping behavior in reaction contexts"
+    },
+    {
+      "id": "aromatic_invalid_vs_valid_pyrrolylpyrrole",
+      "source": "SmilesParserTest.java pyrrolylpyrrole_invalid + pyrrolylpyrrole_valid"
+    },
+    {
+      "id": "aromatic_pyrrole_imidazole_donor_edges",
+      "source": "SmilesParserTest.java testPyrrole1 + testPyrrole2 + testPyrrole3 + testImidazole3 + testImidazole4"
+    },
+    {
+      "id": "smiles_generator_ethanol_and_roundtrip",
+      "source": "SmilesGeneratorTest.java simple molecule generation and parse roundtrip"
+    },
+    {
+      "id": "smiles_generator_isomeric_and_ring_closure",
+      "source": "SmilesGeneratorTest.java isomeric/chiral and cyclic generation coverage"
+    },
+    {
+      "id": "smiles_generator_disconnected_components",
+      "source": "SmilesGeneratorTest.java disconnected component generation"
+    }
+  ]
+}
