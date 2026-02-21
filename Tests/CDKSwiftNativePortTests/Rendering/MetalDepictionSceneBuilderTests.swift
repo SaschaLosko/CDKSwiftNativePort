@@ -285,6 +285,79 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         XCTAssertLessThan(distance, 1.5, "Expected ring oxygen label to remain anchored at atom coordinate.")
     }
 
+    func testRingOxygenLabelAnchorRespectsRotationPanAndZoom() {
+        let molecule = Molecule(
+            name: "Oxacycle",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 1.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 0.5, y: 0.8660254)),
+                Atom(id: 3, element: "C", position: CGPoint(x: -0.5, y: 0.8660254)),
+                Atom(id: 4, element: "C", position: CGPoint(x: -1.0, y: 0.0)),
+                Atom(id: 5, element: "C", position: CGPoint(x: -0.5, y: -0.8660254)),
+                Atom(id: 6, element: "C", position: CGPoint(x: 0.5, y: -0.8660254))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(id: 2, a1: 2, a2: 3, order: .single),
+                Bond(id: 3, a1: 3, a2: 4, order: .single),
+                Bond(id: 4, a1: 4, a2: 5, order: .single),
+                Bond(id: 5, a1: 5, a2: 6, order: .single),
+                Bond(id: 6, a1: 6, a2: 1, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+        let canvasRect = CGRect(x: 0, y: 0, width: 720, height: 520)
+        let zoom: CGFloat = 1.65
+        let pan = CGSize(width: 32, height: -26)
+        let rotationDegrees: CGFloat = 73
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: canvasRect,
+                                                        zoom: zoom,
+                                                        pan: pan,
+                                                        rotationDegrees: rotationDegrees)
+
+        guard let oxygenLabel = scene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label for atom 1.")
+            return
+        }
+
+        guard let box = molecule.boundingBox(),
+              let oxygen = molecule.atoms.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen atom and molecule bounds.")
+            return
+        }
+
+        let pad = style.padding
+        let available = CGRect(x: canvasRect.minX + pad,
+                               y: canvasRect.minY + pad,
+                               width: max(1, canvasRect.width - 2 * pad),
+                               height: max(1, canvasRect.height - 2 * pad))
+        let scaleX = available.width / max(0.0001, box.width)
+        let scaleY = available.height / max(0.0001, box.height)
+        let scale = min(scaleX, scaleY)
+        let center = CGPoint(x: available.midX, y: available.midY)
+        let transform = CGAffineTransform.identity
+            .translatedBy(x: center.x, y: center.y)
+            .scaledBy(x: scale, y: -scale)
+            .translatedBy(x: -box.midX, y: -box.midY)
+        let unrotated = oxygen.position.applying(transform)
+        let expected = applyViewportTransform(unrotated,
+                                              in: canvasRect,
+                                              zoom: zoom,
+                                              pan: pan,
+                                              rotationDegrees: rotationDegrees)
+        let distance = hypot(expected.x - oxygenLabel.position.x, expected.y - oxygenLabel.position.y)
+
+        XCTAssertLessThan(distance, 1.5, "Expected oxygen label to stay anchored during rotation/pan/zoom.")
+    }
+
     func testLabelPlacementIsStableAcrossZoomLevels() {
         let molecule = Molecule(
             name: "PhosphateCluster",
@@ -408,5 +481,22 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                                            pan: CGSize) -> CGPoint {
         CGPoint(x: ((point.x - pan.width - canvas.midX) / zoom) + canvas.midX,
                 y: ((point.y - pan.height - canvas.midY) / zoom) + canvas.midY)
+    }
+
+    private func applyViewportTransform(_ point: CGPoint,
+                                        in canvas: CGRect,
+                                        zoom: CGFloat,
+                                        pan: CGSize,
+                                        rotationDegrees: CGFloat) -> CGPoint {
+        let center = CGPoint(x: canvas.midX, y: canvas.midY)
+        let radians = rotationDegrees * (.pi / 180)
+        let c = cos(radians)
+        let s = sin(radians)
+        let rx = point.x - center.x
+        let ry = point.y - center.y
+        let rotated = CGPoint(x: (rx * c) - (ry * s) + center.x,
+                              y: (rx * s) + (ry * c) + center.y)
+        return CGPoint(x: ((rotated.x - center.x) * zoom) + center.x + pan.width,
+                       y: ((rotated.y - center.y) * zoom) + center.y + pan.height)
     }
 }

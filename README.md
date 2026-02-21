@@ -1,37 +1,66 @@
 # CDKSwiftNativePort
 
-`CDKSwiftNativePort` is a Swift Package that encapsulates CDK-derived chemistry functionality in native Swift.
+`CDKSwiftNativePort` is a Swift-native package that encapsulates CDK-derived chemistry functionality and keeps it reusable across host applications.
 
-It provides:
-- molecule data model and graph utilities
-- import/export for multiple chemistry formats
-- SMILES and InChI parsing/generation paths
-- CDK-style 2D layout + depiction scene generation
-- molecular property and descriptor calculation (including XLogP and Rule-of-Five helpers)
+Repository: `https://github.com/SaschaLosko/CDKSwiftNativePort`
 
-## Design Goals
+## What It Provides
 
-- Keep CDK-derived chemistry logic in one reusable package.
-- Keep package boundaries clean: no dependency on app-level code (Spotlight, Quick Look, app bundle identifiers, window/UI app state).
-- Preserve CDK-inspired organization while staying idiomatic in Swift.
+- Core molecular graph model (`Molecule`, `Atom`, `Bond`) and graph/ring utilities.
+- CDK-style 2D coordinate generation and depiction pipelines.
+- SMILES/CXSMILES/reaction SMILES parsing and generation.
+- InChI parsing + native Swift InChI/InChIKey generation path.
+- Unified multi-format import/export APIs.
+- Descriptor/property services including XLogP and Rule-of-Five support.
+
+## Supported Formats
+
+Input (read):
+- MDL Molfile / SDFile (`.mol`, `.sdf`, `.sd`)
+- SMILES (`.smi`, `.smiles`)
+- InChI (`.inchi`, `.ich`)
+- MOL2 (`.mol2`)
+- PDB (`.pdb`)
+- XYZ (`.xyz`)
+- CML (`.cml`, `.xml`)
+- RXN (`.rxn`)
+- RDF (`.rdf`)
+
+Output (write):
+- MDL Molfile / SDFile
+- SMILES / ISO SMILES
+- InChI
+- MOL2, PDB, XYZ, CML
+- RXN, RDF
+- SVG depiction export
+
+## Package Boundary Contract
+
+The package intentionally does **not** depend on host-app integration layers, including:
+- Spotlight APIs (`CoreSpotlight`)
+- Quick Look APIs (`QuickLook`, `QuickLookThumbnailing`)
+- App-level identifiers, entitlements, or sandbox/bookmark management
+- Host UI state and window lifecycle logic
+
+These concerns stay in the consuming app.
 
 ## Platform and Toolchain
 
 - Swift tools: `5.9`
-- Platform: `macOS 14+` (as declared in `Package.swift`)
+- Platform: `macOS 14+`
 
 ## Installation (SwiftPM)
 
-In Xcode, add a package dependency:
+In Xcode, add:
 
 ```text
-https://github.com/<your-org-or-user>/CDKSwiftNativePort.git
+https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
 or in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/<your-org-or-user>/CDKSwiftNativePort.git", from: "1.0.0")
+.package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.0.0")
 ```
 
 ## Quick Start
@@ -39,73 +68,39 @@ or in `Package.swift`:
 ```swift
 import CDKSwiftNativePort
 
-let input = "CC(=O)OC1=CC=CC=C1C(=O)O"
-let molecules = try CDKSMILESReader.read(text: input)
-guard let first = molecules.first else { fatalError("No molecule") }
+let molecules = try CDKSMILESReader.read(text: "CC(=O)OC1=CC=CC=C1C(=O)O")
+guard let molecule = molecules.first else { fatalError("No molecule parsed") }
 
-// 2D layout
-let laidOut = Depiction2DGenerator.generate(for: first)
-
-// Identifiers
+let laidOut = Depiction2DGenerator.generate(for: molecule)
 let ids = CDKMoleculeIdentifierService.compute(for: laidOut)
-print(ids.smiles)
-print(ids.inchi)
-
-// Properties
 let props = CDKMoleculePropertyService.compute(for: laidOut)
-print(props.formula, props.molecularWeight, props.ruleOfFive.statusText)
-
-// Export SVG
 let svg = CDKDepictionGenerator.toSVG(molecule: laidOut)
+
+print(ids.smiles, ids.inchi, props.molecularWeight, svg.count)
 ```
 
-## Import and Export APIs
+## Documentation
 
-- Generic importer: `CDKFileImporter`
-- Generic exporter: `CDKFileExporter`
-
-Supported families include:
-- MDL Molfile / SDFile (`.mol`, `.sdf`, `.sd`)
-- SMILES / isomeric SMILES
-- InChI
-- MOL2, PDB, XYZ, CML
-- RXN / RDF
-- SVG depiction export
-
-## API Documentation
-
-- High-level API reference: `Documentation/API.md`
-- Architecture notes: `Documentation/ARCHITECTURE.md`
-- Contribution guide: `CONTRIBUTING.md`
+- API reference: `Documentation/API.md`
+- Architecture: `Documentation/ARCHITECTURE.md`
+- Contributing: `CONTRIBUTING.md`
 - Security policy: `SECURITY.md`
-- Publishing/release process: `PUBLISHING.md`
+- Publishing process: `PUBLISHING.md`
 - Changelog: `CHANGELOG.md`
 
 ## Quality Gates
-
-- Run tests:
 
 ```bash
 swift test
 ```
 
-- The suite includes package-boundary checks that prevent app-specific coupling from leaking into package source code.
-
-## Repository Standards
-
-This repository includes:
-- CI workflow (`.github/workflows/ci.yml`)
-- Pull request template (`.github/pull_request_template.md`)
-- Issue templates (`.github/ISSUE_TEMPLATE/`)
-- Changelog-based release notes (`CHANGELOG.md`)
+The test suite includes package-boundary checks that fail if app-specific coupling leaks into package sources.
 
 ## CDK Attribution and License
 
 This package contains CDK-derived work.
 
-- Upstream project: `https://github.com/cdk/cdk`
-- Reference parity target used in this porting effort: CDK `2.11`
-
-Licensing:
-- Package license: `LGPL-2.1-or-later` (see `LICENSE`)
-- Additional attribution notes: `NOTICE.md`
+- Upstream CDK: `https://github.com/cdk/cdk`
+- Port parity target: CDK `2.11`
+- Package license: `LGPL-2.1-or-later` (`LICENSE`)
+- Attribution notes: `NOTICE.md`

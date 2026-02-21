@@ -37,13 +37,13 @@ git tag -a 1.0.0 -m "CDKSwiftNativePort 1.0.0"
 Using GitHub CLI:
 
 ```bash
-gh repo create <your-org-or-user>/CDKSwiftNativePort --public --source . --remote origin --push
+gh repo create SaschaLosko/CDKSwiftNativePort --public --source . --remote origin --push
 ```
 
 or manually:
 
 ```bash
-git remote add origin git@github.com:<your-org-or-user>/CDKSwiftNativePort.git
+git remote add origin git@github.com:SaschaLosko/CDKSwiftNativePort.git
 git push -u origin main
 ```
 
@@ -72,7 +72,7 @@ Recommended release body:
 Consumers add:
 
 ```text
-https://github.com/<your-org-or-user>/CDKSwiftNativePort.git
+https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
 and pin to:

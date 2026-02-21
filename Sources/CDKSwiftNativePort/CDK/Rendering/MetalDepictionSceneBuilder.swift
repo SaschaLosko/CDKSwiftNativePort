@@ -57,14 +57,99 @@ private struct MetalRenderEdgeKey: Hashable {
     }
 }
 
+private struct MetalPreparedDepictionKey: Hashable {
+    let molecule: Molecule
+    let style: RenderStyle
+}
+
+private struct MetalPreparedDepictionData {
+    let depictionMolecule: Molecule
+    let boundingBox: CGRect?
+    let degreeByAtomID: [Int: Int]
+    let aromaticRings: [[Int]]
+    let aromaticBondIDs: Set<Int>
+    let conjugatedRings: [[Int]]
+}
+
+private enum MetalPreparedDepictionCache {
+    private static let maxEntries = 16
+    private static let lock = NSLock()
+    private static var entries: [MetalPreparedDepictionKey: MetalPreparedDepictionData] = [:]
+    private static var lruOrder: [MetalPreparedDepictionKey] = []
+
+    static func preparedData(molecule: Molecule, style: RenderStyle) -> MetalPreparedDepictionData {
+        let key = MetalPreparedDepictionKey(molecule: molecule, style: style)
+
+        lock.lock()
+        if let cached = entries[key] {
+            touchLRU(key)
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
+        let depictionMolecule = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: style)
+        let aromaticRings = depictionMolecule.aromaticDisplayRings()
+        let aromaticBondIDs = depictionMolecule.aromaticDisplayBondIDs()
+        let conjugatedRings = depictionMolecule.simpleCycles(maxSize: 10).filter { ring in
+            guard ring.count >= 5 else { return false }
+            let ringBonds: [Bond] = (0..<ring.count).compactMap { idx in
+                depictionMolecule.bond(between: ring[idx], and: ring[(idx + 1) % ring.count])
+            }
+            guard ringBonds.count == ring.count else { return false }
+            let piCount = ringBonds.reduce(0) { partial, bond in
+                partial + ((bond.order == .double || bond.order == .aromatic) ? 1 : 0)
+            }
+            return piCount >= 2 && ringBonds.allSatisfy { $0.order != .triple }
+        }
+
+        var degreeByAtomID: [Int: Int] = [:]
+        for bond in depictionMolecule.bonds {
+            degreeByAtomID[bond.a1, default: 0] += 1
+            degreeByAtomID[bond.a2, default: 0] += 1
+        }
+
+        let prepared = MetalPreparedDepictionData(depictionMolecule: depictionMolecule,
+                                                  boundingBox: depictionMolecule.boundingBox(),
+                                                  degreeByAtomID: degreeByAtomID,
+                                                  aromaticRings: aromaticRings,
+                                                  aromaticBondIDs: aromaticBondIDs,
+                                                  conjugatedRings: conjugatedRings)
+
+        lock.lock()
+        if let cached = entries[key] {
+            touchLRU(key)
+            lock.unlock()
+            return cached
+        }
+        entries[key] = prepared
+        lruOrder.append(key)
+        while lruOrder.count > maxEntries {
+            let stale = lruOrder.removeFirst()
+            entries.removeValue(forKey: stale)
+        }
+        lock.unlock()
+        return prepared
+    }
+
+    private static func touchLRU(_ key: MetalPreparedDepictionKey) {
+        guard let index = lruOrder.firstIndex(of: key) else { return }
+        if index == lruOrder.count - 1 { return }
+        let moved = lruOrder.remove(at: index)
+        lruOrder.append(moved)
+    }
+}
+
 public enum CDKMetalDepictionSceneBuilder {
     public static func build(molecule: Molecule,
                              style: RenderStyle,
                              canvasRect: CGRect,
                              zoom: CGFloat,
-                             pan: CGSize) -> CDKMetalDepictionScene {
-        let depictionMolecule = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: style)
-        guard let box = depictionMolecule.boundingBox(), canvasRect.width > 1, canvasRect.height > 1 else {
+                             pan: CGSize,
+                             rotationDegrees: CGFloat = 0) -> CDKMetalDepictionScene {
+        let prepared = MetalPreparedDepictionCache.preparedData(molecule: molecule, style: style)
+        let depictionMolecule = prepared.depictionMolecule
+        guard let box = prepared.boundingBox, canvasRect.width > 1, canvasRect.height > 1 else {
             return CDKMetalDepictionScene(gridSegments: [], bondSegments: [], labels: [])
         }
 
@@ -106,9 +191,19 @@ public enum CDKMetalDepictionSceneBuilder {
             .scaledBy(x: scale, y: -scale)
             .translatedBy(x: -box.midX, y: -box.midY)
 
+        let viewportCenter = CGPoint(x: canvasRect.midX, y: canvasRect.midY)
+        let normalizedRotation = rotationDegrees.truncatingRemainder(dividingBy: 360)
+        let rotationRadians = normalizedRotation * (.pi / 180)
+        let rotationCos = cos(rotationRadians)
+        let rotationSin = sin(rotationRadians)
+
         func applyViewportTransform(_ point: CGPoint) -> CGPoint {
-            let zx = (point.x - canvasRect.midX) * zoom + canvasRect.midX + pan.width
-            let zy = (point.y - canvasRect.midY) * zoom + canvasRect.midY + pan.height
+            let rx = point.x - viewportCenter.x
+            let ry = point.y - viewportCenter.y
+            let rotated = CGPoint(x: (rx * rotationCos) - (ry * rotationSin) + viewportCenter.x,
+                                  y: (rx * rotationSin) + (ry * rotationCos) + viewportCenter.y)
+            let zx = (rotated.x - viewportCenter.x) * zoom + viewportCenter.x + pan.width
+            let zy = (rotated.y - viewportCenter.y) * zoom + viewportCenter.y + pan.height
             return CGPoint(x: zx, y: zy)
         }
 
@@ -120,14 +215,9 @@ public enum CDKMetalDepictionSceneBuilder {
             positionByAtomID[atom.id] = applyViewportTransform(basePosition)
         }
 
-        var degree: [Int: Int] = [:]
-        for bond in depictionMolecule.bonds {
-            degree[bond.a1, default: 0] += 1
-            degree[bond.a2, default: 0] += 1
-        }
-
-        let aromaticRings = depictionMolecule.aromaticDisplayRings()
-        let aromaticBondIDs = depictionMolecule.aromaticDisplayBondIDs()
+        let degree = prepared.degreeByAtomID
+        let aromaticRings = prepared.aromaticRings
+        let aromaticBondIDs = prepared.aromaticBondIDs
         var aromaticEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         var conjugatedDoubleEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         let baseBondWidth = max(1.2, style.bondWidth * zoom)
@@ -154,19 +244,8 @@ public enum CDKMetalDepictionSceneBuilder {
             }
         }
 
-        let conjugatedRings = depictionMolecule.simpleCycles(maxSize: 10)
+        let conjugatedRings = prepared.conjugatedRings
         for ring in conjugatedRings where ring.count >= 5 {
-            let ringBonds: [Bond] = (0..<ring.count).compactMap { i in
-                depictionMolecule.bond(between: ring[i], and: ring[(i + 1) % ring.count])
-            }
-            guard ringBonds.count == ring.count else { continue }
-
-            let piCount = ringBonds.reduce(0) { partial, bond in
-                partial + ((bond.order == .double || bond.order == .aromatic) ? 1 : 0)
-            }
-            let hasConjugation = piCount >= 2 && ringBonds.allSatisfy { $0.order != .triple }
-            guard hasConjugation else { continue }
-
             let ringPoints = ring.compactMap { positionByAtomID[$0] }
             guard ringPoints.count == ring.count else { continue }
 

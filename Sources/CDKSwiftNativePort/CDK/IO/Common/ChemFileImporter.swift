@@ -78,6 +78,19 @@ public enum CDKFileImporter {
 
     public static func readMolecules(from url: URL) throws -> [Molecule] {
         let ext = url.pathExtension.lowercased()
+        let shouldStopAccess: Bool
+        if url.isFileURL {
+            shouldStopAccess = url.startAccessingSecurityScopedResource()
+        } else {
+            shouldStopAccess = false
+        }
+
+        defer {
+            if shouldStopAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
         let text = try decodeText(from: url)
         return try readMolecules(text: text, fileExtension: ext)
     }

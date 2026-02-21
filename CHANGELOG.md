@@ -6,7 +6,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
-- No entries yet.
+### Changed
+
+- Updated public documentation (`README.md`, `Documentation/API.md`) to reflect the current API surface, format matrix, and package boundary contract.
+- Updated installation and publishing references to the canonical GitHub repository URL.
+
+### Notes
+
+- Package boundary policy remains enforced by tests (`PackageBoundaryTests`) to keep CDK-derived code app-agnostic.
 
 ## [1.0.0] - 2026-02-19
 

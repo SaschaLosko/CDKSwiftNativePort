@@ -15,22 +15,18 @@ Defined in `Sources/CDKSwiftNativePort/Molecule.swift`.
 - `ChemFormat`
 - `ChemError`
 
-Useful methods on `Molecule` include:
-- graph neighborhood/bond lookup helpers
-- ring/cycle helpers
-- implicit hydrogen helpers
-- geometry helpers (`boundingBox`, normalization-friendly traversal utilities)
+`Molecule` exposes graph helpers (neighbors, bond lookup), ring/cycle utilities, implicit-hydrogen helpers, and geometry helpers such as `boundingBox()`.
 
 ## 2) Layout and Depiction
 
 - `Depiction2DGenerator.generate(for:)`
-  - applies CDK-style 2D coordinate generation.
+  - CDK-style 2D coordinate generation.
 - `CDKDepictionGenerator.toSVG(...)`
-  - produces SVG depictions.
+  - SVG depiction output.
 - `CDKMetalDepictionSceneBuilder.build(...)`
-  - builds a render-agnostic scene representation suitable for Metal-style renderers.
+  - render-agnostic scene generation for Metal renderers in host apps.
 - `CDKStandardGenerator.draw(...)`
-  - SwiftUI `GraphicsContext` drawing path.
+  - SwiftUI `GraphicsContext` rendering path.
 
 Style controls:
 - `RenderStyle`
@@ -43,6 +39,7 @@ Generic dispatch:
 - `CDKFileImporter.readMolecules(from:)`
 - `CDKFileImporter.readMolecules(text:fileExtension:)`
 - `CDKFileImporter.preferredInputFormat(...)`
+- `CDKFileImporter.formats`
 
 Format-specific readers:
 - MDL: `CDKMDLReader`, `CDKMDLV2000Reader`, `CDKMDLV3000Reader`, `CDKIteratingSDFReader`
@@ -59,6 +56,7 @@ Format-specific readers:
 Generic dispatch:
 - `CDKFileExporter.write(...)`
 - `CDKFileExporter.write(..., to:as:options:)`
+- `CDKFileExporter.formats`
 - `CDKFileExportFormat`
 - `CDKFileExportOptions`
 
@@ -74,15 +72,16 @@ Format-specific writers:
 
 ## 5) SMILES APIs
 
-- Parsing:
-  - `CDKSmilesParser`
-  - `CDKSmilesParserFactory`
-  - `CDKCxSmilesParser`
-  - `CDKSmilesReactionParser`
-- Generation:
-  - `CDKSmilesGenerator`
-  - `CDKSmilesGeneratorFactory`
-  - `CDKSmiFlavor`
+Parsing:
+- `CDKSmilesParser`
+- `CDKSmilesParserFactory`
+- `CDKCxSmilesParser`
+- `CDKSmilesReactionParser`
+
+Generation:
+- `CDKSmilesGenerator`
+- `CDKSmilesGeneratorFactory`
+- `CDKSmiFlavor`
 
 ## 6) InChI APIs
 
@@ -91,21 +90,21 @@ Format-specific writers:
 - `CDKInChIGeneratorFactory`
 - `CDKInChIStatus`
 
-Facade:
+Identifier facade:
 - `CDKMoleculeIdentifierService.compute(for:)`
-  - returns `CDKMoleculeIdentifiers` (SMILES, ISO SMILES, InChI, InChIKey).
+  - returns `CDKMoleculeIdentifiers` (`smiles`, `isoSmiles`, `inchi`, `inchiKey`).
 
 ## 7) Descriptors and Property Services
 
-Facade:
+Property facade:
 - `CDKMoleculePropertyService.compute(for:)`
   - returns `CDKMolecularProperties`.
 
-Rule-of-Five helpers:
+Rule-of-Five:
 - `CDKRuleOfFiveDescriptor`
 - `CDKRuleOfFiveResult`
 
-Descriptors:
+Descriptor set includes:
 - `CDKMolecularFormulaDescriptor`
 - `CDKMolecularWeightDescriptor`
 - `CDKExactMassDescriptor`
@@ -119,15 +118,25 @@ Descriptors:
 
 ## 8) Error Handling
 
-Most parsing and writing APIs throw `ChemError`:
+Parsing and writing APIs throw `ChemError`:
 - `.emptyInput`
 - `.unsupported(String)`
 - `.parseFailed(String)`
 
-Call sites should use `do / try / catch` and surface `LocalizedError.errorDescription` where appropriate.
+Host apps should use `do/try/catch` and expose `LocalizedError.errorDescription`.
 
-## 9) Stability Notes
+## 9) Host App Boundary
 
-- Public symbols listed above are intended as the stable integration surface for application use.
-- Internals under the `CDK/...` tree may evolve as parity with upstream CDK improves.
-- For release history and compatibility notes, see `CHANGELOG.md`.
+The package intentionally excludes host-application integration concerns:
+- no Spotlight indexer code
+- no Quick Look providers
+- no security-scoped bookmark/sandbox file-access policy code
+- no app bundle identifiers or app-specific metadata keys
+
+These are expected to live in the consuming application.
+
+## 10) Stability Notes
+
+- The API families listed above are the intended integration surface.
+- Internal implementation details under `Sources/CDKSwiftNativePort/CDK/...` may evolve as parity work continues.
+- See `CHANGELOG.md` for compatibility notes and release history.
