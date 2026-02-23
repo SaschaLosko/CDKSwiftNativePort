@@ -1,8 +1,8 @@
-# API Reference (High-Level)
+# API Reference
 
-This document summarizes the primary public API surface of `CDKSwiftNativePort`.
+This document summarizes the current public API surface of `CDKSwiftNativePort`.
 
-## 1) Core Model
+## 1) Core Types
 
 Defined in `Sources/CDKSwiftNativePort/Molecule.swift`.
 
@@ -12,37 +12,98 @@ Defined in `Sources/CDKSwiftNativePort/Molecule.swift`.
 - `BondOrder`
 - `BondStereo`
 - `AtomChirality`
+- `AtomQueryType`
+- `BondQueryType`
 - `ChemFormat`
 - `ChemError`
+- `Depiction2DGenerator`
 
-`Molecule` exposes graph helpers (neighbors, bond lookup), ring/cycle utilities, implicit-hydrogen helpers, and geometry helpers such as `boundingBox()`.
+Key `Molecule` helpers include:
+- connectivity/lookup: `bonds(forAtom:)`, `bond(between:and:)`, `neighbors(of:)`
+- ring/cycle helpers: `simpleCycles(maxSize:)`, `aromaticDisplayRings()`, `aromaticDisplayBondIDs()`
+- depiction-related chemistry helpers: `implicitHydrogenCount(for:)`, `assignWedgeHashFromChiralCenters()`
+- geometry: `boundingBox()`
 
-## 2) Layout and Depiction
+## 2) Layout + Rendering
 
-- `Depiction2DGenerator.generate(for:)`
-  - CDK-style 2D coordinate generation.
-- `CDKDepictionGenerator.toSVG(...)`
-  - SVG depiction output.
-- `CDKMetalDepictionSceneBuilder.build(...)`
-  - render-agnostic scene generation for Metal renderers in host apps.
-- `CDKStandardGenerator.draw(...)`
-  - SwiftUI `GraphicsContext` rendering path.
+### Layout
+- `Depiction2DGenerator.generate(for:) -> Molecule`
+  - CDK-style 2D placement entry point.
 
-Style controls:
+### Rendering outputs
+- `CDKDepictionGenerator.toSVG(...) -> String`
+  - vector depiction export.
+- `CDKMetalDepictionSceneBuilder.build(...) -> CDKMetalDepictionScene`
+  - renderer-agnostic primitive scene suitable for Metal hosts.
+- `CDKStandardGenerator.draw(molecule:in:style:context:)`
+  - SwiftUI `GraphicsContext` drawing path.
+
+### Rendering style and color APIs
 - `RenderStyle`
 - `CDKAtomColoringMode`
 - `CDKAromaticDisplayMode`
+- `CDKRenderColor`
+- `CDKRenderingStyleResolver`
+- `CDKMetalDepictionScene` and nested:
+  - `CDKMetalDepictionScene.LineSegment`
+  - `CDKMetalDepictionScene.AtomLabel`
 
-## 3) Import APIs
+## 3) SMILES / CXSMILES / Reaction SMILES
 
-Generic dispatch:
-- `CDKFileImporter.readMolecules(from:)`
-- `CDKFileImporter.readMolecules(text:fileExtension:)`
-- `CDKFileImporter.preferredInputFormat(...)`
-- `CDKFileImporter.formats`
+### SMILES parser/generator
+- `CDKSmilesParser`
+  - `parseSmiles(_:)`
+  - `parseCoreSmiles(_:)`
+  - `parseReactionSmiles(_:)`
+- `CDKSmilesParserFactory.shared.newSmilesParser(flavor:)`
+- `CDKSmilesGenerator`
+  - `create(_:)`
+- `CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor:)`
+- `CDKSmiFlavor`
 
-Format-specific readers:
-- MDL: `CDKMDLReader`, `CDKMDLV2000Reader`, `CDKMDLV3000Reader`, `CDKIteratingSDFReader`
+### CXSMILES support
+- `CDKCxSmilesState`
+- `CDKCxSmilesParser`
+  - `split(_:enabled:)`
+  - `applyAtomLabels(to:state:)`
+  - `SplitResult`
+
+### Reaction container
+- `CDKReaction`
+  - `reactants`, `agents`, `products`, `cxState`
+
+## 4) InChI APIs
+
+- `CDKInChIGeneratorFactory.shared`
+  - `getInChIToStructure(_:)`
+  - `getInChIGenerator(_:)`
+- `CDKInChIToStructure`
+  - `getStatus()`
+  - `getMessage()`
+  - `getAtomContainer()`
+- `CDKInChIGenerator`
+  - `getStatus()`
+  - `getMessage()`
+  - `getInchi()`
+  - `getInchiKey()`
+- `CDKInChIStatus`
+
+## 5) Import APIs
+
+### Unified importer facade
+- `CDKFileImporterFormat`
+- `CDKFileImporter`
+  - `formats`
+  - `supportedFileExtensions`
+  - `supportedUTIIdentifiers`
+  - `supports(fileExtension:)`
+  - `preferredInputFormat(forFileExtension:text:)`
+  - `readMolecules(from:)`
+  - `readMolecules(text:fileExtension:)`
+
+### Format-specific readers
+- MDL/SDF: `CDKMDLReader`, `CDKMDLV2000Reader`, `CDKIteratingSDFReader`
+- V3000: `CDKMDLV3000Reader`, `CDKMDLV3000Scaffold`
 - SMILES: `CDKSMILESReader`
 - InChI: `CDKInChIReader`
 - MOL2: `CDKMol2Reader`
@@ -51,16 +112,24 @@ Format-specific readers:
 - CML: `CDKCMLReader`
 - RXN/RDF: `CDKRXNReader`, `CDKRDFReader`
 
-## 4) Export APIs
+## 6) Export APIs
 
-Generic dispatch:
-- `CDKFileExporter.write(...)`
-- `CDKFileExporter.write(..., to:as:options:)`
-- `CDKFileExporter.formats`
+### Unified exporter facade
 - `CDKFileExportFormat`
+- `CDKFileExporterFormat`
 - `CDKFileExportOptions`
+- `CDKFileExporter`
+  - `formats`
+  - `supportedFileExtensions`
+  - `supportedUTIIdentifiers`
+  - `format(forFileExtension:)`
+  - `format(forUTIIdentifier:)`
+  - `write(molecule:as:options:)`
+  - `write(molecules:as:options:)`
+  - `write(molecule:to:as:options:)`
+  - `write(molecules:to:as:options:)`
 
-Format-specific writers:
+### Format-specific writers
 - MDL/SDF: `CDKMDLV2000Writer`, `CDKSDFWriter`
 - SMILES: `CDKSMILESWriter`
 - InChI: `CDKInChIWriter`
@@ -70,41 +139,24 @@ Format-specific writers:
 - CML: `CDKCMLWriter`
 - RXN/RDF: `CDKRXNWriter`, `CDKRDFWriter`
 
-## 5) SMILES APIs
+## 7) Identifier + Property Facades
 
-Parsing:
-- `CDKSmilesParser`
-- `CDKSmilesParserFactory`
-- `CDKCxSmilesParser`
-- `CDKSmilesReactionParser`
+### Identifier service
+- `CDKMoleculeIdentifiers`
+- `CDKMoleculeIdentifierService`
+  - `compute(for:smilesFlavor:isoSmilesFlavor:)`
+  - `unavailableText(from:)`
 
-Generation:
-- `CDKSmilesGenerator`
-- `CDKSmilesGeneratorFactory`
-- `CDKSmiFlavor`
-
-## 6) InChI APIs
-
-- `CDKInChIToStructure`
-- `CDKInChIGenerator`
-- `CDKInChIGeneratorFactory`
-- `CDKInChIStatus`
-
-Identifier facade:
-- `CDKMoleculeIdentifierService.compute(for:)`
-  - returns `CDKMoleculeIdentifiers` (`smiles`, `isoSmiles`, `inchi`, `inchiKey`).
-
-## 7) Descriptors and Property Services
-
-Property facade:
-- `CDKMoleculePropertyService.compute(for:)`
-  - returns `CDKMolecularProperties`.
-
-Rule-of-Five:
-- `CDKRuleOfFiveDescriptor`
+### Property service
+- `CDKMolecularProperties`
 - `CDKRuleOfFiveResult`
+- `CDKRuleOfFiveDescriptor`
+  - `evaluate(for:xlogP:)`
+  - `evaluate(molecularWeight:hBondDonorCount:hBondAcceptorCount:xlogP:)`
+- `CDKMoleculePropertyService`
+  - `compute(for:xlogP:)`
 
-Descriptor set includes:
+### Descriptor APIs
 - `CDKMolecularFormulaDescriptor`
 - `CDKMolecularWeightDescriptor`
 - `CDKExactMassDescriptor`
@@ -116,27 +168,24 @@ Descriptor set includes:
 - `CDKXLogPDescriptor`
 - `CDKMannholdLogPDescriptor`
 
-## 8) Error Handling
+## 8) Errors
 
-Parsing and writing APIs throw `ChemError`:
+Most parsing and IO APIs throw `ChemError`:
 - `.emptyInput`
 - `.unsupported(String)`
 - `.parseFailed(String)`
 
-Host apps should use `do/try/catch` and expose `LocalizedError.errorDescription`.
+## 9) Host-App Boundary
 
-## 9) Host App Boundary
+This package intentionally excludes app integration layers:
+- Spotlight extension/indexing logic
+- Quick Look thumbnail/preview providers
+- app-level identifiers/entitlements/window/session logic
 
-The package intentionally excludes host-application integration concerns:
-- no Spotlight indexer code
-- no Quick Look providers
-- no security-scoped bookmark/sandbox file-access policy code
-- no app bundle identifiers or app-specific metadata keys
-
-These are expected to live in the consuming application.
+`CDKSwiftNativePort` can be used from sandboxed and non-sandboxed hosts, but host-level policies and extension wiring remain the app’s responsibility.
 
 ## 10) Stability Notes
 
-- The API families listed above are the intended integration surface.
+- The API families above are the intended integration surface for host apps.
 - Internal implementation details under `Sources/CDKSwiftNativePort/CDK/...` may evolve as parity work continues.
-- See `CHANGELOG.md` for compatibility notes and release history.
+- See `CHANGELOG.md` for compatibility notes.

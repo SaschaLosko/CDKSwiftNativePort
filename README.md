@@ -1,48 +1,64 @@
 # CDKSwiftNativePort
 
-`CDKSwiftNativePort` is a Swift-native package that encapsulates CDK-derived chemistry functionality and keeps it reusable across host applications.
+`CDKSwiftNativePort` is a Swift-native chemistry package that encapsulates CDK-derived logic behind a reusable API surface for macOS applications.
 
 Repository: `https://github.com/SaschaLosko/CDKSwiftNativePort`
 
-## What It Provides
+## Current Feature Set
 
-- Core molecular graph model (`Molecule`, `Atom`, `Bond`) and graph/ring utilities.
-- CDK-style 2D coordinate generation and depiction pipelines.
-- SMILES/CXSMILES/reaction SMILES parsing and generation.
-- InChI parsing + native Swift InChI/InChIKey generation path.
-- Unified multi-format import/export APIs.
-- Descriptor/property services including XLogP and Rule-of-Five support.
+- Core chemical graph model: `Molecule`, `Atom`, `Bond` (+ query/stereo/valence helpers).
+- CDK-like 2D layout pipeline: `Depiction2DGenerator` (`StructureDiagramGenerator` port).
+- Depiction/export pipeline:
+  - SVG output (`CDKDepictionGenerator`)
+  - SwiftUI `GraphicsContext` renderer (`CDKStandardGenerator`)
+  - Metal-ready scene model (`CDKMetalDepictionSceneBuilder`)
+  - label clipping with glyph-outline-aware obstacles.
+- SMILES family:
+  - SMILES parser/generator
+  - CXSMILES split/state handling
+  - reaction SMILES parsing (`CDKReaction`).
+- InChI family:
+  - InChI -> structure
+  - structure -> InChI / InChIKey
+  - native Swift generation/parsing path.
+- IO coverage:
+  - unified importer/exporter facades
+  - format-specific readers/writers (MDL V2000/V3000, SDF, MOL2, PDB, XYZ, CML, RXN/RDF, SMILES, InChI).
+- Descriptor/property services:
+  - molecular formula/mass descriptors
+  - Rule-of-Five aggregation
+  - XLogP and Mannhold LogP.
 
 ## Supported Formats
 
 Input (read):
 - MDL Molfile / SDFile (`.mol`, `.sdf`, `.sd`)
-- SMILES (`.smi`, `.smiles`)
+- SMILES (`.smi`, `.smiles`, `.ism`, `.can`)
 - InChI (`.inchi`, `.ich`)
 - MOL2 (`.mol2`)
-- PDB (`.pdb`)
+- PDB (`.pdb`, `.ent`)
 - XYZ (`.xyz`)
-- CML (`.cml`, `.xml`)
+- CML (`.cml`)
 - RXN (`.rxn`)
 - RDF (`.rdf`)
+- plain text auto-detection for supported chemistry payloads.
 
 Output (write):
 - MDL Molfile / SDFile
-- SMILES / ISO SMILES
+- SMILES / isomeric SMILES
 - InChI
-- MOL2, PDB, XYZ, CML
-- RXN, RDF
-- SVG depiction export
+- MOL2 / PDB / XYZ / CML
+- RXN / RDF
+- SVG depiction
 
 ## Package Boundary Contract
 
-The package intentionally does **not** depend on host-app integration layers, including:
-- Spotlight APIs (`CoreSpotlight`)
-- Quick Look APIs (`QuickLook`, `QuickLookThumbnailing`)
-- App-level identifiers, entitlements, or sandbox/bookmark management
-- Host UI state and window lifecycle logic
+`CDKSwiftNativePort` intentionally excludes host-app integration concerns:
+- no Spotlight indexer implementation
+- no Quick Look provider implementation
+- no app bundle identifiers, entitlements, or app window/session management
 
-These concerns stay in the consuming app.
+The package is consumed by host apps; app-specific integration remains outside this repository.
 
 ## Platform and Toolchain
 
@@ -94,7 +110,7 @@ print(ids.smiles, ids.inchi, props.molecularWeight, svg.count)
 swift test
 ```
 
-The test suite includes package-boundary checks that fail if app-specific coupling leaks into package sources.
+The test suite includes package-boundary guards that fail if app-specific coupling markers leak into package sources.
 
 ## CDK Attribution and License
 
