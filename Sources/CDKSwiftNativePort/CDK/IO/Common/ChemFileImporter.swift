@@ -26,6 +26,9 @@ public enum CDKFileImporter {
         CDKFileImporterFormat(displayName: "SMILES",
                               fileExtensions: ["smi", "smiles", "ism", "can"],
                               utiIdentifiers: ["chemical/x-daylight-smiles", "chemical/x-smiles"]),
+        CDKFileImporterFormat(displayName: "Reaction SMILES",
+                              fileExtensions: ["rsmi"],
+                              utiIdentifiers: ["chemical/x-reaction-smiles"]),
         CDKFileImporterFormat(displayName: "InChI",
                               fileExtensions: ["inchi", "ich"],
                               utiIdentifiers: ["chemical/x-inchi"]),
@@ -67,6 +70,9 @@ public enum CDKFileImporter {
         if ["smi", "smiles", "ism", "can"].contains(lower) {
             return .smiles
         }
+        if lower == "rsmi" {
+            return .smiles
+        }
         if ["inchi", "ich"].contains(lower) {
             return .inchi
         }
@@ -95,6 +101,25 @@ public enum CDKFileImporter {
         return try readMolecules(text: text, fileExtension: ext)
     }
 
+    public static func readReaction(from url: URL) throws -> CDKReaction {
+        let ext = url.pathExtension.lowercased()
+        let shouldStopAccess: Bool
+        if url.isFileURL {
+            shouldStopAccess = url.startAccessingSecurityScopedResource()
+        } else {
+            shouldStopAccess = false
+        }
+
+        defer {
+            if shouldStopAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        let text = try decodeText(from: url)
+        return try readReaction(text: text, fileExtension: ext)
+    }
+
     public static func readMolecules(text: String,
                                      fileExtension: String?) throws -> [Molecule] {
         let ext = (fileExtension ?? "").lowercased()
@@ -106,6 +131,8 @@ public enum CDKFileImporter {
             return [try CDKMDLReader.read(text: text)]
         case "smi", "smiles", "ism", "can":
             return try CDKSMILESReader.read(text: text)
+        case "rsmi":
+            return try molecules(from: parseReactionSmiles(text))
         case "inchi", "ich":
             return try CDKInChIReader.read(text: text)
         case "xyz":
@@ -127,6 +154,26 @@ public enum CDKFileImporter {
         }
     }
 
+    public static func readReaction(text: String,
+                                    fileExtension: String?) throws -> CDKReaction {
+        let ext = (fileExtension ?? "").lowercased()
+
+        switch ext {
+        case "rxn":
+            return try CDKRXNReader.readReaction(text: text)
+        case "rdf":
+            return try CDKRDFReader.readReaction(text: text)
+        case "smi", "smiles", "ism", "can":
+            return try parseReactionSmiles(text)
+        case "rsmi":
+            return try parseReactionSmiles(text)
+        case "txt":
+            return try readTextReactionWithAutoDetection(text)
+        default:
+            return try readTextReactionWithAutoDetection(text)
+        }
+    }
+
     private static func readTextWithAutoDetection(_ text: String) throws -> [Molecule] {
         if looksLikeInChI(text) {
             return try CDKInChIReader.read(text: text)
@@ -136,6 +183,9 @@ public enum CDKFileImporter {
         }
         if looksLikeRDF(text) {
             return try CDKRDFReader.read(text: text)
+        }
+        if looksLikeReactionSmiles(text) {
+            return try molecules(from: parseReactionSmiles(text))
         }
         if looksLikeMol2(text) {
             return try CDKMol2Reader.read(text: text)
@@ -162,6 +212,31 @@ public enum CDKFileImporter {
         }
 
         throw ChemError.unsupported("Unable to detect a supported molecule/reaction format.")
+    }
+
+    private static func readTextReactionWithAutoDetection(_ text: String) throws -> CDKReaction {
+        if looksLikeRDF(text) {
+            return try CDKRDFReader.readReaction(text: text)
+        }
+        if looksLikeRXN(text) {
+            return try CDKRXNReader.readReaction(text: text)
+        }
+        if looksLikeReactionSmiles(text) {
+            return try parseReactionSmiles(text)
+        }
+        throw ChemError.unsupported("Unable to detect a supported reaction format.")
+    }
+
+    private static func parseReactionSmiles(_ text: String) throws -> CDKReaction {
+        guard let line = firstMeaningfulLine(in: text) else {
+            throw ChemError.emptyInput
+        }
+        let parser = CDKSmilesParser(flavor: .cdkDefault)
+        return try parser.parseReactionSmiles(line)
+    }
+
+    private static func molecules(from reaction: CDKReaction) -> [Molecule] {
+        reaction.reactants + reaction.agents + reaction.products
     }
 
     private static func decodeText(from url: URL) throws -> String {
@@ -203,6 +278,13 @@ public enum CDKFileImporter {
 
     private static func looksLikeRDF(_ text: String) -> Bool {
         text.localizedCaseInsensitiveContains("$RDFILE") && looksLikeRXN(text)
+    }
+
+    private static func looksLikeReactionSmiles(_ text: String) -> Bool {
+        guard let line = firstMeaningfulLine(in: text) else { return false }
+        if line.hasPrefix("InChI=") { return false }
+        let separatorCount = line.filter { $0 == ">" }.count
+        return separatorCount == 2
     }
 
     private static func looksLikePDB(_ text: String) -> Bool {

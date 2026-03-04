@@ -10,6 +10,9 @@ final class PackageBoundaryTests: XCTestCase {
             "de.losko.atomlens",
             "com_chemsketcher",
             "AtomLens",
+            "import AtomLens",
+            "import AtomLensQuickLookSupport",
+            "import AtomLensSpotlightImporter",
             "import AppKit",
             "import UIKit",
             "import CoreSpotlight",
@@ -33,6 +36,53 @@ final class PackageBoundaryTests: XCTestCase {
         XCTAssertTrue(violations.isEmpty, """
         Found package boundary violations:
         \(violations.joined(separator: "\n"))
+        """)
+    }
+
+    func testPackageManifestDoesNotDependOnAtomLensTargets() throws {
+        let root = try packageRoot()
+        let manifestURL = root.appendingPathComponent("Package.swift")
+        let manifest = try String(contentsOf: manifestURL, encoding: .utf8)
+
+        let forbiddenMarkers = [
+            "AtomLens",
+            "AtomLensQuickLookSupport",
+            "AtomLensSpotlightImporter",
+            "path: \"../AtomLens",
+            "path:\"../AtomLens"
+        ]
+
+        let violations = forbiddenMarkers.filter { manifest.contains($0) }
+        XCTAssertTrue(violations.isEmpty, """
+        Package manifest contains forbidden app-coupling markers:
+        \(violations.joined(separator: "\n"))
+        """)
+    }
+
+    func testWorkspaceChemistryLayerContainsOnlyAliasAdapter() throws {
+        let packageRoot = try packageRoot()
+        let workspaceRoot = packageRoot.deletingLastPathComponent()
+        let chemistryRoot = workspaceRoot.appendingPathComponent("AtomLens/Chemistry", isDirectory: true)
+
+        guard FileManager.default.fileExists(atPath: chemistryRoot.path) else {
+            throw XCTSkip("AtomLens host app is not present in this checkout.")
+        }
+
+        let expectedAdapterRelativePath = "CDKPortAliases.swift"
+        var swiftFiles: [String] = []
+        let enumerator = FileManager.default.enumerator(at: chemistryRoot, includingPropertiesForKeys: nil)
+        while let next = enumerator?.nextObject() as? URL {
+            guard next.pathExtension == "swift" else { continue }
+            let relative = next.path.replacingOccurrences(of: chemistryRoot.path + "/", with: "")
+            swiftFiles.append(relative)
+        }
+
+        swiftFiles.sort()
+        let unexpected = swiftFiles.filter { $0 != expectedAdapterRelativePath }
+        XCTAssertTrue(unexpected.isEmpty, """
+        Found AtomLens chemistry source files outside the alias adapter:
+        \(unexpected.joined(separator: "\n"))
+        Move CDK-derived implementation into CDKSwiftNativePort.
         """)
     }
 

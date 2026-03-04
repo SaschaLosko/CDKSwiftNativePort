@@ -36,6 +36,18 @@ final class MDLV2000ReaderPortTests: XCTestCase {
         XCTAssertEqual(molecule.atoms[0].isotopeMassNumber, 13)
     }
 
+    func testParsesAtomMapFromAtomBlock() throws {
+        let molecule = try CDKMDLV2000Reader.read(text: atomMapMol)
+        XCTAssertEqual(molecule.atomCount, 1)
+        XCTAssertEqual(molecule.atoms[0].atomMapNumber, 7)
+    }
+
+    func testParsesMMapPropertyLine() throws {
+        let molecule = try CDKMDLV2000Reader.read(text: mMapMol)
+        XCTAssertEqual(molecule.atomCount, 1)
+        XCTAssertEqual(molecule.atoms[0].atomMapNumber, 9)
+    }
+
     func testParsesAtomListFromMALSRecord() throws {
         let molecule = try CDKMDLV2000Reader.read(text: atomListMol)
         let atom = try XCTUnwrap(molecule.atoms.first)
@@ -141,6 +153,25 @@ CDKSwiftNativePort
   1  0  0  0  0  0  0  0  0  0  0 V2000
     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
 M  ISO  1   1  13
+M  END
+"""
+
+    private let atomMapMol = """
+AtomMap
+CDKSwiftNativePort
+
+  1  0  0  0  0  0  0  0  0  0  0 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  7  0  0
+M  END
+"""
+
+    private let mMapMol = """
+MMap
+CDKSwiftNativePort
+
+  1  0  0  0  0  0  0  0  0  0  0 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0
+M  MAP  1   1   9
 M  END
 """
 

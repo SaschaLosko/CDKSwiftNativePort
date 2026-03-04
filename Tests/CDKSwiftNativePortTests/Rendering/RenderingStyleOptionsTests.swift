@@ -109,4 +109,23 @@ final class RenderingStyleOptionsTests: XCTestCase {
         XCTAssertTrue(svg.contains("<circle "))
         XCTAssertTrue(svg.contains("fill=\"\(oxygenColorHex)\""))
     }
+
+    func testAtomMapHighlightModeUsesMapPalette() {
+        let atom = Atom(id: 1, element: "C", position: .zero, atomMapNumber: 17)
+        let unmapped = Atom(id: 2, element: "C", position: .zero, atomMapNumber: nil)
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                atomColoringMode: .atomMapHighlight,
+                                colorBondsByAtom: true,
+                                aromaticDisplayMode: .innerLine,
+                                bondWidth: 2.0,
+                                fontSize: 14,
+                                padding: 24)
+
+        let mappedColor = CDKRenderingStyleResolver.atomColor(for: atom, style: style)
+        let unmappedColor = CDKRenderingStyleResolver.atomColor(for: unmapped, style: style)
+        XCTAssertNotEqual(mappedColor, CDKRenderColor.ink)
+        XCTAssertEqual(unmappedColor, CDKRenderColor.ink)
+    }
 }

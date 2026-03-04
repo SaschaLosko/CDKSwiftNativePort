@@ -17,11 +17,20 @@ extension CDKSmilesParser {
         applyCxAtomLabels(to: &components, state: split.state)
         let grouped = try applyFragmentGrouping(to: components, state: split.state)
 
-        let reactants = grouped.filter { $0.side == .reactant }.map(\.molecule)
-        let agents = grouped.filter { $0.side == .agent }.map(\.molecule)
-        let products = grouped.filter { $0.side == .product }.map(\.molecule)
+        let reactants = grouped.filter { $0.side == .reactant }.map {
+            CDKReactionParticipant(molecule: $0.molecule, role: .reactant, stoichiometry: $0.stoichiometry)
+        }
+        let agents = grouped.filter { $0.side == .agent }.map {
+            CDKReactionParticipant(molecule: $0.molecule, role: .agent, stoichiometry: $0.stoichiometry)
+        }
+        let products = grouped.filter { $0.side == .product }.map {
+            CDKReactionParticipant(molecule: $0.molecule, role: .product, stoichiometry: $0.stoichiometry)
+        }
 
-        return CDKReaction(reactants: reactants, agents: agents, products: products, cxState: split.state)
+        return CDKReaction(reactantParticipants: reactants,
+                           agentParticipants: agents,
+                           productParticipants: products,
+                           cxState: split.state)
     }
 }
 
@@ -35,6 +44,7 @@ private struct CDKIndexedReactionComponent {
     var molecule: Molecule
     let side: CDKReactionSide
     let globalIndex: Int
+    let stoichiometry: Double?
 }
 
 private extension CDKSmilesParser {
@@ -42,18 +52,42 @@ private extension CDKSmilesParser {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
 
-        let fragments = trimmed.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
-        if fragments.contains(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-            throw ChemError.parseFailed("Invalid empty fragment in reaction side.")
+        var out: [CDKIndexedReactionComponent] = []
+        var index = trimmed.startIndex
+
+        while index < trimmed.endIndex {
+            if trimmed[index] == "." {
+                throw ChemError.parseFailed("Invalid empty fragment in reaction side.")
+            }
+
+            var fragmentEnd = index
+            while fragmentEnd < trimmed.endIndex, trimmed[fragmentEnd] != "." {
+                fragmentEnd = trimmed.index(after: fragmentEnd)
+            }
+
+            let fragment = String(trimmed[index..<fragmentEnd]).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !fragment.isEmpty else {
+                throw ChemError.parseFailed("Invalid empty fragment in reaction side.")
+            }
+
+            let molecule = try parseSmiles(fragment)
+            out.append(
+                CDKIndexedReactionComponent(
+                    molecule: molecule,
+                    side: side,
+                    globalIndex: -1,
+                    stoichiometry: nil
+                )
+            )
+
+            guard fragmentEnd < trimmed.endIndex else { break }
+            index = trimmed.index(after: fragmentEnd)
+            if index == trimmed.endIndex {
+                throw ChemError.parseFailed("Invalid empty fragment in reaction side.")
+            }
         }
 
-        return try fragments.map { fragment in
-            CDKIndexedReactionComponent(
-                molecule: try parseSmiles(fragment),
-                side: side,
-                globalIndex: -1
-            )
-        }
+        return out
     }
 
     func applyCxAtomLabels(to components: inout [CDKIndexedReactionComponent], state: CDKCxSmilesState) {
@@ -103,14 +137,16 @@ private extension CDKSmilesParser {
             return components.enumerated().map {
                 CDKIndexedReactionComponent(molecule: $0.element.molecule,
                                             side: $0.element.side,
-                                            globalIndex: $0.offset)
+                                            globalIndex: $0.offset,
+                                            stoichiometry: $0.element.stoichiometry)
             }
         }
 
         let normalized = components.enumerated().map {
             CDKIndexedReactionComponent(molecule: $0.element.molecule,
                                         side: $0.element.side,
-                                        globalIndex: $0.offset)
+                                        globalIndex: $0.offset,
+                                        stoichiometry: $0.element.stoichiometry)
         }
         let byIndex = Dictionary(uniqueKeysWithValues: normalized.map { ($0.globalIndex, $0) })
 
@@ -152,8 +188,12 @@ private extension CDKSmilesParser {
 
                 let molecules = group.compactMap { byIndex[$0]?.molecule }
                 let side = byIndex[first]?.side ?? component.side
+                let groupedStoichiometry = try mergedStoichiometry(for: group, byIndex: byIndex)
                 let merged = mergeDisconnectedMolecules(molecules)
-                out.append(CDKIndexedReactionComponent(molecule: merged, side: side, globalIndex: first))
+                out.append(CDKIndexedReactionComponent(molecule: merged,
+                                                       side: side,
+                                                       globalIndex: first,
+                                                       stoichiometry: groupedStoichiometry))
             } else {
                 out.append(component)
             }
@@ -204,5 +244,15 @@ private extension CDKSmilesParser {
         }
 
         return out
+    }
+
+    func mergedStoichiometry(for group: [Int],
+                             byIndex: [Int: CDKIndexedReactionComponent]) throws -> Double? {
+        let specified = group.compactMap { byIndex[$0]?.stoichiometry }
+        guard let first = specified.first else { return nil }
+        if specified.contains(where: { $0 != first }) {
+            throw ChemError.parseFailed("Conflicting stoichiometry values in CXSMILES fragment grouping.")
+        }
+        return first
     }
 }

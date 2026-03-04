@@ -1,10 +1,10 @@
 # API Reference
 
-This document summarizes the current public API surface of `CDKSwiftNativePort`.
+This document summarizes the public integration surface of `CDKSwiftNativePort`.
 
-## 1) Core Types
+## 1. Core Domain Model
 
-Defined in `Sources/CDKSwiftNativePort/Molecule.swift`.
+Defined primarily in `Sources/CDKSwiftNativePort/Molecule.swift`.
 
 - `Molecule`
 - `Atom`
@@ -16,41 +16,43 @@ Defined in `Sources/CDKSwiftNativePort/Molecule.swift`.
 - `BondQueryType`
 - `ChemFormat`
 - `ChemError`
-- `Depiction2DGenerator`
 
-Key `Molecule` helpers include:
-- connectivity/lookup: `bonds(forAtom:)`, `bond(between:and:)`, `neighbors(of:)`
-- ring/cycle helpers: `simpleCycles(maxSize:)`, `aromaticDisplayRings()`, `aromaticDisplayBondIDs()`
-- depiction-related chemistry helpers: `implicitHydrogenCount(for:)`, `assignWedgeHashFromChiralCenters()`
+Key `Molecule` helpers:
+
+- graph and lookup: `bonds(forAtom:)`, `bond(between:and:)`, `neighbors(of:)`, `atom(id:)`
+- ring/aromatic support: `simpleCycles(maxSize:)`, `aromaticDisplayRings()`, `aromaticDisplayBondIDs()`
+- depiction chemistry helpers: `implicitHydrogenCount(for:)`, `assignWedgeHashFromChiralCenters()`
 - geometry: `boundingBox()`
 
-## 2) Layout + Rendering
+## 2. Layout and Rendering APIs
 
 ### Layout
+
 - `Depiction2DGenerator.generate(for:) -> Molecule`
-  - CDK-style 2D placement entry point.
 
 ### Rendering outputs
-- `CDKDepictionGenerator.toSVG(...) -> String`
-  - vector depiction export.
-- `CDKMetalDepictionSceneBuilder.build(...) -> CDKMetalDepictionScene`
-  - renderer-agnostic primitive scene suitable for Metal hosts.
-- `CDKStandardGenerator.draw(molecule:in:style:context:)`
-  - SwiftUI `GraphicsContext` drawing path.
 
-### Rendering style and color APIs
+- `CDKDepictionGenerator.toSVG(molecule:style:canvasSize:includeBackground:) -> String`
+- `CDKStandardGenerator.draw(molecule:in:style:context:)`
+- `CDKMetalDepictionSceneBuilder.build(molecule:style:canvasRect:zoom:pan:rotationDegrees:...) -> CDKMetalDepictionScene`
+- `CDKMetalReactionDepictionSceneBuilder.build(reaction:style:canvasRect:zoom:pan:rotationDegrees:...) -> CDKMetalDepictionScene`
+- `CDKMetalReactionDepictionSceneBuilder.participant(at:in:style:canvasRect:zoom:pan:rotationDegrees:) -> CDKReactionParticipantSelection?`
+
+### Rendering configuration and scene types
+
 - `RenderStyle`
 - `CDKAtomColoringMode`
 - `CDKAromaticDisplayMode`
 - `CDKRenderColor`
 - `CDKRenderingStyleResolver`
-- `CDKMetalDepictionScene` and nested:
+- `CDKMetalDepictionScene`
   - `CDKMetalDepictionScene.LineSegment`
   - `CDKMetalDepictionScene.AtomLabel`
 
-## 3) SMILES / CXSMILES / Reaction SMILES
+## 3. SMILES and Reaction APIs
 
-### SMILES parser/generator
+### Parsers and generators
+
 - `CDKSmilesParser`
   - `parseSmiles(_:)`
   - `parseCoreSmiles(_:)`
@@ -61,22 +63,26 @@ Key `Molecule` helpers include:
 - `CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor:)`
 - `CDKSmiFlavor`
 
-### CXSMILES support
+### CXSMILES
+
 - `CDKCxSmilesState`
 - `CDKCxSmilesParser`
   - `split(_:enabled:)`
   - `applyAtomLabels(to:state:)`
   - `SplitResult`
 
-### Reaction container
-- `CDKReaction`
-  - `reactants`, `agents`, `products`, `cxState`
+### Reaction model
 
-## 4) InChI APIs
+- `CDKReaction`
+- `CDKReactionRole`
+- `CDKReactionParticipant`
+- `CDKReactionParticipantSelection`
+
+## 4. InChI APIs
 
 - `CDKInChIGeneratorFactory.shared`
-  - `getInChIToStructure(_:)`
-  - `getInChIGenerator(_:)`
+  - `getInChIToStructure(_:) -> CDKInChIToStructure`
+  - `getInChIGenerator(_:) -> CDKInChIGenerator`
 - `CDKInChIToStructure`
   - `getStatus()`
   - `getMessage()`
@@ -88,9 +94,10 @@ Key `Molecule` helpers include:
   - `getInchiKey()`
 - `CDKInChIStatus`
 
-## 5) Import APIs
+## 5. Import APIs
 
-### Unified importer facade
+### Unified importer
+
 - `CDKFileImporterFormat`
 - `CDKFileImporter`
   - `formats`
@@ -100,10 +107,12 @@ Key `Molecule` helpers include:
   - `preferredInputFormat(forFileExtension:text:)`
   - `readMolecules(from:)`
   - `readMolecules(text:fileExtension:)`
+  - `readReaction(from:)`
+  - `readReaction(text:fileExtension:)`
 
-### Format-specific readers
-- MDL/SDF: `CDKMDLReader`, `CDKMDLV2000Reader`, `CDKIteratingSDFReader`
-- V3000: `CDKMDLV3000Reader`, `CDKMDLV3000Scaffold`
+### Format readers
+
+- MDL/SDF: `CDKMDLReader`, `CDKMDLV2000Reader`, `CDKMDLV3000Reader`, `CDKMDLV3000Scaffold`, `CDKIteratingSDFReader`
 - SMILES: `CDKSMILESReader`
 - InChI: `CDKInChIReader`
 - MOL2: `CDKMol2Reader`
@@ -112,9 +121,10 @@ Key `Molecule` helpers include:
 - CML: `CDKCMLReader`
 - RXN/RDF: `CDKRXNReader`, `CDKRDFReader`
 
-## 6) Export APIs
+## 6. Export APIs
 
-### Unified exporter facade
+### Unified exporter
+
 - `CDKFileExportFormat`
 - `CDKFileExporterFormat`
 - `CDKFileExportOptions`
@@ -129,7 +139,8 @@ Key `Molecule` helpers include:
   - `write(molecule:to:as:options:)`
   - `write(molecules:to:as:options:)`
 
-### Format-specific writers
+### Format writers
+
 - MDL/SDF: `CDKMDLV2000Writer`, `CDKSDFWriter`
 - SMILES: `CDKSMILESWriter`
 - InChI: `CDKInChIWriter`
@@ -139,15 +150,17 @@ Key `Molecule` helpers include:
 - CML: `CDKCMLWriter`
 - RXN/RDF: `CDKRXNWriter`, `CDKRDFWriter`
 
-## 7) Identifier + Property Facades
+## 7. Identifier and Property APIs
 
-### Identifier service
+### Identifiers
+
 - `CDKMoleculeIdentifiers`
 - `CDKMoleculeIdentifierService`
   - `compute(for:smilesFlavor:isoSmilesFlavor:)`
   - `unavailableText(from:)`
 
-### Property service
+### Properties and Rule-of-Five
+
 - `CDKMolecularProperties`
 - `CDKRuleOfFiveResult`
 - `CDKRuleOfFiveDescriptor`
@@ -157,6 +170,7 @@ Key `Molecule` helpers include:
   - `compute(for:xlogP:)`
 
 ### Descriptor APIs
+
 - `CDKMolecularFormulaDescriptor`
 - `CDKMolecularWeightDescriptor`
 - `CDKExactMassDescriptor`
@@ -168,24 +182,30 @@ Key `Molecule` helpers include:
 - `CDKXLogPDescriptor`
 - `CDKMannholdLogPDescriptor`
 
-## 8) Errors
+## 8. Error Model
 
 Most parsing and IO APIs throw `ChemError`:
+
 - `.emptyInput`
 - `.unsupported(String)`
 - `.parseFailed(String)`
 
-## 9) Host-App Boundary
+## 9. Minimal Integration Example
 
-This package intentionally excludes app integration layers:
-- Spotlight extension/indexing logic
-- Quick Look thumbnail/preview providers
-- app-level identifiers/entitlements/window/session logic
+```swift
+import CDKSwiftNativePort
 
-`CDKSwiftNativePort` can be used from sandboxed and non-sandboxed hosts, but host-level policies and extension wiring remain the app’s responsibility.
+let molecules = try CDKFileImporter.readMolecules(text: "CCO", fileExtension: "smi")
+guard let molecule = molecules.first else { throw ChemError.emptyInput }
 
-## 10) Stability Notes
+let laidOut = Depiction2DGenerator.generate(for: molecule)
+let ids = CDKMoleculeIdentifierService.compute(for: laidOut)
+let properties = CDKMoleculePropertyService.compute(for: laidOut)
+let svg = CDKDepictionGenerator.toSVG(molecule: laidOut)
 
-- The API families above are the intended integration surface for host apps.
-- Internal implementation details under `Sources/CDKSwiftNativePort/CDK/...` may evolve as parity work continues.
-- See `CHANGELOG.md` for compatibility notes.
+print(ids.smiles, properties.formula, svg.count)
+```
+
+## 10. Package Boundary
+
+`CDKSwiftNativePort` excludes host-app integration code (Spotlight, Quick Look, app window/session logic, app identifiers). Host apps should consume this package only through the public APIs listed above.

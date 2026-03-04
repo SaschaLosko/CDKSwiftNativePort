@@ -26,6 +26,12 @@ final class RDFReaderPortTests: XCTestCase {
         let molecules = try CDKRDFReader.read(text: text)
         XCTAssertEqual(molecules.count, 1)
         XCTAssertEqual(molecules[0].atoms.first?.element.uppercased(), "N")
+
+        let reaction = try CDKRDFReader.readReaction(text: text)
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.productCount, 0)
+        XCTAssertEqual(reaction.agentCount, 0)
+        XCTAssertEqual(reaction.reactants.first?.atoms.first?.element.uppercased(), "N")
     }
 
     func testRejectsRdfWithoutReactionBlocks() {

@@ -12,7 +12,7 @@ swift test
 
 Required before release:
 - tests pass
-- docs updated (`README.md`, `Documentation/API.md`, `CHANGELOG.md`)
+- docs updated (`README.md`, `Documentation/API.md`, `Documentation/INTEGRATION.md`, `Documentation/CDK_COMPARISON.md`, `Documentation/MACOS.md`, `CHANGELOG.md`)
 - package boundary policy remains satisfied
 - license and notice files present (`LICENSE`, `NOTICE.md`)
 

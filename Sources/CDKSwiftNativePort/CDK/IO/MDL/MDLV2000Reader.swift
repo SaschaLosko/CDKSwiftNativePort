@@ -107,6 +107,12 @@ public enum CDKMDLV2000Reader {
         let symbol = parseElementSymbol(line: line, parts: parts)
         let chargeCode = parseFixedInt(line, start: 36, length: 3) ?? parseInt(parts, index: 5) ?? 0
         let (charge, radicalFromChargeCode) = decodeChargeAndRadical(chargeCode)
+        let atomMapFixed = parseFixedInt(line, start: 60, length: 3)
+        let atomMapToken = parseInt(parts, index: 12)
+        let atomMapValue = [atomMapFixed, atomMapToken]
+            .compactMap { $0 }
+            .first(where: { $0 > 0 }) ?? 0
+        let atomMapNumber = atomMapValue > 0 ? atomMapValue : nil
 
         return Atom(
             id: atomID,
@@ -114,7 +120,8 @@ public enum CDKMDLV2000Reader {
             position: CGPoint(x: x, y: y),
             charge: charge,
             queryType: queryType(for: symbol),
-            radical: radicalFromChargeCode
+            radical: radicalFromChargeCode,
+            atomMapNumber: atomMapNumber
         )
     }
 
@@ -156,6 +163,10 @@ public enum CDKMDLV2000Reader {
             applyChargeLine(fields, to: &molecule)
         case "ISO":
             applyIsotopeLine(fields, to: &molecule)
+        case "MAP":
+            applyAtomIntProperty(fields, to: &molecule) { atom, value in
+                atom.atomMapNumber = value > 0 ? value : nil
+            }
         case "RAD":
             applyRadicalLine(fields, to: &molecule)
         case "RGP":

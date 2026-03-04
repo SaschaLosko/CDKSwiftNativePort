@@ -6,9 +6,24 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-04
+
+### Added
+
+- Reaction model value types (`CDKReactionRole`, `CDKReactionParticipant`) and participant-preserving reaction parsing across SMILES/RXN/RDF workflows.
+- Metal reaction depiction scene builder and participant hit-testing API for host-side interaction (`CDKMetalReactionDepictionSceneBuilder`).
+- Extended importer coverage and tests for reaction parsing edge cases, stoichiometry handling, and RXN/RDF participant metadata.
+- Additional rendering test coverage for aromatic display and reaction visualization consistency.
+- New documentation set for GitHub publishing:
+  - `Documentation/INTEGRATION.md`
+  - `Documentation/CDK_COMPARISON.md`
+  - `Documentation/MACOS.md`
+
 ### Changed
 
-- Updated public documentation (`README.md`, `Documentation/API.md`) to reflect the current API surface, format matrix, and package boundary contract.
+- Updated public documentation (`README.md`, `Documentation/API.md`, `Documentation/ARCHITECTURE.md`) to reflect the current API surface and package boundary contract.
+- Strengthened package boundary guard tests to catch host-app coupling markers and accidental workspace-level chemistry leakage.
+- Refined rendering/layout internals and label clipping behavior used by SVG and Metal scene outputs.
 - Updated installation and publishing references to the canonical GitHub repository URL.
 
 ### Notes

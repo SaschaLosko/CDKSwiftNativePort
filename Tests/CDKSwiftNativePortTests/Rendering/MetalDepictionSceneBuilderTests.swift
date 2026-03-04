@@ -417,6 +417,262 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         }
     }
 
+    func testLabelFontScalesWithCanvasResizeAutoFit() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+
+        let smallCanvas = CGRect(x: 0, y: 0, width: 700, height: 500)
+        let largeCanvas = CGRect(x: 0, y: 0, width: 1000, height: 700)
+        let smallScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                              style: style,
+                                                              canvasRect: smallCanvas,
+                                                              zoom: 1.0,
+                                                              pan: .zero)
+        let largeScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                              style: style,
+                                                              canvasRect: largeCanvas,
+                                                              zoom: 1.0,
+                                                              pan: .zero)
+
+        guard let smallLabel = smallScene.labels.first(where: { $0.id == 1 }),
+              let largeLabel = largeScene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label in both scenes.")
+            return
+        }
+
+        XCTAssertGreaterThan(largeLabel.fontSize,
+                             smallLabel.fontSize * 1.15,
+                             "Expected label font to grow when viewport auto-fit enlarges structure.")
+
+        let smallBondLength = longestBondLength(in: smallScene.bondSegments)
+        let largeBondLength = longestBondLength(in: largeScene.bondSegments)
+        let smallRatio = smallLabel.fontSize / max(1.0, smallBondLength)
+        let largeRatio = largeLabel.fontSize / max(1.0, largeBondLength)
+        XCTAssertLessThan(abs(smallRatio - largeRatio),
+                          0.08,
+                          "Expected label-to-bond scale to stay consistent across viewport resize auto-fit.")
+
+        let smallWidth = averageBondWidth(in: smallScene.bondSegments)
+        let largeWidth = averageBondWidth(in: largeScene.bondSegments)
+        XCTAssertGreaterThan(largeWidth,
+                             smallWidth * 1.15,
+                             "Expected bond stroke width to grow when viewport auto-fit enlarges structure.")
+
+        let smallWidthRatio = smallWidth / max(1.0, smallBondLength)
+        let largeWidthRatio = largeWidth / max(1.0, largeBondLength)
+        XCTAssertLessThan(abs(smallWidthRatio - largeWidthRatio),
+                          0.02,
+                          "Expected bond-width-to-length ratio to stay consistent across viewport resize auto-fit.")
+    }
+
+    func testLabelAndBondSizingKeepShrinkingOnVeryCompactCanvas() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+
+        let compactCanvas = CGRect(x: 0, y: 0, width: 620, height: 420)
+        let extraCompactCanvas = CGRect(x: 0, y: 0, width: 500, height: 340)
+        let compactScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                style: style,
+                                                                canvasRect: compactCanvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero)
+        let extraCompactScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                     style: style,
+                                                                     canvasRect: extraCompactCanvas,
+                                                                     zoom: 1.0,
+                                                                     pan: .zero)
+
+        guard let compactLabel = compactScene.labels.first(where: { $0.id == 1 }),
+              let extraCompactLabel = extraCompactScene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label in both scenes.")
+            return
+        }
+
+        XCTAssertLessThan(extraCompactLabel.fontSize,
+                          compactLabel.fontSize * 0.92,
+                          "Expected labels to continue shrinking when the canvas becomes very compact.")
+
+        let compactBondLength = longestBondLength(in: compactScene.bondSegments)
+        let extraCompactBondLength = longestBondLength(in: extraCompactScene.bondSegments)
+        let compactRatio = compactLabel.fontSize / max(1.0, compactBondLength)
+        let extraCompactRatio = extraCompactLabel.fontSize / max(1.0, extraCompactBondLength)
+        XCTAssertLessThan(abs(compactRatio - extraCompactRatio),
+                          0.08,
+                          "Expected label-to-bond scale to remain stable on compact canvases.")
+
+        let compactBondWidth = averageBondWidth(in: compactScene.bondSegments)
+        let extraCompactBondWidth = averageBondWidth(in: extraCompactScene.bondSegments)
+        XCTAssertLessThan(extraCompactBondWidth,
+                          compactBondWidth * 0.92,
+                          "Expected bond widths to keep shrinking on very compact canvases.")
+    }
+
+    func testCanLowerMinimumLabelFontSizeForTinyPreviewCanvases() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 1.95,
+                                fontSize: 8.0,
+                                padding: 8.0)
+        let tinyCanvas = CGRect(x: 0, y: 0, width: 94, height: 54)
+
+        let defaultScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                style: style,
+                                                                canvasRect: tinyCanvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero,
+                                                                rotationDegrees: 0)
+        let loweredMinimumScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                       style: style,
+                                                                       canvasRect: tinyCanvas,
+                                                                       zoom: 1.0,
+                                                                       pan: .zero,
+                                                                       rotationDegrees: 0,
+                                                                       minimumLabelFontSize: 4.8)
+
+        guard let defaultLabel = defaultScene.labels.first(where: { $0.id == 1 }),
+              let loweredLabel = loweredMinimumScene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label in both tiny-preview scenes.")
+            return
+        }
+
+        XCTAssertEqual(defaultLabel.fontSize, 8.0, accuracy: 0.0001)
+        XCTAssertEqual(loweredLabel.fontSize, 4.8, accuracy: 0.0001)
+    }
+
+    func testMappedCarbonsRemainVisibleWhenMapNumbersEnabledAndCarbonsHidden() {
+        let molecule = Molecule(
+            name: "MappedCarbon",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0), atomMapNumber: 7),
+                Atom(id: 2, element: "O", position: CGPoint(x: 1.2, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        var style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+        style.showAtomMapNumbers = true
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+        XCTAssertTrue(scene.labels.contains(where: { $0.id == 1 && $0.text == "C:7" }),
+                      "Mapped carbons should remain labeled when map-number rendering is enabled.")
+    }
+
+    func testCanSuppressAromaticCarbonLabelsWhenCarbonsHidden() {
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 420, height: 300)
+
+        let defaultScene = CDKMetalDepictionSceneBuilder.build(molecule: aromaticSixRing,
+                                                                style: style,
+                                                                canvasRect: canvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero)
+        let suppressedScene = CDKMetalDepictionSceneBuilder.build(molecule: aromaticSixRing,
+                                                                   style: style,
+                                                                   canvasRect: canvas,
+                                                                   zoom: 1.0,
+                                                                   pan: .zero,
+                                                                   includeAromaticCarbonLabelsWhenCarbonsHidden: false)
+
+        XCTAssertTrue(defaultScene.labels.contains(where: { $0.text == "C" }),
+                      "Default rendering should keep aromatic carbon labels when carbons are hidden.")
+        XCTAssertFalse(suppressedScene.labels.contains(where: { $0.text == "C" }),
+                       "Preview mode should suppress aromatic carbon labels when carbons are hidden.")
+        XCTAssertGreaterThan(suppressedScene.bondSegments.count, 0,
+                             "Suppressing aromatic carbon labels must not remove bond rendering.")
+    }
+
+    func testCanSuppressTerminalCarbonLabelsWhenCarbonsHidden() {
+        let molecule = Molecule(
+            name: "TerminalCarbon",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "O", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 420, height: 300)
+
+        let defaultScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                style: style,
+                                                                canvasRect: canvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero)
+        let suppressedScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                   style: style,
+                                                                   canvasRect: canvas,
+                                                                   zoom: 1.0,
+                                                                   pan: .zero,
+                                                                   includeTerminalCarbonLabelsWhenCarbonsHidden: false)
+
+        XCTAssertTrue(defaultScene.labels.contains(where: { $0.id == 1 && $0.text == "C" }),
+                      "Default rendering should keep terminal carbon labels when carbons are hidden.")
+        XCTAssertFalse(suppressedScene.labels.contains(where: { $0.id == 1 && $0.text == "C" }),
+                       "Preview mode should suppress terminal carbon labels when carbons are hidden.")
+        XCTAssertTrue(suppressedScene.labels.contains(where: { $0.id == 2 && $0.text.hasPrefix("O") }))
+    }
+
     private func countSupportingSegments(forBondFrom from: CGPoint,
                                          to: CGPoint,
                                          segments: [CDKMetalDepictionScene.LineSegment]) -> Int {
@@ -454,6 +710,16 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         }.count
     }
 
+    private func longestBondLength(in segments: [CDKMetalDepictionScene.LineSegment]) -> CGFloat {
+        segments.map { hypot($0.to.x - $0.from.x, $0.to.y - $0.from.y) }.max() ?? 0
+    }
+
+    private func averageBondWidth(in segments: [CDKMetalDepictionScene.LineSegment]) -> CGFloat {
+        guard !segments.isEmpty else { return 0 }
+        let total = segments.reduce(CGFloat.zero) { $0 + $1.width }
+        return total / CGFloat(segments.count)
+    }
+
     private var alternatingSixRing: Molecule {
         let r = CGFloat(1.0)
         let atoms = [
@@ -473,6 +739,27 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
             Bond(id: 6, a1: 6, a2: 1, order: .double)
         ]
         return Molecule(name: "AlternatingSixRing", atoms: atoms, bonds: bonds)
+    }
+
+    private var aromaticSixRing: Molecule {
+        let r = CGFloat(1.0)
+        let atoms = [
+            Atom(id: 1, element: "C", position: CGPoint(x: r, y: 0), aromatic: true),
+            Atom(id: 2, element: "C", position: CGPoint(x: r * 0.5, y: r * 0.8660254), aromatic: true),
+            Atom(id: 3, element: "C", position: CGPoint(x: -r * 0.5, y: r * 0.8660254), aromatic: true),
+            Atom(id: 4, element: "C", position: CGPoint(x: -r, y: 0), aromatic: true),
+            Atom(id: 5, element: "C", position: CGPoint(x: -r * 0.5, y: -r * 0.8660254), aromatic: true),
+            Atom(id: 6, element: "C", position: CGPoint(x: r * 0.5, y: -r * 0.8660254), aromatic: true)
+        ]
+        let bonds = [
+            Bond(id: 1, a1: 1, a2: 2, order: .aromatic),
+            Bond(id: 2, a1: 2, a2: 3, order: .aromatic),
+            Bond(id: 3, a1: 3, a2: 4, order: .aromatic),
+            Bond(id: 4, a1: 4, a2: 5, order: .aromatic),
+            Bond(id: 5, a1: 5, a2: 6, order: .aromatic),
+            Bond(id: 6, a1: 6, a2: 1, order: .aromatic)
+        ]
+        return Molecule(name: "AromaticSixRing", atoms: atoms, bonds: bonds)
     }
 
     private func canonicalizeViewportPoint(_ point: CGPoint,

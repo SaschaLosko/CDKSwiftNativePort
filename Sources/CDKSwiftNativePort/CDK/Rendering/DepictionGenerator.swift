@@ -347,7 +347,7 @@ public enum CDKDepictionGenerator {
                 .atomColor(for: atom, style: style)
                 .svgHexRGB()
             lines.append(
-                "<text x=\"\(fmt(labelCenter.x))\" y=\"\(fmt(labelCenter.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"Helvetica, Arial, sans-serif\" font-size=\"\(fmt(style.fontSize))\" font-weight=\"700\" fill=\"\(atomColor)\">\(svgEsc(label))</text>"
+                "<text x=\"\(fmt(labelCenter.x))\" y=\"\(fmt(labelCenter.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"Helvetica, Arial, sans-serif\" font-size=\"\(fmt(style.fontSize))\" font-weight=\"600\" fill=\"\(atomColor)\">\(svgEsc(label))</text>"
             )
         }
 

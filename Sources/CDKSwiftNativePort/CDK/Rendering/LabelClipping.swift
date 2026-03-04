@@ -3,8 +3,22 @@ import CoreText
 import Foundation
 
 enum CDKLabelText {
-    static func shouldDrawLabel(atom: Atom, degree: Int, style: RenderStyle) -> Bool {
-        if atom.element == "C" && !style.showCarbons && atom.charge == 0 && !atom.aromatic {
+    static func shouldDrawLabel(atom: Atom,
+                                degree: Int,
+                                style: RenderStyle,
+                                includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = true,
+                                includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true) -> Bool {
+        let hasMapNumber = (atom.atomMapNumber ?? 0) > 0
+        if hasMapNumber && (style.showAtomMapNumbers || style.atomColoringMode == .atomMapHighlight) {
+            return true
+        }
+        if atom.element == "C" && !style.showCarbons && atom.charge == 0 {
+            if atom.aromatic && includeAromaticCarbonLabelsWhenCarbonsHidden {
+                return true
+            }
+            if !includeTerminalCarbonLabelsWhenCarbonsHidden {
+                return false
+            }
             return degree <= 1
         }
         return true
@@ -28,6 +42,9 @@ enum CDKLabelText {
         let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
 
         var label = atom.symbolToDraw + hText + chargeText
+        if style.showAtomMapNumbers, let mapNo = atom.atomMapNumber, mapNo > 0 {
+            label += ":\(mapNo)"
+        }
         if style.showAtomIDs {
             label += " \(atom.id)"
         }
@@ -40,7 +57,7 @@ enum CDKLabelText {
                              fontSize: CGFloat) -> CGVector {
         // Keep the atom symbol centered on the atomic anchor even when
         // suffix text (e.g. "H" in "OH") is displayed.
-        guard !style.showAtomIDs else { return .zero }
+        guard !style.showAtomIDs, !style.showAtomMapNumbers else { return .zero }
         let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
         guard !hText.isEmpty else { return .zero }
 

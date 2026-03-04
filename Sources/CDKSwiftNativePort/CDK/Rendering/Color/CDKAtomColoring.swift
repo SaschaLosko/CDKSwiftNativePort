@@ -4,6 +4,9 @@ import Foundation
 public enum CDKAtomColoringMode: String, CaseIterable, Hashable {
     case monochrome
     case cdk2D
+    // CDK depiction option for reactions: highlight mapped atoms consistently
+    // across reactants/products (akin to withAtomMapHighlight()).
+    case atomMapHighlight
 }
 
 public enum CDKAromaticDisplayMode: String, CaseIterable, Hashable {
@@ -46,6 +49,7 @@ public struct CDKRenderColor: Hashable {
     public static let ink = CDKRenderColor(red: 0.07, green: 0.07, blue: 0.09)
     public static let aromaticInk = CDKRenderColor(red: 0.14, green: 0.14, blue: 0.16)
     public static let grid = CDKRenderColor(red: 0.50, green: 0.50, blue: 0.54)
+    public static let outerGlowHighlight = CDKRenderColor(red: 0.99, green: 0.82, blue: 0.32)
 }
 
 public enum CDKRenderingStyleResolver {
@@ -55,11 +59,17 @@ public enum CDKRenderingStyleResolver {
             return atom.aromatic ? .aromaticInk : .ink
         case .cdk2D:
             return cdk2DPaletteColor(symbol: atom.element)
+        case .atomMapHighlight:
+            guard let map = atom.atomMapNumber, map > 0 else {
+                return atom.aromatic ? .aromaticInk : .ink
+            }
+            return atomMapPaletteColor(mapNumber: map)
         }
     }
 
     public static func bondColor(for bond: Bond, molecule: Molecule, style: RenderStyle) -> CDKRenderColor {
-        guard style.atomColoringMode == .cdk2D, style.colorBondsByAtom else {
+        let isPerAtomBondColoring = style.atomColoringMode == .cdk2D || style.atomColoringMode == .atomMapHighlight
+        guard isPerAtomBondColoring, style.colorBondsByAtom else {
             return bond.order == .aromatic ? .aromaticInk : .ink
         }
         guard let a1 = molecule.atoms.first(where: { $0.id == bond.a1 }),
@@ -72,7 +82,8 @@ public enum CDKRenderingStyleResolver {
     }
 
     public static func aromaticRingColor(atomIDs: [Int], molecule: Molecule, style: RenderStyle) -> CDKRenderColor {
-        guard style.atomColoringMode == .cdk2D, style.colorBondsByAtom else {
+        let isPerAtomBondColoring = style.atomColoringMode == .cdk2D || style.atomColoringMode == .atomMapHighlight
+        guard isPerAtomBondColoring, style.colorBondsByAtom else {
             return .aromaticInk
         }
         let colors = atomIDs.compactMap { atomID in
@@ -126,6 +137,24 @@ public enum CDKRenderingStyleResolver {
         default:
             return .ink
         }
+    }
+
+    private static func atomMapPaletteColor(mapNumber: Int) -> CDKRenderColor {
+        // Deterministic highlight palette suitable for mapped reaction atoms.
+        let palette: [CDKRenderColor] = [
+            CDKRenderColor(red: 0.84, green: 0.21, blue: 0.22),
+            CDKRenderColor(red: 0.18, green: 0.49, blue: 0.86),
+            CDKRenderColor(red: 0.13, green: 0.63, blue: 0.27),
+            CDKRenderColor(red: 0.86, green: 0.50, blue: 0.12),
+            CDKRenderColor(red: 0.59, green: 0.28, blue: 0.82),
+            CDKRenderColor(red: 0.00, green: 0.64, blue: 0.72),
+            CDKRenderColor(red: 0.87, green: 0.35, blue: 0.60),
+            CDKRenderColor(red: 0.53, green: 0.39, blue: 0.24),
+            CDKRenderColor(red: 0.18, green: 0.55, blue: 0.47),
+            CDKRenderColor(red: 0.38, green: 0.38, blue: 0.92)
+        ]
+        let idx = abs(mapNumber) % palette.count
+        return palette[idx]
     }
 }
 

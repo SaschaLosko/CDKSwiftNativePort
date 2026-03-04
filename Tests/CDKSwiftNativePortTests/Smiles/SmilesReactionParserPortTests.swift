@@ -39,6 +39,14 @@ final class SmilesReactionParserPortTests: XCTestCase {
         XCTAssertEqual(reaction.agentCount, 1)
         XCTAssertEqual(reaction.productCount, 2)
         XCTAssertEqual(reaction.agents.first?.atomCount, 1)
+
+        XCTAssertEqual(reaction.reactantParticipants.count, 2)
+        XCTAssertEqual(reaction.agentParticipants.count, 1)
+        XCTAssertEqual(reaction.productParticipants.count, 2)
+        XCTAssertTrue(reaction.participants.prefix(2).allSatisfy { $0.role == .reactant })
+        XCTAssertEqual(reaction.participants[2].role, .agent)
+        XCTAssertTrue(reaction.participants.suffix(2).allSatisfy { $0.role == .product })
+        XCTAssertTrue(reaction.participants.allSatisfy { $0.stoichiometry == nil })
     }
 
     // Mirrors CxSmilesParserTest.atomOrderingWithNonContiguousFragments.
@@ -76,6 +84,29 @@ final class SmilesReactionParserPortTests: XCTestCase {
         XCTAssertEqual(reaction.productCount, 1)
         XCTAssertEqual(reaction.reactants.first?.atomCount, 1)
         XCTAssertEqual(reaction.products.first?.atomCount, 1)
+    }
+
+    func testReactionStrictModeRejectsStoichiometryPrefixes() {
+        XCTAssertThrowsError(try parser.parseReactionSmiles("{2}C.O>>CO"))
+        XCTAssertThrowsError(try parser.parseReactionSmiles("{0.5}C.O>>CO"))
+        XCTAssertThrowsError(try parser.parseReactionSmiles("{2}>>O"))
+    }
+
+    func testReactionStrictModeRejectsAgentSlashShorthand() {
+        XCTAssertThrowsError(try parser.parseReactionSmiles("C=CC.O=O>Pd/Cu>CC(C)=O"))
+    }
+
+    func testReactionStrictModeRejectsDiatomicFormulaShorthand() {
+        XCTAssertThrowsError(try parser.parseReactionSmiles("H2.O2>>O"))
+        XCTAssertThrowsError(try parser.parseReactionSmiles("{2}H2.O2>>{2}O"))
+    }
+
+    func testReactionImplicitStoichiometryByComponentRepetition() throws {
+        let reaction = try parser.parseReactionSmiles("C.C>>O")
+        XCTAssertEqual(reaction.reactantCount, 2)
+        XCTAssertEqual(reaction.agentCount, 0)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertTrue(reaction.reactantParticipants.allSatisfy { $0.stoichiometry == nil })
     }
 
     func testRejectsMalformedReactionSyntax() {

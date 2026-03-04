@@ -2,7 +2,15 @@ import Foundation
 
 /// CDK-style MDL RXN reader (V2000 reaction blocks).
 public enum CDKRXNReader {
-    public static func read(text: String) throws -> [Molecule] {
+    public static func readReaction(text: String) throws -> CDKReaction {
+        let reactions = try readReactions(text: text)
+        guard let first = reactions.first else {
+            throw ChemError.parseFailed("RXN file did not contain any reaction blocks.")
+        }
+        return first
+    }
+
+    public static func readReactions(text: String) throws -> [CDKReaction] {
         let normalized = text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
@@ -16,12 +24,18 @@ public enum CDKRXNReader {
             throw ChemError.parseFailed("RXN file is missing $RXN header.")
         }
 
-        var molecules: [Molecule] = []
+        var reactions: [CDKReaction] = []
         for (idx, start) in rxnStarts.enumerated() {
             let end = idx + 1 < rxnStarts.count ? rxnStarts[idx + 1] : lines.count
             let block = Array(lines[start..<end])
-            molecules.append(contentsOf: try parseReactionBlock(block, reactionIndex: idx + 1))
+            reactions.append(try parseReactionBlock(block, reactionIndex: idx + 1))
         }
+        return reactions
+    }
+
+    public static func read(text: String) throws -> [Molecule] {
+        let reactions = try readReactions(text: text)
+        let molecules = reactions.flatMap { $0.reactants + $0.products + $0.agents }
 
         guard !molecules.isEmpty else {
             throw ChemError.parseFailed("RXN file did not contain any molecule blocks.")
@@ -29,7 +43,7 @@ public enum CDKRXNReader {
         return molecules
     }
 
-    private static func parseReactionBlock(_ lines: [String], reactionIndex: Int) throws -> [Molecule] {
+    private static func parseReactionBlock(_ lines: [String], reactionIndex: Int) throws -> CDKReaction {
         guard lines.count >= 5 else {
             throw ChemError.parseFailed("RXN block is truncated.")
         }
@@ -41,21 +55,24 @@ public enum CDKRXNReader {
         let agentCount = counts.agents
         let expectedTotal = reactantCount + productCount + agentCount
 
-        var molecules: [Molecule] = []
+        var parsedParticipants: [(molecule: Molecule, stoichiometry: Double?)] = []
         var lineIndex = 5
         while lineIndex < lines.count {
             let trimmed = lines[lineIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-            guard trimmed == "$MOL" else {
+            guard trimmed.hasPrefix("$MOL") else {
                 lineIndex += 1
                 continue
             }
 
+            let stoichiometry = parseStoichiometry(fromMolHeader: trimmed)
             lineIndex += 1
             var molBlock: [String] = []
             while lineIndex < lines.count {
                 let candidate = lines[lineIndex]
                 let candidateTrimmed = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
-                if candidateTrimmed == "$MOL" || candidateTrimmed == "$RXN" || candidateTrimmed == "$RFMT" {
+                if candidateTrimmed.hasPrefix("$MOL")
+                    || candidateTrimmed == "$RXN"
+                    || candidateTrimmed == "$RFMT" {
                     break
                 }
                 molBlock.append(candidate)
@@ -66,7 +83,7 @@ public enum CDKRXNReader {
             if trimmedMol.isEmpty { continue }
 
             var molecule = try CDKMDLReader.read(lines: trimmedMol)
-            let ordinal = molecules.count + 1
+            let ordinal = parsedParticipants.count + 1
             if molecule.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || molecule.name == "Molecule" {
                 molecule.name = roleName(for: ordinal,
                                          reactantCount: reactantCount,
@@ -74,14 +91,38 @@ public enum CDKRXNReader {
                                          reactionName: reactionName,
                                          reactionIndex: reactionIndex)
             }
-            molecules.append(molecule)
+            parsedParticipants.append((molecule: molecule, stoichiometry: stoichiometry))
         }
 
-        if expectedTotal > 0, molecules.count > expectedTotal {
-            molecules = Array(molecules.prefix(expectedTotal))
+        if expectedTotal > 0, parsedParticipants.count > expectedTotal {
+            parsedParticipants = Array(parsedParticipants.prefix(expectedTotal))
         }
 
-        return molecules
+        let reactantUpperBound = min(reactantCount, parsedParticipants.count)
+        let productUpperBound = min(reactantUpperBound + productCount, parsedParticipants.count)
+        let agentUpperBound = min(productUpperBound + agentCount, parsedParticipants.count)
+
+        let reactants = Array(parsedParticipants[0..<reactantUpperBound]).map { participant in
+            CDKReactionParticipant(molecule: participant.molecule, role: .reactant, stoichiometry: participant.stoichiometry)
+        }
+        let products = Array(parsedParticipants[reactantUpperBound..<productUpperBound]).map { participant in
+            CDKReactionParticipant(molecule: participant.molecule, role: .product, stoichiometry: participant.stoichiometry)
+        }
+        let agents = Array(parsedParticipants[productUpperBound..<agentUpperBound]).map { participant in
+            CDKReactionParticipant(molecule: participant.molecule, role: .agent, stoichiometry: participant.stoichiometry)
+        }
+
+        if reactants.isEmpty, products.isEmpty, agents.isEmpty, !parsedParticipants.isEmpty {
+            // Fallback for malformed counts lines: retain all parsed molecules as reactants.
+            return CDKReaction(reactantParticipants: parsedParticipants.map { participant in
+                CDKReactionParticipant(molecule: participant.molecule,
+                                       role: .reactant,
+                                       stoichiometry: participant.stoichiometry)
+            }, agentParticipants: [], productParticipants: [])
+        }
+        return CDKReaction(reactantParticipants: reactants,
+                           agentParticipants: agents,
+                           productParticipants: products)
     }
 
     private static func parseCounts(line: String) -> (reactants: Int, products: Int, agents: Int) {
@@ -143,5 +184,27 @@ public enum CDKRXNReader {
             result.removeLast()
         }
         return result
+    }
+
+    private static func parseStoichiometry(fromMolHeader line: String) -> Double? {
+        let parts = line.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard parts.count >= 2, parts[0].uppercased() == "$MOL" else { return nil }
+
+        if let direct = parseStoichiometryValue(parts[1]) {
+            return direct
+        }
+
+        if parts.count >= 3,
+           parts[1].uppercased() == "STOICH" {
+            return parseStoichiometryValue(parts[2])
+        }
+
+        return nil
+    }
+
+    private static func parseStoichiometryValue(_ raw: String) -> Double? {
+        let normalized = raw.replacingOccurrences(of: ",", with: ".")
+        guard let value = Double(normalized), value.isFinite else { return nil }
+        return value
     }
 }

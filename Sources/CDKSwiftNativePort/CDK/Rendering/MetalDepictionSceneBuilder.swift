@@ -25,14 +25,22 @@ public struct CDKMetalDepictionScene: Hashable {
         public let fontSize: CGFloat
         public let aromatic: Bool
         public let color: CDKRenderColor
+        public let drawsBackground: Bool
 
-        public init(id: Int, text: String, position: CGPoint, fontSize: CGFloat, aromatic: Bool, color: CDKRenderColor) {
+        public init(id: Int,
+                    text: String,
+                    position: CGPoint,
+                    fontSize: CGFloat,
+                    aromatic: Bool,
+                    color: CDKRenderColor,
+                    drawsBackground: Bool = true) {
             self.id = id
             self.text = text
             self.position = position
             self.fontSize = fontSize
             self.aromatic = aromatic
             self.color = color
+            self.drawsBackground = drawsBackground
         }
     }
 
@@ -146,7 +154,10 @@ public enum CDKMetalDepictionSceneBuilder {
                              canvasRect: CGRect,
                              zoom: CGFloat,
                              pan: CGSize,
-                             rotationDegrees: CGFloat = 0) -> CDKMetalDepictionScene {
+                             rotationDegrees: CGFloat = 0,
+                             minimumLabelFontSize: CGFloat = 8.0,
+                             includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = true,
+                             includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true) -> CDKMetalDepictionScene {
         let prepared = MetalPreparedDepictionCache.preparedData(molecule: molecule, style: style)
         let depictionMolecule = prepared.depictionMolecule
         guard let box = prepared.boundingBox, canvasRect.width > 1, canvasRect.height > 1 else {
@@ -184,6 +195,22 @@ public enum CDKMetalDepictionSceneBuilder {
         let scaleX = available.width / max(0.0001, box.width)
         let scaleY = available.height / max(0.0001, box.height)
         let scale = min(scaleX, scaleY)
+        // Keep auto-fit viewport changes visually consistent with direct zoom:
+        // line widths, stereo wedges, and labels should all scale together.
+        let referenceViewport = CGSize(width: 960, height: 720)
+        let referenceAvailable = CGRect(x: style.padding,
+                                        y: style.padding,
+                                        width: max(1, referenceViewport.width - (2 * style.padding)),
+                                        height: max(1, referenceViewport.height - (2 * style.padding)))
+        let referenceScaleX = referenceAvailable.width / max(0.0001, box.width)
+        let referenceScaleY = referenceAvailable.height / max(0.0001, box.height)
+        let referenceFitScale = min(referenceScaleX, referenceScaleY)
+        // Do not clamp the lower bound: when the viewport gets narrow, a floor here
+        // makes labels/bonds stop shrinking while geometry keeps shrinking, which
+        // visually reads as labels getting bigger again.
+        let viewportAutoFitScale = min(1.90, scale / max(0.0001, referenceFitScale))
+        let viewportStrokeScale = viewportAutoFitScale
+        let viewportLabelScale = viewportAutoFitScale
 
         let center = CGPoint(x: available.midX, y: available.midY)
         let baseTransform = CGAffineTransform.identity
@@ -220,12 +247,17 @@ public enum CDKMetalDepictionSceneBuilder {
         let aromaticBondIDs = prepared.aromaticBondIDs
         var aromaticEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         var conjugatedDoubleEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
-        let baseBondWidth = max(1.2, style.bondWidth * zoom)
-        let stereoSolidWedgeHalfWidth = max(7.2, style.bondWidth * 3.9) * zoom
-        let stereoHashedWedgeHalfWidth = max(7.6, style.bondWidth * 4.15) * zoom
-        let doubleBondSeparation = max(3.4, style.bondWidth * 2.25) * zoom
+        let baseBondWidth = max(1.0, style.bondWidth * viewportStrokeScale * zoom)
+        let stereoScale = style.stereoAttenuation.clamped(to: 0.4...1.2)
+        let hashedStereoScale = style.hashedStereoAttenuation.clamped(to: 0.5...1.05)
+        // Keep stereo wedges visually balanced against compact CDK-like label sizes,
+        // especially in reaction depictions where participant styles are reduced.
+        let stereoBaseHalfWidth = max(style.fontSize * 0.24, style.bondWidth * 2.15) * stereoScale * viewportStrokeScale
+        let stereoSolidWedgeHalfWidth = stereoBaseHalfWidth * zoom
+        let stereoHashedWedgeHalfWidth = max(stereoBaseHalfWidth * 1.02, style.bondWidth * 2.35 * viewportStrokeScale) * zoom * hashedStereoScale
+        let doubleBondSeparation = max(3.4, style.bondWidth * 2.25 * viewportStrokeScale) * zoom
         let doubleBondHalfSeparation = doubleBondSeparation * 0.5
-        let tripleBondOffset = max(3.1, style.bondWidth * 2.2) * zoom
+        let tripleBondOffset = max(3.1, style.bondWidth * 2.2 * viewportStrokeScale) * zoom
 
         for ring in aromaticRings where ring.count >= 3 {
             let ringPoints = ring.compactMap { positionByAtomID[$0] }
@@ -291,7 +323,7 @@ public enum CDKMetalDepictionSceneBuilder {
             let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
             guard let inward = normalize(dx: center.x - mid.x, dy: center.y - mid.y) else { return }
             let trim = CGFloat(0.16)
-            let inset = max(1.6, style.bondWidth * 0.95) * zoom
+            let inset = max(1.6, style.bondWidth * 0.95 * viewportStrokeScale) * zoom
             let a = CGPoint(x: p1.x + (p2.x - p1.x) * trim + inward.0 * inset,
                             y: p1.y + (p2.y - p1.y) * trim + inward.1 * inset)
             let b = CGPoint(x: p2.x + (p1.x - p2.x) * trim + inward.0 * inset,
@@ -348,17 +380,18 @@ public enum CDKMetalDepictionSceneBuilder {
             let px = -dy / len
             let py = dx / len
 
-            let stripeCount = max(12, Int(len / 8.0))
+            let maxHalfWidth = min(stereoSolidWedgeHalfWidth, len * 0.34)
+            let stripeCount = max(5, min(11, Int(len / 10.0)))
             for i in 1...stripeCount {
                 let t = CGFloat(i) / CGFloat(stripeCount + 1)
                 let cx = start.x + dx * t
                 let cy = start.y + dy * t
-                let halfTick = max(baseBondWidth * 0.18, t * stereoSolidWedgeHalfWidth)
+                let halfTick = max(baseBondWidth * 0.10 * stereoScale, t * maxHalfWidth)
                 let left = CGPoint(x: cx + px * halfTick, y: cy + py * halfTick)
                 let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
                 appendSegment(left,
                               right,
-                              width: max(1.1, baseBondWidth * 0.94),
+                              width: max(0.78, baseBondWidth * 0.58 * stereoScale),
                               opacity: 0.97,
                               color: color,
                               into: &segments)
@@ -375,17 +408,18 @@ public enum CDKMetalDepictionSceneBuilder {
             let px = -dy / len
             let py = dx / len
 
-            let tickCount = 9
+            let maxHalfWidth = min(stereoHashedWedgeHalfWidth * 0.82, len * 0.24)
+            let tickCount = max(10, min(24, Int(len / 6.6)))
             for i in 1...tickCount {
                 let t = CGFloat(i) / CGFloat(tickCount + 1)
                 let cx = start.x + dx * t
                 let cy = start.y + dy * t
-                let halfTick = max(baseBondWidth * 0.30, t * stereoHashedWedgeHalfWidth)
+                let halfTick = max(baseBondWidth * 0.12 * stereoScale * hashedStereoScale, t * maxHalfWidth)
                 let left = CGPoint(x: cx + px * halfTick, y: cy + py * halfTick)
                 let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
                 appendSegment(left,
                               right,
-                              width: max(1.15, baseBondWidth * 0.86),
+                              width: max(0.75, baseBondWidth * 0.52 * stereoScale * hashedStereoScale),
                               opacity: 0.96,
                               color: color,
                               into: &segments)
@@ -670,12 +704,17 @@ public enum CDKMetalDepictionSceneBuilder {
 
         var pendingLabels: [PendingLabelPlacement] = []
         pendingLabels.reserveCapacity(depictionMolecule.atoms.count)
-        let labelLayoutFontSize = max(9, style.fontSize)
-        let renderedLabelFontSize = max(9, style.fontSize * zoom)
+        let clampedMinimumLabelFontSize = max(2.5, minimumLabelFontSize)
+        let labelLayoutFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportLabelScale)
+        let renderedLabelFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportLabelScale * zoom)
 
         for atom in depictionMolecule.atoms {
             let atomDegree = degree[atom.id] ?? 0
-            guard CDKLabelText.shouldDrawLabel(atom: atom, degree: atomDegree, style: style),
+            guard CDKLabelText.shouldDrawLabel(atom: atom,
+                                               degree: atomDegree,
+                                               style: style,
+                                               includeAromaticCarbonLabelsWhenCarbonsHidden: includeAromaticCarbonLabelsWhenCarbonsHidden,
+                                               includeTerminalCarbonLabelsWhenCarbonsHidden: includeTerminalCarbonLabelsWhenCarbonsHidden),
                   let anchor = basePositionByAtomID[atom.id] else { continue }
 
             let implicitH = style.showImplicitHydrogens ? depictionMolecule.implicitHydrogenCount(for: atom.id) : 0
@@ -767,7 +806,7 @@ public enum CDKMetalDepictionSceneBuilder {
             placedRects.append(bestRect)
         }
 
-        let labelClipPadding = max(1.4, style.bondWidth * 0.55) * zoom
+        let labelClipPadding = max(1.4, style.bondWidth * 0.55 * viewportStrokeScale) * zoom
         let labelClipObstacles: [CDKLabelObstacle] = pendingLabels.compactMap { label in
             guard let center = resolvedCentersByAtomID[label.atomID] else { return nil }
             let renderedCenter = applyViewportTransform(center)

@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-public enum ChemFormat: String, CaseIterable, Identifiable {
+public enum ChemFormat: String, CaseIterable, Identifiable, Sendable {
     case sdf = "SDF / MOL"
     case smiles = "SMILES"
     case inchi = "InChI"
@@ -9,7 +9,7 @@ public enum ChemFormat: String, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-public enum BondOrder: Int, Codable, Hashable {
+public enum BondOrder: Int, Codable, Hashable, Sendable {
     case single = 1
     case double = 2
     case triple = 3
@@ -37,7 +37,7 @@ extension BondOrder {
     }
 }
 
-public enum BondStereo: Codable, Hashable {
+public enum BondStereo: Codable, Hashable, Sendable {
     case none
     case up
     case down
@@ -56,26 +56,26 @@ public enum BondStereo: Codable, Hashable {
     }
 }
 
-public enum AtomChirality: Codable, Hashable {
+public enum AtomChirality: Codable, Hashable, Sendable {
     case none
     case clockwise
     case anticlockwise
 }
 
-public enum AtomQueryType: String, Codable, Hashable {
+public enum AtomQueryType: String, Codable, Hashable, Sendable {
     case anyAtom
     case anyNonHydrogen
     case anyHetero
 }
 
-public enum BondQueryType: String, Codable, Hashable {
+public enum BondQueryType: String, Codable, Hashable, Sendable {
     case singleOrDouble
     case singleOrAromatic
     case doubleOrAromatic
     case any
 }
 
-public struct Atom: Identifiable, Hashable, Codable {
+public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public let id: Int
     public var element: String
     public var position: CGPoint
@@ -146,7 +146,7 @@ public struct Atom: Identifiable, Hashable, Codable {
     }
 }
 
-public struct Bond: Identifiable, Hashable, Codable {
+public struct Bond: Identifiable, Hashable, Codable, Sendable {
     public let id: Int
     public let a1: Int
     public let a2: Int
@@ -169,7 +169,7 @@ public struct Bond: Identifiable, Hashable, Codable {
     }
 }
 
-public struct Molecule: Hashable, Codable {
+public struct Molecule: Hashable, Codable, Sendable {
     public var name: String = "Untitled"
     public var atoms: [Atom] = []
     public var bonds: [Bond] = []
