@@ -116,24 +116,24 @@ Boundary checks are test-enforced (`PackageBoundaryTests`).
 
 ## Documentation
 
-- API reference: `Documentation/API.md`
-- Integration guide: `Documentation/INTEGRATION.md`
-- Architecture: `Documentation/ARCHITECTURE.md`
-- CDK comparison: `Documentation/CDK_COMPARISON.md`
-- macOS notes: `Documentation/MACOS.md`
-- Contributing: `CONTRIBUTING.md`
-- Publishing: `PUBLISHING.md`
-- Changelog: `CHANGELOG.md`
+- API reference: [`Documentation/API.md`](Documentation/API.md)
+- Integration guide: [`Documentation/INTEGRATION.md`](Documentation/INTEGRATION.md)
+- Architecture: [`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md)
+- CDK comparison: [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md)
+- macOS notes: [`Documentation/MACOS.md`](Documentation/MACOS.md)
+- Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Publishing: [`PUBLISHING.md`](PUBLISHING.md)
+- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## CDK Comparison
 
 This package targets practical parity for the chemistry workflows used by AtomLens, not full one-to-one coverage of all Java CDK modules.
 
-- See `Documentation/CDK_COMPARISON.md` for a detailed comparison and scope notes.
+- See [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md) for a detailed comparison and scope notes.
 
 ## macOS Notes
 
-- See `Documentation/MACOS.md` for sandbox/security-scoped IO behavior, rendering integration patterns, and package/host separation guidance.
+- See [`Documentation/MACOS.md`](Documentation/MACOS.md) for sandbox/security-scoped IO behavior, rendering integration patterns, and package/host separation guidance.
 
 ## Quality Gate
 
