@@ -10,6 +10,18 @@ Repository: <https://github.com/SaschaLosko/CDKSwiftNativePort>
 - Let host apps (for example AtomLens) consume a stable API instead of embedding chemistry-port internals.
 - Preserve a clean boundary: package code has no dependency on host app modules, UI targets, Spotlight, Quick Look, or app-specific identifiers.
 
+## Used by AtomLens
+
+`CDKSwiftNativePort` is used by AtomLens, a native macOS chemistry workbench
+that builds its chemistry parsing, layout, depiction, identifier, and
+property workflows on top of this package.
+
+## Mac App Store
+
+AtomLens is available on the Mac App Store:
+
+[Download AtomLens on the Mac App Store](https://apps.apple.com/de/app/atomlens/id6759559963?l=en-GB&mt=12)
+
 ## Feature Overview
 
 - Core model: `Molecule`, `Atom`, `Bond`, stereochemistry and query metadata.
@@ -134,6 +146,14 @@ swift test
 This package contains CDK-derived work.
 
 - Upstream CDK: <https://github.com/cdk/cdk>
+
+Reference citations:
+
+- Willighagen et al. (2017), The Chemistry Development Kit (CDK) v2.0: atom typing, depiction, molecular formulas, and substructure searching. doi:10.1186/s13321-017-0220-4
+- May and Steinbeck (2014), Efficient ring perception for the Chemistry Development Kit. doi:10.1186/1758-2946-6-3
+- Steinbeck et al. (2006), Recent Developments of the Chemistry Development Kit (CDK) - An Open-Source Java Library for Chemo- and Bioinformatics. doi:10.2174/138161206777585274
+- Steinbeck et al. (2003), The Chemistry Development Kit (CDK): An Open-Source Java Library for Chemo- and Bioinformatics. doi:10.1021/ci025584y
+
 - Port parity target: CDK `2.11`
 - Package license: `LGPL-2.1-or-later` (`LICENSE`)
 - Attribution notes: `NOTICE.md`
