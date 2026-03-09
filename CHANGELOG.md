@@ -6,6 +6,17 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-03-09
+
+### Changed
+
+- Updated installation snippets in `README.md` and `Documentation/INTEGRATION.md` to reference the current package release line.
+- Refined `PUBLISHING.md` to use a reusable `VERSION` variable in release commands and to document `1.1.1` as the current consumer pin target.
+
+### Notes
+
+- This is a documentation-only follow-up release to keep published guidance aligned with the latest tag.
+
 ## [1.1.0] - 2026-03-04
 
 ### Added

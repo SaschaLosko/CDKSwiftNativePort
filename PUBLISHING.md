@@ -23,7 +23,7 @@ Required before release:
 3. Commit release prep changes:
 
 ```bash
-VERSION=1.1.0
+VERSION=1.1.1
 git add .
 git commit -m "Prepare v${VERSION} release"
 ```
@@ -78,8 +78,8 @@ https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
 and pin to:
-- exact tag `1.1.0`, or
-- semver range `from: "1.1.0"`
+- exact tag `1.1.1`, or
+- semver range `from: "1.1.1"`
 
 ## 8) Post-release
 
