@@ -13,7 +13,7 @@ https://github.com/SaschaLosko/CDKSwiftNativePort.git
 or in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.0.0")
+.package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.1.0")
 ```
 
 Then import:

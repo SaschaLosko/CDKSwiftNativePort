@@ -19,17 +19,19 @@ Required before release:
 ## 2) Prepare Release Commit
 
 1. Ensure `CHANGELOG.md` has a finalized section for the target version.
-2. Commit release prep changes:
+2. Set a shell variable for the release version and reuse it in the commands below.
+3. Commit release prep changes:
 
 ```bash
+VERSION=1.1.0
 git add .
-git commit -m "Prepare v1.0.0 release"
+git commit -m "Prepare v${VERSION} release"
 ```
 
 ## 3) Tag the Release
 
 ```bash
-git tag -a 1.0.0 -m "CDKSwiftNativePort 1.0.0"
+git tag -a "${VERSION}" -m "CDKSwiftNativePort ${VERSION}"
 ```
 
 ## 4) Configure Remote (first time)
@@ -58,7 +60,7 @@ git push origin --tags
 Use GitHub UI or CLI:
 
 ```bash
-gh release create 1.0.0 --title "CDKSwiftNativePort 1.0.0" --notes-file CHANGELOG.md
+gh release create "${VERSION}" --title "CDKSwiftNativePort ${VERSION}" --notes-file CHANGELOG.md
 ```
 
 Recommended release body:
@@ -76,8 +78,8 @@ https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
 and pin to:
-- exact tag `1.0.0`, or
-- semver range `from: "1.0.0"`
+- exact tag `1.1.0`, or
+- semver range `from: "1.1.0"`
 
 ## 8) Post-release
 
