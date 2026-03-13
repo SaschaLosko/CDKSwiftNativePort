@@ -130,6 +130,79 @@ final class DepictionGeneratorTests: XCTestCase {
         XCTAssertTrue(svg.contains(">OH</text>"))
     }
 
+    func testSVGHidesAttachmentPointLabelsInMarkushDefinitions() throws {
+        let molecule = try smilesParser.parseSmiles("C* |$;R1$,RG:_R1={Cl* |$;_AP1$|}|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 640, height: 420))
+
+        XCTAssertTrue(svg.contains(">R¹</text>"))
+        XCTAssertTrue(svg.contains(">Cl</text>"))
+        XCTAssertFalse(svg.contains("_AP1"))
+    }
+
+    func testSVGDrawsMarkushBoxAndLinkNodeAnnotations() throws {
+        let molecule = try smilesParser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 720, height: 520))
+
+        XCTAssertTrue(svg.contains(">R¹ is</text>"))
+        XCTAssertTrue(svg.contains(">1-3</text>"))
+        XCTAssertTrue(svg.contains("rx=\""))
+    }
+
+    func testSVGItalicizesRGroupLabels() throws {
+        let molecule = try smilesParser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 720, height: 520))
+
+        XCTAssertTrue(svg.contains("font-family=\"Times New Roman, Georgia, serif\""))
+        XCTAssertTrue(svg.contains("font-style=\"italic\""))
+        XCTAssertTrue(svg.contains(">R¹</text>"))
+    }
+
+    func testSVGHidesMarkushTerminalCarbonLabelsWhenCarbonsAreHidden() throws {
+        let molecule = try smilesParser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: true,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 720, height: 520))
+
+        XCTAssertFalse(svg.contains(">C</text>"))
+        XCTAssertTrue(svg.contains(">O</text>"))
+        XCTAssertTrue(svg.contains(">Cl</text>"))
+        XCTAssertTrue(svg.contains(">N</text>"))
+    }
+
     private func firstLineCoordinates(in svg: String) -> (CGPoint, CGPoint)? {
         let pattern = #"<line x1="([\-0-9.]+)" y1="([\-0-9.]+)" x2="([\-0-9.]+)" y2="([\-0-9.]+)""#
         guard let regex = try? NSRegularExpression(pattern: pattern),

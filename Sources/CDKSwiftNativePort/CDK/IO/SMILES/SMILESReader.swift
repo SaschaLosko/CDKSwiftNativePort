@@ -1,7 +1,8 @@
 import Foundation
 
 /// Swift counterpart of CDK's line-oriented SMILES reader behavior.
-/// Accepts one SMILES entry per non-empty line, with an optional trailing name.
+/// Accepts one SMILES entry per non-empty line and lets `SmilesParser`
+/// consume any trailing CXSMILES/title suffix on the full line.
 public enum CDKSMILESReader {
     public static func read(text: String,
                             flavor: CDKSmiFlavor = .cdkDefault) throws -> [Molecule] {
@@ -14,11 +15,7 @@ public enum CDKSMILESReader {
                 continue
             }
 
-            let (smilesToken, optionalName) = split(line: line)
-            var molecule = try parser.parseSmiles(smilesToken)
-            if let name = optionalName, !name.isEmpty {
-                molecule.name = name
-            }
+            let molecule = try parser.parseSmiles(line)
             molecules.append(molecule)
         }
 
@@ -26,17 +23,5 @@ public enum CDKSMILESReader {
             throw ChemError.emptyInput
         }
         return molecules
-    }
-
-    private static func split(line: String) -> (smiles: String, name: String?) {
-        let separators = CharacterSet.whitespacesAndNewlines
-        guard let firstSeparatorRange = line.rangeOfCharacter(from: separators) else {
-            return (line, nil)
-        }
-
-        let smiles = String(line[..<firstSeparatorRange.lowerBound])
-        let trailing = String(line[firstSeparatorRange.upperBound...])
-            .trimmingCharacters(in: separators)
-        return (smiles, trailing.isEmpty ? nil : trailing)
     }
 }

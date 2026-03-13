@@ -58,6 +58,76 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         XCTAssertGreaterThan(box.height, 1.0)
     }
 
+    func testMarkushDefinitionsAreLaidOutBelowRootStructure() throws {
+        let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let components = connectedComponents(in: molecule)
+
+        let rootComponents = components.filter { membership(of: $0, molecule: molecule) == nil }
+        let r1Components = components.filter { membership(of: $0, molecule: molecule) == "R1" }
+
+        XCTAssertEqual(rootComponents.count, 1)
+        XCTAssertEqual(r1Components.count, 3)
+
+        let rootMidY = try XCTUnwrap(rowBounds(for: rootComponents, molecule: molecule)?.midY)
+        let r1MidY = try XCTUnwrap(rowBounds(for: r1Components, molecule: molecule)?.midY)
+        XCTAssertGreaterThan(rootMidY, r1MidY)
+    }
+
+    func testMarkushRowsStayHorizontallyCentered() throws {
+        let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let components = connectedComponents(in: molecule)
+
+        let rootComponents = components.filter { membership(of: $0, molecule: molecule) == nil }
+        let r1Components = components.filter { membership(of: $0, molecule: molecule) == "R1" }
+
+        let rootMidX = try XCTUnwrap(rowBounds(for: rootComponents, molecule: molecule)?.midX)
+        let r1MidX = try XCTUnwrap(rowBounds(for: r1Components, molecule: molecule)?.midX)
+
+        XCTAssertEqual(rootMidX, r1MidX, accuracy: 0.35)
+    }
+
+    func testMarkushRootOrientationMatchesCDKLayoutIntent() throws {
+        let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let components = connectedComponents(in: molecule)
+        let rootComponent = try XCTUnwrap(components.first { membership(of: $0, molecule: molecule) == nil })
+        let rootBounds = try XCTUnwrap(rowBounds(for: [rootComponent], molecule: molecule))
+
+        let repeatAtomID = try XCTUnwrap(molecule.sgroups.first?.atomIDs.first)
+        let repeatAtom = try XCTUnwrap(molecule.atom(id: repeatAtomID))
+        let rGroupAtom = try XCTUnwrap(molecule.atoms.first { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" })
+        let nitrogen = try XCTUnwrap(molecule.atoms.first { $0.element.uppercased() == "N" && rootComponent.contains($0.id) })
+
+        XCTAssertLessThan(repeatAtom.position.x, rootBounds.midX)
+        XCTAssertGreaterThan(rGroupAtom.position.x, rootBounds.midX)
+        XCTAssertLessThan(nitrogen.position.y, rootBounds.midY)
+    }
+
+    func testMultiAtomMarkushDefinitionsUseAttachmentDrivenOrientation() throws {
+        let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let r1Atoms = molecule.atoms.filter { $0.rGroupMembership == "R1" }
+        let groups = Dictionary(grouping: r1Atoms, by: { $0.componentGroupID ?? -1 })
+
+        let methoxy = try XCTUnwrap(groups.values.first { atoms in
+            atoms.contains(where: { $0.element == "O" }) && atoms.contains(where: { $0.element == "C" })
+        })
+        let methoxyAttachment = try XCTUnwrap(methoxy.first { $0.attachmentPoint == 1 })
+        let oxygen = try XCTUnwrap(methoxy.first { $0.element == "O" })
+        let methyl = try XCTUnwrap(methoxy.first { $0.element == "C" })
+
+        XCTAssertLessThan(methoxyAttachment.position.x, oxygen.position.x)
+        XCTAssertGreaterThan(methoxyAttachment.position.y, oxygen.position.y)
+        XCTAssertGreaterThan(methyl.position.x, oxygen.position.x)
+
+        let nitrile = try XCTUnwrap(groups.values.first { atoms in
+            atoms.contains(where: { $0.element == "N" }) && atoms.contains(where: { $0.element == "C" })
+        })
+        let nitrileAttachment = try XCTUnwrap(nitrile.first { $0.attachmentPoint == 1 })
+        let nitrileNitrogen = try XCTUnwrap(nitrile.first { $0.element == "N" })
+
+        XCTAssertLessThan(nitrileAttachment.position.x, nitrileNitrogen.position.x)
+        XCTAssertGreaterThan(nitrileAttachment.position.y, nitrileNitrogen.position.y)
+    }
+
     private func angleDegrees(a: CGPoint, center: CGPoint, b: CGPoint) -> CGFloat {
         let v1 = CGVector(dx: a.x - center.x, dy: a.y - center.y)
         let v2 = CGVector(dx: b.x - center.x, dy: b.y - center.y)
@@ -70,5 +140,54 @@ final class StructureDiagramGeneratorTests: XCTestCase {
 
     private func parse(_ smiles: String) throws -> Molecule {
         try parser.parseSmiles(smiles)
+    }
+
+    private func connectedComponents(in molecule: Molecule) -> [Set<Int>] {
+        var adjacency: [Int: Set<Int>] = [:]
+        for atom in molecule.atoms {
+            _ = adjacency[atom.id, default: []]
+        }
+        for bond in molecule.bonds {
+            adjacency[bond.a1, default: []].insert(bond.a2)
+            adjacency[bond.a2, default: []].insert(bond.a1)
+        }
+
+        var seen = Set<Int>()
+        var components: [Set<Int>] = []
+
+        for atom in molecule.atoms where !seen.contains(atom.id) {
+            var stack = [atom.id]
+            var component = Set<Int>()
+            seen.insert(atom.id)
+
+            while let current = stack.popLast() {
+                component.insert(current)
+                for neighbor in adjacency[current, default: []] where !seen.contains(neighbor) {
+                    seen.insert(neighbor)
+                    stack.append(neighbor)
+                }
+            }
+
+            components.append(component)
+        }
+
+        return components
+    }
+
+    private func membership(of component: Set<Int>, molecule: Molecule) -> String? {
+        component.compactMap { molecule.atom(id: $0)?.rGroupMembership }.sorted().first
+    }
+
+    private func rowBounds(for components: [Set<Int>], molecule: Molecule) -> CGRect? {
+        var result: CGRect?
+        for component in components {
+            let points = component.compactMap { molecule.atom(id: $0)?.position }
+            guard let first = points.first else { continue }
+            let box = points.dropFirst().reduce(CGRect(origin: first, size: .zero)) { partial, point in
+                partial.union(CGRect(origin: point, size: .zero))
+            }
+            result = result?.union(box) ?? box
+        }
+        return result
     }
 }

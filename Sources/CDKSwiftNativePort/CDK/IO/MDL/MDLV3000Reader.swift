@@ -39,7 +39,8 @@ public enum CDKMDLV3000Reader {
     }
 
     public static func read(lines: [String]) throws -> Molecule {
-        let scaffold = try parseScaffold(lines: lines)
+        let trimmed = dropTrailingEmptyLines(lines)
+        let scaffold = try parseScaffold(lines: trimmed)
 
         var atoms: [Atom] = []
         atoms.reserveCapacity(scaffold.atomRecords.count)
@@ -88,6 +89,7 @@ public enum CDKMDLV3000Reader {
 
         applyCollectionSemantics(scaffold.collectionLines, to: &molecule)
         applySGroupSemantics(scaffold.sgroupLines, to: &molecule)
+        CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
 
         if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
             molecule = Depiction2DGenerator.generate(for: molecule)
@@ -674,12 +676,9 @@ public enum CDKMDLV3000Reader {
             if sgroupType == "DAT" {
                 let fieldName = parseQuotedOrBareString(attributes["FIELDNAME"] ?? "") ?? "DATA"
                 let fieldData = parseQuotedOrBareString(attributes["FIELDDATA"] ?? attributes["DATA"] ?? "")
+                molecule.ensureDataField(named: fieldName)
                 if let fieldData, !fieldData.isEmpty {
-                    if molecule.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || molecule.name == "Molecule" {
-                        molecule.name = fieldData
-                    } else if !molecule.name.contains(fieldData) {
-                        molecule.name += " | \(fieldName)=\(fieldData)"
-                    }
+                    molecule.appendDataFieldValue(fieldData, named: fieldName)
                 }
             }
         }

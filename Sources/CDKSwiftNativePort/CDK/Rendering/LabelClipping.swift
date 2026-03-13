@@ -3,16 +3,27 @@ import CoreText
 import Foundation
 
 enum CDKLabelText {
+    private static let superscriptDigits: [Character: Character] = [
+        "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
+        "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹"
+    ]
+
     static func shouldDrawLabel(atom: Atom,
                                 degree: Int,
                                 style: RenderStyle,
                                 includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = true,
                                 includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true) -> Bool {
+        if atom.attachmentPoint != nil {
+            return false
+        }
         let hasMapNumber = (atom.atomMapNumber ?? 0) > 0
         if hasMapNumber && (style.showAtomMapNumbers || style.atomColoringMode == .atomMapHighlight) {
             return true
         }
         if atom.element == "C" && !style.showCarbons && atom.charge == 0 {
+            if atom.rGroupMembership != nil {
+                return false
+            }
             if atom.aromatic && includeAromaticCarbonLabelsWhenCarbonsHidden {
                 return true
             }
@@ -37,11 +48,43 @@ enum CDKLabelText {
         return implicitHydrogenCount == 1 ? "H" : "H\(implicitHydrogenCount)"
     }
 
+    static func displayText(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2, trimmed.hasPrefix("R") else {
+            return raw
+        }
+
+        let suffix = trimmed.dropFirst()
+        guard !suffix.isEmpty, suffix.allSatisfy(\.isNumber) else {
+            return raw
+        }
+
+        let superscript = suffix.compactMap { superscriptDigits[$0] }
+        return "R" + String(superscript)
+    }
+
+    static func usesItalicRGroupFont(text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("R") else { return false }
+
+        let suffix = trimmed.dropFirst()
+        guard !suffix.isEmpty else { return false }
+
+        let superscriptCharacters = Set(superscriptDigits.values)
+        let numericPrefix = suffix.prefix { character in
+            character.isNumber || superscriptCharacters.contains(character)
+        }
+        guard !numericPrefix.isEmpty else { return false }
+
+        let remainder = String(suffix.dropFirst(numericPrefix.count))
+        return remainder.isEmpty || remainder == " is"
+    }
+
     static func build(atom: Atom, style: RenderStyle, implicitHydrogenCount: Int) -> String {
         let chargeText = chargeText(for: atom)
         let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
 
-        var label = atom.symbolToDraw + hText + chargeText
+        var label = displayText(atom.symbolToDraw) + hText + chargeText
         if style.showAtomMapNumbers, let mapNo = atom.atomMapNumber, mapNo > 0 {
             label += ":\(mapNo)"
         }
@@ -62,7 +105,7 @@ enum CDKLabelText {
         guard !hText.isEmpty else { return .zero }
 
         let fullLabel = build(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
-        let coreLabel = atom.symbolToDraw
+        let coreLabel = displayText(atom.symbolToDraw)
 
         let fullWidth = CDKLabelClipping.estimateLabelSize(text: fullLabel, fontSize: fontSize).width
         let coreWidth = CDKLabelClipping.estimateLabelSize(text: coreLabel, fontSize: fontSize).width

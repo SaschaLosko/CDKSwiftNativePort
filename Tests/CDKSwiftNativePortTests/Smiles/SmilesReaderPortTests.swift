@@ -29,6 +29,19 @@ final class SmilesReaderPortTests: XCTestCase {
         XCTAssertEqual(molecules[0].atomCount, 1)
     }
 
+    func testReadsCxSmilesLineWithoutDroppingCxSuffix() throws {
+        let text = "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+
+        let molecules = try CDKSMILESReader.read(text: text)
+        let molecule = try XCTUnwrap(molecules.first)
+
+        XCTAssertEqual(molecules.count, 1)
+        XCTAssertEqual(molecule.name, "SMILES")
+        XCTAssertEqual(molecule.sgroups.count, 1)
+        XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
+        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+    }
+
     func testThrowsOnNoMolecules() {
         let text = """
 

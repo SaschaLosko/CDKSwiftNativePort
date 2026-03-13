@@ -79,6 +79,8 @@ public enum CDKMDLV2000Reader {
             throw ChemError.parseFailed("Molfile missing M  END record.")
         }
 
+        CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
+
         if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
             molecule = Depiction2DGenerator.generate(for: molecule)
         }

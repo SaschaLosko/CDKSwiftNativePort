@@ -75,6 +75,33 @@ public enum BondQueryType: String, Codable, Hashable, Sendable {
     case any
 }
 
+public struct MoleculeSgroup: Hashable, Codable, Sendable {
+    public enum Kind: String, Codable, Hashable, Sendable {
+        case structureRepeatUnit
+    }
+
+    public let kind: Kind
+    public var atomIDs: [Int]
+    public var crossingBondIDs: [Int]
+    public var subscriptText: String?
+    public var superscriptText: String?
+    public var roundBrackets: Bool
+
+    public init(kind: Kind,
+                atomIDs: [Int],
+                crossingBondIDs: [Int] = [],
+                subscriptText: String? = nil,
+                superscriptText: String? = nil,
+                roundBrackets: Bool = false) {
+        self.kind = kind
+        self.atomIDs = atomIDs
+        self.crossingBondIDs = crossingBondIDs
+        self.subscriptText = subscriptText
+        self.superscriptText = superscriptText
+        self.roundBrackets = roundBrackets
+    }
+}
+
 public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public let id: Int
     public var element: String
@@ -91,6 +118,8 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public var atomListIsNegated: Bool = false
     public var radical: Int? = nil
     public var rGroupLabel: Int? = nil
+    public var rGroupMembership: String? = nil
+    public var componentGroupID: Int? = nil
     public var substitutionCount: Int? = nil
     public var unsaturated: Int? = nil
     public var ringBondCount: Int? = nil
@@ -99,6 +128,12 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public var atomMapNumber: Int? = nil
 
     public var symbolToDraw: String {
+        if let rGroupLabel {
+            let normalized = element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            if normalized.isEmpty || normalized == "*" || normalized == "R" || normalized == "R#" {
+                return "R\(rGroupLabel)"
+            }
+        }
         if let isotopeMassNumber {
             return "\(isotopeMassNumber)\(element)"
         }
@@ -118,6 +153,8 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
                 atomListIsNegated: Bool = false,
                 radical: Int? = nil,
                 rGroupLabel: Int? = nil,
+                rGroupMembership: String? = nil,
+                componentGroupID: Int? = nil,
                 substitutionCount: Int? = nil,
                 unsaturated: Int? = nil,
                 ringBondCount: Int? = nil,
@@ -137,6 +174,8 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         self.atomListIsNegated = atomListIsNegated
         self.radical = radical
         self.rGroupLabel = rGroupLabel
+        self.rGroupMembership = rGroupMembership
+        self.componentGroupID = componentGroupID
         self.substitutionCount = substitutionCount
         self.unsaturated = unsaturated
         self.ringBondCount = ringBondCount
@@ -173,9 +212,24 @@ public struct Molecule: Hashable, Codable, Sendable {
     public var name: String = "Untitled"
     public var atoms: [Atom] = []
     public var bonds: [Bond] = []
+    public var sgroups: [MoleculeSgroup] = []
+    public var dataFields: [String: [String]] = [:]
+    public var dataFieldOrder: [String] = []
 
     public var atomCount: Int { atoms.count }
     public var bondCount: Int { bonds.count }
+    public var orderedDataFieldNames: [String] {
+        Molecule.normalizedDataFieldOrder(preferredOrder: dataFieldOrder, availableFields: dataFields)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name
+        case atoms
+        case bonds
+        case sgroups
+        case dataFields
+        case dataFieldOrder
+    }
 
     public func indexOfAtom(id: Int) -> Int? {
         atoms.firstIndex(where: { $0.id == id })
@@ -191,6 +245,12 @@ public struct Molecule: Hashable, Codable, Sendable {
 
     public func bond(between a: Int, and b: Int) -> Bond? {
         bonds.first(where: { ($0.a1 == a && $0.a2 == b) || ($0.a1 == b && $0.a2 == a) })
+    }
+
+    public func dataFieldValues(named fieldName: String) -> [String] {
+        let normalized = Molecule.normalizedDataFieldName(fieldName)
+        guard !normalized.isEmpty else { return [] }
+        return dataFields[normalized] ?? []
     }
 
     public func neighbors(of atomID: Int) -> [Int] {
@@ -467,6 +527,74 @@ public struct Molecule: Hashable, Codable, Sendable {
         self.name = name
         self.atoms = atoms
         self.bonds = bonds
+        self.dataFields = [:]
+        self.dataFieldOrder = []
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Untitled"
+        atoms = try container.decodeIfPresent([Atom].self, forKey: .atoms) ?? []
+        bonds = try container.decodeIfPresent([Bond].self, forKey: .bonds) ?? []
+        dataFields = try container.decodeIfPresent([String: [String]].self, forKey: .dataFields) ?? [:]
+        dataFieldOrder = try container.decodeIfPresent([String].self, forKey: .dataFieldOrder) ?? []
+        dataFieldOrder = Molecule.normalizedDataFieldOrder(preferredOrder: dataFieldOrder, availableFields: dataFields)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(atoms, forKey: .atoms)
+        try container.encode(bonds, forKey: .bonds)
+        try container.encode(dataFields, forKey: .dataFields)
+        try container.encode(orderedDataFieldNames, forKey: .dataFieldOrder)
+    }
+
+    public mutating func ensureDataField(named fieldName: String) {
+        let normalized = Molecule.normalizedDataFieldName(fieldName)
+        guard !normalized.isEmpty else { return }
+
+        if dataFields[normalized] == nil {
+            dataFields[normalized] = []
+        }
+        if !dataFieldOrder.contains(normalized) {
+            dataFieldOrder.append(normalized)
+        }
+    }
+
+    public mutating func appendDataFieldValue(_ value: String, named fieldName: String) {
+        let normalized = Molecule.normalizedDataFieldName(fieldName)
+        guard !normalized.isEmpty else { return }
+
+        ensureDataField(named: normalized)
+        dataFields[normalized, default: []].append(value)
+    }
+
+    private static func normalizedDataFieldName(_ fieldName: String) -> String {
+        fieldName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func normalizedDataFieldOrder(preferredOrder: [String],
+                                                 availableFields: [String: [String]]) -> [String] {
+        var orderedNames: [String] = []
+        orderedNames.reserveCapacity(availableFields.count)
+        var seen = Set<String>()
+
+        for rawName in preferredOrder {
+            let normalized = normalizedDataFieldName(rawName)
+            guard !normalized.isEmpty,
+                  availableFields[normalized] != nil,
+                  seen.insert(normalized).inserted else {
+                continue
+            }
+            orderedNames.append(normalized)
+        }
+
+        for fieldName in availableFields.keys.sorted() where seen.insert(fieldName).inserted {
+            orderedNames.append(fieldName)
+        }
+
+        return orderedNames
     }
 }
 

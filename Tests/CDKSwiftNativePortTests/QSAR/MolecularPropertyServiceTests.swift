@@ -12,6 +12,8 @@ final class MolecularPropertyServiceTests: XCTestCase {
         XCTAssertEqual(properties.heavyAtomCount, 3)
         XCTAssertEqual(properties.hBondDonorCount, 1)
         XCTAssertEqual(properties.hBondAcceptorCount, 1)
+        XCTAssertEqual(properties.tpsa, 20.23, accuracy: 0.01)
+        XCTAssertEqual(try XCTUnwrap(properties.vanDerWaalsVolume), 51.9389, accuracy: 0.01)
         XCTAssertEqual(properties.rotatableBondCount, 0)
         XCTAssertEqual(properties.ringCount, 0)
 

@@ -113,6 +113,32 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertTrue(productMaps.isSuperset(of: [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]))
     }
 
+    func testReadsCxSmilesBySmilesExtensionWithoutTreatingCxAsName() throws {
+        let text = "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+
+        let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "smi")
+        let molecule = try XCTUnwrap(molecules.first)
+
+        XCTAssertEqual(molecules.count, 1)
+        XCTAssertEqual(molecule.name, "SMILES")
+        XCTAssertEqual(molecule.sgroups.count, 1)
+        XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
+        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+    }
+
+    func testAutoDetectsCxSmilesWithoutTreatingCxAsName() throws {
+        let text = "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+
+        let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: nil)
+        let molecule = try XCTUnwrap(molecules.first)
+
+        XCTAssertEqual(molecules.count, 1)
+        XCTAssertEqual(molecule.name, "SMILES")
+        XCTAssertEqual(molecule.sgroups.count, 1)
+        XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
+        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+    }
+
     func testReadsReactionSmilesFromFileURLByExtension() throws {
         let temporaryDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let fileURL = temporaryDirectory.appendingPathComponent("cdk_file_importer_test.rsmi")

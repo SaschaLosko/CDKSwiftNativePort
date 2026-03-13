@@ -103,6 +103,15 @@ final class MDLV2000ReaderPortTests: XCTestCase {
         XCTAssertGreaterThan(box.width, 0.1)
     }
 
+    func testParsesSDFDataFieldsAfterMEnd() throws {
+        let molecule = try CDKMDLV2000Reader.read(text: annotatedSDFMol)
+
+        XCTAssertEqual(molecule.orderedDataFieldNames, ["ID", "Tags", "Empty"])
+        XCTAssertEqual(molecule.dataFieldValues(named: "ID"), ["001"])
+        XCTAssertEqual(molecule.dataFieldValues(named: "Tags"), ["alpha", "beta", "delta"])
+        XCTAssertEqual(molecule.dataFieldValues(named: "Empty"), [])
+    }
+
     private let ethanolMol = """
 Ethanol
 CDKSwiftNativePort
@@ -255,5 +264,25 @@ CDKSwiftNativePort
     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
 M  END
+"""
+
+    private let annotatedSDFMol = """
+AnnotatedSDF
+CDKSwiftNativePort
+
+  1  0  0  0  0  0  0  0  0  0  0 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+>  <ID>
+001
+
+>  <Tags>
+alpha
+beta
+
+>  <Empty>
+
+>  <Tags>
+delta
 """
 }

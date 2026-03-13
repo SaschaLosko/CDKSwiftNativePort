@@ -43,6 +43,12 @@ final class SmilesParserPortTests: XCTestCase {
         }
     }
 
+    func testParsesTrailingTitleField() throws {
+        let molecule = try parse("CCO ethanol")
+        XCTAssertEqual(molecule.atomCount, 3)
+        XCTAssertEqual(molecule.name, "ethanol")
+    }
+
     func testParsesBracketDecoratorFieldsInStrictMode() throws {
         let molecule = try parse("[CH3;D1;X4;v4;R0;r6;u:12]")
         let atom = try XCTUnwrap(molecule.atoms.first)

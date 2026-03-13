@@ -143,6 +143,144 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         XCTAssertNotNil(scene.labels.first(where: { $0.id == 1 && $0.text.hasPrefix("OH") }))
     }
 
+    func testMetalSceneIncludesMarkushBackgroundBoxAndLinkNodeLabels() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 720, height: 520),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        XCTAssertEqual(scene.backgroundBoxes.count, 1)
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "R¹ is" }))
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "1-3" }))
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "R¹" && $0.italicized }))
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "R¹ is" && $0.italicized }))
+
+        let markushLabelIDs = Set(molecule.atoms.filter { $0.rGroupMembership != nil }.map(\.id))
+        XCTAssertTrue(scene.labels.filter { markushLabelIDs.contains($0.id) }.allSatisfy { !$0.drawsBackground })
+        XCTAssertTrue(scene.labels.filter { ["R¹ is", "(", ")", "1-3"].contains($0.text) }.allSatisfy { !$0.drawsBackground })
+    }
+
+    func testMarkushBackgroundBoxContainsVisibleLabelsAndAttachmentWaves() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: true,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16.0,
+                                padding: 24.0)
+
+        let positionsByAtomID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.position) })
+        let box = try XCTUnwrap(
+            CDKMarkushRendering.rGroupBoxes(molecule: molecule,
+                                            positionsByAtomID: positionsByAtomID,
+                                            style: style,
+                                            padding: max(1.4, style.bondWidth * 0.55),
+                                            fontSize: style.fontSize,
+                                            bondWidth: style.bondWidth)
+                .first
+        )
+
+        for atom in molecule.atoms where atom.rGroupMembership == "R1" && atom.attachmentPoint == nil {
+            let degree = molecule.neighbors(of: atom.id).count
+            guard CDKLabelText.shouldDrawLabel(atom: atom, degree: degree, style: style),
+                  let position = positionsByAtomID[atom.id] else {
+                continue
+            }
+
+            let implicitH = style.showImplicitHydrogens ? molecule.implicitHydrogenCount(for: atom.id) : 0
+            let text = CDKLabelText.build(atom: atom, style: style, implicitHydrogenCount: implicitH)
+            let offset = CDKLabelText.centerOffset(atom: atom,
+                                                   style: style,
+                                                   implicitHydrogenCount: implicitH,
+                                                   fontSize: style.fontSize)
+            let center = position.offsetBy(dx: offset.dx, dy: offset.dy)
+            let rect = CDKLabelClipping.makeLabelRect(center: center,
+                                                      estimatedTextSize: CDKLabelClipping.estimateLabelSize(text: text,
+                                                                                                            fontSize: style.fontSize))
+            XCTAssertTrue(box.boxRect.contains(rect),
+                          "Expected Markush box to contain visible member label \(text).")
+        }
+
+        for bond in molecule.bonds {
+            guard let atom1 = molecule.atom(id: bond.a1),
+                  let atom2 = molecule.atom(id: bond.a2),
+                  atom1.rGroupMembership == "R1",
+                  atom2.rGroupMembership == "R1",
+                  let p1 = positionsByAtomID[bond.a1],
+                  let p2 = positionsByAtomID[bond.a2] else {
+                continue
+            }
+
+            if atom1.attachmentPoint != nil {
+                for segment in CDKMarkushRendering.attachmentPointSegments(center: p1, other: p2, style: style) {
+                    XCTAssertTrue(box.boxRect.insetBy(dx: -1, dy: -1).contains(segment.from))
+                    XCTAssertTrue(box.boxRect.insetBy(dx: -1, dy: -1).contains(segment.to))
+                }
+            }
+
+            if atom2.attachmentPoint != nil {
+                for segment in CDKMarkushRendering.attachmentPointSegments(center: p2, other: p1, style: style) {
+                    XCTAssertTrue(box.boxRect.insetBy(dx: -1, dy: -1).contains(segment.from))
+                    XCTAssertTrue(box.boxRect.insetBy(dx: -1, dy: -1).contains(segment.to))
+                }
+            }
+        }
+    }
+
+    func testMetalSceneDrawsAttachmentPointWaveSegmentsForMarkushDefinitions() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C* |$;R1$,RG:_R1={Cl* |$;_AP1$|}|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 640, height: 420),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        XCTAssertGreaterThan(scene.bondSegments.count, molecule.bondCount + 4)
+        XCTAssertFalse(scene.labels.contains(where: { $0.text.contains("_AP") }))
+    }
+
+    func testMetalSceneHidesMarkushTerminalCarbonLabelsWhenCarbonsAreHidden() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: true,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 720, height: 520),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        let r1AtomIDs = Set(molecule.atoms.filter { $0.rGroupMembership == "R1" }.map(\.id))
+        XCTAssertFalse(scene.labels.contains(where: { r1AtomIDs.contains($0.id) && $0.text == "C" }))
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "O" }))
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "Cl" }))
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "N" }))
+    }
+
     func testCanKeepExplicitHydrogensWhenEnabled() {
         let molecule = Molecule(
             name: "AlcoholFragment",
@@ -673,6 +811,90 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         XCTAssertTrue(suppressedScene.labels.contains(where: { $0.id == 2 && $0.text.hasPrefix("O") }))
     }
 
+    func testMarkushLegendStaysBelowRotatedRootDuringInteractiveRotation() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: true,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 900, height: 620),
+                                                        zoom: 1.35,
+                                                        pan: CGSize(width: 26, height: -18),
+                                                        rotationDegrees: 112)
+
+        let box = try XCTUnwrap(scene.backgroundBoxes.first?.rect)
+        let nh = try XCTUnwrap(scene.labels.first(where: { $0.text == "NH" }))
+        let repeatCount = try XCTUnwrap(scene.labels.first(where: { $0.text == "1-3" }))
+        let rootR = try XCTUnwrap(scene.labels.first(where: { $0.text == "R¹" }))
+
+        XCTAssertGreaterThan(box.minY, nh.position.y + (nh.fontSize * 0.35))
+        XCTAssertGreaterThan(box.minY, repeatCount.position.y + (repeatCount.fontSize * 0.20))
+        XCTAssertGreaterThan(box.minY, rootR.position.y + (rootR.fontSize * 0.15))
+
+        let expandedBox = box.insetBy(dx: -2, dy: -2)
+        let collidingRootSegments = scene.bondSegments.filter { segment in
+            let bounds = segmentBounds(for: segment)
+            guard bounds.intersects(box) else { return false }
+            return !(expandedBox.contains(segment.from) && expandedBox.contains(segment.to))
+        }
+        XCTAssertTrue(collidingRootSegments.isEmpty,
+                      "Expected the fixed legend box to stay clear of rotated scaffold bonds.")
+    }
+
+    func testMarkushLegendFragmentsRotateInsideFixedLegendBox() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: true,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 900, height: 620)
+
+        let scene0 = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                         style: style,
+                                                         canvasRect: canvas,
+                                                         zoom: 1.0,
+                                                         pan: .zero,
+                                                         rotationDegrees: 0)
+        let scene90 = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                          style: style,
+                                                          canvasRect: canvas,
+                                                          zoom: 1.0,
+                                                          pan: .zero,
+                                                          rotationDegrees: 90)
+
+        let box0 = try XCTUnwrap(scene0.backgroundBoxes.first?.rect)
+        let box90 = try XCTUnwrap(scene90.backgroundBoxes.first?.rect)
+        let oxygen0 = try XCTUnwrap(scene0.labels.first(where: { $0.text == "O" }))
+        let oxygen90 = try XCTUnwrap(scene90.labels.first(where: { $0.text == "O" }))
+        let chloride90 = try XCTUnwrap(scene90.labels.first(where: { $0.text == "Cl" }))
+        let nitrile90 = try XCTUnwrap(scene90.labels.first(where: { $0.text == "N" }))
+
+        let offset0 = CGPoint(x: oxygen0.position.x - box0.midX, y: oxygen0.position.y - box0.midY)
+        let offset90 = CGPoint(x: oxygen90.position.x - box90.midX, y: oxygen90.position.y - box90.midY)
+        XCTAssertGreaterThan(hypot(offset0.x - offset90.x, offset0.y - offset90.y),
+                             8.0,
+                             "Expected legend fragment contents to rotate relative to the fixed box.")
+
+        for label in [oxygen90, chloride90, nitrile90] {
+            XCTAssertTrue(box90.insetBy(dx: 2, dy: 2).contains(label.position),
+                          "Expected rotated legend label \(label.text) to stay inside the fixed legend box.")
+        }
+
+        let expandedBox = box90.insetBy(dx: -2, dy: -2)
+        XCTAssertTrue(scene90.bondSegments.filter { segmentBounds(for: $0).intersects(box90) }
+            .allSatisfy { expandedBox.contains($0.from) && expandedBox.contains($0.to) },
+                      "Expected any segment inside the fixed legend box to remain fully contained after rotation.")
+    }
+
     private func countSupportingSegments(forBondFrom from: CGPoint,
                                          to: CGPoint,
                                          segments: [CDKMetalDepictionScene.LineSegment]) -> Int {
@@ -718,6 +940,13 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         guard !segments.isEmpty else { return 0 }
         let total = segments.reduce(CGFloat.zero) { $0 + $1.width }
         return total / CGFloat(segments.count)
+    }
+
+    private func segmentBounds(for segment: CDKMetalDepictionScene.LineSegment) -> CGRect {
+        CGRect(x: min(segment.from.x, segment.to.x),
+               y: min(segment.from.y, segment.to.y),
+               width: abs(segment.to.x - segment.from.x),
+               height: abs(segment.to.y - segment.from.y))
     }
 
     private var alternatingSixRing: Molecule {

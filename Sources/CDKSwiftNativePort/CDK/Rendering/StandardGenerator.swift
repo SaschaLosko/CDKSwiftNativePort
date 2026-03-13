@@ -76,8 +76,13 @@ public enum CDKStandardGenerator {
             .scaledBy(x: scale, y: -scale)            // Scale + flip Y to screen coords
             .translatedBy(x: -box.midX, y: -box.midY) // Center molecule at origin
 
+        let positionsByAtomID = Dictionary(uniqueKeysWithValues: depictionMolecule.atoms.map {
+            ($0.id, $0.position.applying(t))
+        })
+        let atomByID = Dictionary(uniqueKeysWithValues: depictionMolecule.atoms.map { ($0.id, $0) })
+
         func p(_ atomID: Int) -> CGPoint? {
-            depictionMolecule.atoms.first(where: { $0.id == atomID }).map { $0.position.applying(t) }
+            positionsByAtomID[atomID]
         }
 
         // Precompute degrees
@@ -152,6 +157,19 @@ public enum CDKStandardGenerator {
                                                       padding: labelClipPadding)
         }
 
+        let markushBoxes = CDKMarkushRendering.rGroupBoxes(molecule: depictionMolecule,
+                                                           positionsByAtomID: positionsByAtomID,
+                                                           style: style,
+                                                           padding: labelClipPadding,
+                                                           fontSize: style.fontSize,
+                                                           bondWidth: style.bondWidth)
+
+        for annotation in markushBoxes {
+            let boxPath = Path(roundedRect: annotation.boxRect, cornerRadius: annotation.cornerRadius)
+            context.fill(boxPath,
+                         with: .color(swiftUIColor(from: annotation.fillColor)))
+        }
+
         // Bonds
         for bond in depictionMolecule.bonds {
             guard let p1 = p(bond.a1), let p2 = p(bond.a2) else { continue }
@@ -166,6 +184,8 @@ public enum CDKStandardGenerator {
                      aromaticStyled: bond.order == .aromatic,
                      aromaticRingCenters: aromaticCenters,
                      conjugatedRingCenters: conjugatedCenters,
+                     a1Attachment: atomByID[bond.a1]?.attachmentPoint != nil,
+                     a2Attachment: atomByID[bond.a2]?.attachmentPoint != nil,
                      labelClipObstacles: labelClipObstacles,
                      labelClipPadding: labelClipPadding,
                      style: style,
@@ -198,6 +218,26 @@ public enum CDKStandardGenerator {
                           degree: degree[atom.id] ?? 0,
                           implicitHydrogenCount: implicitH)
         }
+
+        let linkAnnotations = CDKMarkushRendering.linkAnnotations(molecule: depictionMolecule,
+                                                                  positionsByAtomID: positionsByAtomID,
+                                                                  fontSize: style.fontSize)
+        for annotation in linkAnnotations {
+            drawAnnotationText("(", at: annotation.leftBracketPosition, style: style, context: &context)
+            drawAnnotationText(")", at: annotation.rightBracketPosition, style: style, context: &context)
+            if let subscriptText = annotation.subscriptText,
+               let subscriptPosition = annotation.subscriptPosition {
+                drawAnnotationText(subscriptText, at: subscriptPosition, style: style, context: &context)
+            }
+            if let superscriptText = annotation.superscriptText,
+               let superscriptPosition = annotation.superscriptPosition {
+                drawAnnotationText(superscriptText, at: superscriptPosition, style: style, context: &context)
+            }
+        }
+
+        for annotation in markushBoxes {
+            drawAnnotationText(annotation.label, at: annotation.labelPosition, style: style, context: &context)
+        }
     }
 
     private static func drawBond(from p1: CGPoint,
@@ -207,6 +247,8 @@ public enum CDKStandardGenerator {
                                  aromaticStyled: Bool,
                                  aromaticRingCenters: [CGPoint],
                                  conjugatedRingCenters: [CGPoint],
+                                 a1Attachment: Bool,
+                                 a2Attachment: Bool,
                                  labelClipObstacles: [CDKLabelObstacle],
                                  labelClipPadding: CGFloat,
                                  style: RenderStyle,
@@ -320,6 +362,26 @@ public enum CDKStandardGenerator {
             strokeLine(a, b, width: max(1.05, style.bondWidth * 0.85), opacity: 0.88)
         }
 
+        func drawAttachmentPointGlyph(center: CGPoint, other: CGPoint) {
+            for segment in CDKMarkushRendering.attachmentPointSegments(center: center,
+                                                                       other: other,
+                                                                       style: style) {
+                strokeLine(segment.from,
+                           segment.to,
+                           width: max(1.0, style.bondWidth * 0.92),
+                           opacity: 0.95)
+            }
+        }
+
+        defer {
+            if a1Attachment {
+                drawAttachmentPointGlyph(center: p1, other: p2)
+            }
+            if a2Attachment {
+                drawAttachmentPointGlyph(center: p2, other: p1)
+            }
+        }
+
         if aromaticStyled {
             strokeLine(p1, p2, width: max(1.2, style.bondWidth * 0.9), opacity: 0.82)
             if style.aromaticDisplayMode == .innerLine {
@@ -394,7 +456,7 @@ public enum CDKStandardGenerator {
         let labelCenter = pos.offsetBy(dx: centerOffset.dx, dy: centerOffset.dy)
 
         let text = Text(label)
-            .font(.system(size: style.fontSize, weight: .medium, design: .rounded))
+            .font(labelFont(for: label, size: style.fontSize))
             .foregroundStyle(swiftUIColor(from: color.withAlpha(atom.aromatic ? 0.90 : 1.0)))
 
         let resolved = context.resolve(text)
@@ -419,6 +481,23 @@ public enum CDKStandardGenerator {
             context.fill(Path(ellipseIn: CGRect(x: pos.x - r, y: pos.y - r, width: 2*r, height: 2*r)),
                          with: .color(swiftUIColor(from: color.withAlpha(0.55))))
         }
+    }
+
+    private static func drawAnnotationText(_ text: String,
+                                           at position: CGPoint,
+                                           style: RenderStyle,
+                                           context: inout GraphicsContext) {
+        let annotation = Text(text)
+            .font(labelFont(for: text, size: style.fontSize * 0.86))
+            .foregroundStyle(swiftUIColor(from: .ink))
+        context.draw(context.resolve(annotation), at: position, anchor: .center)
+    }
+
+    private static func labelFont(for text: String, size: CGFloat) -> Font {
+        if CDKLabelText.usesItalicRGroupFont(text: text) {
+            return .system(size: size, weight: .semibold, design: .serif).italic()
+        }
+        return .system(size: size, weight: .medium, design: .rounded)
     }
 
     private static func drawAromaticCircle(points: [CGPoint],

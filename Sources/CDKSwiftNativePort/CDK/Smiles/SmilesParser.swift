@@ -11,7 +11,13 @@ public final class CDKSmilesParser {
     public func parseSmiles(_ smiles: String) throws -> Molecule {
         let split = try CDKCxSmilesParser.split(smiles, enabled: flavor.contains(.cxsmiles))
         var molecule = try parseCoreSmiles(split.coreSmiles)
-        CDKCxSmilesParser.applyAtomLabels(to: &molecule, state: split.state)
+        try CDKCxSmilesParser.apply(to: &molecule, state: split.state) { [self] definition in
+            try parseSmiles(definition)
+        }
+        if !split.state.rGroupDefinitions.isEmpty || !split.state.linkNodes.isEmpty {
+            molecule = Depiction2DGenerator.generate(for: molecule)
+            molecule.assignWedgeHashFromChiralCenters()
+        }
         if let title = split.title, !title.isEmpty {
             molecule.name = title
         }

@@ -99,7 +99,17 @@ final class MDLV3000ReaderScaffoldTests: XCTestCase {
         let atom = try XCTUnwrap(molecule.atoms.first(where: { $0.id == 1 }))
         XCTAssertEqual(atom.element, "Me")
         XCTAssertEqual(atom.attachmentPoint, 1)
-        XCTAssertTrue(molecule.name.contains("AliasName"))
+        XCTAssertEqual(molecule.name, "V3000CollectionAndSGroup")
+        XCTAssertEqual(molecule.orderedDataFieldNames, ["CDK"])
+        XCTAssertEqual(molecule.dataFieldValues(named: "CDK"), ["AliasName"])
+    }
+
+    func testParsesTrailingSDFFieldsFromV3000Record() throws {
+        let molecule = try CDKMDLV3000Reader.read(text: annotatedV3000)
+
+        XCTAssertEqual(molecule.orderedDataFieldNames, ["ID", "Tags"])
+        XCTAssertEqual(molecule.dataFieldValues(named: "ID"), ["001"])
+        XCTAssertEqual(molecule.dataFieldValues(named: "Tags"), ["alpha", "beta"])
     }
 
     private let minimalV3000 = """
@@ -210,5 +220,27 @@ M  V30 2 DAT 0 ATOMS=(1 3) FIELDNAME="CDK" FIELDDATA="AliasName"
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END
+"""
+
+    private let annotatedV3000 = """
+V3000Annotated
+CDKSwiftNativePort
+
+  0  0  0  0  0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.0000 0.0000 0.0000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+>  <ID>
+001
+
+>  <Tags>
+alpha
+beta
 """
 }

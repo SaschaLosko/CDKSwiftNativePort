@@ -96,6 +96,8 @@ public enum CDKMetalReactionDepictionSceneBuilder {
 
         var baseBondSegments: [CDKMetalDepictionScene.LineSegment] = []
         baseBondSegments.reserveCapacity((reactants.count + products.count + agents.count) * 32)
+        var baseBackgroundBoxes: [CDKMetalDepictionScene.BackgroundBox] = []
+        baseBackgroundBoxes.reserveCapacity((reactants.count + products.count + agents.count) * 2)
         var baseLabels: [CDKMetalDepictionScene.AtomLabel] = []
         baseLabels.reserveCapacity((reactants.count + products.count + agents.count) * 24)
         var nextLabelID = 1_000_000
@@ -113,6 +115,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                             pan: .zero,
                                                             rotationDegrees: 0)
             let glowColor = CDKRenderColor.outerGlowHighlight.withAlpha(0.92)
+            for box in scene.backgroundBoxes {
+                baseBackgroundBoxes.append(box)
+            }
             for segment in scene.bondSegments {
                 if highlighted {
                     let glowWidth = max(segment.width * 2.45,
@@ -144,7 +149,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                          fontSize: max(7.2, label.fontSize),
                                                          aromatic: false,
                                                          color: CDKRenderColor.outerGlowHighlight.withAlpha(0.92),
-                                                         drawsBackground: false)
+                                                         italicized: label.italicized,
+                                                         drawsBackground: false,
+                                                         usesGlowOverlay: true)
                     )
                 }
                 nextLabelID += 1
@@ -154,7 +161,10 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                      position: label.position,
                                                      fontSize: max(7.2, label.fontSize),
                                                      aromatic: label.aromatic,
-                                                     color: label.color)
+                                                     color: label.color,
+                                                     italicized: label.italicized,
+                                                     drawsBackground: label.drawsBackground,
+                                                     usesGlowOverlay: label.usesGlowOverlay)
                 )
             }
         }
@@ -256,6 +266,18 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                opacity: segment.opacity,
                                                color: segment.color)
         }
+        let transformedBoxes = baseBackgroundBoxes.map { box in
+            let minPoint = applyViewportTransform(CGPoint(x: box.rect.minX, y: box.rect.minY))
+            let maxPoint = applyViewportTransform(CGPoint(x: box.rect.maxX, y: box.rect.maxY))
+            let rect = CGRect(x: min(minPoint.x, maxPoint.x),
+                              y: min(minPoint.y, maxPoint.y),
+                              width: abs(maxPoint.x - minPoint.x),
+                              height: abs(maxPoint.y - minPoint.y))
+            return CDKMetalDepictionScene.BackgroundBox(rect: rect,
+                                                        cornerRadius: max(2.0, box.cornerRadius * zoom * reactionAutoFitScale),
+                                                        color: box.color,
+                                                        opacity: box.opacity)
+        }
         let transformedLabels = baseLabels.map { label in
             CDKMetalDepictionScene.AtomLabel(id: label.id,
                                              text: label.text,
@@ -263,10 +285,13 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                              fontSize: max(7.0, label.fontSize * zoom * reactionAutoFitScale),
                                              aromatic: label.aromatic,
                                              color: label.color,
-                                             drawsBackground: label.drawsBackground)
+                                             italicized: label.italicized,
+                                             drawsBackground: label.drawsBackground,
+                                             usesGlowOverlay: label.usesGlowOverlay)
         }
 
         return CDKMetalDepictionScene(gridSegments: gridSegments,
+                                      backgroundBoxes: transformedBoxes,
                                       bondSegments: transformedBonds,
                                       labels: transformedLabels)
     }

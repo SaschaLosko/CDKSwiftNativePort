@@ -43,6 +43,8 @@ public struct CDKMolecularProperties: Equatable {
     public let heavyAtomCount: Int
     public let hBondDonorCount: Int
     public let hBondAcceptorCount: Int
+    public let tpsa: Double
+    public let vanDerWaalsVolume: Double?
     public let rotatableBondCount: Int
     public let ringCount: Int
     public let ruleOfFive: CDKRuleOfFiveResult
@@ -54,6 +56,8 @@ public struct CDKMolecularProperties: Equatable {
                 heavyAtomCount: Int,
                 hBondDonorCount: Int,
                 hBondAcceptorCount: Int,
+                tpsa: Double,
+                vanDerWaalsVolume: Double?,
                 rotatableBondCount: Int,
                 ringCount: Int,
                 ruleOfFive: CDKRuleOfFiveResult) {
@@ -64,6 +68,8 @@ public struct CDKMolecularProperties: Equatable {
         self.heavyAtomCount = heavyAtomCount
         self.hBondDonorCount = hBondDonorCount
         self.hBondAcceptorCount = hBondAcceptorCount
+        self.tpsa = tpsa
+        self.vanDerWaalsVolume = vanDerWaalsVolume
         self.rotatableBondCount = rotatableBondCount
         self.ringCount = ringCount
         self.ruleOfFive = ruleOfFive
@@ -113,6 +119,8 @@ public enum CDKMoleculePropertyService {
         let heavyAtomCount = CDKHeavyAtomCountDescriptor.calculate(for: molecule)
         let hBondDonorCount = CDKHBondDonorCountDescriptor.calculate(for: molecule)
         let hBondAcceptorCount = CDKHBondAcceptorCountDescriptor.calculate(for: molecule)
+        let tpsa = CDKTPSADescriptor.calculate(for: molecule, checkAromaticity: true)
+        let vanDerWaalsVolume = CDKVABCDescriptor.calculate(for: molecule)
         let rotatableBondCount = CDKRotatableBondsCountDescriptor.calculate(for: molecule)
         let ringCount = CDKRingCountDescriptor.calculate(for: molecule)
         let resolvedXlogP = xlogP ?? CDKXLogPDescriptor.calculate(for: molecule)
@@ -128,6 +136,8 @@ public enum CDKMoleculePropertyService {
                                       heavyAtomCount: heavyAtomCount,
                                       hBondDonorCount: hBondDonorCount,
                                       hBondAcceptorCount: hBondAcceptorCount,
+                                      tpsa: tpsa,
+                                      vanDerWaalsVolume: vanDerWaalsVolume,
                                       rotatableBondCount: rotatableBondCount,
                                       ringCount: ringCount,
                                       ruleOfFive: ruleOfFive)

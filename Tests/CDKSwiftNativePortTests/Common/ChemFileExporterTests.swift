@@ -41,6 +41,22 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed.count, molecules.count)
     }
 
+    func testWritesSDFDataFieldsAndRoundTripsThem() throws {
+        var molecules = try referenceMolecules()
+        molecules[0].appendDataFieldValue("001", named: "ID")
+        molecules[0].appendDataFieldValue("alpha", named: "Tags")
+        molecules[0].appendDataFieldValue("beta", named: "Tags")
+        molecules[1].ensureDataField(named: "Empty")
+
+        let text = try CDKFileExporter.write(molecules: molecules, as: .sdf)
+        let parsed = try CDKIteratingSDFReader.read(text: text)
+
+        XCTAssertEqual(parsed[0].orderedDataFieldNames, ["ID", "Tags"])
+        XCTAssertEqual(parsed[0].dataFieldValues(named: "Tags"), ["alpha", "beta"])
+        XCTAssertEqual(parsed[1].orderedDataFieldNames, ["Empty"])
+        XCTAssertEqual(parsed[1].dataFieldValues(named: "Empty"), [])
+    }
+
     func testWritesSmilesAndRoundTrips() throws {
         let molecules = try referenceMolecules()
         let text = try CDKFileExporter.write(molecules: molecules, as: .smiles)

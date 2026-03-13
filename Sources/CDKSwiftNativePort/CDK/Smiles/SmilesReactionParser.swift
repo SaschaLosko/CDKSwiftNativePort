@@ -122,6 +122,8 @@ private extension CDKSmilesParser {
                                                               atomListIsNegated: old.atomListIsNegated,
                                                               radical: old.radical,
                                                               rGroupLabel: old.rGroupLabel,
+                                                              rGroupMembership: old.rGroupMembership,
+                                                              componentGroupID: old.componentGroupID,
                                                               substitutionCount: old.substitutionCount,
                                                               unsaturated: old.unsaturated,
                                                               ringBondCount: old.ringBondCount,
@@ -209,6 +211,7 @@ private extension CDKSmilesParser {
 
         for molecule in molecules {
             var idMap: [Int: Int] = [:]
+            var bondIDMap: [Int: Int] = [:]
 
             for atom in molecule.atoms {
                 nextAtomID += 1
@@ -227,6 +230,8 @@ private extension CDKSmilesParser {
                          atomListIsNegated: atom.atomListIsNegated,
                          radical: atom.radical,
                          rGroupLabel: atom.rGroupLabel,
+                         rGroupMembership: atom.rGroupMembership,
+                         componentGroupID: atom.componentGroupID,
                          substitutionCount: atom.substitutionCount,
                          unsaturated: atom.unsaturated,
                          ringBondCount: atom.ringBondCount,
@@ -239,7 +244,27 @@ private extension CDKSmilesParser {
             for bond in molecule.bonds {
                 guard let a1 = idMap[bond.a1], let a2 = idMap[bond.a2] else { continue }
                 nextBondID += 1
-                out.bonds.append(Bond(id: nextBondID, a1: a1, a2: a2, order: bond.order, stereo: bond.stereo))
+                bondIDMap[bond.id] = nextBondID
+                out.bonds.append(Bond(id: nextBondID,
+                                      a1: a1,
+                                      a2: a2,
+                                      order: bond.order,
+                                      stereo: bond.stereo,
+                                      queryType: bond.queryType))
+            }
+
+            for sgroup in molecule.sgroups {
+                let atomIDs = sgroup.atomIDs.compactMap { idMap[$0] }
+                guard !atomIDs.isEmpty else { continue }
+                let crossingBondIDs = sgroup.crossingBondIDs.compactMap { bondIDMap[$0] }
+                out.sgroups.append(
+                    MoleculeSgroup(kind: sgroup.kind,
+                                   atomIDs: atomIDs,
+                                   crossingBondIDs: crossingBondIDs,
+                                   subscriptText: sgroup.subscriptText,
+                                   superscriptText: sgroup.superscriptText,
+                                   roundBrackets: sgroup.roundBrackets)
+                )
             }
         }
 

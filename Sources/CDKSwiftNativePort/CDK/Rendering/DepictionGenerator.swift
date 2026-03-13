@@ -37,8 +37,13 @@ public enum CDKDepictionGenerator {
             .scaledBy(x: scale, y: -scale)
             .translatedBy(x: -box.midX, y: -box.midY)
 
+        let positionsByAtomID = Dictionary(uniqueKeysWithValues: depictionMolecule.atoms.map {
+            ($0.id, $0.position.applying(transform))
+        })
+        let atomByID = Dictionary(uniqueKeysWithValues: depictionMolecule.atoms.map { ($0.id, $0) })
+
         func p(_ atomID: Int) -> CGPoint? {
-            depictionMolecule.atoms.first(where: { $0.id == atomID }).map { $0.position.applying(transform) }
+            positionsByAtomID[atomID]
         }
 
         var degree: [Int: Int] = [:]
@@ -117,11 +122,27 @@ public enum CDKDepictionGenerator {
                                                       padding: labelClipPadding)
         }
 
+        let markushBoxes = CDKMarkushRendering.rGroupBoxes(molecule: depictionMolecule,
+                                                           positionsByAtomID: positionsByAtomID,
+                                                           style: style,
+                                                           padding: labelClipPadding,
+                                                           fontSize: style.fontSize,
+                                                           bondWidth: style.bondWidth)
+        let linkAnnotations = CDKMarkushRendering.linkAnnotations(molecule: depictionMolecule,
+                                                                  positionsByAtomID: positionsByAtomID,
+                                                                  fontSize: style.fontSize)
+
         var lines: [String] = []
         lines.reserveCapacity(max(32, depictionMolecule.bonds.count * 4 + depictionMolecule.atoms.count))
         lines.append("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\(Int(width))\" height=\"\(Int(height))\" viewBox=\"0 0 \(Int(width)) \(Int(height))\">")
         if includeBackground {
             lines.append("<rect x=\"0\" y=\"0\" width=\"\(Int(width))\" height=\"\(Int(height))\" fill=\"#ffffff\"/>")
+        }
+
+        for annotation in markushBoxes {
+            lines.append(
+                "<rect x=\"\(fmt(annotation.boxRect.minX))\" y=\"\(fmt(annotation.boxRect.minY))\" width=\"\(fmt(annotation.boxRect.width))\" height=\"\(fmt(annotation.boxRect.height))\" rx=\"\(fmt(annotation.cornerRadius))\" ry=\"\(fmt(annotation.cornerRadius))\" fill=\"\(annotation.fillColor.svgHexRGB())\" fill-opacity=\"\(fmt(annotation.fillColor.alpha))\"/>"
+            )
         }
 
         @inline(__always)
@@ -210,6 +231,18 @@ public enum CDKDepictionGenerator {
                     y: p2.y + (p1.y - p2.y) * trim + perp.dy * inset * sign
                 )
                 addLine(a, b, width: max(1.05, style.bondWidth * 0.85), opacity: 0.88, color: baseColor)
+            }
+
+            func drawAttachmentPointGlyph(center: CGPoint, other: CGPoint) {
+                for segment in CDKMarkushRendering.attachmentPointSegments(center: center,
+                                                                           other: other,
+                                                                           style: style) {
+                    addLine(segment.from,
+                            segment.to,
+                            width: max(1.0, style.bondWidth * 0.92),
+                            opacity: 0.95,
+                            color: baseColor)
+                }
             }
 
             func drawSolidWedge(from a: CGPoint, to b: CGPoint) {
@@ -310,6 +343,13 @@ public enum CDKDepictionGenerator {
             case .aromatic:
                 addLine(p1, p2, width: max(1.2, style.bondWidth * 0.85), opacity: 0.8, color: baseColor)
             }
+
+            if atomByID[bond.a1]?.attachmentPoint != nil {
+                drawAttachmentPointGlyph(center: p1, other: p2)
+            }
+            if atomByID[bond.a2]?.attachmentPoint != nil {
+                drawAttachmentPointGlyph(center: p2, other: p1)
+            }
         }
 
         if style.aromaticDisplayMode == .circle {
@@ -347,8 +387,28 @@ public enum CDKDepictionGenerator {
                 .atomColor(for: atom, style: style)
                 .svgHexRGB()
             lines.append(
-                "<text x=\"\(fmt(labelCenter.x))\" y=\"\(fmt(labelCenter.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"Helvetica, Arial, sans-serif\" font-size=\"\(fmt(style.fontSize))\" font-weight=\"600\" fill=\"\(atomColor)\">\(svgEsc(label))</text>"
+                svgText(label,
+                        position: labelCenter,
+                        fontSize: style.fontSize,
+                        fill: atomColor)
             )
+        }
+
+        for annotation in linkAnnotations {
+            lines.append(annotationText("(", position: annotation.leftBracketPosition, fontSize: style.fontSize * 0.86))
+            lines.append(annotationText(")", position: annotation.rightBracketPosition, fontSize: style.fontSize * 0.86))
+            if let subscriptText = annotation.subscriptText,
+               let subscriptPosition = annotation.subscriptPosition {
+                lines.append(annotationText(subscriptText, position: subscriptPosition, fontSize: style.fontSize * 0.78))
+            }
+            if let superscriptText = annotation.superscriptText,
+               let superscriptPosition = annotation.superscriptPosition {
+                lines.append(annotationText(superscriptText, position: superscriptPosition, fontSize: style.fontSize * 0.72))
+            }
+        }
+
+        for annotation in markushBoxes {
+            lines.append(annotationText(annotation.label, position: annotation.labelPosition, fontSize: style.fontSize * 0.82))
         }
 
         lines.append("</svg>")
@@ -366,6 +426,25 @@ public enum CDKDepictionGenerator {
             .replacingOccurrences(of: ">", with: "&gt;")
             .replacingOccurrences(of: "\"", with: "&quot;")
             .replacingOccurrences(of: "'", with: "&apos;")
+    }
+
+    private static func annotationText(_ text: String, position: CGPoint, fontSize: CGFloat) -> String {
+        svgText(text,
+                position: position,
+                fontSize: fontSize,
+                fill: CDKRenderColor.ink.svgHexRGB())
+    }
+
+    private static func svgText(_ text: String,
+                                position: CGPoint,
+                                fontSize: CGFloat,
+                                fill: String) -> String {
+        let italicized = CDKLabelText.usesItalicRGroupFont(text: text)
+        let fontFamily = italicized
+            ? "Times New Roman, Georgia, serif"
+            : "Helvetica, Arial, sans-serif"
+        let fontStyle = italicized ? " font-style=\"italic\"" : ""
+        return "<text x=\"\(fmt(position.x))\" y=\"\(fmt(position.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"\(fontFamily)\" font-size=\"\(fmt(fontSize))\" font-weight=\"600\"\(fontStyle) fill=\"\(fill)\">\(svgEsc(text))</text>"
     }
 
     private struct RenderEdgeKey: Hashable {

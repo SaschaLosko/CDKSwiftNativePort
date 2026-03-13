@@ -12,6 +12,12 @@ final class SmilesReactionParserPortTests: XCTestCase {
         XCTAssertEqual(reaction.productCount, 2)
     }
 
+    func testReactionCountsWithTrailingTitleField() throws {
+        let reaction = try parser.parseReactionSmiles("O>>[H+].[OH-] water autoionization")
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.productCount, 2)
+    }
+
     // Mirrors CDK SmilesParserTest.noReactants/noProducts/noReaction/onlyAgents.
     func testReactionWithMissingSides() throws {
         let noReactants = try parser.parseReactionSmiles(">>C")
