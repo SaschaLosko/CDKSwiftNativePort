@@ -86,6 +86,33 @@ final class PackageBoundaryTests: XCTestCase {
         """)
     }
 
+    func testHostXcodeProjectUsesPackageProductInsteadOfPackageSourceFiles() throws {
+        let packageRoot = try packageRoot()
+        let workspaceRoot = packageRoot.deletingLastPathComponent()
+        let projectURL = workspaceRoot.appendingPathComponent("AtomLens.xcodeproj/project.pbxproj", isDirectory: false)
+
+        guard FileManager.default.fileExists(atPath: projectURL.path) else {
+            throw XCTSkip("AtomLens Xcode project is not present in this checkout.")
+        }
+
+        let project = try String(contentsOf: projectURL, encoding: .utf8)
+
+        XCTAssertTrue(project.contains("XCLocalSwiftPackageReference \"CDKSwiftNativePort\""),
+                      "Expected AtomLens to consume CDKSwiftNativePort as a local Swift package product.")
+
+        let forbiddenMarkers = [
+            "CDKSwiftNativePort/Sources/",
+            "CDKSwiftNativePort/Tests/"
+        ]
+
+        let violations = forbiddenMarkers.filter { project.contains($0) }
+        XCTAssertTrue(violations.isEmpty, """
+        Found direct Xcode project references to package implementation files:
+        \(violations.joined(separator: "\n"))
+        Host targets should link the package product, not compile package sources directly.
+        """)
+    }
+
     private func packageRoot() throws -> URL {
         var url = URL(fileURLWithPath: #filePath)
         // #filePath -> .../Tests/CDKSwiftNativePortTests/PackageBoundaryTests.swift

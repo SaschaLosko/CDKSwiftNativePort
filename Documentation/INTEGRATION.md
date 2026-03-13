@@ -1,6 +1,7 @@
 # Integration Guide
 
-This guide shows how to integrate `CDKSwiftNativePort` into a macOS app and use the main APIs end-to-end.
+This guide shows how to integrate `CDKSwiftNativePort` into a macOS host and
+use the current public APIs end-to-end.
 
 ## 1. Add the Package
 
@@ -13,7 +14,9 @@ https://github.com/SaschaLosko/CDKSwiftNativePort.git
 or in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.1.1")
+dependencies: [
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.1.1")
+]
 ```
 
 Then import:
@@ -22,7 +25,17 @@ Then import:
 import CDKSwiftNativePort
 ```
 
-## 2. Parse Molecules from Text
+## 2. Choose an Integration Style
+
+Most hosts use one of these patterns:
+
+- Import / inspect / export only
+- Parse -> layout -> SVG export
+- Parse -> layout -> build `CDKMetalDepictionScene` -> render in a host-owned
+  Metal or Core Graphics layer
+- Parse reactions and use `CDKMetalReactionDepictionSceneBuilder` for reaction UI
+
+## 3. Read Molecules from Text
 
 ```swift
 let molecules = try CDKFileImporter.readMolecules(
@@ -35,31 +48,59 @@ guard let molecule = molecules.first else {
 }
 ```
 
-## 3. Parse from File URLs
+`CDKFileImporter` also supports text autodetection for SDF, RXN, RDF, InChI,
+SMILES, reaction SMILES, MOL2, CML, PDB, and XYZ payloads.
+
+## 4. Read from Sandboxed File URLs
 
 ```swift
 let fileURL = URL(fileURLWithPath: "/path/to/molecule.sdf")
 let molecules = try CDKFileImporter.readMolecules(from: fileURL)
 ```
 
-`CDKFileImporter.readMolecules(from:)` and `readReaction(from:)` handle security-scoped resource access for file URLs when the host is sandboxed.
+`readMolecules(from:)` and `readReaction(from:)` start and stop security-scoped
+resource access for file URLs when needed, which makes them suitable for App
+Sandbox hosts using user-selected files or security-scoped bookmarks.
 
-## 4. Generate Layout, IDs, and Properties
+## 5. Generate 2D Coordinates
 
 ```swift
 let laidOut = Depiction2DGenerator.generate(for: molecule)
+```
+
+Layout is recommended before SVG export or scene generation unless your input
+already carries usable 2D coordinates.
+
+## 6. Compute Identifiers and Properties
+
+```swift
 let identifiers = CDKMoleculeIdentifierService.compute(for: laidOut)
 let properties = CDKMoleculePropertyService.compute(for: laidOut)
 
 print(identifiers.smiles)
+print(identifiers.isoSmiles)
+print(identifiers.inchi)
 print(identifiers.inchiKey)
+
 print(properties.formula)
+print(properties.molecularWeight)
+print(properties.tpsa)
 print(properties.ruleOfFive.statusText)
 ```
 
-## 5. Generate SVG Output
+For direct descriptor access:
 
 ```swift
+let xlogP = CDKXLogPDescriptor.calculate(for: laidOut)
+let tpsa = CDKTPSADescriptor.calculate(for: laidOut, checkAromaticity: true)
+let vabc = CDKVABCDescriptor.calculate(for: laidOut)
+```
+
+## 7. Generate SVG
+
+```swift
+import CoreGraphics
+
 var options = CDKFileExportOptions()
 options.svgCanvasSize = CGSize(width: 1280, height: 840)
 options.svgIncludeBackground = true
@@ -67,7 +108,20 @@ options.svgIncludeBackground = true
 let svg = try CDKFileExporter.write(molecule: laidOut, as: .svg, options: options)
 ```
 
-## 6. Build Metal-Friendly Scenes
+You can also call the lower-level generator directly:
+
+```swift
+import CoreGraphics
+
+let svg = CDKDepictionGenerator.toSVG(
+    molecule: laidOut,
+    style: RenderStyle(),
+    canvasSize: CGSize(width: 1280, height: 840),
+    includeBackground: true
+)
+```
+
+## 8. Build a Scene for a Host Renderer
 
 ```swift
 import CoreGraphics
@@ -75,20 +129,56 @@ import CoreGraphics
 let scene = CDKMetalDepictionSceneBuilder.build(
     molecule: laidOut,
     style: RenderStyle(),
-    canvasRect: CGRect(x: 0, y: 0, width: 900, height: 620),
+    canvasRect: CGRect(x: 0, y: 0, width: 960, height: 720),
     zoom: 1.0,
-    pan: .zero
+    pan: .zero,
+    rotationDegrees: 0
 )
 
-print(scene.bondSegments.count, scene.labels.count)
+print(scene.backgroundBoxes.count)
+print(scene.bondSegments.count)
+print(scene.labels.count)
 ```
 
-## 7. Parse and Render Reactions
+Important: the package computes scene geometry only. Your app owns the actual
+Metal, Core Graphics, or raster drawing implementation.
+
+## 9. Parse a Markush CXSMILES
 
 ```swift
 import CoreGraphics
 
-let reaction = try CDKFileImporter.readReaction(text: "CCO>>CC=O", fileExtension: "rsmi")
+let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+let markush = try parser.parseSmiles(
+    "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+)
+
+let laidOutMarkush = Depiction2DGenerator.generate(for: markush)
+let markushScene = CDKMetalDepictionSceneBuilder.build(
+    molecule: laidOutMarkush,
+    style: RenderStyle(showCarbons: false, showImplicitHydrogens: true),
+    canvasRect: CGRect(x: 0, y: 0, width: 960, height: 720),
+    zoom: 1.0,
+    pan: .zero
+)
+```
+
+Supported Markush-related behavior includes:
+
+- CXSMILES `RG:` parsing
+- CXSMILES `LN:` repeat/link-node parsing for the supported path
+- R-group legend boxes in SVG / SwiftUI / Metal scene outputs
+- fixed-legend Metal scene behavior for interactive host rotation
+
+## 10. Parse and Render Reactions
+
+```swift
+import CoreGraphics
+
+let reaction = try CDKFileImporter.readReaction(
+    text: "CCO>>CC=O",
+    fileExtension: "rsmi"
+)
 
 let reactionScene = CDKMetalReactionDepictionSceneBuilder.build(
     reaction: reaction,
@@ -112,19 +202,27 @@ let hit = CDKMetalReactionDepictionSceneBuilder.participant(
 )
 ```
 
-## 8. Export to Common Formats
+## 11. Export to Common Formats
 
 ```swift
 let smiles = try CDKFileExporter.write(molecule: laidOut, as: .smiles)
+let isoSmiles = try CDKFileExporter.write(molecule: laidOut, as: .isomericSmiles)
 let inchi = try CDKFileExporter.write(molecule: laidOut, as: .inchi)
 let molfile = try CDKFileExporter.write(molecule: laidOut, as: .mol)
-
-print(smiles)
-print(inchi)
-print(molfile.prefix(80))
 ```
 
-## 9. Error Handling Pattern
+For full reaction export:
+
+```swift
+let rxn = try CDKRXNWriter.write(
+    reactants: reaction.reactants,
+    products: reaction.products,
+    agents: reaction.agents,
+    reactionName: "Oxidation"
+)
+```
+
+## 12. Error Handling Pattern
 
 ```swift
 do {
@@ -143,12 +241,14 @@ do {
 }
 ```
 
-## 10. Host Boundary Guidance
+## 13. Host Boundary Guidance
 
 Keep host-specific concerns outside this package:
 
 - Spotlight metadata and index extensions
-- Quick Look preview/thumbnail extension wiring
-- app entitlements, bundle IDs, and app-window/session logic
+- Quick Look preview / thumbnail extension wiring
+- `MTKView` ownership and renderer lifecycle
+- app entitlements, bundle IDs, document/window/session logic
 
-Use `CDKSwiftNativePort` as the chemistry core and build host features around it.
+Use `CDKSwiftNativePort` as the chemistry core and build host features around
+its public APIs.

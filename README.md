@@ -1,55 +1,93 @@
 # CDKSwiftNativePort
 
-`CDKSwiftNativePort` is a Swift-native chemistry package that encapsulates CDK-derived functionality behind a reusable API for macOS hosts.
+`CDKSwiftNativePort` is a Swift-native chemistry package that encapsulates
+CDK-derived parsing, layout, depiction, identifier, IO, and selected descriptor
+work behind a reusable library boundary.
 
 Repository: <https://github.com/SaschaLosko/CDKSwiftNativePort>
 
-## Why This Package Exists
+## What This Package Is For
 
-- Keep CDK-derived chemistry logic in one isolated, reusable package.
-- Let host apps (for example AtomLens) consume a stable API instead of embedding chemistry-port internals.
-- Preserve a clean boundary: package code has no dependency on host app modules, UI targets, Spotlight, Quick Look, or app-specific identifiers.
+- Keep all CDK-derived chemistry implementation inside one standalone package.
+- Let host apps link a package product instead of embedding chemistry-port source.
+- Preserve a clean host boundary: package code has no dependency on AtomLens app
+  modules, app extension targets, app bundle identifiers, or app session logic.
+- Provide a native Swift API for the workflows most often needed in macOS
+  chemistry apps: import, layout, depiction, identifiers, properties, and export.
 
-## Used by AtomLens
+The first-party consumer is AtomLens, but the package is intentionally authored
+as a host-agnostic library.
 
-`CDKSwiftNativePort` is used by AtomLens, a native macOS chemistry workbench
-that builds its chemistry parsing, layout, depiction, identifier, and
-property workflows on top of this package.
+## Feature Highlights
 
-## Mac App Store
+- Core chemistry model:
+  - `Molecule`, `Atom`, `Bond`, `MoleculeSgroup`
+  - stereochemistry, query atoms/bonds, atom maps, attachment points
+  - data fields for SDF-style metadata
+- SMILES and CXSMILES:
+  - CDK-style SMILES parser/generator
+  - reaction SMILES support
+  - CXSMILES state parsing
+  - CDK 2.12-style Markush / R-group support, including `RG:` and `LN:` layers
+- Layout and depiction:
+  - `Depiction2DGenerator` for CDK-style 2D coordinates
+  - SVG export with `CDKDepictionGenerator`
+  - SwiftUI `GraphicsContext` rendering with `CDKStandardGenerator`
+  - renderer-agnostic Metal scene primitives with `CDKMetalDepictionSceneBuilder`
+    and `CDKMetalReactionDepictionSceneBuilder`
+- File IO:
+  - MDL Molfile / SDF / RXN / RDF
+  - SMILES / reaction SMILES
+  - InChI
+  - MOL2, PDB, XYZ, CML
+  - unified import/export facades (`CDKFileImporter`, `CDKFileExporter`)
+- Identifiers and descriptors:
+  - SMILES, isomeric SMILES, InChI, InChIKey
+  - formula, molecular weight, exact mass
+  - H-bond donors/acceptors, heavy atoms, rings, rotatable bonds
+  - XLogP, TPSA, van der Waals volume, Rule-of-Five summary
 
-AtomLens is available on the Mac App Store:
+## Encapsulation and Host Boundary
 
-[Download AtomLens on the Mac App Store](https://apps.apple.com/de/app/atomlens/id6759559963?l=en-GB&mt=12)
+All CDK-derived implementation lives under `Sources/CDKSwiftNativePort`.
 
-## Feature Overview
+What stays inside the package:
 
-- Core model: `Molecule`, `Atom`, `Bond`, stereochemistry and query metadata.
-- Layout/depiction:
-  - `Depiction2DGenerator` (CDK-style 2D layout)
-  - `CDKDepictionGenerator` (SVG output)
-  - `CDKStandardGenerator` (SwiftUI `GraphicsContext` drawing)
-  - `CDKMetalDepictionSceneBuilder` and `CDKMetalReactionDepictionSceneBuilder` (renderer-agnostic scene primitives for Metal hosts)
-- Parsing/import:
-  - MDL Molfile/SDF, SMILES and reaction SMILES, InChI, MOL2, PDB, XYZ, CML, RXN, RDF
-  - unified `CDKFileImporter`
-- Export:
-  - Molfile, SDF, SMILES/isomeric SMILES, InChI, MOL2, PDB, XYZ, CML, RXN, RDF, SVG
-  - unified `CDKFileExporter`
-- Identifier/property services:
-  - SMILES, isomeric SMILES, InChI, InChIKey (`CDKMoleculeIdentifierService`)
-  - molecular formula/mass, H-bond counts, rotatable bonds, rings, Rule-of-Five, XLogP (`CDKMoleculePropertyService`)
+- parsers, generators, readers, writers
+- CDK-derived 2D layout and depiction logic
+- descriptor and identifier implementations
+- scene-building logic for host renderers
+
+What stays outside the package:
+
+- Spotlight importers and indexers
+- Quick Look preview / thumbnail extensions
+- `MTKView` ownership, AppKit / SwiftUI app wiring, window state, entitlements
+- App Store metadata, bundle IDs, sandbox policy, and host-session logic
+
+This is enforced in tests:
+
+- package sources are scanned for forbidden AtomLens and app-extension coupling
+- the package manifest is checked for host-target references
+- the monorepo host chemistry layer is checked to ensure it only contains a thin
+  alias adapter
+- the host Xcode project is checked to ensure it links the package product rather
+  than compiling package source files directly
 
 ## Platform and Toolchain
 
 - Swift tools: `5.9`
-- Platform: `macOS 14+`
+- Declared platform: `macOS 14+`
+
+The package is currently optimized for native macOS hosts. Core chemistry APIs
+are Swift/Apple-framework based, while the rendering surface includes a SwiftUI
+renderer and Metal scene builders for host-owned rendering pipelines.
 
 ## Installation
 
 ### Xcode
 
-Add package dependency:
+Add the package dependency:
 
 ```text
 https://github.com/SaschaLosko/CDKSwiftNativePort.git
@@ -58,10 +96,17 @@ https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ### `Package.swift`
 
 ```swift
-.package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.1.1")
+dependencies: [
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.1.1")
+]
 ```
 
+If you need functionality that is newer than the latest tag, pin a branch or
+revision until the next release is cut.
+
 ## Quick Start
+
+### Parse, Layout, Identify, and Export
 
 ```swift
 import CDKSwiftNativePort
@@ -70,19 +115,45 @@ let molecules = try CDKFileImporter.readMolecules(
     text: "CC(=O)OC1=CC=CC=C1C(=O)O",
     fileExtension: "smi"
 )
-guard let parsed = molecules.first else { fatalError("No molecule parsed") }
+guard let molecule = molecules.first else {
+    throw ChemError.emptyInput
+}
 
-let laidOut = Depiction2DGenerator.generate(for: parsed)
-let ids = CDKMoleculeIdentifierService.compute(for: laidOut)
-let props = CDKMoleculePropertyService.compute(for: laidOut)
+let laidOut = Depiction2DGenerator.generate(for: molecule)
+let identifiers = CDKMoleculeIdentifierService.compute(for: laidOut)
+let properties = CDKMoleculePropertyService.compute(for: laidOut)
 let svg = CDKDepictionGenerator.toSVG(molecule: laidOut)
 
-print(ids.inchiKey)
-print(props.formula)
-print(svg.prefix(80))
+print(identifiers.smiles)
+print(identifiers.inchiKey)
+print(properties.formula)
+print(svg.prefix(120))
 ```
 
-### Reaction + Metal Scene (Host Rendering)
+### Parse a Markush CXSMILES
+
+```swift
+import CDKSwiftNativePort
+import CoreGraphics
+
+let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+let markush = try parser.parseSmiles(
+    "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+)
+
+let laidOut = Depiction2DGenerator.generate(for: markush)
+let scene = CDKMetalDepictionSceneBuilder.build(
+    molecule: laidOut,
+    style: RenderStyle(showCarbons: false, showImplicitHydrogens: true),
+    canvasRect: CGRect(x: 0, y: 0, width: 960, height: 720),
+    zoom: 1.0,
+    pan: .zero
+)
+
+print(scene.backgroundBoxes.count) // Markush legend boxes
+```
+
+### Build a Reaction Scene for a Host Renderer
 
 ```swift
 import CDKSwiftNativePort
@@ -96,44 +167,25 @@ let reaction = try CDKFileImporter.readReaction(
 let scene = CDKMetalReactionDepictionSceneBuilder.build(
     reaction: reaction,
     style: RenderStyle(),
-    canvasRect: CGRect(x: 0, y: 0, width: 960, height: 540),
+    canvasRect: CGRect(x: 0, y: 0, width: 1200, height: 680),
     zoom: 1.0,
     pan: .zero
 )
 
 print(scene.bondSegments.count)
+print(scene.labels.count)
 ```
-
-## Boundary Contract
-
-`CDKSwiftNativePort` intentionally excludes host-app integration concerns:
-
-- no Spotlight indexer implementation
-- no Quick Look provider implementation
-- no app bundle identifiers/entitlements/window/session logic
-
-Boundary checks are test-enforced (`PackageBoundaryTests`).
 
 ## Documentation
 
 - API reference: [`Documentation/API.md`](Documentation/API.md)
 - Integration guide: [`Documentation/INTEGRATION.md`](Documentation/INTEGRATION.md)
-- Architecture: [`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md)
-- CDK comparison: [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md)
-- macOS notes: [`Documentation/MACOS.md`](Documentation/MACOS.md)
+- Architecture and boundary contract: [`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md)
+- Comparison with original CDK: [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md)
+- macOS-specific notes: [`Documentation/MACOS.md`](Documentation/MACOS.md)
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Publishing: [`PUBLISHING.md`](PUBLISHING.md)
 - Changelog: [`CHANGELOG.md`](CHANGELOG.md)
-
-## CDK Comparison
-
-This package targets practical parity for the chemistry workflows used by AtomLens, not full one-to-one coverage of all Java CDK modules.
-
-- See [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md) for a detailed comparison and scope notes.
-
-## macOS Notes
-
-- See [`Documentation/MACOS.md`](Documentation/MACOS.md) for sandbox/security-scoped IO behavior, rendering integration patterns, and package/host separation guidance.
 
 ## Quality Gate
 
@@ -141,21 +193,34 @@ This package targets practical parity for the chemistry workflows used by AtomLe
 swift test
 ```
 
+## Upstream Reference and Scope
+
+This package aims at practical parity for the workflows currently implemented in
+the Swift port, not one-to-one coverage of all Java CDK modules. The current
+reference target for parity work is CDK `2.12`.
+
+See [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md) for a
+feature-by-feature comparison and known scope limits.
+
 ## Attribution and License
 
 This package contains CDK-derived work.
 
 - Upstream CDK: <https://github.com/cdk/cdk>
+- Reference parity target: CDK `2.12`
+- Package license: `LGPL-2.1-or-later` (`LICENSE`)
+- Attribution notes: [`NOTICE.md`](NOTICE.md)
 
 Reference citations:
 
-- Willighagen et al. (2017), The Chemistry Development Kit (CDK) v2.0: atom typing, depiction, molecular formulas, and substructure searching. DOI: [10.1186/s13321-017-0220-4](https://doi.org/10.1186/s13321-017-0220-4)
-- May and Steinbeck (2014), Efficient ring perception for the Chemistry Development Kit. DOI: [10.1186/1758-2946-6-3](https://doi.org/10.1186/1758-2946-6-3)
-- Steinbeck et al. (2006), Recent Developments of the Chemistry Development Kit (CDK) - An Open-Source Java Library for Chemo- and Bioinformatics. DOI: [10.2174/138161206777585274](https://doi.org/10.2174/138161206777585274)
-- Steinbeck et al. (2003), The Chemistry Development Kit (CDK): An Open-Source Java Library for Chemo- and Bioinformatics. DOI: [10.1021/ci025584y](https://doi.org/10.1021/ci025584y)
-
-Additional attribution details:
-
-- Port parity target: CDK `2.11`
-- Package license: `LGPL-2.1-or-later` (`LICENSE`)
-- Attribution notes: `NOTICE.md`
+- Willighagen et al. (2017), The Chemistry Development Kit (CDK) v2.0:
+  atom typing, depiction, molecular formulas, and substructure searching.
+  DOI: [10.1186/s13321-017-0220-4](https://doi.org/10.1186/s13321-017-0220-4)
+- May and Steinbeck (2014), Efficient ring perception for the Chemistry
+  Development Kit. DOI: [10.1186/1758-2946-6-3](https://doi.org/10.1186/1758-2946-6-3)
+- Steinbeck et al. (2006), Recent Developments of the Chemistry Development
+  Kit (CDK) - An Open-Source Java Library for Chemo- and Bioinformatics.
+  DOI: [10.2174/138161206777585274](https://doi.org/10.2174/138161206777585274)
+- Steinbeck et al. (2003), The Chemistry Development Kit (CDK): An
+  Open-Source Java Library for Chemo- and Bioinformatics.
+  DOI: [10.1021/ci025584y](https://doi.org/10.1021/ci025584y)

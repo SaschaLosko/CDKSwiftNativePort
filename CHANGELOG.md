@@ -6,6 +6,24 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+### Added
+
+- CDK 2.12-style Markush / R-group support across the currently supported
+  CXSMILES parsing, layout, SVG, SwiftUI, and Metal depiction paths.
+- A package-boundary test that verifies the host Xcode project links the
+  `CDKSwiftNativePort` package product instead of compiling package source files
+  directly.
+
+### Changed
+
+- Refreshed the GitHub-facing documentation set (`README.md`,
+  `Documentation/API.md`, `Documentation/INTEGRATION.md`,
+  `Documentation/CDK_COMPARISON.md`, `Documentation/MACOS.md`,
+  `Documentation/ARCHITECTURE.md`) to reflect the current public API surface,
+  host-boundary contract, and macOS integration model.
+- Updated attribution notes to reflect CDK `2.12` as the current parity target
+  for supported workflows.
+
 ## [1.1.1] - 2026-03-09
 
 ### Changed

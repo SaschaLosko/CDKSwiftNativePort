@@ -7,7 +7,7 @@ Upstream project:
 - https://github.com/cdk/cdk
 
 Reference target used for parity work in this port:
-- CDK 2.11
+- CDK 2.12
 
 Reference citations:
 

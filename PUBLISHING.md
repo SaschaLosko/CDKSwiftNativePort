@@ -15,6 +15,8 @@ Required before release:
 - docs updated (`README.md`, `Documentation/API.md`, `Documentation/INTEGRATION.md`, `Documentation/CDK_COMPARISON.md`, `Documentation/MACOS.md`, `CHANGELOG.md`)
 - package boundary policy remains satisfied
 - license and notice files present (`LICENSE`, `NOTICE.md`)
+- if working in the monorepo, verify the host app still links the package
+  product cleanly and does not require package-source references
 
 ## 2) Prepare Release Commit
 
@@ -80,6 +82,9 @@ https://github.com/SaschaLosko/CDKSwiftNativePort.git
 and pin to:
 - exact tag `1.1.1`, or
 - semver range `from: "1.1.1"`
+
+If a new feature is only on `main` and not yet tagged, document that clearly in
+`README.md` and cut a release before recommending it as the default consumer pin.
 
 ## 8) Post-release
 
