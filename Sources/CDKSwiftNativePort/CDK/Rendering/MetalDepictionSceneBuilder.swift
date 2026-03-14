@@ -45,6 +45,7 @@ public struct CDKMetalDepictionScene: Hashable {
         public let italicized: Bool
         public let drawsBackground: Bool
         public let usesGlowOverlay: Bool
+        public let suppressesMatchedBackground: Bool
 
         public init(id: Int,
                     text: String,
@@ -54,7 +55,8 @@ public struct CDKMetalDepictionScene: Hashable {
                     color: CDKRenderColor,
                     italicized: Bool = false,
                     drawsBackground: Bool = true,
-                    usesGlowOverlay: Bool = false) {
+                    usesGlowOverlay: Bool = false,
+                    suppressesMatchedBackground: Bool = false) {
             self.id = id
             self.text = text
             self.position = position
@@ -64,6 +66,7 @@ public struct CDKMetalDepictionScene: Hashable {
             self.italicized = italicized
             self.drawsBackground = drawsBackground
             self.usesGlowOverlay = usesGlowOverlay
+            self.suppressesMatchedBackground = suppressesMatchedBackground
         }
     }
 
@@ -177,6 +180,128 @@ private enum MetalPreparedDepictionCache {
 }
 
 public enum CDKMetalDepictionSceneBuilder {
+    private static func representativeBondLength(molecule: Molecule,
+                                                 positionsByAtomID: [Int: CGPoint]) -> CGFloat? {
+        let bondLengths = molecule.bonds.compactMap { bond -> CGFloat? in
+            guard let p1 = positionsByAtomID[bond.a1],
+                  let p2 = positionsByAtomID[bond.a2] else {
+                return nil
+            }
+            let length = hypot(p2.x - p1.x, p2.y - p1.y)
+            return (length.isFinite && length > 0.0001) ? length : nil
+        }.sorted()
+
+        guard !bondLengths.isEmpty else { return nil }
+        let mid = bondLengths.count / 2
+        if bondLengths.count.isMultiple(of: 2) {
+            return (bondLengths[mid - 1] + bondLengths[mid]) * 0.5
+        }
+        return bondLengths[mid]
+    }
+
+    private static func labelDensityScale(visibleAtomLabelCount: Int) -> CGFloat {
+        let extraLabels = max(0, visibleAtomLabelCount - 2)
+        return (1.0 - (CGFloat(extraLabels) * 0.026)).clamped(to: 0.80...1.0)
+    }
+
+    private static func sceneProminenceBoost(showCarbons: Bool,
+                                             atomCount: Int,
+                                             bondCount: Int,
+                                             visibleAtomLabelCount: Int) -> CGFloat {
+        let extraVisibleLabels = max(0, visibleAtomLabelCount - 1)
+        let hiddenCarbonBias = showCarbons
+            ? CGFloat.zero
+            : max(0, 0.12 - (CGFloat(max(0, visibleAtomLabelCount - 4)) * 0.03))
+        let macroPenalty = (CGFloat(max(0, atomCount - 40)) * 0.004)
+            + (CGFloat(max(0, bondCount - 42)) * 0.003)
+        return (1.60
+            + hiddenCarbonBias
+            - (CGFloat(extraVisibleLabels) * 0.07)
+            - macroPenalty)
+            .clamped(to: 1.0...1.72)
+    }
+
+    private static func zoomVisualScale(_ zoom: CGFloat,
+                                        zoomOutExponent: CGFloat,
+                                        zoomInExponent: CGFloat) -> CGFloat {
+        let safeZoom = max(0.2, zoom)
+        if safeZoom >= 1.0 {
+            return pow(safeZoom, zoomInExponent)
+        }
+        return pow(safeZoom, zoomOutExponent)
+    }
+
+    private static func autoFitLabelFontSize(style: RenderStyle,
+                                             baseViewportFontSize: CGFloat,
+                                             representativeBondLength: CGFloat?,
+                                             atomCount: Int,
+                                             bondCount: Int,
+                                             visibleAtomLabelCount: Int,
+                                             minimumLabelFontSize: CGFloat) -> CGFloat {
+        let clampedMinimum = max(2.5, minimumLabelFontSize)
+        guard let representativeBondLength,
+              representativeBondLength.isFinite,
+              representativeBondLength > 0.0001 else {
+            return max(clampedMinimum, baseViewportFontSize)
+        }
+        if baseViewportFontSize <= clampedMinimum + 0.0001 {
+            return clampedMinimum
+        }
+
+        let densityScale = labelDensityScale(visibleAtomLabelCount: visibleAtomLabelCount)
+        let prominenceBoost = sceneProminenceBoost(showCarbons: style.showCarbons,
+                                                   atomCount: atomCount,
+                                                   bondCount: bondCount,
+                                                   visibleAtomLabelCount: visibleAtomLabelCount)
+        let preferredMinimumRatio = ((style.fontSize / 152.0) * densityScale).clamped(to: 0.126...0.166)
+        let ratioFloorFontSize = representativeBondLength * preferredMinimumRatio
+        let prominenceFontSize = baseViewportFontSize * prominenceBoost
+        let boostedFontSize = max(baseViewportFontSize, max(ratioFloorFontSize, prominenceFontSize))
+        let absoluteMaxFontSize = max(clampedMinimum,
+                                      baseViewportFontSize * (prominenceBoost + 0.10).clamped(to: 1.16...1.50))
+        return boostedFontSize.clamped(to: clampedMinimum...absoluteMaxFontSize)
+    }
+
+    private static func autoFitBondWidth(style: RenderStyle,
+                                         baseViewportBondWidth: CGFloat,
+                                         representativeBondLength: CGFloat?,
+                                         atomCount: Int,
+                                         bondCount: Int,
+                                         visibleAtomLabelCount: Int) -> CGFloat {
+        guard let representativeBondLength,
+              representativeBondLength.isFinite,
+              representativeBondLength > 0.0001 else {
+            return max(1.0, baseViewportBondWidth)
+        }
+
+        let densityScale = labelDensityScale(visibleAtomLabelCount: visibleAtomLabelCount)
+        let prominenceBoost = sceneProminenceBoost(showCarbons: style.showCarbons,
+                                                   atomCount: atomCount,
+                                                   bondCount: bondCount,
+                                                   visibleAtomLabelCount: visibleAtomLabelCount)
+        let strokeProminenceBoost = 1.0 + ((prominenceBoost - 1.0) * 0.72)
+        let preferredMinimumRatio = ((style.bondWidth / 72.0) * densityScale).clamped(to: 0.016...0.026)
+        let ratioFloorWidth = representativeBondLength * preferredMinimumRatio
+        let prominenceWidth = baseViewportBondWidth * strokeProminenceBoost
+        let boostedBondWidth = max(baseViewportBondWidth, max(ratioFloorWidth, prominenceWidth))
+        let absoluteMaxBondWidth = max(1.0,
+                                       baseViewportBondWidth * (strokeProminenceBoost + 0.06).clamped(to: 1.10...1.34))
+        return boostedBondWidth.clamped(to: 1.0...absoluteMaxBondWidth)
+    }
+
+    private static func usesGlowHighlights(style: RenderStyle) -> Bool {
+        switch style.highlightStyle {
+        case .outerGlow, .outerGlowWhiteEdge:
+            return true
+        case .none, .colored:
+            return false
+        }
+    }
+
+    private static func preservesBackgroundDuringGlow(style: RenderStyle) -> Bool {
+        style.highlightStyle == .outerGlowWhiteEdge
+    }
+
     public static func build(molecule: Molecule,
                              style: RenderStyle,
                              canvasRect: CGRect,
@@ -188,6 +313,8 @@ public enum CDKMetalDepictionSceneBuilder {
                              includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true) -> CDKMetalDepictionScene {
         let prepared = MetalPreparedDepictionCache.preparedData(molecule: molecule, style: style)
         let depictionMolecule = prepared.depictionMolecule
+        let highlightedAtomIDs = style.highlightStyle == .none ? Set<Int>() : Set(depictionMolecule.highlightedAtomIDs)
+        let highlightedBondIDs = style.highlightStyle == .none ? Set<Int>() : Set(depictionMolecule.highlightedBondIDs)
         guard let box = prepared.boundingBox, canvasRect.width > 1, canvasRect.height > 1 else {
             return CDKMetalDepictionScene(gridSegments: [], backgroundBoxes: [], bondSegments: [], labels: [])
         }
@@ -238,7 +365,6 @@ public enum CDKMetalDepictionSceneBuilder {
         // visually reads as labels getting bigger again.
         let viewportAutoFitScale = min(1.90, scale / max(0.0001, referenceFitScale))
         let viewportStrokeScale = viewportAutoFitScale
-        let viewportLabelScale = viewportAutoFitScale
 
         let center = CGPoint(x: available.midX, y: available.midY)
         let baseTransform = CGAffineTransform.identity
@@ -251,9 +377,6 @@ public enum CDKMetalDepictionSceneBuilder {
         let rotationRadians = normalizedRotation * (.pi / 180)
         let rotationCos = cos(rotationRadians)
         let rotationSin = sin(rotationRadians)
-        let clampedMinimumLabelFontSize = max(2.5, minimumLabelFontSize)
-        let labelLayoutFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportLabelScale)
-        let renderedLabelFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportLabelScale * zoom)
 
         func rotateAround(_ point: CGPoint, center: CGPoint) -> CGPoint {
             let rx = point.x - center.x
@@ -277,6 +400,40 @@ public enum CDKMetalDepictionSceneBuilder {
             let basePosition = atom.position.applying(baseTransform)
             basePositionByAtomID[atom.id] = basePosition
         }
+
+        let visibleAtomLabelCount = depictionMolecule.atoms.reduce(into: 0) { partial, atom in
+            let atomDegree = prepared.degreeByAtomID[atom.id] ?? 0
+            if CDKLabelText.shouldDrawLabel(atom: atom,
+                                            degree: atomDegree,
+                                            style: style,
+                                            includeAromaticCarbonLabelsWhenCarbonsHidden: includeAromaticCarbonLabelsWhenCarbonsHidden,
+                                            includeTerminalCarbonLabelsWhenCarbonsHidden: includeTerminalCarbonLabelsWhenCarbonsHidden,
+                                            molecule: depictionMolecule,
+                                            highlightedAtomIDs: highlightedAtomIDs,
+                                            highlightedBondIDs: highlightedBondIDs) {
+                partial += 1
+            }
+        }
+        let representativeBaseBondLength = representativeBondLength(molecule: depictionMolecule,
+                                                                    positionsByAtomID: basePositionByAtomID)
+        let clampedMinimumLabelFontSize = max(2.5, minimumLabelFontSize)
+        let baseViewportLabelFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportAutoFitScale)
+        let labelLayoutFontSize = autoFitLabelFontSize(style: style,
+                                                       baseViewportFontSize: baseViewportLabelFontSize,
+                                                       representativeBondLength: representativeBaseBondLength,
+                                                       atomCount: depictionMolecule.atomCount,
+                                                       bondCount: depictionMolecule.bondCount,
+                                                       visibleAtomLabelCount: visibleAtomLabelCount,
+                                                       minimumLabelFontSize: clampedMinimumLabelFontSize)
+        // When the auto-fit view zooms out, keep labels and strokes from shrinking
+        // as aggressively as the scaffold so sparse scenes stay readable.
+        let zoomedLabelScale = zoomVisualScale(zoom,
+                                               zoomOutExponent: 0.62,
+                                               zoomInExponent: 1.18)
+        let zoomedStrokeScale = zoomVisualScale(zoom,
+                                                zoomOutExponent: 0.68,
+                                                zoomInExponent: 1.14)
+        let renderedLabelFontSize = max(clampedMinimumLabelFontSize, labelLayoutFontSize * zoomedLabelScale)
 
         func pointBounds(_ points: some Sequence<CGPoint>) -> CGRect? {
             var iterator = points.makeIterator()
@@ -357,6 +514,10 @@ public enum CDKMetalDepictionSceneBuilder {
             return applyViewportTransform(basePosition)
         }
 
+        func renderedPoint(for rawPoint: CGPoint) -> CGPoint {
+            applyViewportTransform(rawPoint.applying(baseTransform))
+        }
+
         var positionByAtomID: [Int: CGPoint] = [:]
         for atom in depictionMolecule.atoms {
             guard let basePosition = basePositionByAtomID[atom.id] else { continue }
@@ -369,24 +530,31 @@ public enum CDKMetalDepictionSceneBuilder {
         let aromaticBondIDs = prepared.aromaticBondIDs
         var aromaticEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         var conjugatedDoubleEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
-        let baseBondWidth = max(1.0, style.bondWidth * viewportStrokeScale * zoom)
+        let baseViewportBondWidth = max(1.0, style.bondWidth * viewportStrokeScale)
+        let layoutBondWidth = autoFitBondWidth(style: style,
+                                               baseViewportBondWidth: baseViewportBondWidth,
+                                               representativeBondLength: representativeBaseBondLength,
+                                               atomCount: depictionMolecule.atomCount,
+                                               bondCount: depictionMolecule.bondCount,
+                                               visibleAtomLabelCount: visibleAtomLabelCount)
+        let baseBondWidth = max(1.0, layoutBondWidth * zoomedStrokeScale)
         let stereoScale = style.stereoAttenuation.clamped(to: 0.4...1.2)
         let hashedStereoScale = style.hashedStereoAttenuation.clamped(to: 0.5...1.05)
         // Keep stereo wedges visually balanced against compact CDK-like label sizes,
         // especially in reaction depictions where participant styles are reduced.
         let stereoBaseHalfWidth = max(style.fontSize * 0.24, style.bondWidth * 2.15) * stereoScale * viewportStrokeScale
-        let stereoSolidWedgeHalfWidth = stereoBaseHalfWidth * zoom
-        let stereoHashedWedgeHalfWidth = max(stereoBaseHalfWidth * 1.02, style.bondWidth * 2.35 * viewportStrokeScale) * zoom * hashedStereoScale
-        let doubleBondSeparation = max(3.4, style.bondWidth * 2.25 * viewportStrokeScale) * zoom
+        let stereoSolidWedgeHalfWidth = stereoBaseHalfWidth * zoomedStrokeScale
+        let stereoHashedWedgeHalfWidth = max(stereoBaseHalfWidth * 1.02, style.bondWidth * 2.35 * viewportStrokeScale) * zoomedStrokeScale * hashedStereoScale
+        let doubleBondSeparation = max(3.4, style.bondWidth * 2.25 * viewportStrokeScale) * zoomedStrokeScale
         let doubleBondHalfSeparation = doubleBondSeparation * 0.5
-        let tripleBondOffset = max(3.1, style.bondWidth * 2.2 * viewportStrokeScale) * zoom
+        let tripleBondOffset = max(3.1, style.bondWidth * 2.2 * viewportStrokeScale) * zoomedStrokeScale
         let backgroundBoxes = CDKMarkushRendering.rGroupBoxes(molecule: depictionMolecule,
                                                               positionsByAtomID: positionByAtomID,
                                                               style: style,
-                                                              padding: max(1.4, style.bondWidth * 0.55 * viewportStrokeScale) * zoom,
-                                                              fontSize: max(2.5, style.fontSize * viewportLabelScale * zoom),
+                                                              padding: max(1.4, style.bondWidth * 0.55 * viewportStrokeScale) * zoomedStrokeScale,
+                                                              fontSize: renderedLabelFontSize,
                                                               bondWidth: baseBondWidth,
-                                                              scale: viewportStrokeScale * zoom)
+                                                              scale: viewportStrokeScale * zoomedStrokeScale)
             .map {
                 CDKMetalDepictionScene.BackgroundBox(rect: $0.boxRect,
                                                      cornerRadius: $0.cornerRadius,
@@ -395,7 +563,12 @@ public enum CDKMetalDepictionSceneBuilder {
             }
         let linkAnnotations = CDKMarkushRendering.linkAnnotations(molecule: depictionMolecule,
                                                                   positionsByAtomID: positionByAtomID,
-                                                                  fontSize: max(2.5, style.fontSize * viewportLabelScale * zoom))
+                                                                  fontSize: renderedLabelFontSize)
+        let sgroupBracketAnnotations = CDKSgroupRendering.bracketAnnotations(molecule: depictionMolecule,
+                                                                             positionsByAtomID: positionByAtomID,
+                                                                             transformPoint: renderedPoint(for:),
+                                                                             fontSize: renderedLabelFontSize,
+                                                                             bondWidth: baseBondWidth)
 
         for ring in aromaticRings where ring.count >= 3 {
             let ringPoints = ring.compactMap { positionByAtomID[$0] }
@@ -461,7 +634,7 @@ public enum CDKMetalDepictionSceneBuilder {
             let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
             guard let inward = normalize(dx: center.x - mid.x, dy: center.y - mid.y) else { return }
             let trim = CGFloat(0.16)
-            let inset = max(1.6, style.bondWidth * 0.95 * viewportStrokeScale) * zoom
+            let inset = max(1.6, style.bondWidth * 0.95 * viewportStrokeScale) * zoomedStrokeScale
             let a = CGPoint(x: p1.x + (p2.x - p1.x) * trim + inward.0 * inset,
                             y: p1.y + (p2.y - p1.y) * trim + inward.1 * inset)
             let b = CGPoint(x: p2.x + (p1.x - p2.x) * trim + inward.0 * inset,
@@ -598,11 +771,92 @@ public enum CDKMetalDepictionSceneBuilder {
             for segment in CDKMarkushRendering.attachmentPointSegments(center: center,
                                                                        other: other,
                                                                        style: style,
-                                                                       scale: viewportStrokeScale * zoom) {
+                                                                       scale: viewportStrokeScale * zoomedStrokeScale) {
                 appendSegment(segment.from,
                               segment.to,
                               width: max(1.0, baseBondWidth * 0.92),
                               opacity: 0.95,
+                              color: color,
+                              into: &segments)
+            }
+        }
+
+        func appendDashedSegment(_ from: CGPoint,
+                                 _ to: CGPoint,
+                                 width: CGFloat,
+                                 opacity: CGFloat,
+                                 color: CDKRenderColor,
+                                 into segments: inout [CDKMetalDepictionScene.LineSegment]) {
+            let dx = to.x - from.x
+            let dy = to.y - from.y
+            let length = hypot(dx, dy)
+            guard length > 0.0001 else { return }
+            let direction = CGVector(dx: dx / length, dy: dy / length)
+            let dashLength = max(width * 3.6, 8.0)
+            let gapLength = max(width * 1.8, 4.8)
+            var traveled: CGFloat = 0
+            while traveled < length {
+                let start = traveled
+                let end = min(length, traveled + dashLength)
+                let p1 = CGPoint(x: from.x + direction.dx * start, y: from.y + direction.dy * start)
+                let p2 = CGPoint(x: from.x + direction.dx * end, y: from.y + direction.dy * end)
+                appendSegment(p1, p2, width: width, opacity: opacity, color: color, into: &segments)
+                traveled += dashLength + gapLength
+            }
+        }
+
+        func appendGlowSegment(_ from: CGPoint,
+                               _ to: CGPoint,
+                               width: CGFloat,
+                               into segments: inout [CDKMetalDepictionScene.LineSegment]) {
+            let glowWidth = max(width * 2.35, width + max(1.6, style.bondWidth * 1.8))
+            appendSegment(from,
+                          to,
+                          width: glowWidth,
+                          opacity: 0.34,
+                          color: .outerGlowHighlight,
+                          into: &segments)
+        }
+
+        func appendQuerySecondaryLine(from p1: CGPoint,
+                                      to p2: CGPoint,
+                                      px: CGFloat,
+                                      py: CGFloat,
+                                      centers: [CGPoint],
+                                      paritySeed: Int,
+                                      color: CDKRenderColor,
+                                      dashed: Bool,
+                                      into segments: inout [CDKMetalDepictionScene.LineSegment]) {
+            let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
+            let summed = centers.reduce((dx: CGFloat(0), dy: CGFloat(0))) { partial, c in
+                (dx: partial.dx + (c.x - mid.x), dy: partial.dy + (c.y - mid.y))
+            }
+            let preferred = normalize(dx: summed.dx, dy: summed.dy)
+            let sign: CGFloat
+            if let preferred {
+                sign = (preferred.0 * px + preferred.1 * py) >= 0 ? 1 : -1
+            } else {
+                sign = (paritySeed % 2 == 0) ? 1 : -1
+            }
+
+            let trim = CGFloat(0.15)
+            let inset = doubleBondSeparation
+            let a = CGPoint(x: p1.x + (p2.x - p1.x) * trim + px * inset * sign,
+                            y: p1.y + (p2.y - p1.y) * trim + py * inset * sign)
+            let b = CGPoint(x: p2.x + (p1.x - p2.x) * trim + px * inset * sign,
+                            y: p2.y + (p1.y - p2.y) * trim + py * inset * sign)
+            if dashed {
+                appendDashedSegment(a,
+                                    b,
+                                    width: max(1.0, baseBondWidth * 0.82),
+                                    opacity: 0.92,
+                                    color: color,
+                                    into: &segments)
+            } else {
+                appendSegment(a,
+                              b,
+                              width: max(1.0, baseBondWidth * 0.82),
+                              opacity: 0.92,
                               color: color,
                               into: &segments)
             }
@@ -613,7 +867,11 @@ public enum CDKMetalDepictionSceneBuilder {
 
         for bond in depictionMolecule.bonds {
             guard let p1 = positionByAtomID[bond.a1], let p2 = positionByAtomID[bond.a2] else { continue }
-            let bondColor = CDKRenderingStyleResolver.bondColor(for: bond, molecule: depictionMolecule, style: style)
+            let glowHighlighted = usesGlowHighlights(style: style) && highlightedBondIDs.contains(bond.id)
+            let bondColor = CDKRenderingStyleResolver.bondColor(for: bond,
+                                                                molecule: depictionMolecule,
+                                                                style: style,
+                                                                highlightedBondIDs: highlightedBondIDs)
 
             let dx = p2.x - p1.x
             let dy = p2.y - p1.y
@@ -623,8 +881,99 @@ public enum CDKMetalDepictionSceneBuilder {
             let edgeKey = MetalRenderEdgeKey(bond.a1, bond.a2)
             let aromaticCenters = aromaticEdgeCenters[edgeKey] ?? []
             let conjugatedCenters = conjugatedDoubleEdgeCenters[edgeKey] ?? []
+            let aromaticStyled = bond.order == .aromatic
+                || (style.aromaticDisplayMode == .circle && aromaticBondIDs.contains(bond.id))
 
-            if bond.order == .aromatic {
+            func appendQueryBondSegments() {
+                let queryColor = bondColor
+                switch bond.queryType {
+                case .any:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
+                    appendDashedSegment(p1,
+                                        p2,
+                                        width: max(1.0, baseBondWidth * 0.92),
+                                        opacity: 0.94,
+                                        color: queryColor,
+                                        into: &bondSegments)
+                case .singleOrDouble:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
+                    appendSegment(p1,
+                                  p2,
+                                  width: baseBondWidth,
+                                  opacity: 0.95,
+                                  color: queryColor,
+                                  into: &bondSegments)
+                    appendQuerySecondaryLine(from: p1,
+                                             to: p2,
+                                             px: px,
+                                             py: py,
+                                             centers: conjugatedCenters.isEmpty ? aromaticCenters : conjugatedCenters,
+                                             paritySeed: bond.id,
+                                             color: queryColor,
+                                             dashed: true,
+                                             into: &bondSegments)
+                case .singleOrAromatic:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.92), into: &bondSegments)
+                    }
+                    appendSegment(p1,
+                                  p2,
+                                  width: max(1.0, baseBondWidth * 0.92),
+                                  opacity: 0.90,
+                                  color: queryColor,
+                                  into: &bondSegments)
+                    appendQuerySecondaryLine(from: p1,
+                                             to: p2,
+                                             px: px,
+                                             py: py,
+                                             centers: aromaticCenters,
+                                             paritySeed: bond.id,
+                                             color: queryColor,
+                                             dashed: true,
+                                             into: &bondSegments)
+                case .doubleOrAromatic:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
+                    appendSegment(p1.offsetBy(dx: px * doubleBondHalfSeparation, dy: py * doubleBondHalfSeparation),
+                                  p2.offsetBy(dx: px * doubleBondHalfSeparation, dy: py * doubleBondHalfSeparation),
+                                  width: baseBondWidth,
+                                  opacity: 0.95,
+                                  color: queryColor,
+                                  into: &bondSegments)
+                    appendQuerySecondaryLine(from: p1,
+                                             to: p2,
+                                             px: px,
+                                             py: py,
+                                             centers: aromaticCenters,
+                                             paritySeed: bond.id,
+                                             color: queryColor,
+                                             dashed: true,
+                                             into: &bondSegments)
+                case .none:
+                    break
+                }
+            }
+
+            if bond.queryType != nil {
+                appendQueryBondSegments()
+                if atomByID[bond.a1]?.attachmentPoint != nil {
+                    appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
+                }
+                if atomByID[bond.a2]?.attachmentPoint != nil {
+                    appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
+                }
+                continue
+            }
+
+            if aromaticStyled {
+                if glowHighlighted {
+                    appendGlowSegment(p1, p2, width: max(1.1, baseBondWidth * 0.88), into: &bondSegments)
+                }
                 appendSegment(p1,
                               p2,
                               width: max(1.1, baseBondWidth * 0.88),
@@ -653,19 +1002,40 @@ public enum CDKMetalDepictionSceneBuilder {
             case .single:
                 switch bond.stereo {
                 case .up:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
                     appendSolidWedge(from: p1, to: p2, color: bondColor, into: &bondSegments)
                 case .upReversed:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
                     appendSolidWedge(from: p2, to: p1, color: bondColor, into: &bondSegments)
                 case .down:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
                     appendHashedWedge(from: p1, to: p2, color: bondColor, into: &bondSegments)
                 case .downReversed:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
                     appendHashedWedge(from: p2, to: p1, color: bondColor, into: &bondSegments)
                 case .either:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.72), into: &bondSegments)
+                    }
                     appendSegment(p1, p2, width: max(1.0, baseBondWidth * 0.72), opacity: 0.78, color: bondColor, into: &bondSegments)
                 case .none:
+                    if glowHighlighted {
+                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    }
                     appendSegment(p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
                 }
             case .double:
+                if glowHighlighted {
+                    appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                }
                 if !conjugatedCenters.isEmpty {
                     appendSegment(p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
                     appendConjugatedDoubleInnerLine(from: p1,
@@ -691,6 +1061,9 @@ public enum CDKMetalDepictionSceneBuilder {
                                   into: &bondSegments)
                 }
             case .triple:
+                if glowHighlighted {
+                    appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                }
                 appendSegment(p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
                 appendSegment(CGPoint(x: p1.x + px * tripleBondOffset, y: p1.y + py * tripleBondOffset),
                               CGPoint(x: p2.x + px * tripleBondOffset, y: p2.y + py * tripleBondOffset),
@@ -705,6 +1078,9 @@ public enum CDKMetalDepictionSceneBuilder {
                               color: bondColor,
                               into: &bondSegments)
             case .aromatic:
+                if glowHighlighted {
+                    appendGlowSegment(p1, p2, width: max(1.1, baseBondWidth * 0.88), into: &bondSegments)
+                }
                 appendSegment(p1,
                               p2,
                               width: max(1.1, baseBondWidth * 0.88),
@@ -721,11 +1097,38 @@ public enum CDKMetalDepictionSceneBuilder {
             }
         }
 
+        for annotation in sgroupBracketAnnotations {
+            for segment in annotation.segments {
+                appendSegment(segment.from,
+                              segment.to,
+                              width: max(0.95, baseBondWidth * 0.84),
+                              opacity: 0.92,
+                              color: .ink,
+                              into: &bondSegments)
+            }
+        }
+
         if style.aromaticDisplayMode == .circle {
             for ring in aromaticRings where ring.count >= 5 {
                 let ringPoints = ring.compactMap { positionByAtomID[$0] }
                 guard ringPoints.count == ring.count else { continue }
-                let ringColor = CDKRenderingStyleResolver.aromaticRingColor(atomIDs: ring, molecule: depictionMolecule, style: style)
+                let ringColor = CDKRenderingStyleResolver.aromaticRingColor(atomIDs: ring,
+                                                                            molecule: depictionMolecule,
+                                                                            style: style,
+                                                                            highlightedBondIDs: highlightedBondIDs)
+                let ringIsHighlighted = usesGlowHighlights(style: style) && (0..<ring.count).contains { index in
+                    let atom1 = ring[index]
+                    let atom2 = ring[(index + 1) % ring.count]
+                    guard let bond = depictionMolecule.bond(between: atom1, and: atom2) else { return false }
+                    return highlightedBondIDs.contains(bond.id)
+                }
+                if ringIsHighlighted {
+                    appendAromaticCircle(points: ringPoints,
+                                         color: .outerGlowHighlight,
+                                         width: max(1.0, baseBondWidth * 1.95),
+                                         opacity: 0.26,
+                                         into: &bondSegments)
+                }
                 appendAromaticCircle(points: ringPoints,
                                      color: ringColor,
                                      width: max(1.0, baseBondWidth * 0.84),
@@ -879,7 +1282,10 @@ public enum CDKMetalDepictionSceneBuilder {
                                                degree: atomDegree,
                                                style: style,
                                                includeAromaticCarbonLabelsWhenCarbonsHidden: includeAromaticCarbonLabelsWhenCarbonsHidden,
-                                               includeTerminalCarbonLabelsWhenCarbonsHidden: includeTerminalCarbonLabelsWhenCarbonsHidden),
+                                               includeTerminalCarbonLabelsWhenCarbonsHidden: includeTerminalCarbonLabelsWhenCarbonsHidden,
+                                               molecule: depictionMolecule,
+                                               highlightedAtomIDs: highlightedAtomIDs,
+                                               highlightedBondIDs: highlightedBondIDs),
                   let anchor = basePositionByAtomID[atom.id] else { continue }
 
             let implicitH = style.showImplicitHydrogens ? depictionMolecule.implicitHydrogenCount(for: atom.id) : 0
@@ -887,7 +1293,9 @@ public enum CDKMetalDepictionSceneBuilder {
 
             let neighborPositions = depictionMolecule.neighbors(of: atom.id).compactMap { basePositionByAtomID[$0] }
             let estimated = estimateLabelSize(text: text, fontSize: labelLayoutFontSize)
-            let atomColor = CDKRenderingStyleResolver.atomColor(for: atom, style: style)
+            let atomColor = CDKRenderingStyleResolver.atomColor(for: atom,
+                                                                style: style,
+                                                                highlightedAtomIDs: highlightedAtomIDs)
             let centerOffset = CDKLabelText.centerOffset(atom: atom,
                                                          style: style,
                                                          implicitHydrogenCount: implicitH,
@@ -971,7 +1379,7 @@ public enum CDKMetalDepictionSceneBuilder {
             placedRects.append(bestRect)
         }
 
-        let labelClipPadding = max(1.4, style.bondWidth * 0.55 * viewportStrokeScale) * zoom
+        let labelClipPadding = max(1.4, style.bondWidth * 0.55 * viewportStrokeScale) * zoomedStrokeScale
         let labelClipObstacles: [CDKLabelObstacle] = pendingLabels.compactMap { label in
             guard let center = resolvedCentersByAtomID[label.atomID] else { return nil }
             let renderedCenter = renderedPosition(for: label.atomID, basePosition: center)
@@ -995,10 +1403,23 @@ public enum CDKMetalDepictionSceneBuilder {
         }
 
         var labels: [CDKMetalDepictionScene.AtomLabel] = []
-        labels.reserveCapacity(pendingLabels.count + linkAnnotations.count * 4 + backgroundBoxes.count)
+        labels.reserveCapacity((pendingLabels.count * 2) + (linkAnnotations.count * 4) + (sgroupBracketAnnotations.count * 2) + backgroundBoxes.count)
         for label in pendingLabels {
             let resolvedBaseCenter = resolvedCentersByAtomID[label.atomID] ?? label.anchor
             let renderedCenter = renderedPosition(for: label.atomID, basePosition: resolvedBaseCenter)
+            let atomHighlighted = usesGlowHighlights(style: style) && highlightedAtomIDs.contains(label.atomID)
+            if atomHighlighted {
+                labels.append(CDKMetalDepictionScene.AtomLabel(id: -(label.atomID + 1_000_000),
+                                                               text: label.text,
+                                                               position: renderedCenter,
+                                                               fontSize: renderedLabelFontSize,
+                                                               aromatic: false,
+                                                               color: CDKRenderColor.outerGlowHighlight.withAlpha(0.92),
+                                                               italicized: CDKLabelText.usesItalicRGroupFont(text: label.text),
+                                                               drawsBackground: false,
+                                                               usesGlowOverlay: true,
+                                                               suppressesMatchedBackground: !preservesBackgroundDuringGlow(style: style)))
+            }
             labels.append(CDKMetalDepictionScene.AtomLabel(id: label.atomID,
                                                            text: label.text,
                                                            position: renderedCenter,
@@ -1051,16 +1472,33 @@ public enum CDKMetalDepictionSceneBuilder {
             }
         }
 
+        for annotation in sgroupBracketAnnotations {
+            if let subscriptText = annotation.subscriptText,
+               let subscriptPosition = annotation.subscriptPosition {
+                appendAnnotationLabel(text: subscriptText,
+                                      position: subscriptPosition,
+                                      fontSize: renderedLabelFontSize * 0.80,
+                                      drawsBackground: false)
+            }
+            if let superscriptText = annotation.superscriptText,
+               let superscriptPosition = annotation.superscriptPosition {
+                appendAnnotationLabel(text: superscriptText,
+                                      position: superscriptPosition,
+                                      fontSize: renderedLabelFontSize * 0.74,
+                                      drawsBackground: false)
+            }
+        }
+
         for annotation in CDKMarkushRendering.rGroupBoxes(molecule: depictionMolecule,
                                                           positionsByAtomID: positionByAtomID,
                                                           style: style,
                                                           padding: labelClipPadding,
                                                           fontSize: renderedLabelFontSize,
                                                           bondWidth: baseBondWidth,
-                                                          scale: viewportStrokeScale * zoom) {
+                                                          scale: viewportStrokeScale * zoomedStrokeScale) {
             appendAnnotationLabel(text: annotation.label,
                                   position: annotation.labelPosition,
-                                  fontSize: renderedLabelFontSize * 0.82,
+                                  fontSize: renderedLabelFontSize,
                                   drawsBackground: false)
         }
 

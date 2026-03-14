@@ -15,6 +15,7 @@ final class PackageBoundaryTests: XCTestCase {
             "import AtomLensSpotlightImporter",
             "import AppKit",
             "import UIKit",
+            "import SwiftUI",
             "import CoreSpotlight",
             "import QuickLook",
             "import QuickLookThumbnailing"

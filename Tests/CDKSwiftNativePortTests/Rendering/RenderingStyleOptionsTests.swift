@@ -87,6 +87,31 @@ final class RenderingStyleOptionsTests: XCTestCase {
         XCTAssertGreaterThan(circleScene.bondSegments.count, innerScene.bondSegments.count + 20)
     }
 
+    func testAromaticCircleModeSuppressesKekuleAlternatingDoubleLines() throws {
+        let molecule = try smilesParser.parseSmiles("C1=CC=CC=C1")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                atomColoringMode: .monochrome,
+                                colorBondsByAtom: false,
+                                aromaticDisplayMode: .circle,
+                                bondWidth: 2.0,
+                                fontSize: 14,
+                                padding: 24)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        let longStraightSegments = scene.bondSegments.filter { segment in
+            hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y) > 30
+        }
+
+        XCTAssertEqual(longStraightSegments.count, 6, "Circle mode should use one perimeter line per aromatic edge, not a circle plus Kekule double bonds.")
+    }
+
     func testSVGContainsCircleAndElementColorWhenEnabled() throws {
         let molecule = try smilesParser.parseSmiles("c1ccccc1O")
         let style = RenderStyle(showCarbons: true,

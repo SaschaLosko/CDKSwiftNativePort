@@ -20,9 +20,12 @@ public struct CDKReactionParticipant: Equatable, Hashable, Codable, Sendable {
 }
 
 public struct CDKReaction: Equatable {
+    public var id: String? = nil
     public var reactantParticipants: [CDKReactionParticipant]
     public var agentParticipants: [CDKReactionParticipant]
     public var productParticipants: [CDKReactionParticipant]
+    public var name: String? = nil
+    public var properties: [String: String] = [:]
     public var cxState: CDKCxSmilesState? = nil
 
     public var reactants: [Molecule] {
@@ -59,7 +62,14 @@ public struct CDKReaction: Equatable {
         reactantParticipants + agentParticipants + productParticipants
     }
 
-    public init(reactants: [Molecule], agents: [Molecule], products: [Molecule], cxState: CDKCxSmilesState? = nil) {
+    public init(reactants: [Molecule],
+                agents: [Molecule],
+                products: [Molecule],
+                id: String? = nil,
+                name: String? = nil,
+                properties: [String: String] = [:],
+                cxState: CDKCxSmilesState? = nil) {
+        self.id = id
         self.reactantParticipants = reactants.map { molecule in
             CDKReactionParticipant(molecule: molecule, role: .reactant)
         }
@@ -69,26 +79,41 @@ public struct CDKReaction: Equatable {
         self.productParticipants = products.map { molecule in
             CDKReactionParticipant(molecule: molecule, role: .product)
         }
+        self.name = name
+        self.properties = properties
         self.cxState = cxState
     }
 
     public init(reactantParticipants: [CDKReactionParticipant],
                 agentParticipants: [CDKReactionParticipant],
                 productParticipants: [CDKReactionParticipant],
+                id: String? = nil,
+                name: String? = nil,
+                properties: [String: String] = [:],
                 cxState: CDKCxSmilesState? = nil) {
+        self.id = id
         self.reactantParticipants = Self.normalizedParticipants(reactantParticipants, role: .reactant)
         self.agentParticipants = Self.normalizedParticipants(agentParticipants, role: .agent)
         self.productParticipants = Self.normalizedParticipants(productParticipants, role: .product)
+        self.name = name
+        self.properties = properties
         self.cxState = cxState
     }
 
-    public init(participants: [CDKReactionParticipant], cxState: CDKCxSmilesState? = nil) {
+    public init(participants: [CDKReactionParticipant],
+                id: String? = nil,
+                name: String? = nil,
+                properties: [String: String] = [:],
+                cxState: CDKCxSmilesState? = nil) {
+        self.id = id
         self.reactantParticipants = participants
             .filter { $0.role == .reactant }
         self.agentParticipants = participants
             .filter { $0.role == .agent }
         self.productParticipants = participants
             .filter { $0.role == .product }
+        self.name = name
+        self.properties = properties
         self.cxState = cxState
     }
 

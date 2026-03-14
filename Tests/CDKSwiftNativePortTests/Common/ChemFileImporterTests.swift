@@ -11,6 +11,18 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertTrue(supported.contains("rxn"))
         XCTAssertTrue(supported.contains("rdf"))
         XCTAssertTrue(supported.contains("rsmi"))
+        XCTAssertTrue(supported.contains("cxsmiles"))
+    }
+
+    func testReadsCxSmilesByCxSmilesExtension() throws {
+        let text = "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+
+        let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "cxsmiles")
+        let molecule = try XCTUnwrap(molecules.first)
+
+        XCTAssertEqual(molecules.count, 1)
+        XCTAssertEqual(molecule.atomCount, 15)
+        XCTAssertTrue(molecule.cxState?.rGroupDefinitions.isEmpty == false)
     }
 
     func testAutoDetectsInChIFromPlainText() throws {
@@ -93,6 +105,29 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertEqual(reaction.productCount, 1)
     }
 
+    func testReadsReactionCMLByCMLExtension() throws {
+        let reaction = try CDKFileImporter.readReaction(text: CMLReactionFixtures.reactionWithProperties,
+                                                        fileExtension: "cml")
+
+        XCTAssertEqual(reaction.id, "reaction.2")
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertEqual(reaction.properties["Ka"], "3")
+
+        let molecules = try CDKFileImporter.readMolecules(text: CMLReactionFixtures.reactionWithProperties,
+                                                          fileExtension: "cml")
+        XCTAssertEqual(molecules.count, 2)
+        XCTAssertEqual(molecules.map(\.externalID), ["react", "product"])
+    }
+
+    func testAutoDetectsReactionCMLFromPlainText() throws {
+        let reaction = try CDKFileImporter.readReaction(text: CMLReactionFixtures.fragmentReaction,
+                                                        fileExtension: "txt")
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertEqual(reaction.agentCount, 1)
+    }
+
     func testReadsMappedReactionSmilesByRSMIExtension() throws {
         let text = "[CH3:1][C:2](=[O:3])[CH2:4][S:5][CH2:6][CH:7]=[CH2:8].[CH3:9][CH:10]([NH2:11])[CH:12]([OH:13])[CH:14]=[CH2:15]>>[CH3:1][C:2](=[O:3])[CH2:4][S:5][CH2:6][CH:7]=[CH:14][CH:12]([CH:10]([CH3:9])[NH2:11])[OH:13]"
 
@@ -120,7 +155,7 @@ final class ChemFileImporterTests: XCTestCase {
         let molecule = try XCTUnwrap(molecules.first)
 
         XCTAssertEqual(molecules.count, 1)
-        XCTAssertEqual(molecule.name, "SMILES")
+        XCTAssertEqual(molecule.name, "")
         XCTAssertEqual(molecule.sgroups.count, 1)
         XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
         XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
@@ -133,7 +168,7 @@ final class ChemFileImporterTests: XCTestCase {
         let molecule = try XCTUnwrap(molecules.first)
 
         XCTAssertEqual(molecules.count, 1)
-        XCTAssertEqual(molecule.name, "SMILES")
+        XCTAssertEqual(molecule.name, "")
         XCTAssertEqual(molecule.sgroups.count, 1)
         XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
         XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)

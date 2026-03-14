@@ -20,9 +20,22 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertTrue(supported.contains("svg"))
     }
 
+    func testFormatsIncludeV3000MolfileExport() {
+        XCTAssertTrue(CDKFileExporter.formats.contains(where: { $0.format == .molV3000 && $0.displayName.contains("V3000") }))
+    }
+
     func testWritesMolAndRoundTrips() throws {
         let molecule = try referenceMolecule(name: "Aspirin")
         let text = try CDKFileExporter.write(molecule: molecule, as: .mol)
+        let parsed = try CDKMDLReader.read(text: text)
+        XCTAssertEqual(parsed.atomCount, molecule.atomCount)
+        XCTAssertEqual(parsed.bondCount, molecule.bondCount)
+    }
+
+    func testWritesV3000MolAndRoundTrips() throws {
+        let molecule = try referenceMolecule(name: "Aspirin")
+        let text = try CDKFileExporter.write(molecule: molecule, as: .molV3000)
+        XCTAssertTrue(text.contains("V3000"))
         let parsed = try CDKMDLReader.read(text: text)
         XCTAssertEqual(parsed.atomCount, molecule.atomCount)
         XCTAssertEqual(parsed.bondCount, molecule.bondCount)
@@ -41,6 +54,17 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed.count, molecules.count)
     }
 
+    func testWritesSDFAsV3000WhenRequested() throws {
+        let molecule = try referenceMolecule(name: "Aspirin")
+        var exportOptions = CDKFileExportOptions()
+        exportOptions.sdfOptions = CDKSDFWriterOptions(alwaysV3000: true)
+
+        let text = try CDKFileExporter.write(molecule: molecule, as: .sdf, options: exportOptions)
+
+        XCTAssertTrue(text.contains("V3000"))
+        XCTAssertFalse(text.contains("V2000"))
+    }
+
     func testWritesSDFDataFieldsAndRoundTripsThem() throws {
         var molecules = try referenceMolecules()
         molecules[0].appendDataFieldValue("001", named: "ID")
@@ -55,6 +79,22 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed[0].dataFieldValues(named: "Tags"), ["alpha", "beta"])
         XCTAssertEqual(parsed[1].orderedDataFieldNames, ["Empty"])
         XCTAssertEqual(parsed[1].dataFieldValues(named: "Empty"), [])
+    }
+
+    func testSDFExportOptionsPropagateToWriter() throws {
+        var molecule = try referenceMolecule(name: "Tagged")
+        molecule.appendDataFieldValue("a", named: "one")
+        molecule.appendDataFieldValue("b", named: "two")
+
+        var exportOptions = CDKFileExportOptions()
+        exportOptions.sdfOptions = CDKSDFWriterOptions(acceptedDataFieldNames: ["one"],
+                                                       programName: "Bioclipse")
+
+        let text = try CDKFileExporter.write(molecule: molecule, as: .sdf, options: exportOptions)
+
+        XCTAssertTrue(text.contains("> <one>"))
+        XCTAssertFalse(text.contains("> <two>"))
+        XCTAssertTrue(text.contains("  Bioclip"))
     }
 
     func testWritesSmilesAndRoundTrips() throws {
@@ -125,6 +165,22 @@ final class ChemFileExporterTests: XCTestCase {
         let text = try CDKFileExporter.write(molecules: molecules, as: .rdf)
         let parsed = try CDKRDFReader.read(text: text)
         XCTAssertEqual(parsed.count, molecules.count)
+    }
+
+    func testWritesReactionCMLAndRoundTrips() throws {
+        let reaction = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
+                                   agents: [],
+                                   products: [try referenceMolecule(name: "Product")],
+                                   id: "cml-rxn-1",
+                                   properties: ["Ka": "3"])
+
+        let text = try CDKFileExporter.write(reaction: reaction, as: .cml)
+        let parsed = try CDKCMLReactionReader.readReaction(text: text)
+
+        XCTAssertEqual(parsed.id, "cml-rxn-1")
+        XCTAssertEqual(parsed.reactantCount, 1)
+        XCTAssertEqual(parsed.productCount, 1)
+        XCTAssertEqual(parsed.properties["Ka"], "3")
     }
 
     func testWritesSVG() throws {

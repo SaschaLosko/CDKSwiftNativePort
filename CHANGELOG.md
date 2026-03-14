@@ -8,8 +8,21 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Added
 
-- CDK 2.12-style Markush / R-group support across the currently supported
-  CXSMILES parsing, layout, SVG, SwiftUI, and Metal depiction paths.
+### Changed
+
+## [1.2.0] - 2026-03-14
+
+### Added
+
+- Expanded CDK 2.12-style CXSMILES support, including highlights, richer
+  Sgroups, ligand ordering, and Markush/link-node handling across parsing,
+  layout, SVG, and scene-generation paths.
+- V2000/V3000/SDF parity work for import/export, including round-trip-focused
+  coverage and V3000 `HILITE` support.
+- CML molecule and reaction import/export support aligned with the current
+  package model and tested for round-trip workflows.
+- Rendering support for non-Markush Sgroups, query atoms/bonds, and additional
+  highlight styles backed by the newer format support.
 - A package-boundary test that verifies the host Xcode project links the
   `CDKSwiftNativePort` package product instead of compiling package source files
   directly.
@@ -18,9 +31,9 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 - Refreshed the GitHub-facing documentation set (`README.md`,
   `Documentation/API.md`, `Documentation/INTEGRATION.md`,
-  `Documentation/CDK_COMPARISON.md`, `Documentation/MACOS.md`,
-  `Documentation/ARCHITECTURE.md`) to reflect the current public API surface,
-  host-boundary contract, and macOS integration model.
+  `Documentation/ARCHITECTURE.md`, `Documentation/CDK_COMPARISON.md`,
+  `Documentation/MACOS.md`, `PUBLISHING.md`) to reflect the current public API
+  surface, host-boundary contract, and macOS integration model.
 - Updated attribution notes to reflect CDK `2.12` as the current parity target
   for supported workflows.
 

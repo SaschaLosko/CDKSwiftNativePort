@@ -23,6 +23,9 @@ public enum CDKFileImporter {
         CDKFileImporterFormat(displayName: "MDL SDFile",
                               fileExtensions: ["sdf", "sd"],
                               utiIdentifiers: ["chemical/x-mdl-sdfile", "net.sourceforge.openbabel.mdl"]),
+        CDKFileImporterFormat(displayName: "CXSMILES",
+                              fileExtensions: ["cxsmiles"],
+                              utiIdentifiers: []),
         CDKFileImporterFormat(displayName: "SMILES",
                               fileExtensions: ["smi", "smiles", "ism", "can"],
                               utiIdentifiers: ["chemical/x-daylight-smiles", "chemical/x-smiles"]),
@@ -67,7 +70,7 @@ public enum CDKFileImporter {
     public static func preferredInputFormat(forFileExtension ext: String,
                                             text: String? = nil) -> ChemFormat {
         let lower = ext.lowercased()
-        if ["smi", "smiles", "ism", "can"].contains(lower) {
+        if ["smi", "smiles", "ism", "can", "cxsmiles"].contains(lower) {
             return .smiles
         }
         if lower == "rsmi" {
@@ -82,41 +85,17 @@ public enum CDKFileImporter {
         return .sdf
     }
 
-    public static func readMolecules(from url: URL) throws -> [Molecule] {
+    public static func readMolecules(from url: URL,
+                                     coordinateAccess: Bool = true) throws -> [Molecule] {
         let ext = url.pathExtension.lowercased()
-        let shouldStopAccess: Bool
-        if url.isFileURL {
-            shouldStopAccess = url.startAccessingSecurityScopedResource()
-        } else {
-            shouldStopAccess = false
-        }
-
-        defer {
-            if shouldStopAccess {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        let text = try decodeText(from: url)
+        let text = try decodeText(from: url, coordinateAccess: coordinateAccess)
         return try readMolecules(text: text, fileExtension: ext)
     }
 
-    public static func readReaction(from url: URL) throws -> CDKReaction {
+    public static func readReaction(from url: URL,
+                                    coordinateAccess: Bool = true) throws -> CDKReaction {
         let ext = url.pathExtension.lowercased()
-        let shouldStopAccess: Bool
-        if url.isFileURL {
-            shouldStopAccess = url.startAccessingSecurityScopedResource()
-        } else {
-            shouldStopAccess = false
-        }
-
-        defer {
-            if shouldStopAccess {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        let text = try decodeText(from: url)
+        let text = try decodeText(from: url, coordinateAccess: coordinateAccess)
         return try readReaction(text: text, fileExtension: ext)
     }
 
@@ -142,6 +121,9 @@ public enum CDKFileImporter {
         case "mol2":
             return try CDKMol2Reader.read(text: text)
         case "cml":
+            if CDKCMLReactionReader.containsReactionMarkup(text) {
+                return try molecules(from: CDKCMLReactionReader.readReactions(text: text))
+            }
             return try CDKCMLReader.read(text: text)
         case "rxn":
             return try CDKRXNReader.read(text: text)
@@ -159,6 +141,8 @@ public enum CDKFileImporter {
         let ext = (fileExtension ?? "").lowercased()
 
         switch ext {
+        case "cml":
+            return try CDKCMLReactionReader.readReaction(text: text)
         case "rxn":
             return try CDKRXNReader.readReaction(text: text)
         case "rdf":
@@ -191,6 +175,9 @@ public enum CDKFileImporter {
             return try CDKMol2Reader.read(text: text)
         }
         if looksLikeCML(text) {
+            if CDKCMLReactionReader.containsReactionMarkup(text) {
+                return try molecules(from: CDKCMLReactionReader.readReactions(text: text))
+            }
             return try CDKCMLReader.read(text: text)
         }
         if looksLikePDB(text) {
@@ -221,10 +208,30 @@ public enum CDKFileImporter {
         if looksLikeRXN(text) {
             return try CDKRXNReader.readReaction(text: text)
         }
+        if looksLikeCML(text), CDKCMLReactionReader.containsReactionMarkup(text) {
+            return try CDKCMLReactionReader.readReaction(text: text)
+        }
         if looksLikeReactionSmiles(text) {
             return try parseReactionSmiles(text)
         }
         throw ChemError.unsupported("Unable to detect a supported reaction format.")
+    }
+
+    public static func looksLikeReaction(text: String, fileExtension: String?) -> Bool {
+        let ext = (fileExtension ?? "").lowercased()
+        if ext == "rxn" || ext == "rdf" || ext == "rsmi" {
+            return true
+        }
+        if ext == "cml" && CDKCMLReactionReader.containsReactionMarkup(text) {
+            return true
+        }
+        if looksLikeRDF(text) || looksLikeRXN(text) {
+            return true
+        }
+        if looksLikeCML(text), CDKCMLReactionReader.containsReactionMarkup(text) {
+            return true
+        }
+        return looksLikeReactionSmiles(text)
     }
 
     private static func parseReactionSmiles(_ text: String) throws -> CDKReaction {
@@ -239,12 +246,15 @@ public enum CDKFileImporter {
         reaction.reactants + reaction.agents + reaction.products
     }
 
-    private static func decodeText(from url: URL) throws -> String {
-        let data = try Data(contentsOf: url)
-        if let utf8 = String(data: data, encoding: .utf8) {
-            return utf8
-        }
-        return String(decoding: data, as: UTF8.self)
+    private static func molecules(from reactions: [CDKReaction]) -> [Molecule] {
+        reactions.flatMap(molecules(from:))
+    }
+
+    private static func decodeText(from url: URL,
+                                   coordinateAccess: Bool = true) throws -> String {
+        try CDKFileAccess.decodeText(from: url,
+                                     preferredEncodings: [.utf8],
+                                     coordinateAccess: coordinateAccess)
     }
 
     private static func firstMeaningfulLine(in text: String) -> String? {

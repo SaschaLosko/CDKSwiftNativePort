@@ -42,6 +42,27 @@ final class DepictionGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(lineCount, 2, "Expected at least two line segments for a double bond.")
     }
 
+    func testSVGCircleModeSuppressesKekuleAlternatingDoubleLines() throws {
+        let molecule = try smilesParser.parseSmiles("C1=CC=CC=C1")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                atomColoringMode: .monochrome,
+                                colorBondsByAtom: false,
+                                aromaticDisplayMode: .circle,
+                                bondWidth: 2.0,
+                                fontSize: 14,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 600, height: 400))
+
+        let lineCount = svg.components(separatedBy: "<line ").count - 1
+        XCTAssertEqual(lineCount, 6, "Circle mode should not keep Kekule double bonds when the aromatic circle is shown.")
+        XCTAssertTrue(svg.contains("<circle "))
+    }
+
     func testRendersStereoUpBondAsWedgePolygon() {
         let molecule = Molecule(
             name: "StereoUp",
@@ -146,6 +167,174 @@ final class DepictionGeneratorTests: XCTestCase {
         XCTAssertTrue(svg.contains(">R¹</text>"))
         XCTAssertTrue(svg.contains(">Cl</text>"))
         XCTAssertFalse(svg.contains("_AP1"))
+    }
+
+    func testSVGUsesCDKSelectionColorForHighlightedAtomsAndBonds() throws {
+        let molecule = try smilesParser.parseSmiles("CN |ha:1,hb:0|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains("stroke=\"#49DFFF\""))
+        XCTAssertTrue(svg.contains("fill=\"#49DFFF\""))
+    }
+
+    func testSVGUsesCDKSelectionColorForHighlightsImportedFromV3000Collection() throws {
+        let molecule = try CDKMDLV3000Reader.read(text: """
+V3000Highlighted
+CDKSwiftNativePort
+
+  0  0  0  0  0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0 0 0 0
+M  V30 2 N 1.2 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/HILITE ATOMS=(1 2) BONDS=(1 1)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+""")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains("stroke=\"#49DFFF\""))
+        XCTAssertTrue(svg.contains("fill=\"#49DFFF\""))
+    }
+
+    func testSVGRendersQueryAtomListLabels() {
+        let molecule = Molecule(name: "QueryAtom",
+                                atoms: [
+                                    Atom(id: 1,
+                                         element: "L",
+                                         position: CGPoint(x: 0, y: 0),
+                                         queryType: .anyAtom,
+                                         atomList: ["C", "N"]),
+                                    Atom(id: 2, element: "O", position: CGPoint(x: 1.2, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single)
+                                ])
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains(">[C,N]</text>"))
+    }
+
+    func testSVGRendersQueryBondSemanticsWithDashedSecondaryLine() {
+        let molecule = Molecule(name: "QueryBond",
+                                atoms: [
+                                    Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                                    Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single, queryType: .singleOrDouble)
+                                ])
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains("stroke-dasharray="))
+        XCTAssertGreaterThanOrEqual(svg.components(separatedBy: "<line ").count - 1, 2)
+    }
+
+    func testSVGDrawsPolymerSgroupBracketAnnotations() {
+        var molecule = Molecule(name: "PolymerBracket",
+                                atoms: [
+                                    Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                                    Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single)
+                                ])
+        molecule.sgroups = [
+            MoleculeSgroup(kind: .polymer,
+                           keyword: "COP",
+                           atomIDs: [1, 2],
+                           subtype: "RAN")
+        ]
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains(">ran</text>"))
+    }
+
+    func testSVGUsesGlowHighlightModeForHighlightedAtomsAndBonds() throws {
+        let molecule = try smilesParser.parseSmiles("CN |ha:1,hb:0|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                highlightStyle: .outerGlow,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains("stroke=\"\(CDKRenderColor.outerGlowHighlight.svgHexRGB())\""))
+        XCTAssertFalse(svg.contains("fill=\"#49DFFF\""))
+    }
+
+    func testSVGUsesWhiteEdgeStrokeForGlowWhiteEdgeMode() throws {
+        let molecule = try smilesParser.parseSmiles("CN |ha:1,hb:0|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                highlightStyle: .outerGlowWhiteEdge,
+                                bondWidth: 2.0,
+                                fontSize: 16,
+                                padding: 24)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 520, height: 360))
+
+        XCTAssertTrue(svg.contains("stroke=\"#FFFFFF\""))
     }
 
     func testSVGDrawsMarkushBoxAndLinkNodeAnnotations() throws {

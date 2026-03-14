@@ -6,84 +6,99 @@ Upstream reference: <https://github.com/cdk/cdk>
 
 ## Scope Summary
 
-- **Original CDK**: a broad Java chemistry toolkit with extensive modules for
-  IO, structure handling, descriptors, rendering, atom typing, fingerprints,
-  substructure search, and more.
-- **CDKSwiftNativePort**: a Swift-native package that ports and re-expresses the
-  subset of CDK functionality needed for current native-host workflows.
+- **Original CDK** is a broad Java chemistry toolkit with a large module set.
+- **CDKSwiftNativePort** is a Swift-native port that focuses on the workflows
+  needed by native Apple hosts: parsing, layout, depiction, identifiers,
+  descriptors, and major file formats.
 
-The current parity target for this port is CDK `2.12` for the areas covered by
-the package today. That does not imply full port parity for every CDK module.
+The current parity target for the supported surface in this package is CDK
+`2.12`. That does not mean every CDK module is ported.
 
 ## Side-by-Side Overview
 
 | Area | Original CDK (Java) | CDKSwiftNativePort (Swift) |
 |---|---|---|
-| Runtime | JVM | Native Swift on Apple platforms |
-| Core model | `IAtom`, `IBond`, `IAtomContainer`, interface-heavy graph model | `Atom`, `Bond`, `Molecule` value types |
-| API style | Java OO interfaces and factories | Swift value types plus focused facade APIs |
-| SMILES | Mature parser/generator stack | CDK-style parser/generator, reaction SMILES, CXSMILES state handling |
-| CXSMILES Markush | CDK 2.12 supports `RG:` / link-node depiction path | Ported support for the currently implemented Markush / R-group path |
-| InChI | CDK wrapper APIs | Native Swift-facing parse/generate facades |
-| File IO | Broad reader/writer module set | Unified importer/exporter plus focused reader/writer coverage |
-| 2D layout | Structure diagram generator | `Depiction2DGenerator` backed by the Swift port |
-| Rendering | CDK depiction infrastructure | SVG output, SwiftUI rendering, Metal scene primitives |
-| Descriptors | Very broad | Focused descriptor set used by current hosts |
-| Host integration | N/A | Explicitly excludes host-app wiring |
+| Runtime | JVM | Native Swift |
+| Core model | interface-heavy `IAtomContainer` ecosystem | Swift value types (`Molecule`, `Atom`, `Bond`) |
+| API style | Java OO interfaces and factories | Swift-first facades plus lower-level readers/writers |
+| SMILES | mature parser/generator stack | SMILES, reaction SMILES, CXSMILES |
+| MDL | V2000, V3000, SDF, RXN, RDF | same major formats with round-trip coverage |
+| CML | broad molecule/reaction support | molecule and reaction CML support |
+| Layout | structure diagram generator | `Depiction2DGenerator` |
+| Rendering | CDK depiction infrastructure | SVG plus renderer-neutral scene generation |
+| Descriptors | extensive descriptor set | focused descriptor/property set used by hosts |
+| Host integration | not applicable | explicitly excludes app/extension implementation |
 
 ## Areas With Strong Current Coverage
 
-- Molecule graph model and stereochemistry
-- SMILES parsing and generation
-- reaction SMILES parsing
-- CXSMILES parsing used by the supported depiction path
-- InChI parse/generate integration
-- MDL Molfile / SDF / RXN / RDF support
-- MOL2, PDB, XYZ, and CML IO
+- molecule and reaction model types
+- SMILES and reaction SMILES parsing/generation
+- CXSMILES layers used by CDK 2.12-backed host workflows:
+  - atom labels and atom values
+  - coordinates
+  - radicals
+  - enhanced stereo metadata
+  - fragment grouping
+  - `ha:` / `hb:` highlights
+  - ligand ordering
+  - Markush `RG:` and link-node `LN:`
+  - polymer/data/generic/positional-variation Sgroups
+- MDL Molfile V2000 import/export
+- MDL Molfile V3000 import/export, including `HILITE`
+- SDF import/export with SD data fields and mixed V2000/V3000 records
+- RXN and RDF support
+- CML molecule and reaction support
+- InChI integration
 - CDK-derived 2D layout
-- SVG / SwiftUI / Metal-scene depiction
-- identifier and selected descriptor services
-
-## CDK 2.12-Specific Highlights in This Port
-
-The current branch includes CDK 2.12-derived work for the supported Markush
-path, including:
-
-- CXSMILES `RG:` R-group parsing
-- link-node / repeat-unit handling used by the current depiction flow
-- Markush legend layout and depiction
-- host-friendly Metal scene behavior for rotating scaffolds while keeping the
-  Markush legend fixed
+- depiction support for:
+  - aromatic display modes
+  - Markush legends
+  - Sgroup brackets and labels
+  - query atoms and query bonds
+  - highlight rendering modes
 
 ## Intentional Differences
 
-- The API surface is Swift-first rather than a Java API mirror.
-- The package favors a small number of host-facing facade types
-  (`CDKFileImporter`, `CDKFileExporter`, `CDKMoleculeIdentifierService`,
-  `CDKMoleculePropertyService`) over exposing every internal port layer.
-- Rendering is expressed in outputs that fit native Apple hosts:
-  SVG strings, SwiftUI `GraphicsContext`, and renderer-neutral scene primitives.
-- Host integration concerns such as Spotlight, Quick Look, document windows,
-  and bundle metadata stay outside the package.
+- The API is Swift-first instead of mirroring CDK’s Java interfaces.
+- The package emphasizes a small set of façade APIs rather than exposing every
+  internal implementation detail as a first-class integration surface.
+- Rendering output is package-owned as SVG or neutral scene data, not as a Java
+  renderer object graph.
+- Host concerns such as Quick Look, Spotlight, document state, and app UI stay
+  outside the package.
 
-## Not Yet a Full CDK Port
+## macOS-Oriented Differences
 
-The following CDK areas are not exposed as package-wide parity targets today:
+Compared with upstream CDK, this port adds host-facing concerns that are useful
+for native Apple apps:
 
-- generalized SMARTS and substructure search modules
-- fingerprint / similarity modules
-- force-field / 3D generation workflows
-- full atom typing / matcher breadth
+- coordinated file access via `CDKFileAccess`
+- renderer-neutral scene generation for host Metal/Core Graphics pipelines
+- package boundaries that make reuse from app extensions practical
+
+Those are integration conveniences around the chemistry core, not attempts to
+reproduce the original Java runtime model.
+
+## Remaining Scope Limits
+
+The following CDK areas are still outside the package’s current parity target:
+
+- generalized SMARTS and broad substructure-search modules
+- fingerprint/similarity toolkits
+- force-field and 3D generation workflows
 - the broader long tail of CDK QSAR descriptors
-- complete parity for every CXSMILES extension outside the supported paths
+- first-class reaction-scheme object models
+- every configurable reader/writer mode from upstream CDK
 
-These areas should be treated as out of scope unless explicitly added.
+For reaction CML specifically, reaction schemes and lists can be read, but they
+are flattened to `[CDKReaction]` because the Swift package does not currently
+define a separate reaction-scheme type.
 
 ## Parity Tracking
 
-Parity-oriented tests and metadata references live in:
+Parity-oriented metadata lives under:
 
 - `Tests/CDKSwiftNativePortTests/**/port_metadata.json`
 
-These metadata files document links back to upstream CDK tests where applicable
-and help keep the supported feature surface traceable to the original toolkit.
+Those metadata files link the current Swift test surface back to the upstream
+CDK 2.12 tests that informed the port.

@@ -15,6 +15,8 @@ public enum CDKDepictionGenerator {
         let height = max(1, canvasSize.height)
 
         let depictionMolecule = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: style)
+        let highlightedAtomIDs = style.highlightStyle == .none ? Set<Int>() : Set(depictionMolecule.highlightedAtomIDs)
+        let highlightedBondIDs = style.highlightStyle == .none ? Set<Int>() : Set(depictionMolecule.highlightedBondIDs)
         guard let box = depictionMolecule.boundingBox() else {
             return """
             <svg xmlns="http://www.w3.org/2000/svg" width="\(Int(width))" height="\(Int(height))" viewBox="0 0 \(Int(width)) \(Int(height))"></svg>
@@ -105,7 +107,12 @@ public enum CDKDepictionGenerator {
         let labelClipPadding = max(1.4, style.bondWidth * 0.55)
         let labelClipObstacles: [CDKLabelObstacle] = depictionMolecule.atoms.compactMap { atom in
             let atomDegree = degree[atom.id] ?? 0
-            guard CDKLabelText.shouldDrawLabel(atom: atom, degree: atomDegree, style: style),
+            guard CDKLabelText.shouldDrawLabel(atom: atom,
+                                               degree: atomDegree,
+                                               style: style,
+                                               molecule: depictionMolecule,
+                                               highlightedAtomIDs: highlightedAtomIDs,
+                                               highlightedBondIDs: highlightedBondIDs),
                   let pos = p(atom.id) else {
                 return nil
             }
@@ -131,6 +138,11 @@ public enum CDKDepictionGenerator {
         let linkAnnotations = CDKMarkushRendering.linkAnnotations(molecule: depictionMolecule,
                                                                   positionsByAtomID: positionsByAtomID,
                                                                   fontSize: style.fontSize)
+        let sgroupBracketAnnotations = CDKSgroupRendering.bracketAnnotations(molecule: depictionMolecule,
+                                                                             positionsByAtomID: positionsByAtomID,
+                                                                             transformPoint: { $0.applying(transform) },
+                                                                             fontSize: style.fontSize,
+                                                                             bondWidth: style.bondWidth)
 
         var lines: [String] = []
         lines.reserveCapacity(max(32, depictionMolecule.bonds.count * 4 + depictionMolecule.atoms.count))
@@ -150,16 +162,29 @@ public enum CDKDepictionGenerator {
                      _ b: CGPoint,
                      width: CGFloat = style.bondWidth,
                      opacity: CGFloat = 0.95,
-                     color: String = CDKRenderColor.ink.svgHexRGB()) {
+                     color: String = CDKRenderColor.ink.svgHexRGB(),
+                     dashArray: String? = nil) {
             guard let (start, end) = CDKLabelClipping.clipSegmentEndpoints(a,
                                                                             b,
                                                                             labelObstacles: labelClipObstacles,
                                                                             padding: labelClipPadding) else {
                 return
             }
+            let dashAttribute = dashArray.map { " stroke-dasharray=\"\($0)\"" } ?? ""
             lines.append(
-                "<line x1=\"\(fmt(start.x))\" y1=\"\(fmt(start.y))\" x2=\"\(fmt(end.x))\" y2=\"\(fmt(end.y))\" stroke=\"\(color)\" stroke-width=\"\(fmt(width))\" stroke-opacity=\"\(fmt(opacity))\" stroke-linecap=\"round\"/>"
+                "<line x1=\"\(fmt(start.x))\" y1=\"\(fmt(start.y))\" x2=\"\(fmt(end.x))\" y2=\"\(fmt(end.y))\" stroke=\"\(color)\" stroke-width=\"\(fmt(width))\" stroke-opacity=\"\(fmt(opacity))\" stroke-linecap=\"round\"\(dashAttribute)/>"
             )
+        }
+
+        @inline(__always)
+        func addGlowLine(_ a: CGPoint,
+                         _ b: CGPoint,
+                         width: CGFloat) {
+            addLine(a,
+                    b,
+                    width: max(width * 2.35, width + max(1.6, style.bondWidth * 1.8)),
+                    opacity: 0.34,
+                    color: CDKRenderColor.outerGlowHighlight.svgHexRGB())
         }
 
         @inline(__always)
@@ -186,9 +211,14 @@ public enum CDKDepictionGenerator {
             let edgeKey = RenderEdgeKey(bond.a1, bond.a2)
             let aromaticCenters = aromaticEdgeCenters[edgeKey] ?? []
             let conjugatedCenters = conjugatedDoubleEdgeCenters[edgeKey] ?? []
+            let aromaticStyled = bond.order == .aromatic
+                || (style.aromaticDisplayMode == .circle && aromaticBondIDs.contains(bond.id))
 
             let baseColor = CDKRenderingStyleResolver
-                .bondColor(for: bond, molecule: depictionMolecule, style: style)
+                .bondColor(for: bond,
+                           molecule: depictionMolecule,
+                           style: style,
+                           highlightedBondIDs: highlightedBondIDs)
                 .svgHexRGB()
             let doubleBondSeparation = max(3.4, style.bondWidth * 2.25)
             let doubleBondHalfSeparation = doubleBondSeparation * 0.5
@@ -231,6 +261,38 @@ public enum CDKDepictionGenerator {
                     y: p2.y + (p1.y - p2.y) * trim + perp.dy * inset * sign
                 )
                 addLine(a, b, width: max(1.05, style.bondWidth * 0.85), opacity: 0.88, color: baseColor)
+            }
+
+            func drawQuerySecondaryLine(centers: [CGPoint], dashed: Bool) {
+                let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
+                let sum = centers.reduce(CGVector.zero) { acc, c in
+                    CGVector(dx: acc.dx + (c.x - mid.x), dy: acc.dy + (c.y - mid.y))
+                }
+                let preferred = normalize(sum)
+                let perp = CGVector(dx: px, dy: py)
+                let sign: CGFloat
+                if let preferred {
+                    sign = (preferred.dx * perp.dx + preferred.dy * perp.dy) >= 0 ? 1 : -1
+                } else {
+                    sign = (bond.id % 2 == 0) ? 1 : -1
+                }
+
+                let trim = CGFloat(0.15)
+                let inset = doubleBondSeparation
+                let a = CGPoint(
+                    x: p1.x + (p2.x - p1.x) * trim + perp.dx * inset * sign,
+                    y: p1.y + (p2.y - p1.y) * trim + perp.dy * inset * sign
+                )
+                let b = CGPoint(
+                    x: p2.x + (p1.x - p2.x) * trim + perp.dx * inset * sign,
+                    y: p2.y + (p1.y - p2.y) * trim + perp.dy * inset * sign
+                )
+                addLine(a,
+                        b,
+                        width: max(1.0, style.bondWidth * 0.82),
+                        opacity: 0.92,
+                        color: baseColor,
+                        dashArray: dashed ? "\(fmt(max(style.bondWidth * 3.6, 8.0))) \(fmt(max(style.bondWidth * 1.8, 4.8)))" : nil)
             }
 
             func drawAttachmentPointGlyph(center: CGPoint, other: CGPoint) {
@@ -277,7 +339,11 @@ public enum CDKDepictionGenerator {
                 }
             }
 
-            if bond.order == .aromatic {
+            let glowHighlighted = usesGlowHighlights(style: style) && highlightedBondIDs.contains(bond.id)
+            if aromaticStyled {
+                if glowHighlighted {
+                    addGlowLine(p1, p2, width: max(1.2, style.bondWidth * 0.9))
+                }
                 addLine(p1, p2, width: max(1.2, style.bondWidth * 0.9), opacity: 0.82, color: baseColor)
                 if style.aromaticDisplayMode == .innerLine,
                    aromaticCenters.count == 1,
@@ -287,21 +353,82 @@ public enum CDKDepictionGenerator {
                 continue
             }
 
+            if bond.queryType != nil {
+                switch bond.queryType {
+                case .any:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: max(1.0, style.bondWidth * 0.92))
+                    }
+                    addLine(p1,
+                            p2,
+                            width: max(1.0, style.bondWidth * 0.92),
+                            opacity: 0.94,
+                            color: baseColor,
+                            dashArray: "\(fmt(max(style.bondWidth * 3.6, 8.0))) \(fmt(max(style.bondWidth * 1.8, 4.8)))")
+                case .singleOrDouble:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: style.bondWidth)
+                    }
+                    addLine(p1, p2, width: style.bondWidth, opacity: 0.95, color: baseColor)
+                    drawQuerySecondaryLine(centers: conjugatedCenters.isEmpty ? aromaticCenters : conjugatedCenters, dashed: true)
+                case .singleOrAromatic:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: max(1.0, style.bondWidth * 0.92))
+                    }
+                    addLine(p1, p2, width: max(1.0, style.bondWidth * 0.92), opacity: 0.90, color: baseColor)
+                    drawQuerySecondaryLine(centers: aromaticCenters, dashed: true)
+                case .doubleOrAromatic:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: style.bondWidth)
+                    }
+                    addLine(p1.offsetBy(dx: px * doubleBondHalfSeparation, dy: py * doubleBondHalfSeparation),
+                            p2.offsetBy(dx: px * doubleBondHalfSeparation, dy: py * doubleBondHalfSeparation),
+                            width: style.bondWidth,
+                            opacity: 0.95,
+                            color: baseColor)
+                    drawQuerySecondaryLine(centers: aromaticCenters, dashed: true)
+                case .none:
+                    break
+                }
+                if atomByID[bond.a1]?.attachmentPoint != nil {
+                    drawAttachmentPointGlyph(center: p1, other: p2)
+                }
+                if atomByID[bond.a2]?.attachmentPoint != nil {
+                    drawAttachmentPointGlyph(center: p2, other: p1)
+                }
+                continue
+            }
+
             if bond.order == .single {
                 switch bond.stereo {
                 case .up:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: style.bondWidth)
+                    }
                     drawSolidWedge(from: p1, to: p2)
                     continue
                 case .down:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: style.bondWidth)
+                    }
                     drawHashedWedge(from: p1, to: p2)
                     continue
                 case .upReversed:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: style.bondWidth)
+                    }
                     drawSolidWedge(from: p2, to: p1)
                     continue
                 case .downReversed:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: style.bondWidth)
+                    }
                     drawHashedWedge(from: p2, to: p1)
                     continue
                 case .either:
+                    if glowHighlighted {
+                        addGlowLine(p1, p2, width: max(1.0, style.bondWidth * 0.75))
+                    }
                     addLine(p1, p2, width: max(1.0, style.bondWidth * 0.75), opacity: 0.78, color: baseColor)
                     continue
                 case .none:
@@ -311,8 +438,14 @@ public enum CDKDepictionGenerator {
 
             switch bond.order {
             case .single:
+                if glowHighlighted {
+                    addGlowLine(p1, p2, width: style.bondWidth)
+                }
                 addLine(p1, p2, width: style.bondWidth, opacity: 0.95, color: baseColor)
             case .double:
+                if glowHighlighted {
+                    addGlowLine(p1, p2, width: style.bondWidth)
+                }
                 if !conjugatedCenters.isEmpty {
                     addLine(p1, p2, width: style.bondWidth, opacity: 0.95, color: baseColor)
                     drawConjugatedDoubleInnerLine(centers: conjugatedCenters)
@@ -329,6 +462,9 @@ public enum CDKDepictionGenerator {
                             color: baseColor)
                 }
             case .triple:
+                if glowHighlighted {
+                    addGlowLine(p1, p2, width: style.bondWidth)
+                }
                 addLine(p1, p2, width: style.bondWidth, opacity: 0.95, color: baseColor)
                 addLine(p1.offsetBy(dx: px * tripleBondOffset, dy: py * tripleBondOffset),
                         p2.offsetBy(dx: px * tripleBondOffset, dy: py * tripleBondOffset),
@@ -341,6 +477,9 @@ public enum CDKDepictionGenerator {
                         opacity: 0.95,
                         color: baseColor)
             case .aromatic:
+                if glowHighlighted {
+                    addGlowLine(p1, p2, width: max(1.2, style.bondWidth * 0.85))
+                }
                 addLine(p1, p2, width: max(1.2, style.bondWidth * 0.85), opacity: 0.8, color: baseColor)
             }
 
@@ -349,6 +488,16 @@ public enum CDKDepictionGenerator {
             }
             if atomByID[bond.a2]?.attachmentPoint != nil {
                 drawAttachmentPointGlyph(center: p2, other: p1)
+            }
+        }
+
+        for annotation in sgroupBracketAnnotations {
+            for segment in annotation.segments {
+                addLine(segment.from,
+                        segment.to,
+                        width: max(0.95, style.bondWidth * 0.84),
+                        opacity: 0.92,
+                        color: CDKRenderColor.ink.svgHexRGB())
             }
         }
 
@@ -364,8 +513,22 @@ public enum CDKDepictionGenerator {
                 guard minRadius > 1 else { continue }
                 let radius = minRadius * 0.53
                 let circleColor = CDKRenderingStyleResolver
-                    .aromaticRingColor(atomIDs: ring, molecule: depictionMolecule, style: style)
+                    .aromaticRingColor(atomIDs: ring,
+                                       molecule: depictionMolecule,
+                                       style: style,
+                                       highlightedBondIDs: highlightedBondIDs)
                     .svgHexRGB()
+                let ringIsHighlighted = usesGlowHighlights(style: style) && (0..<ring.count).contains { index in
+                    let atom1 = ring[index]
+                    let atom2 = ring[(index + 1) % ring.count]
+                    guard let bond = depictionMolecule.bond(between: atom1, and: atom2) else { return false }
+                    return highlightedBondIDs.contains(bond.id)
+                }
+                if ringIsHighlighted {
+                    lines.append(
+                        "<circle cx=\"\(fmt(center.x))\" cy=\"\(fmt(center.y))\" r=\"\(fmt(radius))\" fill=\"none\" stroke=\"\(CDKRenderColor.outerGlowHighlight.svgHexRGB())\" stroke-width=\"\(fmt(max(1.0, style.bondWidth * 1.95)))\" stroke-opacity=\"0.26\"/>"
+                    )
+                }
                 lines.append(
                     "<circle cx=\"\(fmt(center.x))\" cy=\"\(fmt(center.y))\" r=\"\(fmt(radius))\" fill=\"none\" stroke=\"\(circleColor)\" stroke-width=\"\(fmt(max(1.0, style.bondWidth * 0.84)))\" stroke-opacity=\"0.82\"/>"
                 )
@@ -373,7 +536,12 @@ public enum CDKDepictionGenerator {
         }
 
         for atom in depictionMolecule.atoms {
-            guard CDKLabelText.shouldDrawLabel(atom: atom, degree: degree[atom.id] ?? 0, style: style) else { continue }
+            guard CDKLabelText.shouldDrawLabel(atom: atom,
+                                               degree: degree[atom.id] ?? 0,
+                                               style: style,
+                                               molecule: depictionMolecule,
+                                               highlightedAtomIDs: highlightedAtomIDs,
+                                               highlightedBondIDs: highlightedBondIDs) else { continue }
             guard let pos = p(atom.id) else { continue }
 
             let implicitH = style.showImplicitHydrogens ? depictionMolecule.implicitHydrogenCount(for: atom.id) : 0
@@ -384,13 +552,25 @@ public enum CDKDepictionGenerator {
                                                          fontSize: style.fontSize)
             let labelCenter = pos.offsetBy(dx: centerOffset.dx, dy: centerOffset.dy)
             let atomColor = CDKRenderingStyleResolver
-                .atomColor(for: atom, style: style)
+                .atomColor(for: atom,
+                           style: style,
+                           highlightedAtomIDs: highlightedAtomIDs)
                 .svgHexRGB()
+            let atomHighlighted = usesGlowHighlights(style: style) && highlightedAtomIDs.contains(atom.id)
+            if atomHighlighted {
+                lines.append(
+                    svgGlowText(label,
+                                position: labelCenter,
+                                fontSize: style.fontSize,
+                                fill: CDKRenderColor.outerGlowHighlight.svgHexRGB())
+                )
+            }
             lines.append(
                 svgText(label,
                         position: labelCenter,
                         fontSize: style.fontSize,
-                        fill: atomColor)
+                        fill: atomColor,
+                        outlineWhite: atomHighlighted && preservesBackgroundDuringGlow(style: style))
             )
         }
 
@@ -407,8 +587,19 @@ public enum CDKDepictionGenerator {
             }
         }
 
+        for annotation in sgroupBracketAnnotations {
+            if let subscriptText = annotation.subscriptText,
+               let subscriptPosition = annotation.subscriptPosition {
+                lines.append(annotationText(subscriptText, position: subscriptPosition, fontSize: style.fontSize * 0.80))
+            }
+            if let superscriptText = annotation.superscriptText,
+               let superscriptPosition = annotation.superscriptPosition {
+                lines.append(annotationText(superscriptText, position: superscriptPosition, fontSize: style.fontSize * 0.74))
+            }
+        }
+
         for annotation in markushBoxes {
-            lines.append(annotationText(annotation.label, position: annotation.labelPosition, fontSize: style.fontSize * 0.82))
+            lines.append(annotationText(annotation.label, position: annotation.labelPosition, fontSize: style.fontSize))
         }
 
         lines.append("</svg>")
@@ -435,16 +626,49 @@ public enum CDKDepictionGenerator {
                 fill: CDKRenderColor.ink.svgHexRGB())
     }
 
-    private static func svgText(_ text: String,
-                                position: CGPoint,
-                                fontSize: CGFloat,
-                                fill: String) -> String {
+    private static func usesGlowHighlights(style: RenderStyle) -> Bool {
+        switch style.highlightStyle {
+        case .outerGlow, .outerGlowWhiteEdge:
+            return true
+        case .none, .colored:
+            return false
+        }
+    }
+
+    private static func preservesBackgroundDuringGlow(style: RenderStyle) -> Bool {
+        style.highlightStyle == .outerGlowWhiteEdge
+    }
+
+    private static func svgGlowText(_ text: String,
+                                    position: CGPoint,
+                                    fontSize: CGFloat,
+                                    fill: String) -> String {
         let italicized = CDKLabelText.usesItalicRGroupFont(text: text)
         let fontFamily = italicized
             ? "Times New Roman, Georgia, serif"
             : "Helvetica, Arial, sans-serif"
         let fontStyle = italicized ? " font-style=\"italic\"" : ""
-        return "<text x=\"\(fmt(position.x))\" y=\"\(fmt(position.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"\(fontFamily)\" font-size=\"\(fmt(fontSize))\" font-weight=\"600\"\(fontStyle) fill=\"\(fill)\">\(svgEsc(text))</text>"
+        let glowStrokeWidth = max(1.2, fontSize * 0.16)
+        return "<text x=\"\(fmt(position.x))\" y=\"\(fmt(position.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"\(fontFamily)\" font-size=\"\(fmt(fontSize))\" font-weight=\"600\"\(fontStyle) fill=\"\(fill)\" fill-opacity=\"0.78\" stroke=\"\(fill)\" stroke-opacity=\"0.58\" stroke-width=\"\(fmt(glowStrokeWidth))\" paint-order=\"stroke fill\">\(svgEsc(text))</text>"
+    }
+
+    private static func svgText(_ text: String,
+                                position: CGPoint,
+                                fontSize: CGFloat,
+                                fill: String,
+                                outlineWhite: Bool = false) -> String {
+        let italicized = CDKLabelText.usesItalicRGroupFont(text: text)
+        let fontFamily = italicized
+            ? "Times New Roman, Georgia, serif"
+            : "Helvetica, Arial, sans-serif"
+        let fontStyle = italicized ? " font-style=\"italic\"" : ""
+        let outlineAttributes: String
+        if outlineWhite {
+            outlineAttributes = " stroke=\"#FFFFFF\" stroke-width=\"\(fmt(max(0.9, fontSize * 0.12)))\" paint-order=\"stroke fill\""
+        } else {
+            outlineAttributes = ""
+        }
+        return "<text x=\"\(fmt(position.x))\" y=\"\(fmt(position.y))\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"\(fontFamily)\" font-size=\"\(fmt(fontSize))\" font-weight=\"600\"\(fontStyle) fill=\"\(fill)\"\(outlineAttributes)>\(svgEsc(text))</text>"
     }
 
     private struct RenderEdgeKey: Hashable {

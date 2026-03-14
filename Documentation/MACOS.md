@@ -1,86 +1,97 @@
 # macOS-Specific Notes
 
-`CDKSwiftNativePort` currently declares `macOS 14+` in its package manifest and
-is designed to integrate cleanly into sandboxed native desktop hosts.
+`CDKSwiftNativePort` currently declares `macOS 14+` and is designed to work
+cleanly inside sandboxed native macOS hosts.
 
-## 1. Sandboxed File Access Support
+## 1. Sandboxed File Access
 
-`CDKFileImporter.readMolecules(from:)` and `CDKFileImporter.readReaction(from:)`
-call `startAccessingSecurityScopedResource()` for file URLs and stop access
-afterward.
+`CDKFileImporter` and related helpers route file reads through `CDKFileAccess`,
+which provides:
 
-Implication:
+- security-scoped resource access for file URLs
+- coordinated reads via `NSFileCoordinator`
+- shared text/data loading helpers for apps and extension targets
 
-- the package works cleanly with user-selected file URLs and security-scoped
-  bookmarks in App Sandbox hosts
-- host apps do not need to wrap every read path with their own temporary access
-  handling when they already have a valid security-scoped URL
+That is useful for:
 
-## 2. Native Rendering Surfaces for macOS Hosts
+- App Sandbox document-based apps
+- Quick Look targets
+- metadata importers
+- helper tools that receive security-scoped URLs
 
-The package exposes rendering outputs that fit common macOS app stacks:
+## 2. Renderer-Neutral Outputs
 
-- `CDKStandardGenerator.draw(...)`
-  - for SwiftUI `GraphicsContext` drawing
+The package does not own a window, view, or GPU pipeline. Instead it provides:
+
+- `CDKDepictionGenerator`
+  - SVG export for snapshots, previews, and web-style embedding
 - `CDKMetalDepictionSceneBuilder`
-  - for host-owned Metal molecule views
+  - molecule scene data for host Metal/Core Graphics renderers
 - `CDKMetalReactionDepictionSceneBuilder`
-  - for host-owned Metal reaction views and hit-testing
-- `CDKDepictionGenerator.toSVG(...)`
-  - for export, previews, snapshots, and web-style embedding
+  - reaction scene data and participant hit-testing
 
-Important: the Metal scene builders do not own a `MTKView` or a Metal pipeline.
-They provide scene data only, which keeps the package reusable and keeps host UI
-policy outside the chemistry core.
+This is a good fit for macOS because the host can use whichever presentation
+stack it wants without moving chemistry logic into app code.
 
 ## 3. App Store-Friendly Boundary
 
-The package intentionally excludes host extension wiring and app-level policies:
+For App Store preparation, the key property is separation:
 
-- no Quick Look extension implementation
-- no Spotlight importer or indexer implementation
-- no bundle identifiers or entitlements
-- no window restoration or document-session logic
+- the package contains chemistry logic
+- the app and its extensions contain platform UI and bundle behavior
 
-This separation is useful for App Store submission because host-review concerns
-stay in the host app and its extensions, while chemistry logic remains packaged
-as a standalone library.
+The package intentionally does not include:
 
-## 4. No AppKit Dependency in the Chemistry Core
+- Quick Look extension entry points
+- Spotlight importer entry points
+- bundle identifiers
+- entitlements
+- document/session restoration logic
 
-The package uses Swift / Foundation / CoreGraphics and selected Apple frameworks
-that support the current rendering and text-measurement paths, but it does not
-depend on `AppKit` or AtomLens code.
+That keeps review-facing concerns where Apple expects them: in the app and its
+extensions rather than in the chemistry library.
 
-That keeps the chemistry core easier to test and reuse across multiple macOS
-targets without pulling in host-app implementation.
+## 4. No App Framework Coupling in the Chemistry Core
 
-## 5. Performance-Oriented Building Blocks
+The package uses `Foundation`, `CoreGraphics`, and related low-level Apple
+frameworks required for the chemistry and rendering pipeline. It does not
+depend on:
 
-- depiction scene builders cache prepared depiction data for redraw-heavy flows
-- scene output is renderer-neutral, which lets hosts optimize their own drawing
-  backend
-- Markush legend handling is computed once at scene-build time rather than being
-  hard-coded into host drawing code
+- `AtomLens`
+- `AppKit`
+- `UIKit`
+- `SwiftUI`
+
+That makes the package easier to test, publish, and reuse across multiple macOS
+targets.
+
+## 5. Good Extension Reuse Characteristics
+
+Because the chemistry core stays package-owned and headless, the same package
+can be shared by:
+
+- the main app
+- Quick Look preview and thumbnail targets
+- Spotlight/metadata importers
+- command-line utilities
+- future helper or conversion tools
+
+The extension target should call package APIs directly instead of copying
+chemistry code into the extension bundle.
 
 ## 6. Recommended Host Architecture
 
-- Use `CDKSwiftNativePort` for chemistry parsing, layout, identifiers,
-  descriptors, and depiction scene generation.
-- Keep all extension targets (Quick Look, Spotlight, metadata importers) in host
-  app targets.
-- Keep sandbox policy, bookmarks, persistence, and app-document coordination in
-  host code.
+- keep parsing, layout, depiction, export, identifiers, and descriptors inside
+  `CDKSwiftNativePort`
+- keep `MTKView`, Core Graphics, or view-model logic in the host
+- keep extension lifecycle and metadata schema wiring in the host
+- keep persistence, bookmarks, and sandbox policy in the host
 
-## 7. What Is Not macOS-Specific
+## 7. Practical macOS Highlights
 
-Although the package targets macOS today, most of the chemistry model and IO
-logic is not AtomLens-specific and not tied to host-app state. The most
-macOS-oriented parts are:
+The most useful package characteristics for a macOS app today are:
 
-- security-scoped URL access helpers
-- SwiftUI `GraphicsContext` renderer
-- scene-generation APIs intended for native host rendering pipelines
-
-If broader platform support is needed later, that should be treated as an
-explicit compatibility project instead of an assumed guarantee.
+- security-scoped file handling via `CDKFileAccess`
+- a reusable chemistry core that can be shared by the app and extensions
+- scene generation that lets the host control rendering and interaction policy
+- no dependency on AtomLens or on higher-level app frameworks

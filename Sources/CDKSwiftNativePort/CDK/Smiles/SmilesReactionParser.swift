@@ -30,6 +30,7 @@ extension CDKSmilesParser {
         return CDKReaction(reactantParticipants: reactants,
                            agentParticipants: agents,
                            productParticipants: products,
+                           name: split.title,
                            cxState: split.state)
     }
 }
@@ -112,6 +113,7 @@ private extension CDKSmilesParser {
             components[compIndex].molecule.atoms[idx] = Atom(id: old.id,
                                                               element: label,
                                                               position: old.position,
+                                                              zPosition: old.zPosition,
                                                               charge: old.charge,
                                                               isotopeMassNumber: old.isotopeMassNumber,
                                                               aromatic: false,
@@ -121,6 +123,8 @@ private extension CDKSmilesParser {
                                                               atomList: old.atomList,
                                                               atomListIsNegated: old.atomListIsNegated,
                                                               radical: old.radical,
+                                                              radicalType: old.radicalType,
+                                                              atomValue: old.atomValue,
                                                               rGroupLabel: old.rGroupLabel,
                                                               rGroupMembership: old.rGroupMembership,
                                                               componentGroupID: old.componentGroupID,
@@ -128,6 +132,9 @@ private extension CDKSmilesParser {
                                                               unsaturated: old.unsaturated,
                                                               ringBondCount: old.ringBondCount,
                                                               attachmentPoint: old.attachmentPoint,
+                                                              valenceOverride: old.valenceOverride,
+                                                              cxStereoGroup: old.cxStereoGroup,
+                                                              ligandOrderingAtomIDs: old.ligandOrderingAtomIDs,
                                                               atomClass: old.atomClass,
                                                               atomMapNumber: old.atomMapNumber)
         }
@@ -157,7 +164,7 @@ private extension CDKSmilesParser {
             let group = Array(Set(rawGroup)).sorted()
             guard !group.isEmpty else { continue }
             for idx in group where idx < 0 || idx >= normalized.count {
-                throw ChemError.parseFailed("CXSMILES fragment-group index \(idx) is out of range.")
+                return normalized
             }
 
             var perSide: [CDKReactionSide: [Int]] = [:]
@@ -171,7 +178,7 @@ private extension CDKSmilesParser {
                 guard !sideGroup.isEmpty else { continue }
                 for idx in sideGroup {
                     if groupsByIndex[idx] != nil {
-                        throw ChemError.parseFailed("CXSMILES fragment index \(idx) appears in multiple groups.")
+                        return normalized
                     }
                     groupsByIndex[idx] = sideGroup
                 }
@@ -220,6 +227,7 @@ private extension CDKSmilesParser {
                     Atom(id: nextAtomID,
                          element: atom.element,
                          position: atom.position,
+                         zPosition: atom.zPosition,
                          charge: atom.charge,
                          isotopeMassNumber: atom.isotopeMassNumber,
                          aromatic: atom.aromatic,
@@ -229,6 +237,8 @@ private extension CDKSmilesParser {
                          atomList: atom.atomList,
                          atomListIsNegated: atom.atomListIsNegated,
                          radical: atom.radical,
+                         radicalType: atom.radicalType,
+                         atomValue: atom.atomValue,
                          rGroupLabel: atom.rGroupLabel,
                          rGroupMembership: atom.rGroupMembership,
                          componentGroupID: atom.componentGroupID,
@@ -236,6 +246,9 @@ private extension CDKSmilesParser {
                          unsaturated: atom.unsaturated,
                          ringBondCount: atom.ringBondCount,
                          attachmentPoint: atom.attachmentPoint,
+                         valenceOverride: atom.valenceOverride,
+                         cxStereoGroup: atom.cxStereoGroup,
+                         ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
                          atomClass: atom.atomClass,
                          atomMapNumber: atom.atomMapNumber)
                 )
@@ -250,7 +263,8 @@ private extension CDKSmilesParser {
                                       a2: a2,
                                       order: bond.order,
                                       stereo: bond.stereo,
-                                      queryType: bond.queryType))
+                                      queryType: bond.queryType,
+                                      topology: bond.topology))
             }
 
             for sgroup in molecule.sgroups {
@@ -259,11 +273,24 @@ private extension CDKSmilesParser {
                 let crossingBondIDs = sgroup.crossingBondIDs.compactMap { bondIDMap[$0] }
                 out.sgroups.append(
                     MoleculeSgroup(kind: sgroup.kind,
+                                   keyword: sgroup.keyword,
                                    atomIDs: atomIDs,
                                    crossingBondIDs: crossingBondIDs,
                                    subscriptText: sgroup.subscriptText,
                                    superscriptText: sgroup.superscriptText,
-                                   roundBrackets: sgroup.roundBrackets)
+                                   roundBrackets: sgroup.roundBrackets,
+                                   connectivity: sgroup.connectivity,
+                                   dataFieldName: sgroup.dataFieldName,
+                                   dataValue: sgroup.dataValue,
+                                   dataOperator: sgroup.dataOperator,
+                                   dataUnit: sgroup.dataUnit,
+                                   dataTag: sgroup.dataTag,
+                                   subtype: sgroup.subtype,
+                                   parentAtomIDs: sgroup.parentAtomIDs.compactMap { idMap[$0] },
+                                   componentNumber: sgroup.componentNumber,
+                                   expanded: sgroup.expanded,
+                                   brackets: sgroup.brackets,
+                                   childGroupIndices: sgroup.childGroupIndices)
                 )
             }
         }

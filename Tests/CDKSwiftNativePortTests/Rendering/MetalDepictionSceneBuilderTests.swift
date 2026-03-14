@@ -3,6 +3,7 @@ import XCTest
 @testable import CDKSwiftNativePort
 
 final class MetalDepictionSceneBuilderTests: XCTestCase {
+    private let smilesParser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
 
     func testAlternatingRingRetainsExplicitDoubleBondDepiction() throws {
         let molecule = alternatingSixRing
@@ -143,6 +144,325 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         XCTAssertNotNil(scene.labels.first(where: { $0.id == 1 && $0.text.hasPrefix("OH") }))
     }
 
+    func testMetalSceneColorsCxHighlightedAtomsAndBondsWithCDKSelectionColor() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("CN |ha:1,hb:0|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        let carbonLabel = try XCTUnwrap(scene.labels.first(where: { $0.id == molecule.atoms[0].id }))
+        let nitrogenLabel = try XCTUnwrap(scene.labels.first(where: { $0.id == molecule.atoms[1].id }))
+
+        XCTAssertEqual(carbonLabel.color, .ink)
+        XCTAssertEqual(nitrogenLabel.color, .selectionHighlight)
+        XCTAssertFalse(scene.bondSegments.isEmpty)
+        XCTAssertTrue(scene.bondSegments.allSatisfy { $0.color == .selectionHighlight },
+                      "Expected selected CX bond to use CDK's selection highlight color.")
+    }
+
+    func testMetalSceneShowsDisconnectedSelectedCarbonLabelLikeCDKSelectionVisibility() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("CC |ha:0|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero,
+                                                        includeTerminalCarbonLabelsWhenCarbonsHidden: false)
+
+        let selectedLabel = try XCTUnwrap(scene.labels.first(where: { $0.id == molecule.atoms[0].id }))
+        XCTAssertEqual(selectedLabel.text, "C")
+        XCTAssertEqual(selectedLabel.color, .selectionHighlight)
+    }
+
+    func testMetalSceneKeepsSelectedCarbonLabelHiddenWhenAdjacentBondIsSelected() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("CC |ha:0,hb:0|")
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero,
+                                                        includeTerminalCarbonLabelsWhenCarbonsHidden: false)
+
+        XCTAssertFalse(scene.labels.contains(where: { $0.id == molecule.atoms[0].id }),
+                       "Expected selected carbon label to remain hidden when a connected selected bond is present.")
+    }
+
+    func testMetalSceneUsesGlowHighlightOverlayInsteadOfSelectionColorInOuterGlowMode() throws {
+        let molecule = try smilesParser.parseSmiles("CN |ha:1,hb:0|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                atomColoringMode: .monochrome,
+                                highlightStyle: .outerGlow,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        let baseNitrogen = try XCTUnwrap(scene.labels.first(where: { $0.id == 2 }))
+        XCTAssertEqual(baseNitrogen.color, CDKRenderColor.ink)
+        let glowNitrogen = try XCTUnwrap(scene.labels.first(where: { $0.usesGlowOverlay && $0.text == "N" }))
+        XCTAssertEqual(glowNitrogen.color, CDKRenderColor.outerGlowHighlight.withAlpha(0.92))
+        XCTAssertTrue(glowNitrogen.suppressesMatchedBackground)
+        XCTAssertTrue(scene.bondSegments.contains(where: { $0.color == .outerGlowHighlight }))
+        XCTAssertTrue(scene.bondSegments.contains(where: { $0.color == .ink }))
+    }
+
+    func testMetalScenePreservesBaseLabelBackgroundInOuterGlowWhiteEdgeMode() throws {
+        let molecule = try smilesParser.parseSmiles("CN |ha:1,hb:0|")
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                atomColoringMode: .monochrome,
+                                highlightStyle: .outerGlowWhiteEdge,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        let glowNitrogen = try XCTUnwrap(scene.labels.first(where: { $0.usesGlowOverlay && $0.text == "N" }))
+        XCTAssertFalse(glowNitrogen.suppressesMatchedBackground)
+    }
+
+    func testMetalSceneRendersQueryAtomListLabels() {
+        let molecule = Molecule(name: "QueryAtom",
+                                atoms: [
+                                    Atom(id: 1,
+                                         element: "L",
+                                         position: CGPoint(x: 0, y: 0),
+                                         queryType: .anyAtom,
+                                         atomList: ["C", "N"]),
+                                    Atom(id: 2, element: "O", position: CGPoint(x: 1.2, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single)
+                                ])
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 520, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        XCTAssertTrue(scene.labels.contains(where: { $0.id == 1 && $0.text == "[C,N]" }))
+    }
+
+    func testMetalSceneRendersQueryBondSemantics() {
+        let molecule = Molecule(name: "QueryBond",
+                                atoms: [
+                                    Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                                    Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single, queryType: .singleOrDouble)
+                                ])
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 520, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        XCTAssertGreaterThanOrEqual(scene.bondSegments.count, 2)
+        let widths = scene.bondSegments.map(\.width)
+        XCTAssertTrue(widths.contains(where: { $0 < style.bondWidth }),
+                      "Expected query secondary line to render narrower than the primary bond stroke.")
+    }
+
+    func testMetalSceneRendersPolymerSgroupBracketAnnotations() {
+        var molecule = Molecule(name: "PolymerBracket",
+                                atoms: [
+                                    Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                                    Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single)
+                                ])
+        molecule.sgroups = [
+            MoleculeSgroup(kind: .polymer,
+                           keyword: "COP",
+                           atomIDs: [1, 2],
+                           subtype: "RAN")
+        ]
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let plainScene = CDKMetalDepictionSceneBuilder.build(molecule: Molecule(name: molecule.name,
+                                                                                atoms: molecule.atoms,
+                                                                                bonds: molecule.bonds),
+                                                             style: style,
+                                                             canvasRect: CGRect(x: 0, y: 0, width: 520, height: 320),
+                                                             zoom: 1.0,
+                                                             pan: .zero)
+        let annotatedScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                 style: style,
+                                                                 canvasRect: CGRect(x: 0, y: 0, width: 520, height: 320),
+                                                                 zoom: 1.0,
+                                                                 pan: .zero)
+
+        XCTAssertTrue(annotatedScene.labels.contains(where: { $0.text == "ran" }))
+        XCTAssertGreaterThan(annotatedScene.bondSegments.count, plainScene.bondSegments.count)
+    }
+
+    func testGenericSgroupRendererSkipsRoundBracketLinkNodeRepeatUnits() throws {
+        let molecule = try smilesParser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let positionsByAtomID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.position) })
+
+        let annotations = CDKSgroupRendering.bracketAnnotations(molecule: molecule,
+                                                                positionsByAtomID: positionsByAtomID,
+                                                                fontSize: 16,
+                                                                bondWidth: 2.0)
+
+        XCTAssertTrue(annotations.isEmpty,
+                      "Round-bracket LN repeat units should stay on the dedicated Markush annotation path and not also emit generic square-bracket Sgroup graphics.")
+    }
+
+    func testGenericSgroupRendererStillDrawsSquareBracketRepeatUnits() {
+        var molecule = Molecule(
+            name: "SquareBracketSRU",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        molecule.sgroups = [
+            MoleculeSgroup(kind: .structureRepeatUnit,
+                           keyword: "SRU",
+                           atomIDs: [1, 2],
+                           crossingBondIDs: [1],
+                           subscriptText: "n",
+                           roundBrackets: false)
+        ]
+        let positionsByAtomID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.position) })
+
+        let annotations = CDKSgroupRendering.bracketAnnotations(molecule: molecule,
+                                                                positionsByAtomID: positionsByAtomID,
+                                                                fontSize: 16,
+                                                                bondWidth: 2.0)
+
+        XCTAssertEqual(annotations.count, 1)
+        XCTAssertFalse(annotations[0].segments.isEmpty)
+        XCTAssertEqual(annotations[0].subscriptText, "n")
+    }
+
+    func testMarkushLinkRendererSkipsSquareBracketRepeatUnits() {
+        var molecule = Molecule(
+            name: "SquareBracketSRU",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        molecule.sgroups = [
+            MoleculeSgroup(kind: .structureRepeatUnit,
+                           keyword: "SRU",
+                           atomIDs: [1, 2],
+                           crossingBondIDs: [1],
+                           subscriptText: "n",
+                           roundBrackets: false)
+        ]
+        let positionsByAtomID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.position) })
+
+        let annotations = CDKMarkushRendering.linkAnnotations(molecule: molecule,
+                                                              positionsByAtomID: positionsByAtomID,
+                                                              fontSize: 16)
+
+        XCTAssertTrue(annotations.isEmpty)
+    }
+
+    func testMetalSceneContractsDisplayShortcutsForAbbreviations() {
+        var molecule = Molecule(name: "Abbreviation",
+                                atoms: [
+                                    Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0)),
+                                    Atom(id: 2, element: "C", position: CGPoint(x: 1.0, y: 0)),
+                                    Atom(id: 3, element: "C", position: CGPoint(x: 2.2, y: 0))
+                                ],
+                                bonds: [
+                                    Bond(id: 1, a1: 1, a2: 2, order: .single),
+                                    Bond(id: 2, a1: 2, a2: 3, order: .single)
+                                ])
+        molecule.sgroups = [
+            MoleculeSgroup(kind: .generic,
+                           keyword: "SUP",
+                           atomIDs: [1, 2],
+                           crossingBondIDs: [2],
+                           subscriptText: "Et")
+        ]
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 14.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 520, height: 320),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        XCTAssertTrue(scene.labels.contains(where: { $0.text == "Et" }))
+        XCTAssertFalse(scene.labels.contains(where: { $0.id == 1 && $0.text == "C" }))
+    }
+
     func testMetalSceneIncludesMarkushBackgroundBoxAndLinkNodeLabels() throws {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
         let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
@@ -164,6 +484,13 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         XCTAssertTrue(scene.labels.contains(where: { $0.text == "1-3" }))
         XCTAssertTrue(scene.labels.contains(where: { $0.text == "R¹" && $0.italicized }))
         XCTAssertTrue(scene.labels.contains(where: { $0.text == "R¹ is" && $0.italicized }))
+
+        let rootR = try XCTUnwrap(scene.labels.first(where: { $0.text == "R¹" }))
+        let legendPrefix = try XCTUnwrap(scene.labels.first(where: { $0.text == "R¹ is" }))
+        XCTAssertEqual(legendPrefix.fontSize,
+                       rootR.fontSize,
+                       accuracy: 0.0001,
+                       "Expected Markush legend prefix to use the same dynamic font size as the scaffold R-group label.")
 
         let markushLabelIDs = Set(molecule.atoms.filter { $0.rGroupMembership != nil }.map(\.id))
         XCTAssertTrue(scene.labels.filter { markushLabelIDs.contains($0.id) }.allSatisfy { !$0.drawsBackground })
@@ -673,6 +1000,205 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                           "Expected bond widths to keep shrinking on very compact canvases.")
     }
 
+    func testSparseSceneGetsBoundedLabelBoostAboveViewportBaseline() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 760, height: 540)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: canvas,
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        guard let oxygenLabel = scene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label in sparse scene.")
+            return
+        }
+
+        let viewportBaseline = viewportFitBaselineFontSize(for: molecule, style: style, canvasRect: canvas)
+        XCTAssertGreaterThan(oxygenLabel.fontSize,
+                             viewportBaseline * 1.18,
+                             "Expected sparse scenes to receive a visible label boost over viewport-only sizing.")
+        XCTAssertLessThanOrEqual(oxygenLabel.fontSize,
+                                 viewportBaseline * 1.50 + 0.0001,
+                                 "Expected sparse-scene label boost to remain bounded.")
+    }
+
+    func testDenseSceneDoesNotReceiveSparseProminenceBoost() {
+        let atoms = (0..<10).map { index in
+            Atom(id: index + 1, element: "N", position: CGPoint(x: CGFloat(index) * 1.18, y: 0.0))
+        }
+        let bonds = (0..<9).map { index in
+            Bond(id: index + 1, a1: index + 1, a2: index + 2, order: .single)
+        }
+        let molecule = Molecule(name: "DenseNitrogenChain", atoms: atoms, bonds: bonds)
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 760, height: 360)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: canvas,
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        guard let nitrogenLabel = scene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected visible nitrogen labels in dense scene.")
+            return
+        }
+
+        let viewportBaseline = viewportFitBaselineFontSize(for: molecule, style: style, canvasRect: canvas)
+        XCTAssertLessThanOrEqual(nitrogenLabel.fontSize,
+                                 viewportBaseline * 1.06 + 0.0001,
+                                 "Expected dense scenes to stay close to viewport-only label sizing.")
+    }
+
+    func testSparseSceneGetsVisibleBondBoostAboveViewportBaseline() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 760, height: 540)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: canvas,
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        let averageWidth = averageBondWidth(in: scene.bondSegments)
+        let viewportBaseline = viewportFitBaselineBondWidth(for: molecule, style: style, canvasRect: canvas)
+        XCTAssertGreaterThan(averageWidth,
+                             viewportBaseline * 1.08,
+                             "Expected sparse scenes to receive a visible bond-width boost over viewport-only sizing.")
+        XCTAssertLessThanOrEqual(averageWidth,
+                                 viewportBaseline * 1.34 + 0.0001,
+                                 "Expected sparse-scene bond boost to remain bounded.")
+    }
+
+    func testZoomStrengthensSparseSceneLabelsAndBondsBeyondLinearScaling() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 760, height: 540)
+
+        let baseScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                            style: style,
+                                                            canvasRect: canvas,
+                                                            zoom: 1.0,
+                                                            pan: .zero)
+        let zoomedScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                              style: style,
+                                                              canvasRect: canvas,
+                                                              zoom: 1.5,
+                                                              pan: .zero)
+
+        guard let baseLabel = baseScene.labels.first(where: { $0.id == 1 }),
+              let zoomedLabel = zoomedScene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label in both zoom scenes.")
+            return
+        }
+
+        let baseBondWidth = averageBondWidth(in: baseScene.bondSegments)
+        let zoomedBondWidth = averageBondWidth(in: zoomedScene.bondSegments)
+        XCTAssertGreaterThan(zoomedLabel.fontSize,
+                             baseLabel.fontSize * 1.55,
+                             "Expected sparse-scene label size to scale more strongly than the previous linear zoom baseline.")
+        XCTAssertGreaterThan(zoomedBondWidth,
+                             baseBondWidth * 1.52,
+                             "Expected sparse-scene bond width to scale more strongly than the previous linear zoom baseline.")
+    }
+
+    func testZoomedOutSparseSceneRetainsLabelAndBondReadabilityAboveLinearShrink() {
+        let molecule = Molecule(
+            name: "FormylFragment",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.22, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.35,
+                                fontSize: 24.0,
+                                padding: 24.0)
+        let canvas = CGRect(x: 0, y: 0, width: 760, height: 540)
+
+        let baseScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                            style: style,
+                                                            canvasRect: canvas,
+                                                            zoom: 1.0,
+                                                            pan: .zero)
+        let zoomedOutScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                                 style: style,
+                                                                 canvasRect: canvas,
+                                                                 zoom: 0.75,
+                                                                 pan: .zero)
+
+        guard let baseLabel = baseScene.labels.first(where: { $0.id == 1 }),
+              let zoomedOutLabel = zoomedOutScene.labels.first(where: { $0.id == 1 }) else {
+            XCTFail("Expected oxygen label in both zoom scenes.")
+            return
+        }
+
+        let baseBondWidth = averageBondWidth(in: baseScene.bondSegments)
+        let zoomedOutBondWidth = averageBondWidth(in: zoomedOutScene.bondSegments)
+        XCTAssertGreaterThan(zoomedOutLabel.fontSize,
+                             baseLabel.fontSize * 0.80,
+                             "Expected zoomed-out sparse-scene labels to shrink more gently than linear zoom.")
+        XCTAssertGreaterThan(zoomedOutBondWidth,
+                             baseBondWidth * 0.79,
+                             "Expected zoomed-out sparse-scene bond widths to shrink more gently than linear zoom.")
+    }
+
     func testCanLowerMinimumLabelFontSizeForTinyPreviewCanvases() {
         let molecule = Molecule(
             name: "FormylFragment",
@@ -947,6 +1473,58 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                y: min(segment.from.y, segment.to.y),
                width: abs(segment.to.x - segment.from.x),
                height: abs(segment.to.y - segment.from.y))
+    }
+
+    private func viewportFitBaselineFontSize(for molecule: Molecule,
+                                             style: RenderStyle,
+                                             canvasRect: CGRect) -> CGFloat {
+        let depictionMolecule = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: style)
+        guard let box = depictionMolecule.boundingBox() else { return style.fontSize }
+
+        let available = CGRect(x: canvasRect.minX + style.padding,
+                               y: canvasRect.minY + style.padding,
+                               width: max(1, canvasRect.width - (2 * style.padding)),
+                               height: max(1, canvasRect.height - (2 * style.padding)))
+        let scaleX = available.width / max(0.0001, box.width)
+        let scaleY = available.height / max(0.0001, box.height)
+        let scale = min(scaleX, scaleY)
+
+        let referenceViewport = CGSize(width: 960, height: 720)
+        let referenceAvailable = CGRect(x: style.padding,
+                                        y: style.padding,
+                                        width: max(1, referenceViewport.width - (2 * style.padding)),
+                                        height: max(1, referenceViewport.height - (2 * style.padding)))
+        let referenceScaleX = referenceAvailable.width / max(0.0001, box.width)
+        let referenceScaleY = referenceAvailable.height / max(0.0001, box.height)
+        let referenceFitScale = min(referenceScaleX, referenceScaleY)
+        let viewportAutoFitScale = min(1.90, scale / max(0.0001, referenceFitScale))
+        return max(8.0, style.fontSize * viewportAutoFitScale)
+    }
+
+    private func viewportFitBaselineBondWidth(for molecule: Molecule,
+                                              style: RenderStyle,
+                                              canvasRect: CGRect) -> CGFloat {
+        let depictionMolecule = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: style)
+        guard let box = depictionMolecule.boundingBox() else { return style.bondWidth }
+
+        let available = CGRect(x: canvasRect.minX + style.padding,
+                               y: canvasRect.minY + style.padding,
+                               width: max(1, canvasRect.width - (2 * style.padding)),
+                               height: max(1, canvasRect.height - (2 * style.padding)))
+        let scaleX = available.width / max(0.0001, box.width)
+        let scaleY = available.height / max(0.0001, box.height)
+        let scale = min(scaleX, scaleY)
+
+        let referenceViewport = CGSize(width: 960, height: 720)
+        let referenceAvailable = CGRect(x: style.padding,
+                                        y: style.padding,
+                                        width: max(1, referenceViewport.width - (2 * style.padding)),
+                                        height: max(1, referenceViewport.height - (2 * style.padding)))
+        let referenceScaleX = referenceAvailable.width / max(0.0001, box.width)
+        let referenceScaleY = referenceAvailable.height / max(0.0001, box.height)
+        let referenceFitScale = min(referenceScaleX, referenceScaleY)
+        let viewportAutoFitScale = min(1.90, scale / max(0.0001, referenceFitScale))
+        return max(1.0, style.bondWidth * viewportAutoFitScale)
     }
 
     private var alternatingSixRing: Molecule {

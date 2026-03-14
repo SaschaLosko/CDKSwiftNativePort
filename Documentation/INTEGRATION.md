@@ -1,7 +1,7 @@
 # Integration Guide
 
-This guide shows how to integrate `CDKSwiftNativePort` into a macOS host and
-use the current public APIs end-to-end.
+This guide shows how to integrate `CDKSwiftNativePort` into a native macOS host
+without pulling chemistry logic into the app target itself.
 
 ## 1. Add the Package
 
@@ -15,27 +15,28 @@ or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.1.1")
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.2.0")
 ]
 ```
 
-Then import:
+Then import it:
 
 ```swift
 import CDKSwiftNativePort
 ```
 
-## 2. Choose an Integration Style
+## 2. Pick an Integration Style
 
-Most hosts use one of these patterns:
+Most hosts fit one of these patterns:
 
-- Import / inspect / export only
-- Parse -> layout -> SVG export
-- Parse -> layout -> build `CDKMetalDepictionScene` -> render in a host-owned
-  Metal or Core Graphics layer
-- Parse reactions and use `CDKMetalReactionDepictionSceneBuilder` for reaction UI
+- import, inspect, and export only
+- parse -> layout -> SVG
+- parse -> layout -> build `CDKMetalDepictionScene` -> render in host-owned
+  Metal/Core Graphics
+- parse reactions and use `CDKMetalReactionDepictionSceneBuilder`
+- build Quick Look / Spotlight / importer targets on top of the package APIs
 
-## 3. Read Molecules from Text
+## 3. Read Molecules From Text
 
 ```swift
 let molecules = try CDKFileImporter.readMolecules(
@@ -48,19 +49,25 @@ guard let molecule = molecules.first else {
 }
 ```
 
-`CDKFileImporter` also supports text autodetection for SDF, RXN, RDF, InChI,
-SMILES, reaction SMILES, MOL2, CML, PDB, and XYZ payloads.
+`CDKFileImporter` supports text autodetection for common payloads including:
 
-## 4. Read from Sandboxed File URLs
+- SMILES and CXSMILES
+- reaction SMILES
+- MDL Molfile and SDF
+- RXN and RDF
+- InChI
+- MOL2, PDB, XYZ
+- CML molecules and CML reactions
+
+## 4. Read From Sandboxed File URLs
 
 ```swift
 let fileURL = URL(fileURLWithPath: "/path/to/molecule.sdf")
 let molecules = try CDKFileImporter.readMolecules(from: fileURL)
 ```
 
-`readMolecules(from:)` and `readReaction(from:)` start and stop security-scoped
-resource access for file URLs when needed, which makes them suitable for App
-Sandbox hosts using user-selected files or security-scoped bookmarks.
+The package uses `CDKFileAccess` internally, which coordinates file access and
+works with security-scoped URLs in App Sandbox hosts.
 
 ## 5. Generate 2D Coordinates
 
@@ -68,8 +75,8 @@ Sandbox hosts using user-selected files or security-scoped bookmarks.
 let laidOut = Depiction2DGenerator.generate(for: molecule)
 ```
 
-Layout is recommended before SVG export or scene generation unless your input
-already carries usable 2D coordinates.
+Run layout before depiction unless the input already provides good 2D
+coordinates that you want to preserve.
 
 ## 6. Compute Identifiers and Properties
 
@@ -88,7 +95,7 @@ print(properties.tpsa)
 print(properties.ruleOfFive.statusText)
 ```
 
-For direct descriptor access:
+Low-level descriptors remain available directly:
 
 ```swift
 let xlogP = CDKXLogPDescriptor.calculate(for: laidOut)
@@ -97,6 +104,8 @@ let vabc = CDKVABCDescriptor.calculate(for: laidOut)
 ```
 
 ## 7. Generate SVG
+
+Using the export facade:
 
 ```swift
 import CoreGraphics
@@ -108,7 +117,7 @@ options.svgIncludeBackground = true
 let svg = try CDKFileExporter.write(molecule: laidOut, as: .svg, options: options)
 ```
 
-You can also call the lower-level generator directly:
+Using the lower-level depiction generator directly:
 
 ```swift
 import CoreGraphics
@@ -140,10 +149,34 @@ print(scene.bondSegments.count)
 print(scene.labels.count)
 ```
 
-Important: the package computes scene geometry only. Your app owns the actual
-Metal, Core Graphics, or raster drawing implementation.
+Important: the package computes scene geometry only. The host owns the drawing
+backend and event handling.
 
-## 9. Parse a Markush CXSMILES
+## 9. Configure Rendering
+
+```swift
+let style = RenderStyle(
+    showCarbons: false,
+    showImplicitHydrogens: true,
+    atomColoringMode: .cdk2D,
+    highlightStyle: .outerGlowWhiteEdge,
+    colorBondsByAtom: true,
+    aromaticDisplayMode: .circle,
+    bondWidth: 2.2,
+    fontSize: 18,
+    padding: 24
+)
+```
+
+Useful rendering features include:
+
+- aromatic circle mode
+- colored or glow highlights
+- query atom and query bond depiction
+- Markush legends and link-node annotations
+- non-Markush Sgroup brackets and labels
+
+## 10. Parse a Markush CXSMILES
 
 ```swift
 import CoreGraphics
@@ -163,14 +196,18 @@ let markushScene = CDKMetalDepictionSceneBuilder.build(
 )
 ```
 
-Supported Markush-related behavior includes:
+Current CDK 2.12-style CX coverage in the supported path includes:
 
-- CXSMILES `RG:` parsing
-- CXSMILES `LN:` repeat/link-node parsing for the supported path
-- R-group legend boxes in SVG / SwiftUI / Metal scene outputs
-- fixed-legend Metal scene behavior for interactive host rotation
+- atom labels and atom values
+- coordinates
+- radicals
+- enhanced stereo state
+- highlight layers
+- ligand ordering
+- polymer/data/generic/positional-variation Sgroups
+- Markush `RG:` and `LN:`
 
-## 10. Parse and Render Reactions
+## 11. Parse and Render Reactions
 
 ```swift
 import CoreGraphics
@@ -202,53 +239,56 @@ let hit = CDKMetalReactionDepictionSceneBuilder.participant(
 )
 ```
 
-## 11. Export to Common Formats
+## 12. Export Common Formats
+
+### Molecules
 
 ```swift
 let smiles = try CDKFileExporter.write(molecule: laidOut, as: .smiles)
 let isoSmiles = try CDKFileExporter.write(molecule: laidOut, as: .isomericSmiles)
 let inchi = try CDKFileExporter.write(molecule: laidOut, as: .inchi)
-let molfile = try CDKFileExporter.write(molecule: laidOut, as: .mol)
+let molV2000 = try CDKFileExporter.write(molecule: laidOut, as: .mol)
+let molV3000 = try CDKFileExporter.write(molecule: laidOut, as: .molV3000)
+let cml = try CDKFileExporter.write(molecule: laidOut, as: .cml)
 ```
 
-For full reaction export:
+### SDF with options
 
 ```swift
-let rxn = try CDKRXNWriter.write(
-    reactants: reaction.reactants,
-    products: reaction.products,
-    agents: reaction.agents,
-    reactionName: "Oxidation"
-)
+var options = CDKFileExportOptions()
+options.sdfOptions = CDKSDFWriterOptions(alwaysV3000: true, programName: "MyHost")
+
+let sdf = try CDKFileExporter.write(molecules: [laidOut], as: .sdf, options: options)
 ```
 
-## 12. Error Handling Pattern
+### Reactions
 
 ```swift
-do {
-    _ = try CDKFileImporter.readMolecules(text: "", fileExtension: "smi")
-} catch let error as ChemError {
-    switch error {
-    case .emptyInput:
-        print("Input is empty")
-    case .unsupported(let details):
-        print("Unsupported format: \(details)")
-    case .parseFailed(let details):
-        print("Parse failed: \(details)")
-    }
-} catch {
-    print("Unexpected error: \(error)")
-}
+let rsmi = try CDKFileExporter.write(reaction: reaction, as: .smiles)
+let cmlReaction = try CDKFileExporter.write(reaction: reaction, as: .cml)
+let rxn = try CDKFileExporter.write(reaction: reaction, as: .rxn)
+let rdf = try CDKFileExporter.write(reaction: reaction, as: .rdf)
 ```
 
-## 13. Host Boundary Guidance
+## 13. Use the Package in Extensions
 
-Keep host-specific concerns outside this package:
+The package is suitable for:
 
-- Spotlight metadata and index extensions
-- Quick Look preview / thumbnail extension wiring
-- `MTKView` ownership and renderer lifecycle
-- app entitlements, bundle IDs, document/window/session logic
+- Quick Look preview or thumbnail targets
+- Spotlight metadata importers
+- helper tools and batch converters
+
+Those targets should import `CDKSwiftNativePort` directly instead of copying
+chemistry code into the extension target.
+
+## 14. Host Boundary Guidance
+
+Keep host-specific concerns outside the package:
+
+- Spotlight indexing policy
+- Quick Look extension lifecycle
+- `MTKView` ownership and render loops
+- app entitlements, bundle IDs, document logic, and window/session state
 
 Use `CDKSwiftNativePort` as the chemistry core and build host features around
 its public APIs.

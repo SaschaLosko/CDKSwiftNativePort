@@ -1,13 +1,15 @@
 {
   "schemaVersion": 1,
   "suite": "CDK Smiles Port",
-  "cdkReferenceVersion": "2.11",
-  "cdkReferenceTag": "cdk-2.11",
+  "cdkReferenceVersion": "2.12",
+  "cdkReferenceTag": "cdk-2.12",
   "sourceTests": [
     "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesParserTest.java",
     "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesGeneratorTest.java",
     "storage/smiles/src/test/java/org/openscience/cdk/smiles/BeamToCDKTest.java",
-    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesParserTest.java"
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesParserTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesGeneratorTest.java"
   ],
   "portedCases": [
     {
@@ -61,6 +63,38 @@
     {
       "id": "cx_racemic_layer_parsing",
       "source": "CxSmilesParserTest.java loadRacGlobal + stereogroups_rac"
+    },
+    {
+      "id": "cx_escaped_labels_attachpoints_and_empty_titles",
+      "source": "CxSmilesParserTest.java escapedAtomLabels + escapedAtomLabels2 and CxSmilesTest.java atomLabels + attachPoints + emptyCXSMILES + correctTitle"
+    },
+    {
+      "id": "cx_data_sgroups_and_alias_fields",
+      "source": "CxSmilesParserTest.java dataSgroups + dataSgroupsArrow + dataSgroupsArrowWithDot and CxSmilesTest.java testTerseSgroupDataParsingOnReactions"
+    },
+    {
+      "id": "cx_positional_variation_and_crossing_bond_fix",
+      "source": "CxSmilesParserTest.java positionalVariation + positionalVariationImpliedLayer + variableAttachCrossingBonds and CxSmilesTest.java positionalVariation"
+    },
+    {
+      "id": "cx_reaction_fragment_grouping_invalid_fallback",
+      "source": "CxSmilesTest.java fragmentGroupingReactants + fragmentGroupingAgents + fragmentGroupingProducts + fragmentGroupingInvalid"
+    },
+    {
+      "id": "cx_reaction_generic_markush_parsing",
+      "source": "CxSmilesTest.java genericReaction + trailingAtomLabelSemiColonAndAtomValues"
+    },
+    {
+      "id": "cx_generator_reaction_layers_and_terse_sgroups",
+      "source": "CxSmilesTest.java roundTripReactionAtomLabelsAndFragmentGroups + testSimpleLinkNode + testMultipleLinkNode + testLinkNodeWithAttachedAtoms + testTerseSgroup"
+    },
+    {
+      "id": "cx_generator_reaction_data_sgroups_and_hierarchy",
+      "source": "CxSmilesTest.java roundTripSgroupParents + testTerseSgroupDataParsingOnReactions"
+    },
+    {
+      "id": "cx_generator_enhanced_stereo_normalization",
+      "source": "CxSmilesGeneratorTest.java outputRFlagWhenAllRac1 + outputRFlagWhenAllRac3 + outputRFlagWhenAllAbs + outputRFlagWhenAllRel1Rac1 + outputRFlagWhenAllRel1Abs + outputRFlagWhenAllRel5Renumber"
     },
     {
       "id": "strict_bracket_decorators_degree_valence_ring_atommap",

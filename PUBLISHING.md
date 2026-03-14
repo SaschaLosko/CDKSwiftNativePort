@@ -1,92 +1,108 @@
 # Publishing Guide
 
-This guide describes a typical professional GitHub release flow for `CDKSwiftNativePort`.
+This guide describes a practical GitHub release flow for
+`CDKSwiftNativePort`.
 
-## 1) Pre-release Quality Gate
+## 1. Pre-release Quality Gate
 
-From repository root:
+From the package root:
 
 ```bash
 swift test
 ```
 
-Required before release:
-- tests pass
-- docs updated (`README.md`, `Documentation/API.md`, `Documentation/INTEGRATION.md`, `Documentation/CDK_COMPARISON.md`, `Documentation/MACOS.md`, `CHANGELOG.md`)
-- package boundary policy remains satisfied
-- license and notice files present (`LICENSE`, `NOTICE.md`)
-- if working in the monorepo, verify the host app still links the package
-  product cleanly and does not require package-source references
+Required before publishing:
 
-## 2) Prepare Release Commit
+- the package test suite passes
+- `README.md` and the documentation set match the current public API
+- `CHANGELOG.md` is updated
+- package boundary checks remain green
+- `LICENSE` and `NOTICE.md` are present
 
-1. Ensure `CHANGELOG.md` has a finalized section for the target version.
-2. Set a shell variable for the release version and reuse it in the commands below.
-3. Commit release prep changes:
+If you are working in the first-party monorepo, also verify that AtomLens still
+builds against the package product:
 
 ```bash
-VERSION=1.1.1
+xcodebuild -project /path/to/AtomLens.xcodeproj -scheme AtomLens -configuration Debug -sdk macosx CODE_SIGNING_ALLOWED=NO build
+```
+
+## 2. Review the Docs Set
+
+Before release, make sure these documents are current:
+
+- `README.md`
+- `Documentation/API.md`
+- `Documentation/INTEGRATION.md`
+- `Documentation/ARCHITECTURE.md`
+- `Documentation/CDK_COMPARISON.md`
+- `Documentation/MACOS.md`
+- `CHANGELOG.md`
+
+## 3. Prepare the Release Commit
+
+Choose the release version and commit the release-prep changes:
+
+```bash
+VERSION=1.2.0
 git add .
 git commit -m "Prepare v${VERSION} release"
 ```
 
-## 3) Tag the Release
+## 4. Tag the Release
 
 ```bash
 git tag -a "${VERSION}" -m "CDKSwiftNativePort ${VERSION}"
 ```
 
-## 4) Configure Remote (first time)
+## 5. Push the Branch and Tag
 
-Using GitHub CLI:
+If the repository already exists:
+
+```bash
+git push origin main
+git push origin --tags
+```
+
+If this is the first push, configure the remote first:
 
 ```bash
 gh repo create SaschaLosko/CDKSwiftNativePort --public --source . --remote origin --push
 ```
 
-or manually:
+## 6. Create the GitHub Release
 
-```bash
-git remote add origin git@github.com:SaschaLosko/CDKSwiftNativePort.git
-git push -u origin main
-```
-
-## 5) Push Tags
-
-```bash
-git push origin --tags
-```
-
-## 6) Create GitHub Release
-
-Use GitHub UI or CLI:
+Using GitHub CLI:
 
 ```bash
 gh release create "${VERSION}" --title "CDKSwiftNativePort ${VERSION}" --notes-file CHANGELOG.md
 ```
 
-Recommended release body:
-- summary of major additions
-- breaking changes (if any)
+Recommended release notes content:
+
+- major additions
+- compatibility notes
+- breaking changes, if any
 - migration notes
 - known limitations
 
-## 7) Consumer Integration
+## 7. Consumer Guidance
 
-Consumers add:
+Consumers should add:
 
 ```text
 https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
-and pin to:
-- exact tag `1.1.1`, or
-- semver range `from: "1.1.1"`
+and pin either:
 
-If a new feature is only on `main` and not yet tagged, document that clearly in
-`README.md` and cut a release before recommending it as the default consumer pin.
+- an exact tag, or
+- a semver range from the latest published release
 
-## 8) Post-release
+If an important feature exists only on `main`, keep that explicit in the docs
+instead of silently recommending an unreleased revision.
 
-- Create `Unreleased` section entries in `CHANGELOG.md` for next cycle.
-- Track parity/bugfix tasks as issues.
+## 8. After the Release
+
+- add a fresh `Unreleased` section in `CHANGELOG.md`
+- track follow-up parity or bugfix work as issues
+- refresh the documentation when new public APIs or supported formats change

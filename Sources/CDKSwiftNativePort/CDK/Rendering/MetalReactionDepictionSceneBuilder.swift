@@ -151,7 +151,8 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                          color: CDKRenderColor.outerGlowHighlight.withAlpha(0.92),
                                                          italicized: label.italicized,
                                                          drawsBackground: false,
-                                                         usesGlowOverlay: true)
+                                                         usesGlowOverlay: true,
+                                                         suppressesMatchedBackground: true)
                     )
                 }
                 nextLabelID += 1
@@ -164,7 +165,8 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                      color: label.color,
                                                      italicized: label.italicized,
                                                      drawsBackground: label.drawsBackground,
-                                                     usesGlowOverlay: label.usesGlowOverlay)
+                                                     usesGlowOverlay: label.usesGlowOverlay,
+                                                     suppressesMatchedBackground: label.suppressesMatchedBackground)
                 )
             }
         }
@@ -287,7 +289,8 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                              color: label.color,
                                              italicized: label.italicized,
                                              drawsBackground: label.drawsBackground,
-                                             usesGlowOverlay: label.usesGlowOverlay)
+                                             usesGlowOverlay: label.usesGlowOverlay,
+                                             suppressesMatchedBackground: label.suppressesMatchedBackground)
         }
 
         return CDKMetalDepictionScene(gridSegments: gridSegments,

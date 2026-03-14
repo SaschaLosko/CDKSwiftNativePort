@@ -43,6 +43,105 @@ final class CMLReaderPortTests: XCTestCase {
         XCTAssertEqual(molecules[0].bondCount, 1)
     }
 
+    func testParsesListWithMultipleMolecules() throws {
+        let text = """
+        <list>
+          <molecule id="m1">
+            <atomArray><atom id="a1" elementType="C" /></atomArray>
+          </molecule>
+          <molecule id="m2">
+            <atomArray><atom id="a1" elementType="O" /></atomArray>
+          </molecule>
+        </list>
+        """
+
+        let molecules = try CDKCMLReader.read(text: text)
+        XCTAssertEqual(molecules.count, 2)
+        XCTAssertEqual(molecules[0].name, "m1")
+        XCTAssertEqual(molecules[1].name, "m2")
+    }
+
+    func testParsesVector3DCoordinates() throws {
+        let text = """
+        <molecule id="m1">
+          <atomArray atomID="a1 a2" x3="0.0 0.1" y3="1.2 1.3" z3="2.1 2.5" />
+        </molecule>
+        """
+
+        let molecules = try CDKCMLReader.read(text: text)
+        XCTAssertEqual(molecules[0].atoms[0].position.x, 0.0, accuracy: 0.00001)
+        XCTAssertEqual(molecules[0].atoms[0].position.y, 1.2, accuracy: 0.00001)
+        XCTAssertEqual(try XCTUnwrap(molecules[0].atoms[0].zPosition), 2.1, accuracy: 0.00001)
+        XCTAssertEqual(try XCTUnwrap(molecules[0].atoms[1].zPosition), 2.5, accuracy: 0.00001)
+    }
+
+    func testParsesXYZ3OnIndividualAtoms() throws {
+        let text = """
+        <molecule id="m1">
+          <atomArray>
+            <atom id="a1" xyz3="0.0 0.1 0.2" />
+            <atom id="a2" />
+            <atom id="a3" xyz3="0.1 0.0 0.2" />
+          </atomArray>
+        </molecule>
+        """
+
+        let molecules = try CDKCMLReader.read(text: text)
+        XCTAssertNotNil(molecules[0].atoms[0].zPosition)
+        XCTAssertNil(molecules[0].atoms[1].zPosition)
+        XCTAssertNotNil(molecules[0].atoms[2].zPosition)
+    }
+
+    func testParsesBondStereoFromDictRefAndCharContent() throws {
+        let text = """
+        <molecule id="m1">
+          <atomArray atomID="a1 a2 a3 a4 a5" />
+          <bondArray>
+            <bond atomRefs2="a1 a2" order="S"><bondStereo dictRef="cml:H" /></bond>
+            <bond atomRefs2="a2 a3" order="S"><bondStereo>W</bondStereo></bond>
+            <bond atomRefs2="a3 a4" order="S"><bondStereo dictRef="cml:W">H</bondStereo></bond>
+            <bond atomRefs2="a4 a5" order="S"><bondStereo dictRef="cml:">W</bondStereo></bond>
+          </bondArray>
+        </molecule>
+        """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: text).first)
+        XCTAssertEqual(molecule.bonds.map(\.stereo), [.down, .up, .up, .up])
+    }
+
+    func testParsesAromaticBondTypeChildAndMarksAtomsAromatic() throws {
+        let text = """
+        <molecule id="m1">
+          <atomArray atomID="a1 a2" />
+          <bondArray>
+            <bond atomRefs2="a1 a2" order="2">
+              <bondType dictRef="cdk:aromaticBond" />
+            </bond>
+          </bondArray>
+        </molecule>
+        """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: text).first)
+        XCTAssertEqual(molecule.bonds[0].order, .double)
+        XCTAssertTrue(molecule.atoms[0].aromatic)
+        XCTAssertTrue(molecule.atoms[1].aromatic)
+    }
+
+    func testParsesPseudoAtomFromDummyTitle() throws {
+        let text = """
+        <molecule id="m1">
+          <atomArray>
+            <atom id="a1" elementType="Du" title="Glu55" x2="0.0" y2="0.0" />
+          </atomArray>
+        </molecule>
+        """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: text).first)
+        XCTAssertEqual(molecule.atoms[0].element, "R")
+        XCTAssertEqual(molecule.atoms[0].aliasLabel, "Glu55")
+        XCTAssertEqual(molecule.atoms[0].symbolToDraw, "Glu55")
+    }
+
     func testRejectsMalformedCML() {
         XCTAssertThrowsError(try CDKCMLReader.read(text: "<cml><molecule><atomArray></cml>"))
     }

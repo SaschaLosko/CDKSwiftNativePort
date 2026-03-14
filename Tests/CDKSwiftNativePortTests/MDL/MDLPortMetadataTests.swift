@@ -26,15 +26,21 @@ final class MDLPortMetadataTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(metadata.schemaVersion, 1)
         XCTAssertFalse(metadata.suite.isEmpty)
-        XCTAssertEqual(metadata.cdkReferenceVersion, "2.11")
-        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.11")
+        XCTAssertEqual(metadata.cdkReferenceVersion, "2.12")
+        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.12")
 
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000ReaderTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000WriterTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLReaderTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000AtomBlockTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000BondBlockTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV3000ReaderTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV3000WriterTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("IteratingSDFReaderTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("SDFReaderTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("SDFWriterTest.java") }))
 
-        XCTAssertGreaterThanOrEqual(metadata.portedCases.count, 12)
+        XCTAssertGreaterThanOrEqual(metadata.portedCases.count, 35)
         XCTAssertTrue(metadata.portedCases.allSatisfy { !$0.id.isEmpty && !$0.source.isEmpty })
 
         let uniqueIDs = Set(metadata.portedCases.map(\.id))

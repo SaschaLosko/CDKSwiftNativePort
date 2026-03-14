@@ -75,37 +75,130 @@ public enum BondQueryType: String, Codable, Hashable, Sendable {
     case any
 }
 
+public enum BondTopology: String, Codable, Hashable, Sendable {
+    case ring
+    case chain
+}
+
+public struct CxCoordinate: Hashable, Codable, Sendable {
+    public var x: Double
+    public var y: Double
+    public var z: Double
+
+    public init(x: Double, y: Double, z: Double = 0) {
+        self.x = x
+        self.y = y
+        self.z = z
+    }
+}
+
+public enum CxRadicalType: Int, CaseIterable, Codable, Hashable, Sendable {
+    case monovalent = 1
+    case divalent = 2
+    case divalentSinglet = 3
+    case divalentTriplet = 4
+    case trivalent = 5
+    case trivalentDoublet = 6
+    case trivalentQuartet = 7
+
+    public var electronCount: Int {
+        switch self {
+        case .monovalent:
+            return 1
+        case .divalent, .divalentSinglet, .divalentTriplet:
+            return 2
+        case .trivalent, .trivalentDoublet, .trivalentQuartet:
+            return 3
+        }
+    }
+}
+
+public struct MoleculeSgroupBracket: Hashable, Codable, Sendable {
+    public var firstPoint: CGPoint
+    public var secondPoint: CGPoint
+
+    public init(firstPoint: CGPoint, secondPoint: CGPoint) {
+        self.firstPoint = firstPoint
+        self.secondPoint = secondPoint
+    }
+}
+
 public struct MoleculeSgroup: Hashable, Codable, Sendable {
     public enum Kind: String, Codable, Hashable, Sendable {
         case structureRepeatUnit
+        case extMulticenter
+        case polymer
+        case data
+        case generic
     }
 
     public let kind: Kind
+    public var keyword: String?
     public var atomIDs: [Int]
     public var crossingBondIDs: [Int]
     public var subscriptText: String?
     public var superscriptText: String?
     public var roundBrackets: Bool
+    public var connectivity: String?
+    public var dataFieldName: String?
+    public var dataValue: String?
+    public var dataOperator: String?
+    public var dataUnit: String?
+    public var dataTag: String?
+    public var subtype: String?
+    public var parentAtomIDs: [Int]
+    public var componentNumber: Int?
+    public var expanded: Bool
+    public var brackets: [MoleculeSgroupBracket]
+    public var childGroupIndices: [Int]
 
     public init(kind: Kind,
+                keyword: String? = nil,
                 atomIDs: [Int],
                 crossingBondIDs: [Int] = [],
                 subscriptText: String? = nil,
                 superscriptText: String? = nil,
-                roundBrackets: Bool = false) {
+                roundBrackets: Bool = false,
+                connectivity: String? = nil,
+                dataFieldName: String? = nil,
+                dataValue: String? = nil,
+                dataOperator: String? = nil,
+                dataUnit: String? = nil,
+                dataTag: String? = nil,
+                subtype: String? = nil,
+                parentAtomIDs: [Int] = [],
+                componentNumber: Int? = nil,
+                expanded: Bool = false,
+                brackets: [MoleculeSgroupBracket] = [],
+                childGroupIndices: [Int] = []) {
         self.kind = kind
+        self.keyword = keyword
         self.atomIDs = atomIDs
         self.crossingBondIDs = crossingBondIDs
         self.subscriptText = subscriptText
         self.superscriptText = superscriptText
         self.roundBrackets = roundBrackets
+        self.connectivity = connectivity
+        self.dataFieldName = dataFieldName
+        self.dataValue = dataValue
+        self.dataOperator = dataOperator
+        self.dataUnit = dataUnit
+        self.dataTag = dataTag
+        self.subtype = subtype
+        self.parentAtomIDs = parentAtomIDs
+        self.componentNumber = componentNumber
+        self.expanded = expanded
+        self.brackets = brackets
+        self.childGroupIndices = childGroupIndices
     }
 }
 
 public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public let id: Int
+    public var externalID: String? = nil
     public var element: String
     public var position: CGPoint
+    public var zPosition: Double? = nil
     public var charge: Int = 0
     public var isotopeMassNumber: Int? = nil
     public var aromatic: Bool = false
@@ -117,6 +210,8 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public var atomList: [String]? = nil
     public var atomListIsNegated: Bool = false
     public var radical: Int? = nil
+    public var radicalType: CxRadicalType? = nil
+    public var atomValue: String? = nil
     public var rGroupLabel: Int? = nil
     public var rGroupMembership: String? = nil
     public var componentGroupID: Int? = nil
@@ -124,10 +219,20 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public var unsaturated: Int? = nil
     public var ringBondCount: Int? = nil
     public var attachmentPoint: Int? = nil
+    public var valenceOverride: Int? = nil
+    public var cxStereoGroup: Int? = nil
+    public var ligandOrderingAtomIDs: [Int]? = nil
     public var atomClass: Int? = nil
     public var atomMapNumber: Int? = nil
+    public var aliasLabel: String? = nil
 
     public var symbolToDraw: String {
+        if let aliasLabel {
+            let trimmed = aliasLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
         if let rGroupLabel {
             let normalized = element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
             if normalized.isEmpty || normalized == "*" || normalized == "R" || normalized == "R#" {
@@ -141,8 +246,10 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     }
 
     public init(id: Int,
+                externalID: String? = nil,
                 element: String,
                 position: CGPoint,
+                zPosition: Double? = nil,
                 charge: Int = 0,
                 isotopeMassNumber: Int? = nil,
                 aromatic: Bool = false,
@@ -152,6 +259,8 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
                 atomList: [String]? = nil,
                 atomListIsNegated: Bool = false,
                 radical: Int? = nil,
+                radicalType: CxRadicalType? = nil,
+                atomValue: String? = nil,
                 rGroupLabel: Int? = nil,
                 rGroupMembership: String? = nil,
                 componentGroupID: Int? = nil,
@@ -159,11 +268,17 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
                 unsaturated: Int? = nil,
                 ringBondCount: Int? = nil,
                 attachmentPoint: Int? = nil,
+                valenceOverride: Int? = nil,
+                cxStereoGroup: Int? = nil,
+                ligandOrderingAtomIDs: [Int]? = nil,
                 atomClass: Int? = nil,
-                atomMapNumber: Int? = nil) {
+                atomMapNumber: Int? = nil,
+                aliasLabel: String? = nil) {
         self.id = id
+        self.externalID = externalID
         self.element = element
         self.position = position
+        self.zPosition = zPosition
         self.charge = charge
         self.isotopeMassNumber = isotopeMassNumber
         self.aromatic = aromatic
@@ -173,6 +288,8 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         self.atomList = atomList
         self.atomListIsNegated = atomListIsNegated
         self.radical = radical
+        self.radicalType = radicalType
+        self.atomValue = atomValue
         self.rGroupLabel = rGroupLabel
         self.rGroupMembership = rGroupMembership
         self.componentGroupID = componentGroupID
@@ -180,39 +297,53 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         self.unsaturated = unsaturated
         self.ringBondCount = ringBondCount
         self.attachmentPoint = attachmentPoint
+        self.valenceOverride = valenceOverride
+        self.cxStereoGroup = cxStereoGroup
+        self.ligandOrderingAtomIDs = ligandOrderingAtomIDs
         self.atomClass = atomClass
         self.atomMapNumber = atomMapNumber
+        self.aliasLabel = aliasLabel
     }
 }
 
 public struct Bond: Identifiable, Hashable, Codable, Sendable {
     public let id: Int
+    public var externalID: String? = nil
     public let a1: Int
     public let a2: Int
     public var order: BondOrder
     public var stereo: BondStereo = .none
     public var queryType: BondQueryType? = nil
+    public var topology: BondTopology? = nil
 
     public init(id: Int,
+                externalID: String? = nil,
                 a1: Int,
                 a2: Int,
                 order: BondOrder,
                 stereo: BondStereo = .none,
-                queryType: BondQueryType? = nil) {
+                queryType: BondQueryType? = nil,
+                topology: BondTopology? = nil) {
         self.id = id
+        self.externalID = externalID
         self.a1 = a1
         self.a2 = a2
         self.order = order
         self.stereo = stereo
         self.queryType = queryType
+        self.topology = topology
     }
 }
 
 public struct Molecule: Hashable, Codable, Sendable {
     public var name: String = "Untitled"
+    public var externalID: String? = nil
     public var atoms: [Atom] = []
     public var bonds: [Bond] = []
     public var sgroups: [MoleculeSgroup] = []
+    public var highlightedAtomIDs: [Int] = []
+    public var highlightedBondIDs: [Int] = []
+    public var cxState: CDKCxSmilesState? = nil
     public var dataFields: [String: [String]] = [:]
     public var dataFieldOrder: [String] = []
 
@@ -224,9 +355,13 @@ public struct Molecule: Hashable, Codable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case name
+        case externalID
         case atoms
         case bonds
         case sgroups
+        case highlightedAtomIDs
+        case highlightedBondIDs
+        case cxState
         case dataFields
         case dataFieldOrder
     }
@@ -523,8 +658,12 @@ public struct Molecule: Hashable, Codable, Sendable {
         return lhs.count < rhs.count
     }
 
-    public init(name: String = "Untitled", atoms: [Atom] = [], bonds: [Bond] = []) {
+    public init(name: String = "Untitled",
+                externalID: String? = nil,
+                atoms: [Atom] = [],
+                bonds: [Bond] = []) {
         self.name = name
+        self.externalID = externalID
         self.atoms = atoms
         self.bonds = bonds
         self.dataFields = [:]
@@ -534,8 +673,13 @@ public struct Molecule: Hashable, Codable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Untitled"
+        externalID = try container.decodeIfPresent(String.self, forKey: .externalID)
         atoms = try container.decodeIfPresent([Atom].self, forKey: .atoms) ?? []
         bonds = try container.decodeIfPresent([Bond].self, forKey: .bonds) ?? []
+        sgroups = try container.decodeIfPresent([MoleculeSgroup].self, forKey: .sgroups) ?? []
+        highlightedAtomIDs = try container.decodeIfPresent([Int].self, forKey: .highlightedAtomIDs) ?? []
+        highlightedBondIDs = try container.decodeIfPresent([Int].self, forKey: .highlightedBondIDs) ?? []
+        cxState = try container.decodeIfPresent(CDKCxSmilesState.self, forKey: .cxState)
         dataFields = try container.decodeIfPresent([String: [String]].self, forKey: .dataFields) ?? [:]
         dataFieldOrder = try container.decodeIfPresent([String].self, forKey: .dataFieldOrder) ?? []
         dataFieldOrder = Molecule.normalizedDataFieldOrder(preferredOrder: dataFieldOrder, availableFields: dataFields)
@@ -544,8 +688,13 @@ public struct Molecule: Hashable, Codable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(externalID, forKey: .externalID)
         try container.encode(atoms, forKey: .atoms)
         try container.encode(bonds, forKey: .bonds)
+        try container.encode(sgroups, forKey: .sgroups)
+        try container.encode(highlightedAtomIDs, forKey: .highlightedAtomIDs)
+        try container.encode(highlightedBondIDs, forKey: .highlightedBondIDs)
+        try container.encodeIfPresent(cxState, forKey: .cxState)
         try container.encode(dataFields, forKey: .dataFields)
         try container.encode(orderedDataFieldNames, forKey: .dataFieldOrder)
     }

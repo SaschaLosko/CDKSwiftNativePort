@@ -12,7 +12,14 @@ enum CDKLabelText {
                                 degree: Int,
                                 style: RenderStyle,
                                 includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = true,
-                                includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true) -> Bool {
+                                includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true,
+                                molecule: Molecule? = nil,
+                                highlightedAtomIDs: Set<Int> = [],
+                                highlightedBondIDs: Set<Int> = []) -> Bool {
+        let trimmedElement = atom.element.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedElement.isEmpty {
+            return false
+        }
         if atom.attachmentPoint != nil {
             return false
         }
@@ -23,6 +30,13 @@ enum CDKLabelText {
         if atom.element == "C" && !style.showCarbons && atom.charge == 0 {
             if atom.rGroupMembership != nil {
                 return false
+            }
+            if let molecule,
+               CDKSelectionVisibility.shouldForceVisible(atom: atom,
+                                                        in: molecule,
+                                                        highlightedAtomIDs: highlightedAtomIDs,
+                                                        highlightedBondIDs: highlightedBondIDs) {
+                return true
             }
             if atom.aromatic && includeAromaticCarbonLabelsWhenCarbonsHidden {
                 return true
@@ -80,7 +94,34 @@ enum CDKLabelText {
         return remainder.isEmpty || remainder == " is"
     }
 
+    static func queryDisplayText(for atom: Atom) -> String? {
+        if let atomList = atom.atomList, !atomList.isEmpty {
+            let joined = atomList.joined(separator: ",")
+            return atom.atomListIsNegated ? "NOT[\(joined)]" : "[\(joined)]"
+        }
+        guard let queryType = atom.queryType else { return nil }
+        switch queryType {
+        case .anyAtom:
+            return "*"
+        case .anyNonHydrogen:
+            return "A"
+        case .anyHetero:
+            return "Q"
+        }
+    }
+
     static func build(atom: Atom, style: RenderStyle, implicitHydrogenCount: Int) -> String {
+        if let queryText = queryDisplayText(for: atom) {
+            var label = queryText
+            if style.showAtomMapNumbers, let mapNo = atom.atomMapNumber, mapNo > 0 {
+                label += ":\(mapNo)"
+            }
+            if style.showAtomIDs {
+                label += " \(atom.id)"
+            }
+            return label
+        }
+
         let chargeText = chargeText(for: atom)
         let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
 
@@ -101,6 +142,7 @@ enum CDKLabelText {
         // Keep the atom symbol centered on the atomic anchor even when
         // suffix text (e.g. "H" in "OH") is displayed.
         guard !style.showAtomIDs, !style.showAtomMapNumbers else { return .zero }
+        guard queryDisplayText(for: atom) == nil else { return .zero }
         let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
         guard !hText.isEmpty else { return .zero }
 

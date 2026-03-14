@@ -20,6 +20,7 @@ let package = Package(
             name: "CDKSwiftNativePortTests",
             dependencies: ["CDKSwiftNativePort"],
             exclude: [
+                "CML/port_metadata.json",
                 "Smiles/port_metadata.json",
                 "MDL/port_metadata.json",
                 "InChI/port_metadata.json"

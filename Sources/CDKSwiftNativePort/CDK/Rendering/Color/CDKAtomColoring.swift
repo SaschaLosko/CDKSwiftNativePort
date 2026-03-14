@@ -49,11 +49,23 @@ public struct CDKRenderColor: Hashable {
     public static let ink = CDKRenderColor(red: 0.07, green: 0.07, blue: 0.09)
     public static let aromaticInk = CDKRenderColor(red: 0.14, green: 0.14, blue: 0.16)
     public static let grid = CDKRenderColor(red: 0.50, green: 0.50, blue: 0.54)
+    public static let selectionHighlight = CDKRenderColor(red: 0x49 / 255.0,
+                                                          green: 0xDF / 255.0,
+                                                          blue: 0xFF / 255.0)
     public static let outerGlowHighlight = CDKRenderColor(red: 0.99, green: 0.82, blue: 0.32)
 }
 
 public enum CDKRenderingStyleResolver {
-    public static func atomColor(for atom: Atom, style: RenderStyle) -> CDKRenderColor {
+    public static func usesColoredHighlights(style: RenderStyle) -> Bool {
+        style.highlightStyle == .colored
+    }
+
+    public static func atomColor(for atom: Atom,
+                                 style: RenderStyle,
+                                 highlightedAtomIDs: Set<Int> = []) -> CDKRenderColor {
+        if usesColoredHighlights(style: style), highlightedAtomIDs.contains(atom.id) {
+            return .selectionHighlight
+        }
         switch style.atomColoringMode {
         case .monochrome:
             return atom.aromatic ? .aromaticInk : .ink
@@ -67,7 +79,13 @@ public enum CDKRenderingStyleResolver {
         }
     }
 
-    public static func bondColor(for bond: Bond, molecule: Molecule, style: RenderStyle) -> CDKRenderColor {
+    public static func bondColor(for bond: Bond,
+                                 molecule: Molecule,
+                                 style: RenderStyle,
+                                 highlightedBondIDs: Set<Int> = []) -> CDKRenderColor {
+        if usesColoredHighlights(style: style), highlightedBondIDs.contains(bond.id) {
+            return .selectionHighlight
+        }
         let isPerAtomBondColoring = style.atomColoringMode == .cdk2D || style.atomColoringMode == .atomMapHighlight
         guard isPerAtomBondColoring, style.colorBondsByAtom else {
             return bond.order == .aromatic ? .aromaticInk : .ink
@@ -81,7 +99,22 @@ public enum CDKRenderingStyleResolver {
         return c1.mixed(with: c2, ratio: 0.5)
     }
 
-    public static func aromaticRingColor(atomIDs: [Int], molecule: Molecule, style: RenderStyle) -> CDKRenderColor {
+    public static func aromaticRingColor(atomIDs: [Int],
+                                         molecule: Molecule,
+                                         style: RenderStyle,
+                                         highlightedBondIDs: Set<Int> = []) -> CDKRenderColor {
+        if usesColoredHighlights(style: style),
+           atomIDs.count >= 3,
+           !highlightedBondIDs.isEmpty {
+            for index in 0..<atomIDs.count {
+                let atom1 = atomIDs[index]
+                let atom2 = atomIDs[(index + 1) % atomIDs.count]
+                if let bond = molecule.bond(between: atom1, and: atom2),
+                   highlightedBondIDs.contains(bond.id) {
+                    return .selectionHighlight
+                }
+            }
+        }
         let isPerAtomBondColoring = style.atomColoringMode == .cdk2D || style.atomColoringMode == .atomMapHighlight
         guard isPerAtomBondColoring, style.colorBondsByAtom else {
             return .aromaticInk

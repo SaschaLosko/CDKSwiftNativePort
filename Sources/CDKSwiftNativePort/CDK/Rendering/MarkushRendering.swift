@@ -38,6 +38,8 @@ enum CDKMarkushRendering {
                             scale: CGFloat = 1.0) -> [CDKMarkushBoxAnnotation] {
         var boundsByLabel: [String: CGRect] = [:]
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
+        let highlightedAtomIDs = Set(molecule.highlightedAtomIDs)
+        let highlightedBondIDs = Set(molecule.highlightedBondIDs)
         var degreeByAtomID: [Int: Int] = [:]
         degreeByAtomID.reserveCapacity(molecule.atoms.count)
 
@@ -58,7 +60,12 @@ enum CDKMarkushRendering {
 
             let degree = degreeByAtomID[atom.id] ?? 0
             if atom.attachmentPoint == nil,
-               CDKLabelText.shouldDrawLabel(atom: atom, degree: degree, style: style) {
+               CDKLabelText.shouldDrawLabel(atom: atom,
+                                           degree: degree,
+                                           style: style,
+                                           molecule: molecule,
+                                           highlightedAtomIDs: highlightedAtomIDs,
+                                           highlightedBondIDs: highlightedBondIDs) {
                 let implicitH = style.showImplicitHydrogens ? molecule.implicitHydrogenCount(for: atom.id) : 0
                 let text = CDKLabelText.build(atom: atom, style: style, implicitHydrogenCount: implicitH)
                 let centerOffset = CDKLabelText.centerOffset(atom: atom,
@@ -159,7 +166,7 @@ enum CDKMarkushRendering {
                                 positionsByAtomID: [Int: CGPoint],
                                 fontSize: CGFloat) -> [CDKMarkushLinkAnnotation] {
         molecule.sgroups.compactMap { sgroup in
-            guard sgroup.kind == .structureRepeatUnit else { return nil }
+            guard sgroup.kind == .structureRepeatUnit, sgroup.roundBrackets else { return nil }
 
             let points = sgroup.atomIDs.compactMap { positionsByAtomID[$0] }
             guard !points.isEmpty else { return nil }

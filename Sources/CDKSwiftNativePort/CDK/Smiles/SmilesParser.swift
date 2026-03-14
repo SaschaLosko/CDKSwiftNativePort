@@ -14,11 +14,16 @@ public final class CDKSmilesParser {
         try CDKCxSmilesParser.apply(to: &molecule, state: split.state) { [self] definition in
             try parseSmiles(definition)
         }
-        if !split.state.rGroupDefinitions.isEmpty || !split.state.linkNodes.isEmpty {
+        let needsGeneratedLayout = split.state.atomCoordinates.isEmpty &&
+            (!split.state.rGroupDefinitions.isEmpty ||
+             !split.state.linkNodes.isEmpty ||
+             !split.state.sgroups.isEmpty ||
+             !split.state.positionalVariations.isEmpty)
+        if needsGeneratedLayout {
             molecule = Depiction2DGenerator.generate(for: molecule)
             molecule.assignWedgeHashFromChiralCenters()
         }
-        if let title = split.title, !title.isEmpty {
+        if let title = split.title {
             molecule.name = title
         }
         return molecule

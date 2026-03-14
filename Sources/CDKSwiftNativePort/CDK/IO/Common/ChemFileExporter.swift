@@ -3,6 +3,7 @@ import CoreGraphics
 
 public enum CDKFileExportFormat: String, CaseIterable, Identifiable {
     case mol
+    case molV3000
     case sdf
     case smiles
     case isomericSmiles
@@ -44,17 +45,20 @@ public struct CDKFileExporterFormat: Hashable, Identifiable {
 public struct CDKFileExportOptions {
     public var smilesFlavor: CDKSmiFlavor
     public var isomericSmilesFlavor: CDKSmiFlavor
+    public var sdfOptions: CDKSDFWriterOptions
     public var renderStyle: RenderStyle
     public var svgCanvasSize: CGSize
     public var svgIncludeBackground: Bool
 
     public init(smilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .strict],
                 isomericSmilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .isomeric, .strict],
+                sdfOptions: CDKSDFWriterOptions = CDKSDFWriterOptions(),
                 renderStyle: RenderStyle = RenderStyle(),
                 svgCanvasSize: CGSize = CGSize(width: 1400, height: 920),
                 svgIncludeBackground: Bool = true) {
         self.smilesFlavor = smilesFlavor
         self.isomericSmilesFlavor = isomericSmilesFlavor
+        self.sdfOptions = sdfOptions
         self.renderStyle = renderStyle
         self.svgCanvasSize = svgCanvasSize
         self.svgIncludeBackground = svgIncludeBackground
@@ -66,6 +70,11 @@ public enum CDKFileExporter {
     public static let formats: [CDKFileExporterFormat] = [
         CDKFileExporterFormat(format: .mol,
                               displayName: "MDL Molfile (V2000)",
+                              fileExtensions: ["mol"],
+                              utiIdentifiers: ["chemical/x-mdl-molfile", "net.sourceforge.openbabel.mdl"],
+                              supportsMultipleMolecules: false),
+        CDKFileExporterFormat(format: .molV3000,
+                              displayName: "MDL Molfile (V3000)",
                               fileExtensions: ["mol"],
                               utiIdentifiers: ["chemical/x-mdl-molfile", "net.sourceforge.openbabel.mdl"],
                               supportsMultipleMolecules: false),
@@ -156,8 +165,13 @@ public enum CDKFileExporter {
                 throw ChemError.unsupported("Molfile export supports a single molecule only. Use SDF for multiple molecules.")
             }
             return try CDKMDLV2000Writer.write(first)
+        case .molV3000:
+            guard let first = molecules.first, molecules.count == 1 else {
+                throw ChemError.unsupported("V3000 Molfile export supports a single molecule only. Use SDF for multiple molecules.")
+            }
+            return try CDKMDLV3000Writer.write(first, options: CDKMDLV3000Writer.Options(includeDataFields: false))
         case .sdf:
-            return try CDKSDFWriter.write(molecules)
+            return try CDKSDFWriter.write(molecules, options: options.sdfOptions)
         case .smiles:
             return try CDKSMILESWriter.write(molecules, flavor: options.smilesFlavor)
         case .isomericSmiles:
@@ -184,6 +198,54 @@ public enum CDKFileExporter {
                                                style: options.renderStyle,
                                                canvasSize: options.svgCanvasSize,
                                                includeBackground: options.svgIncludeBackground)
+        }
+    }
+
+    public static func write(reaction: CDKReaction,
+                             as format: CDKFileExportFormat,
+                             options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
+        try write(reactions: [reaction], as: format, options: options)
+    }
+
+    public static func write(reactions: [CDKReaction],
+                             as format: CDKFileExportFormat,
+                             options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
+        guard !reactions.isEmpty else { throw ChemError.emptyInput }
+
+        switch format {
+        case .cml:
+            return try reactions.count == 1
+                ? CDKCMLReactionWriter.write(reactions[0])
+                : CDKCMLReactionWriter.write(reactions)
+        case .rxn:
+            guard reactions.count == 1, let reaction = reactions.first else {
+                throw ChemError.unsupported("RXN export supports a single reaction only.")
+            }
+            return try CDKRXNWriter.write(reactants: reaction.reactants,
+                                          products: reaction.products,
+                                          agents: reaction.agents,
+                                          reactionName: reaction.name ?? reaction.id ?? "CDKSwiftNativePort Reaction")
+        case .rdf:
+            if reactions.count == 1, let reaction = reactions.first {
+                return try CDKRDFWriter.write(reactants: reaction.reactants,
+                                              products: reaction.products,
+                                              agents: reaction.agents,
+                                              reactionName: reaction.name ?? reaction.id ?? "CDKSwiftNativePort RDF")
+            }
+
+            return try reactions.enumerated().map { index, reaction in
+                try CDKRDFWriter.write(reactants: reaction.reactants,
+                                       products: reaction.products,
+                                       agents: reaction.agents,
+                                       reactionName: reaction.name ?? reaction.id ?? "CDKSwiftNativePort RDF \(index + 1)")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }.joined(separator: "\n")
+                + "\n"
+        case .smiles, .isomericSmiles:
+            let generator = CDKSmilesGenerator(flavor: format == .smiles ? options.smilesFlavor : options.isomericSmilesFlavor)
+            return reactions.map(generator.create).joined(separator: "\n") + "\n"
+        default:
+            throw ChemError.unsupported("Format \(format.rawValue) does not support reaction export.")
         }
     }
 
