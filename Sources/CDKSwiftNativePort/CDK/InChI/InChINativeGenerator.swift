@@ -530,10 +530,15 @@ enum CDKInChINativeGenerator {
     private static func digestBytes(for text: String) -> [UInt8] {
         let bytes = [UInt8](text.utf8)
         #if canImport(CryptoKit)
-        let hash = SHA256.hash(data: Data(bytes))
-        return Array(hash)
+        if #available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *) {
+            let hash = SHA256.hash(data: Data(bytes))
+            return Array(hash)
+        }
         #else
         // Deterministic fallback for platforms without CryptoKit.
+        #endif
+
+        // Deterministic fallback for platforms or OS versions without CryptoKit hashing.
         var state: UInt64 = 0xcbf29ce484222325
         for byte in bytes {
             state ^= UInt64(byte)
@@ -547,7 +552,6 @@ enum CDKInChINativeGenerator {
             out.append(UInt8(truncatingIfNeeded: current & 0xff))
         }
         return out
-        #endif
     }
 
     private static let knownElementSymbols: Set<String> = [

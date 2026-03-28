@@ -1,7 +1,8 @@
 # Integration Guide
 
-This guide shows how to integrate `CDKSwiftNativePort` into a native macOS host
-without pulling chemistry logic into the app target itself.
+This guide shows how to integrate `CDKSwiftNativePort` into a native app,
+helper tool, or Linux command-line host without pulling chemistry logic into
+the host target itself.
 
 ## 1. Add the Package
 
@@ -15,7 +16,7 @@ or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.2.0")
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.3.0")
 ]
 ```
 
@@ -24,6 +25,9 @@ Then import it:
 ```swift
 import CDKSwiftNativePort
 ```
+
+For a full Swift-on-Linux walkthrough, including runnable executable-package
+examples, see [`LINUX.md`](LINUX.md).
 
 ## 2. Pick an Integration Style
 
@@ -34,11 +38,14 @@ Most hosts fit one of these patterns:
 - parse -> layout -> build `CDKMetalDepictionScene` -> render in host-owned
   Metal/Core Graphics
 - parse reactions and use `CDKMetalReactionDepictionSceneBuilder`
+- build Linux command-line tools or batch converters
 - build Quick Look / Spotlight / importer targets on top of the package APIs
 
 ## 3. Read Molecules From Text
 
 ```swift
+import Foundation
+
 let molecules = try CDKFileImporter.readMolecules(
     text: "CC(=O)OC1=CC=CC=C1C(=O)O",
     fileExtension: "smi"
@@ -62,6 +69,8 @@ guard let molecule = molecules.first else {
 ## 4. Read From Sandboxed File URLs
 
 ```swift
+import Foundation
+
 let fileURL = URL(fileURLWithPath: "/path/to/molecule.sdf")
 let molecules = try CDKFileImporter.readMolecules(from: fileURL)
 ```
@@ -69,9 +78,14 @@ let molecules = try CDKFileImporter.readMolecules(from: fileURL)
 The package uses `CDKFileAccess` internally, which coordinates file access and
 works with security-scoped URLs in App Sandbox hosts.
 
+On Linux and other non-sandboxed hosts, the same API uses standard Foundation
+file access without introducing host-app dependencies.
+
 ## 5. Generate 2D Coordinates
 
 ```swift
+import Foundation
+
 let laidOut = Depiction2DGenerator.generate(for: molecule)
 ```
 
@@ -81,6 +95,8 @@ coordinates that you want to preserve.
 ## 6. Compute Identifiers and Properties
 
 ```swift
+import Foundation
+
 let identifiers = CDKMoleculeIdentifierService.compute(for: laidOut)
 let properties = CDKMoleculePropertyService.compute(for: laidOut)
 
@@ -108,7 +124,7 @@ let vabc = CDKVABCDescriptor.calculate(for: laidOut)
 Using the export facade:
 
 ```swift
-import CoreGraphics
+import Foundation
 
 var options = CDKFileExportOptions()
 options.svgCanvasSize = CGSize(width: 1280, height: 840)
@@ -120,7 +136,7 @@ let svg = try CDKFileExporter.write(molecule: laidOut, as: .svg, options: option
 Using the lower-level depiction generator directly:
 
 ```swift
-import CoreGraphics
+import Foundation
 
 let svg = CDKDepictionGenerator.toSVG(
     molecule: laidOut,
@@ -133,7 +149,7 @@ let svg = CDKDepictionGenerator.toSVG(
 ## 8. Build a Scene for a Host Renderer
 
 ```swift
-import CoreGraphics
+import Foundation
 
 let scene = CDKMetalDepictionSceneBuilder.build(
     molecule: laidOut,
@@ -179,7 +195,7 @@ Useful rendering features include:
 ## 10. Parse a Markush CXSMILES
 
 ```swift
-import CoreGraphics
+import Foundation
 
 let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
 let markush = try parser.parseSmiles(
@@ -210,7 +226,7 @@ Current CDK 2.12-style CX coverage in the supported path includes:
 ## 11. Parse and Render Reactions
 
 ```swift
-import CoreGraphics
+import Foundation
 
 let reaction = try CDKFileImporter.readReaction(
     text: "CCO>>CC=O",
@@ -229,6 +245,8 @@ let reactionScene = CDKMetalReactionDepictionSceneBuilder.build(
 Optional participant hit-testing:
 
 ```swift
+import Foundation
+
 let hit = CDKMetalReactionDepictionSceneBuilder.participant(
     at: CGPoint(x: 320, y: 240),
     in: reaction,
@@ -277,6 +295,7 @@ The package is suitable for:
 - Quick Look preview or thumbnail targets
 - Spotlight metadata importers
 - helper tools and batch converters
+- Linux CLI and service-side workflows
 
 Those targets should import `CDKSwiftNativePort` directly instead of copying
 chemistry code into the extension target.

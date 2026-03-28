@@ -1,5 +1,9 @@
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
+#if canImport(CoreText)
 import CoreText
+#endif
 import Foundation
 
 enum CDKLabelText {
@@ -201,7 +205,10 @@ enum CDKLabelClipping {
                                   padding: CGFloat) -> CDKLabelObstacle {
         guard let glyphPath = makeGlyphPath(text: text, center: center, fontSize: fontSize) else {
             let estimate = estimateLabelSize(text: text, fontSize: fontSize)
-            let rect = makeLabelRect(center: center, estimatedTextSize: estimate)
+            let rect = CGRect(x: center.x - estimate.width * 0.5,
+                              y: center.y - estimate.height * 0.5,
+                              width: estimate.width,
+                              height: estimate.height)
                 .insetBy(dx: -padding, dy: -padding)
             return CDKLabelObstacle(rect: rect)
         }
@@ -341,6 +348,7 @@ enum CDKLabelClipping {
     }
 
     private static func makeGlyphPath(text: String, center: CGPoint, fontSize: CGFloat) -> CGPath? {
+        #if canImport(CoreText)
         guard !text.isEmpty else { return nil }
 
         let fontName = "Helvetica-Bold" as CFString
@@ -383,5 +391,8 @@ enum CDKLabelClipping {
 
         guard !path.isEmpty else { return nil }
         return path.copy()
+        #else
+        return nil
+        #endif
     }
 }

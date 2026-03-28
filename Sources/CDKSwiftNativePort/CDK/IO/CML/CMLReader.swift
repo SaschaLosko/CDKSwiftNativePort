@@ -1,5 +1,10 @@
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 /// CDK-style CML reader supporting common atomArray/bondArray variants emitted by CDK and other toolkits.
 public enum CDKCMLReader {

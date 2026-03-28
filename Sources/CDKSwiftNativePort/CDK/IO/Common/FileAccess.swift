@@ -4,6 +4,7 @@ public enum CDKFileAccess {
     public static func withReadableURL<T>(at url: URL,
                                           coordinateAccess: Bool = true,
                                           _ body: (URL) throws -> T) throws -> T {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         let shouldStopAccess = url.isFileURL ? url.startAccessingSecurityScopedResource() : false
         defer {
             if shouldStopAccess {
@@ -38,6 +39,10 @@ public enum CDKFileAccess {
             throw ChemError.parseFailed("Unable to coordinate file access.")
         }
         return try result.get()
+        #else
+        _ = coordinateAccess
+        return try body(url)
+        #endif
     }
 
     public static func readData(from url: URL,

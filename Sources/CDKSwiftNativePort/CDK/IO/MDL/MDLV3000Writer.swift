@@ -26,15 +26,30 @@ public enum CDKMDLV3000Writer {
         let bondIndexByID: [Int: Int]
     }
 
+    private struct SerializedCTAB {
+        let lines: [String]
+    }
+
+    private struct RGroupMemberDefinition {
+        let label: String
+        let number: Int
+        let componentGroupID: Int
+        let atomIDs: [Int]
+    }
+
     public static func write(_ molecule: Molecule,
                              options: Options = Options()) throws -> String {
         guard !molecule.atoms.isEmpty else {
             throw ChemError.parseFailed("Cannot write Molfile for empty molecule.")
         }
 
-        let order = try outputOrder(for: molecule)
-        let ctabSgroups = orderCtabSgroups(for: molecule)
-        let chiralStatus = chiralFlag(for: molecule)
+        let root = rootMolecule(for: molecule)
+        guard !root.atoms.isEmpty else {
+            throw ChemError.parseFailed("Cannot write V3000 R-group file without a root structure.")
+        }
+
+        let rootCTAB = try serializedCTAB(for: root)
+        let rgroupLines = try rgroupBlockLines(for: molecule)
 
         var lines: [String] = []
         let title = molecule.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -42,8 +57,31 @@ public enum CDKMDLV3000Writer {
         lines.append(headerProgramLine(for: molecule, options: options))
         lines.append("")
         lines.append("  0  0  0     0  0            999 V3000")
+        lines.append(contentsOf: rootCTAB.lines)
+        lines.append(contentsOf: rgroupLines)
+        lines.append("M  END")
+
+        if options.includeDataFields {
+            let dataFields = CDKSDFDataFieldSupport.serializeDataFields(for: molecule,
+                                                                        acceptedFieldNames: options.acceptedDataFieldNames,
+                                                                        truncateLongValues: options.truncateLongDataFields)
+            if !dataFields.isEmpty {
+                lines.append(contentsOf: dataFields.components(separatedBy: "\n"))
+            }
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private static func serializedCTAB(for molecule: Molecule) throws -> SerializedCTAB {
+        let order = try outputOrder(for: molecule)
+        let orderedSgroups = orderCtabSgroups(for: molecule)
+        let sgroupPayloads = sgroupPayloads(forOrderedSgroups: orderedSgroups, order: order)
+        let chiralStatus = chiralFlag(for: molecule)
+
+        var lines: [String] = []
         lines.append("M  V30 BEGIN CTAB")
-        lines.append("M  V30 COUNTS \(order.atoms.count) \(order.bonds.count) \(ctabSgroups.count) 0 \(chiralStatus == 1 ? 1 : 0)")
+        lines.append("M  V30 COUNTS \(order.atoms.count) \(order.bonds.count) \(sgroupPayloads.count) 0 \(chiralStatus == 1 ? 1 : 0)")
 
         lines.append("M  V30 BEGIN ATOM")
         for (index, atom) in order.atoms.enumerated() {
@@ -64,7 +102,6 @@ public enum CDKMDLV3000Writer {
             lines.append("M  V30 END BOND")
         }
 
-        let sgroupPayloads = sgroupPayloads(for: ctabSgroups, order: order)
         if !sgroupPayloads.isEmpty {
             lines.append("M  V30 BEGIN SGROUP")
             for payload in sgroupPayloads {
@@ -83,18 +120,7 @@ public enum CDKMDLV3000Writer {
         }
 
         lines.append("M  V30 END CTAB")
-        lines.append("M  END")
-
-        if options.includeDataFields {
-            let dataFields = CDKSDFDataFieldSupport.serializeDataFields(for: molecule,
-                                                                        acceptedFieldNames: options.acceptedDataFieldNames,
-                                                                        truncateLongValues: options.truncateLongDataFields)
-            if !dataFields.isEmpty {
-                lines.append(contentsOf: dataFields.components(separatedBy: "\n"))
-            }
-        }
-
-        return lines.joined(separator: "\n")
+        return SerializedCTAB(lines: lines)
     }
 
     private static func outputOrder(for molecule: Molecule) throws -> OutputOrder {
@@ -394,7 +420,7 @@ public enum CDKMDLV3000Writer {
         }
     }
 
-    private static func sgroupPayloads(for orderedSgroups: [(Int, MoleculeSgroup)],
+    private static func sgroupPayloads(forOrderedSgroups orderedSgroups: [(Int, MoleculeSgroup)],
                                        order: OutputOrder) -> [String] {
         guard !orderedSgroups.isEmpty else { return [] }
 
@@ -490,6 +516,173 @@ public enum CDKMDLV3000Writer {
         }
 
         return payloads
+    }
+
+    private static func rgroupBlockLines(for molecule: Molecule) throws -> [String] {
+        let memberDefinitions = try markushDefinitionGroups(for: molecule)
+        guard !memberDefinitions.isEmpty else { return [] }
+
+        let grouped = Dictionary(grouping: memberDefinitions, by: \.number)
+        var lines: [String] = []
+
+        for number in grouped.keys.sorted() {
+            guard let members = grouped[number] else { continue }
+            lines.append("M  V30 BEGIN RGROUP \(number)")
+
+            for member in members.sorted(by: { $0.componentGroupID < $1.componentGroupID }) {
+                let memberMolecule = extractSubmolecule(from: molecule,
+                                                       atomIDs: Set(member.atomIDs),
+                                                       name: member.label,
+                                                       preserveDataFields: false)
+                let memberCTAB = try serializedCTAB(for: memberMolecule)
+                lines.append(contentsOf: memberCTAB.lines)
+            }
+
+            lines.append("M  V30 END RGROUP")
+        }
+
+        return lines
+    }
+
+    private static func markushDefinitionGroups(for molecule: Molecule) throws -> [RGroupMemberDefinition] {
+        let maxComponentGroupID = molecule.atoms.compactMap(\.componentGroupID).max() ?? 0
+        var nextSyntheticComponentGroupID = maxComponentGroupID + 1
+        var grouped: [RGroupMemberDefinition] = []
+
+        let labels = Set(molecule.atoms.compactMap(\.rGroupMembership)).sorted(by: compareRGroupLabels)
+        for label in labels {
+            guard let number = rGroupNumber(for: label) else {
+                throw ChemError.parseFailed("Unsupported R-group label '\(label)' for V3000 RGROUP export.")
+            }
+            let labelAtoms = molecule.atoms.filter { $0.rGroupMembership == label }
+            let explicitGroups = Dictionary(grouping: labelAtoms) { $0.componentGroupID }
+
+            for componentGroupID in explicitGroups.keys.compactMap({ $0 }).sorted() {
+                guard let atoms = explicitGroups[componentGroupID], !atoms.isEmpty else { continue }
+                grouped.append(RGroupMemberDefinition(label: label,
+                                                      number: number,
+                                                      componentGroupID: componentGroupID,
+                                                      atomIDs: atoms.map(\.id).sorted()))
+            }
+
+            if let ungroupedAtoms = explicitGroups[nil], !ungroupedAtoms.isEmpty {
+                let components = connectedComponents(atomIDs: Set(ungroupedAtoms.map(\.id)), molecule: molecule)
+                for component in components {
+                    grouped.append(RGroupMemberDefinition(label: label,
+                                                          number: number,
+                                                          componentGroupID: nextSyntheticComponentGroupID,
+                                                          atomIDs: component.sorted()))
+                    nextSyntheticComponentGroupID += 1
+                }
+            }
+        }
+
+        return grouped.sorted { lhs, rhs in
+            if lhs.number != rhs.number {
+                return lhs.number < rhs.number
+            }
+            return lhs.componentGroupID < rhs.componentGroupID
+        }
+    }
+
+    private static func rGroupNumber(for label: String) -> Int? {
+        let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard trimmed.hasPrefix("R"), trimmed.count > 1 else { return nil }
+        return Int(trimmed.dropFirst())
+    }
+
+    private static func connectedComponents(atomIDs: Set<Int>, molecule: Molecule) -> [Set<Int>] {
+        guard !atomIDs.isEmpty else { return [] }
+
+        var adjacency: [Int: Set<Int>] = [:]
+        for atomID in atomIDs {
+            adjacency[atomID] = []
+        }
+
+        for bond in molecule.bonds where atomIDs.contains(bond.a1) && atomIDs.contains(bond.a2) {
+            adjacency[bond.a1, default: []].insert(bond.a2)
+            adjacency[bond.a2, default: []].insert(bond.a1)
+        }
+
+        var visited = Set<Int>()
+        var components: [Set<Int>] = []
+
+        for atomID in atomIDs.sorted() where !visited.contains(atomID) {
+            var stack = [atomID]
+            var component = Set<Int>()
+            visited.insert(atomID)
+
+            while let current = stack.popLast() {
+                component.insert(current)
+                for neighbor in adjacency[current, default: []].sorted() where !visited.contains(neighbor) {
+                    visited.insert(neighbor)
+                    stack.append(neighbor)
+                }
+            }
+
+            components.append(component)
+        }
+
+        return components
+    }
+
+    private static func rootMolecule(for molecule: Molecule) -> Molecule {
+        let rootAtomIDs = Set(molecule.atoms.compactMap { atom in
+            atom.rGroupMembership == nil ? atom.id : nil
+        })
+        return extractSubmolecule(from: molecule,
+                                  atomIDs: rootAtomIDs,
+                                  name: molecule.name,
+                                  preserveDataFields: true)
+    }
+
+    private static func extractSubmolecule(from source: Molecule,
+                                           atomIDs: Set<Int>,
+                                           name: String,
+                                           preserveDataFields: Bool) -> Molecule {
+        let atoms = source.atoms.filter { atomIDs.contains($0.id) }
+        let bondIDs = Set(source.bonds.compactMap { bond in
+            atomIDs.contains(bond.a1) && atomIDs.contains(bond.a2) ? bond.id : nil
+        })
+        let bonds = source.bonds.filter { bondIDs.contains($0.id) }
+
+        var result = Molecule(name: name,
+                              atoms: atoms,
+                              bonds: bonds)
+        result.externalID = source.externalID
+        result.sgroups = filteredSgroups(from: source.sgroups,
+                                         atomIDs: atomIDs,
+                                         bondIDs: bondIDs)
+        result.highlightedAtomIDs = source.highlightedAtomIDs.filter { atomIDs.contains($0) }
+        result.highlightedBondIDs = source.highlightedBondIDs.filter { bondIDs.contains($0) }
+        result.cxState = nil
+        if preserveDataFields {
+            result.dataFields = source.dataFields
+            result.dataFieldOrder = source.dataFieldOrder
+        }
+        return result
+    }
+
+    private static func filteredSgroups(from sgroups: [MoleculeSgroup],
+                                        atomIDs: Set<Int>,
+                                        bondIDs: Set<Int>) -> [MoleculeSgroup] {
+        let includedIndices = sgroups.indices.filter { index in
+            let sgroup = sgroups[index]
+            return Set(sgroup.atomIDs).isSubset(of: atomIDs)
+                && Set(sgroup.crossingBondIDs).isSubset(of: bondIDs)
+                && Set(sgroup.parentAtomIDs).isSubset(of: atomIDs)
+        }
+
+        let includedIndexSet = Set(includedIndices)
+        let indexMap = Dictionary(uniqueKeysWithValues: includedIndices.enumerated().map { ($1, $0) })
+
+        return includedIndices.map { index in
+            var sgroup = sgroups[index]
+            sgroup.childGroupIndices = sgroup.childGroupIndices
+                .filter { includedIndexSet.contains($0) }
+                .compactMap { indexMap[$0] }
+            return sgroup
+        }
     }
 
     private static func sgroupTypeKey(for sgroup: MoleculeSgroup) -> String {
@@ -655,6 +848,17 @@ public enum CDKMDLV3000Writer {
             return "0"
         }
         return rendered
+    }
+
+    private static func compareRGroupLabels(_ lhs: String, _ rhs: String) -> Bool {
+        let lhsDigits = lhs.drop(while: { !$0.isNumber })
+        let rhsDigits = rhs.drop(while: { !$0.isNumber })
+
+        if let lhsValue = Int(lhsDigits), let rhsValue = Int(rhsDigits), lhsValue != rhsValue {
+            return lhsValue < rhsValue
+        }
+
+        return lhs.localizedStandardCompare(rhs) == .orderedAscending
     }
 
     private static func v30WrappedLines(for payload: String) -> [String] {

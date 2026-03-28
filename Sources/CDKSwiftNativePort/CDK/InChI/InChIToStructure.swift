@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 /// Swift counterpart of CDK's InChI-to-structure adapter.
 public final class CDKInChIToStructure {

@@ -1,17 +1,18 @@
 # CDKSwiftNativePort
 
 `CDKSwiftNativePort` is a Swift-native chemistry package that keeps
-CDK-derived parsing, layout, depiction, identifiers, descriptors, and file IO
+CDK-derived parsing, layout, depiction, identifiers, descriptors, and file I/O
 inside a reusable package boundary.
 
-Repository: <https://github.com/SaschaLosko/CDKSwiftNativePort>
+GitHub repository: <https://github.com/SaschaLosko/CDKSwiftNativePort>
 
 ## Overview
 
 This package exists for two reasons:
 
 - keep all CDK-derived chemistry logic out of the host app
-- expose a Swift-first API for native macOS chemistry workflows
+- expose a Swift-first chemistry API that can be reused from Apple apps,
+  command-line tools, and Swift on Linux
 
 The first-party consumer is AtomLens, but the package itself has no dependency
 on AtomLens modules, Quick Look targets, Spotlight targets, bundle identifiers,
@@ -94,13 +95,14 @@ The package owns:
 - scene building for host renderers
 - identifier and descriptor services
 
-The host app owns:
+The host app or tool owns:
 
 - window and document behavior
 - UI state and toolbar controls
-- `MTKView` / Core Graphics drawing loops
+- render loops and view ownership
 - Quick Look and Spotlight extension targets
-- bundle identifiers, entitlements, and App Store metadata
+- bundle identifiers, entitlements, and app metadata
+- command-line argument parsing and process lifecycle
 
 This boundary is enforced in tests:
 
@@ -111,15 +113,23 @@ This boundary is enforced in tests:
 - the AtomLens Xcode project is checked to ensure it links the package product
   rather than compiling package implementation files directly
 
-## Platform
+## Platform and Release Status
 
 - Swift tools: `5.9`
-- declared platform: `macOS 14+`
+- Apple deployment targets declared in `Package.swift`:
+  - `macOS 14+`
+  - `iOS 13+`
+- Linux:
+  - builds and runs as a Swift package under Swift on Linux
+  - verified on Ubuntu 24.04 with Swift 6.3
 
-The chemistry core is headless and does not depend on `AppKit` or `SwiftUI`.
-The package uses Foundation/CoreGraphics/CoreText-level APIs and is well suited
-to app, Quick Look, and metadata-importer targets that want to share the same
-chemistry core.
+The package is headless. It does not depend on `AppKit`, `UIKit`, `SwiftUI`,
+Quick Look, Spotlight, or AtomLens internals. That makes it suitable for:
+
+- macOS and iOS apps
+- helper tools and import/export utilities
+- Quick Look and Spotlight-style host integrations on Apple platforms
+- Linux command-line tools, batch converters, and service-side workflows
 
 ## Installation
 
@@ -131,21 +141,61 @@ Add the package dependency:
 https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
-### `Package.swift`
+### Swift Package Manager
+
+Add the dependency in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.2.0")
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.3.0")
 ]
+```
+
+Then add the product to your target:
+
+```swift
+.target(
+    name: "MyTarget",
+    dependencies: [
+        .product(name: "CDKSwiftNativePort", package: "CDKSwiftNativePort")
+    ]
+)
+```
+
+### SwiftPM Executable on Linux
+
+For a Linux command-line tool, use an executable target:
+
+```swift
+// Package.swift
+// swift-tools-version: 5.9
+import PackageDescription
+
+let package = Package(
+    name: "ChemCLI",
+    dependencies: [
+        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.3.0")
+    ],
+    targets: [
+        .executableTarget(
+            name: "ChemCLI",
+            dependencies: [
+                .product(name: "CDKSwiftNativePort", package: "CDKSwiftNativePort")
+            ]
+        )
+    ]
+)
 ```
 
 ## Quick Start
 
-### Parse, layout, identify, and export SVG
+### Parse, Layout, Identify, and Export SVG
+
+This example works in a Swift package on macOS and Linux.
 
 ```swift
+import Foundation
 import CDKSwiftNativePort
-import CoreGraphics
 
 let molecules = try CDKFileImporter.readMolecules(
     text: "CC(=O)OC1=CC=CC=C1C(=O)O",
@@ -153,7 +203,9 @@ let molecules = try CDKFileImporter.readMolecules(
 )
 
 guard let molecule = molecules.first else {
-    throw ChemError.emptyInput
+    throw NSError(domain: "CDKSwiftNativePort", code: 1, userInfo: [
+        NSLocalizedDescriptionKey: "No molecule could be parsed."
+    ])
 }
 
 let laidOut = Depiction2DGenerator.generate(for: molecule)
@@ -173,11 +225,58 @@ print(properties.formula)
 print(svg.prefix(120))
 ```
 
-### Parse a Markush CXSMILES and build a scene
+### Build a Linux CLI That Writes an SVG File
+
+`Sources/ChemCLI/main.swift`:
 
 ```swift
+import Foundation
 import CDKSwiftNativePort
-import CoreGraphics
+
+let args = CommandLine.arguments
+guard args.count == 2 else {
+    fputs("usage: ChemCLI '<SMILES>'\n", stderr)
+    exit(64)
+}
+
+let molecules = try CDKFileImporter.readMolecules(text: args[1], fileExtension: "smi")
+guard let molecule = molecules.first else {
+    fputs("No molecule could be parsed.\n", stderr)
+    exit(65)
+}
+
+let laidOut = Depiction2DGenerator.generate(for: molecule)
+let identifiers = CDKMoleculeIdentifierService.compute(for: laidOut)
+let svg = CDKDepictionGenerator.toSVG(
+    molecule: laidOut,
+    style: RenderStyle(),
+    canvasSize: CGSize(width: 960, height: 640),
+    includeBackground: true
+)
+
+let outputURL = URL(fileURLWithPath: "molecule.svg")
+try svg.write(to: outputURL, atomically: true, encoding: .utf8)
+
+print("SMILES:", identifiers.smiles)
+print("InChIKey:", identifiers.inchiKey)
+print("Wrote:", outputURL.path)
+```
+
+Run it with SwiftPM:
+
+```bash
+swift build
+swift run ChemCLI "CC(=O)OC1=CC=CC=C1C(=O)O"
+```
+
+For more detailed Linux examples, including file import/export workflows, see
+[`Documentation/LINUX.md`](Documentation/LINUX.md).
+
+### Parse a Markush CXSMILES and Build a Scene
+
+```swift
+import Foundation
+import CDKSwiftNativePort
 
 let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
 let molecule = try parser.parseSmiles(
@@ -197,7 +296,7 @@ print(scene.backgroundBoxes.count)
 print(scene.labels.count)
 ```
 
-### Export a highlighted molecule as V3000
+### Export a Highlighted Molecule as V3000
 
 ```swift
 import CDKSwiftNativePort
@@ -214,7 +313,7 @@ let molV3000 = try CDKFileExporter.write(
 print(molV3000)
 ```
 
-### Read and export a reaction as CML
+### Read and Export a Reaction as CML
 
 ```swift
 import CDKSwiftNativePort
@@ -232,6 +331,7 @@ print(cml.prefix(120))
 
 - API reference: [`Documentation/API.md`](Documentation/API.md)
 - Integration guide: [`Documentation/INTEGRATION.md`](Documentation/INTEGRATION.md)
+- Linux guide: [`Documentation/LINUX.md`](Documentation/LINUX.md)
 - Architecture and boundary contract: [`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md)
 - Comparison with original CDK: [`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md)
 - macOS-specific notes: [`Documentation/MACOS.md`](Documentation/MACOS.md)
@@ -239,7 +339,7 @@ print(cml.prefix(120))
 - Attribution and notice: [`NOTICE.md`](NOTICE.md)
 - Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 
-## Quality Gate
+## Release Quality Gate
 
 Package-only:
 
@@ -247,26 +347,41 @@ Package-only:
 swift test
 ```
 
-Monorepo verification before shipping AtomLens:
+Before publishing a GitHub release, run the same package suite on at least one
+Linux environment as well. The package has been verified on Ubuntu 24.04 with
+Swift 6.3.
+
+If you are validating the first-party monorepo as well, also build AtomLens
+against the package product:
 
 ```bash
 xcodebuild -project /path/to/AtomLens.xcodeproj -scheme AtomLens -configuration Debug -sdk macosx build
 ```
 
-## Upstream Reference
+## Upstream Reference and Attribution
 
-The current parity target for the supported workflows in this package is
-CDK `2.12`.
+`CDKSwiftNativePort` includes code derived from and inspired by the Chemistry
+Development Kit (CDK). The current parity target for the supported workflows in
+this package is CDK `2.12`.
 
-This is not a full port of every CDK Java module. See
-[`Documentation/CDK_COMPARISON.md`](Documentation/CDK_COMPARISON.md) for the
-current parity surface and known scope limits.
+Upstream project:
 
-## License and Attribution
+- <https://github.com/cdk/cdk>
 
-This repository contains CDK-derived work.
+Reference citations:
 
-- upstream CDK: <https://github.com/cdk/cdk>
-- reference parity target: CDK `2.12`
-- license: `LGPL-2.1-or-later`
-- attribution notes: [`NOTICE.md`](NOTICE.md)
+- Willighagen et al. (2017), *The Chemistry Development Kit (CDK) v2.0: atom
+  typing, depiction, molecular formulas, and substructure searching*.
+  DOI: [10.1186/s13321-017-0220-4](https://doi.org/10.1186/s13321-017-0220-4)
+- May and Steinbeck (2014), *Efficient ring perception for the Chemistry
+  Development Kit*.
+  DOI: [10.1186/1758-2946-6-3](https://doi.org/10.1186/1758-2946-6-3)
+- Steinbeck et al. (2006), *Recent Developments of the Chemistry Development
+  Kit (CDK) - An Open-Source Java Library for Chemo- and Bioinformatics*.
+  DOI: [10.2174/138161206777585274](https://doi.org/10.2174/138161206777585274)
+- Steinbeck et al. (2003), *The Chemistry Development Kit (CDK): An Open-Source
+  Java Library for Chemo- and Bioinformatics*.
+  DOI: [10.1021/ci025584y](https://doi.org/10.1021/ci025584y)
+
+For the full upstream attribution and redistribution notice, see
+[`NOTICE.md`](NOTICE.md).

@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 /// CDK-style XYZ reader for one or more XYZ blocks in a single text stream.
 public enum CDKXYZReader {

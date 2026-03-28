@@ -27,7 +27,7 @@ final class PackageBoundaryTests: XCTestCase {
 
         while let next = enumerator?.nextObject() as? URL {
             guard next.pathExtension == "swift" else { continue }
-            let content = try String(contentsOf: next, encoding: .utf8)
+            let content = try loadUTF8Source(from: next)
             for marker in forbiddenMarkers where content.contains(marker) {
                 let relativePath = next.path.replacingOccurrences(of: sourcesRoot.path + "/", with: "")
                 violations.append("\(relativePath): contains '\(marker)'")
@@ -58,6 +58,24 @@ final class PackageBoundaryTests: XCTestCase {
         Package manifest contains forbidden app-coupling markers:
         \(violations.joined(separator: "\n"))
         """)
+    }
+
+    func testPackageManifestDeclaresIOSSupport() throws {
+        let root = try packageRoot()
+        let manifestURL = root.appendingPathComponent("Package.swift")
+        let manifest = try String(contentsOf: manifestURL, encoding: .utf8)
+
+        XCTAssertTrue(manifest.contains(".iOS("),
+                      "Expected CDKSwiftNativePort Package.swift to declare iOS platform support.")
+    }
+
+    func testPackageManifestDoesNotCarryAtomLensCrossPlatformCouplingGuidance() throws {
+        let root = try packageRoot()
+        let manifestURL = root.appendingPathComponent("Package.swift")
+        let manifest = try String(contentsOf: manifestURL, encoding: .utf8)
+
+        XCTAssertFalse(manifest.contains("AtomLens app"),
+                       "Package manifest should stay package-scoped and not describe host-app coupling.")
     }
 
     func testWorkspaceChemistryLayerContainsOnlyAliasAdapter() throws {
@@ -126,5 +144,10 @@ final class PackageBoundaryTests: XCTestCase {
                           userInfo: [NSLocalizedDescriptionKey: "Could not locate package root from \(#filePath)"])
         }
         return url
+    }
+
+    private func loadUTF8Source(from url: URL) throws -> String {
+        let data = try Data(contentsOf: url)
+        return String(decoding: data, as: UTF8.self)
     }
 }

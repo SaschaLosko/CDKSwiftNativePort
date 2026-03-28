@@ -1,5 +1,8 @@
+import Foundation
 import XCTest
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 @testable import CDKSwiftNativePort
 
 final class MDLV2000WriterTests: XCTestCase {
@@ -157,6 +160,19 @@ final class MDLV2000WriterTests: XCTestCase {
         )
         let threeDText = try CDKMDLV2000Writer.write(threeD)
         XCTAssertTrue(threeDText.contains("3D"))
+    }
+
+    func testWritesSignedZeroCoordinatesWithoutNegativeZeroArtifacts() throws {
+        let molecule = Molecule(
+            name: "SignedZero",
+            atoms: [Atom(id: 1, element: "C", position: CGPoint(x: -0.0, y: 0.0), zPosition: -0.0)],
+            bonds: []
+        )
+
+        let text = try CDKMDLV2000Writer.write(molecule)
+
+        XCTAssertTrue(text.contains("    0.0000    0.0000    0.0000"))
+        XCTAssertFalse(text.contains("-0.0000"))
     }
 
     func testRGroupPropertyWrapsAcrossMultipleLines() throws {

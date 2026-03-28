@@ -20,6 +20,9 @@ public enum CDKFileImporter {
         CDKFileImporterFormat(displayName: "MDL Molfile",
                               fileExtensions: ["mol"],
                               utiIdentifiers: ["chemical/x-mdl-molfile", "net.sourceforge.openbabel.mdl"]),
+        CDKFileImporterFormat(displayName: "MDL RGfile",
+                              fileExtensions: ["rgf"],
+                              utiIdentifiers: ["chemical/x-mdl-rgfile"]),
         CDKFileImporterFormat(displayName: "MDL SDFile",
                               fileExtensions: ["sdf", "sd"],
                               utiIdentifiers: ["chemical/x-mdl-sdfile", "net.sourceforge.openbabel.mdl"]),
@@ -107,7 +110,12 @@ public enum CDKFileImporter {
         case "sdf", "sd":
             return try CDKIteratingSDFReader.read(text: text)
         case "mol":
+            if looksLikeRGFile(text) {
+                return [try CDKRGFileReader.readFlattenedMolecule(text: text)]
+            }
             return [try CDKMDLReader.read(text: text)]
+        case "rgf":
+            return [try CDKRGFileReader.readFlattenedMolecule(text: text)]
         case "smi", "smiles", "ism", "can":
             return try CDKSMILESReader.read(text: text)
         case "rsmi":
@@ -161,6 +169,9 @@ public enum CDKFileImporter {
     private static func readTextWithAutoDetection(_ text: String) throws -> [Molecule] {
         if looksLikeInChI(text) {
             return try CDKInChIReader.read(text: text)
+        }
+        if looksLikeRGFile(text) {
+            return [try CDKRGFileReader.readFlattenedMolecule(text: text)]
         }
         if looksLikeRXN(text) {
             return try CDKRXNReader.read(text: text)
@@ -284,6 +295,14 @@ public enum CDKFileImporter {
         text.components(separatedBy: .newlines).contains {
             $0.trimmingCharacters(in: .whitespacesAndNewlines) == "$RXN"
         }
+    }
+
+    private static func looksLikeRGFile(_ text: String) -> Bool {
+        let meaningfulLines = text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard meaningfulLines.count >= 2 else { return false }
+        return meaningfulLines[0].hasPrefix("$MDL") && meaningfulLines[1] == "$MOL"
     }
 
     private static func looksLikeRDF(_ text: String) -> Bool {

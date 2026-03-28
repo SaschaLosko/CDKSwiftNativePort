@@ -1,9 +1,12 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 public enum CDKFileExportFormat: String, CaseIterable, Identifiable {
     case mol
     case molV3000
+    case rgfile
     case sdf
     case smiles
     case isomericSmiles
@@ -77,6 +80,11 @@ public enum CDKFileExporter {
                               displayName: "MDL Molfile (V3000)",
                               fileExtensions: ["mol"],
                               utiIdentifiers: ["chemical/x-mdl-molfile", "net.sourceforge.openbabel.mdl"],
+                              supportsMultipleMolecules: false),
+        CDKFileExporterFormat(format: .rgfile,
+                              displayName: "MDL RGfile",
+                              fileExtensions: ["rgf"],
+                              utiIdentifiers: ["chemical/x-mdl-rgfile"],
                               supportsMultipleMolecules: false),
         CDKFileExporterFormat(format: .sdf,
                               displayName: "MDL SDFile",
@@ -170,6 +178,11 @@ public enum CDKFileExporter {
                 throw ChemError.unsupported("V3000 Molfile export supports a single molecule only. Use SDF for multiple molecules.")
             }
             return try CDKMDLV3000Writer.write(first, options: CDKMDLV3000Writer.Options(includeDataFields: false))
+        case .rgfile:
+            guard let first = molecules.first, molecules.count == 1 else {
+                throw ChemError.unsupported("RGfile export supports a single query molecule only.")
+            }
+            return try CDKRGFileWriter.write(first)
         case .sdf:
             return try CDKSDFWriter.write(molecules, options: options.sdfOptions)
         case .smiles:

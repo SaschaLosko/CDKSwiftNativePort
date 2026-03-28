@@ -1,4 +1,7 @@
+import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 public enum CDKHighlightStyle: String, CaseIterable, Hashable {
     case none

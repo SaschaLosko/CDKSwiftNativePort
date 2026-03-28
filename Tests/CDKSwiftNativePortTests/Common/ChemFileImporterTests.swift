@@ -12,6 +12,27 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertTrue(supported.contains("rdf"))
         XCTAssertTrue(supported.contains("rsmi"))
         XCTAssertTrue(supported.contains("cxsmiles"))
+        XCTAssertTrue(supported.contains("rgf"))
+    }
+
+    func testReadsRGFileByExtension() throws {
+        let molecules = try CDKFileImporter.readMolecules(text: RGFileFixtures.simpleQuery, fileExtension: "rgf")
+        let molecule = try XCTUnwrap(molecules.first)
+
+        XCTAssertEqual(molecules.count, 1)
+        XCTAssertEqual(molecule.atomCount, 15)
+        XCTAssertEqual(molecule.rGroupLogicDefinitions[1]?.occurrence, "0,1-3")
+        XCTAssertEqual(molecule.rGroupLogicDefinitions[1]?.restH, true)
+        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == "R1" }.count, 8)
+    }
+
+    func testAutoDetectsRGFileFromMolfileText() throws {
+        let molecules = try CDKFileImporter.readMolecules(text: RGFileFixtures.simpleQuery, fileExtension: "mol")
+        let molecule = try XCTUnwrap(molecules.first)
+
+        XCTAssertEqual(molecules.count, 1)
+        XCTAssertEqual(molecule.atomCount, 15)
+        XCTAssertEqual(molecule.rGroupLogicDefinitions[1]?.occurrence, "0,1-3")
     }
 
     func testReadsCxSmilesByCxSmilesExtension() throws {

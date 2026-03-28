@@ -1,4 +1,7 @@
+import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 import XCTest
 @testable import CDKSwiftNativePort
 
@@ -388,6 +391,80 @@ final class MDLV3000WriterTests: XCTestCase {
         XCTAssertEqual(parsed.highlightedBondIDs, [1])
         XCTAssertEqual(parsed.bonds.first?.queryType, .any)
         XCTAssertEqual(parsed.bonds.first?.topology, .ring)
+    }
+
+    func testRoundTripsMarkushDefinitionsFromCxSmiles() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles(
+            "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|"
+        )
+
+        let text = try CDKMDLV3000Writer.write(molecule)
+        let parsed = try CDKMDLV3000Reader.read(text: text)
+
+        XCTAssertTrue(text.contains("M  V30 BEGIN RGROUP 1"))
+        XCTAssertFalse(text.contains("SUBTYPE=MARKUSHRGROUP"))
+        XCTAssertEqual(parsed.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+        XCTAssertEqual(parsed.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 3)
+        XCTAssertEqual(parsed.sgroups.count, 1)
+        XCTAssertEqual(parsed.sgroups.first?.subscriptText, "1-3")
+
+        let r1Atoms = parsed.atoms.filter { $0.rGroupMembership == "R1" }
+        let grouped = Dictionary(grouping: r1Atoms, by: { $0.componentGroupID ?? -1 })
+
+        XCTAssertEqual(grouped.count, 3)
+        XCTAssertTrue(grouped.values.contains { atoms in
+            atoms.contains(where: { $0.element == "O" }) && atoms.contains(where: { $0.element == "C" })
+        })
+        XCTAssertTrue(parsed.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Cl" })
+        XCTAssertTrue(grouped.values.contains { atoms in
+            atoms.contains(where: { $0.element == "C" }) && atoms.contains(where: { $0.element == "N" })
+        })
+    }
+
+    func testReadsCompliantV3000RGroupBlocks() throws {
+        let input = """
+Molecule
+  CDK     0316261200
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0 0 0 0
+M  V30 2 R# 1.2 0 0 0 RGROUPS=(1 1)
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 BEGIN RGROUP 1
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl 0 0 0 0 ATTCHPT=1
+M  V30 END ATOM
+M  V30 END CTAB
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Br 0 0 0 0 ATTCHPT=1
+M  V30 END ATOM
+M  V30 END CTAB
+M  V30 END RGROUP
+M  END
+"""
+
+        let molecule = try CDKMDLV3000Reader.read(text: input)
+
+        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 2)
+
+        let grouped = Dictionary(grouping: molecule.atoms.filter { $0.rGroupMembership == "R1" },
+                                 by: { $0.componentGroupID ?? -1 })
+        XCTAssertEqual(grouped.count, 2)
+        XCTAssertTrue(molecule.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Cl" })
+        XCTAssertTrue(molecule.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Br" })
     }
 
     func testRoundTripsNestedSgroupHierarchyAndStereoNormalization() throws {

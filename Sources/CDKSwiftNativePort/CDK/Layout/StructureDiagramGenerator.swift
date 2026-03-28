@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 // CDK-inspired SDG port entry point and layout support types.
 private struct CDKEdgeKey: Hashable {

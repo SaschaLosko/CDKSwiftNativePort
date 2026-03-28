@@ -7,6 +7,7 @@ final class ChemFileExporterTests: XCTestCase {
     func testSupportedExtensionsIncludeWriterFormats() {
         let supported = Set(CDKFileExporter.supportedFileExtensions)
         XCTAssertTrue(supported.contains("mol"))
+        XCTAssertTrue(supported.contains("rgf"))
         XCTAssertTrue(supported.contains("sdf"))
         XCTAssertTrue(supported.contains("smi"))
         XCTAssertTrue(supported.contains("ism"))
@@ -24,6 +25,10 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertTrue(CDKFileExporter.formats.contains(where: { $0.format == .molV3000 && $0.displayName.contains("V3000") }))
     }
 
+    func testFormatsIncludeRGfileExport() {
+        XCTAssertTrue(CDKFileExporter.formats.contains(where: { $0.format == .rgfile && $0.fileExtensions.contains("rgf") }))
+    }
+
     func testWritesMolAndRoundTrips() throws {
         let molecule = try referenceMolecule(name: "Aspirin")
         let text = try CDKFileExporter.write(molecule: molecule, as: .mol)
@@ -39,6 +44,20 @@ final class ChemFileExporterTests: XCTestCase {
         let parsed = try CDKMDLReader.read(text: text)
         XCTAssertEqual(parsed.atomCount, molecule.atomCount)
         XCTAssertEqual(parsed.bondCount, molecule.bondCount)
+    }
+
+    func testWritesRGFileAndRoundTripsAdvancedLogic() throws {
+        let query = try CDKRGFileReader.read(text: RGFileFixtures.simpleQuery)
+        let flattened = CDKRGroupQueryManipulator.toFlatMolecule(query)
+
+        let text = try CDKFileExporter.write(molecule: flattened, as: .rgfile)
+        let reparsed = try CDKRGFileReader.read(text: text)
+
+        XCTAssertTrue(text.contains("$RGP"))
+        XCTAssertTrue(text.contains("M  LOG  1   1   0   1   0,1-3"))
+        XCTAssertEqual(reparsed.rGroupDefinitions[1]?.occurrence, "0,1-3")
+        XCTAssertEqual(reparsed.rGroupDefinitions[1]?.restH, true)
+        XCTAssertEqual(reparsed.rGroupDefinitions[1]?.rGroups.count, 3)
     }
 
     func testWritingMolWithMultipleMoleculesThrows() throws {

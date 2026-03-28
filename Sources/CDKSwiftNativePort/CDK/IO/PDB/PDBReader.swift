@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 /// CDK-style PDB reader (ATOM/HETATM + CONECT).
 public enum CDKPDBReader {

@@ -1,4 +1,6 @@
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 import Foundation
 
 /// CDK-style 2D depiction export to SVG.

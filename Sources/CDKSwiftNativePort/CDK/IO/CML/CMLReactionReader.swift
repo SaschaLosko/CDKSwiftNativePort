@@ -1,5 +1,10 @@
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 public enum CDKCMLReactionReader {
     public static func readReaction(text: String) throws -> CDKReaction {

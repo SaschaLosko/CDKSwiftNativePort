@@ -835,7 +835,9 @@ public enum CDKMDLV2000Writer {
         if value.isNaN || value.isInfinite {
             return "    0.0000"
         }
-        return String(format: "%10.4f", value == -0 ? 0 : value)
+        // Keep the CVarArg typed as Double when normalizing signed zero.
+        let normalizedValue = value == 0 ? 0.0 : value
+        return String(format: "%10.4f", normalizedValue)
     }
 
     private static func formatMDLString(_ value: String, _ width: Int) -> String {

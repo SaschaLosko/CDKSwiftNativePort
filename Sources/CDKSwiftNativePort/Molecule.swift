@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 public enum ChemFormat: String, CaseIterable, Identifiable, Sendable {
     case sdf = "SDF / MOL"
@@ -346,6 +348,7 @@ public struct Molecule: Hashable, Codable, Sendable {
     public var cxState: CDKCxSmilesState? = nil
     public var dataFields: [String: [String]] = [:]
     public var dataFieldOrder: [String] = []
+    public var rGroupLogicDefinitions: [Int: MoleculeRGroupLogic] = [:]
 
     public var atomCount: Int { atoms.count }
     public var bondCount: Int { bonds.count }
@@ -364,6 +367,7 @@ public struct Molecule: Hashable, Codable, Sendable {
         case cxState
         case dataFields
         case dataFieldOrder
+        case rGroupLogicDefinitions
     }
 
     public func indexOfAtom(id: Int) -> Int? {
@@ -668,6 +672,7 @@ public struct Molecule: Hashable, Codable, Sendable {
         self.bonds = bonds
         self.dataFields = [:]
         self.dataFieldOrder = []
+        self.rGroupLogicDefinitions = [:]
     }
 
     public init(from decoder: Decoder) throws {
@@ -683,6 +688,8 @@ public struct Molecule: Hashable, Codable, Sendable {
         dataFields = try container.decodeIfPresent([String: [String]].self, forKey: .dataFields) ?? [:]
         dataFieldOrder = try container.decodeIfPresent([String].self, forKey: .dataFieldOrder) ?? []
         dataFieldOrder = Molecule.normalizedDataFieldOrder(preferredOrder: dataFieldOrder, availableFields: dataFields)
+        rGroupLogicDefinitions = try container.decodeIfPresent([Int: MoleculeRGroupLogic].self,
+                                                               forKey: .rGroupLogicDefinitions) ?? [:]
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -697,6 +704,7 @@ public struct Molecule: Hashable, Codable, Sendable {
         try container.encodeIfPresent(cxState, forKey: .cxState)
         try container.encode(dataFields, forKey: .dataFields)
         try container.encode(orderedDataFieldNames, forKey: .dataFieldOrder)
+        try container.encode(rGroupLogicDefinitions, forKey: .rGroupLogicDefinitions)
     }
 
     public mutating func ensureDataField(named fieldName: String) {

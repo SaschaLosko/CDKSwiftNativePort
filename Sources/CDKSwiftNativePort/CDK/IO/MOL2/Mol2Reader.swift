@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 /// CDK-style TRIPOS MOL2 reader.
 public enum CDKMol2Reader {

@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 public struct CDKMDLV3000Scaffold: Hashable, Codable {
     public struct AtomRecord: Hashable, Codable {
@@ -32,9 +34,16 @@ public struct CDKMDLV3000Scaffold: Hashable, Codable {
 }
 
 public enum CDKMDLV3000Reader {
+    private static let markushDefinitionSubtype = "MARKUSHRGROUP"
+
     private struct BondParseResult {
         let bond: Bond
         let positionalVariationSgroup: MoleculeSgroup?
+    }
+
+    private struct RGroupBlock {
+        let number: Int
+        let memberCTABs: [[String]]
     }
 
     public static func read(text: String) throws -> Molecule {
@@ -47,6 +56,7 @@ public enum CDKMDLV3000Reader {
     public static func read(lines: [String]) throws -> Molecule {
         let trimmed = dropTrailingEmptyLines(lines)
         let scaffold = try parseScaffold(lines: trimmed)
+        let rgroupBlocks = try parseRGroupBlocks(lines: trimmed)
 
         var atoms: [Atom] = []
         atoms.reserveCapacity(scaffold.atomRecords.count)
@@ -101,6 +111,7 @@ public enum CDKMDLV3000Reader {
         molecule.sgroups.append(contentsOf: positionalVariationGroups)
         applyCollectionSemantics(scaffold.collectionLines, chiralFlag: scaffold.chiralFlag, to: &molecule)
         applySGroupSemantics(scaffold.sgroupLines, to: &molecule)
+        try applyRGroupBlocks(rgroupBlocks, to: &molecule)
         CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
 
         if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
@@ -245,6 +256,72 @@ public enum CDKMDLV3000Reader {
             collectionLines: collectionLines,
             sgroupLines: sgroupLines
         )
+    }
+
+    private static func parseRGroupBlocks(lines: [String]) throws -> [RGroupBlock] {
+        let unfolded = unfoldV30Continuations(lines)
+        guard let beginCTAB = unfolded.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  V30 BEGIN CTAB" }),
+              let endCTAB = unfolded.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB" }),
+              beginCTAB < endCTAB else {
+            return []
+        }
+
+        var blocks: [RGroupBlock] = []
+        var index = endCTAB + 1
+
+        while index < unfolded.count {
+            let line = unfolded[index].trimmingCharacters(in: .whitespaces)
+            guard line.hasPrefix("M  V30 BEGIN RGROUP") else {
+                index += 1
+                continue
+            }
+
+            let fields = tokenizeV30(line)
+            guard fields.count >= 3, let number = Int(fields[2]) else {
+                throw ChemError.parseFailed("Invalid V3000 RGROUP header: \(unfolded[index])")
+            }
+
+            index += 1
+            var memberCTABs: [[String]] = []
+
+            while index < unfolded.count {
+                let current = unfolded[index].trimmingCharacters(in: .whitespaces)
+                if current == "M  V30 END RGROUP" {
+                    break
+                }
+
+                if current == "M  V30 BEGIN CTAB" {
+                    var ctabLines: [String] = [unfolded[index]]
+                    index += 1
+
+                    while index < unfolded.count {
+                        ctabLines.append(unfolded[index])
+                        if unfolded[index].trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB" {
+                            break
+                        }
+                        index += 1
+                    }
+
+                    guard ctabLines.last?.trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB" else {
+                        throw ChemError.parseFailed("Unterminated V3000 RGROUP member CTAB.")
+                    }
+
+                    memberCTABs.append(ctabLines)
+                }
+
+                index += 1
+            }
+
+            guard index < unfolded.count,
+                  unfolded[index].trimmingCharacters(in: .whitespaces) == "M  V30 END RGROUP" else {
+                throw ChemError.parseFailed("Unterminated V3000 RGROUP block.")
+            }
+
+            blocks.append(RGroupBlock(number: number, memberCTABs: memberCTABs))
+            index += 1
+        }
+
+        return blocks
     }
 
     private static func parseAtom(rawLine: String) throws -> Atom {
@@ -753,6 +830,31 @@ public enum CDKMDLV3000Reader {
         }
     }
 
+    private static func applyRGroupBlocks(_ blocks: [RGroupBlock], to molecule: inout Molecule) throws {
+        guard !blocks.isEmpty else { return }
+
+        var nextComponentGroupID = (molecule.atoms.compactMap(\.componentGroupID).max() ?? 0) + 1
+
+        for block in blocks.sorted(by: { $0.number < $1.number }) {
+            let label = "R\(block.number)"
+
+            for memberCTAB in block.memberCTABs {
+                var member = try read(lines: wrappedMolfileLines(for: memberCTAB, title: label))
+                let componentGroupID = nextComponentGroupID
+                nextComponentGroupID += 1
+
+                for idx in member.atoms.indices {
+                    if member.atoms[idx].rGroupMembership == nil {
+                        member.atoms[idx].rGroupMembership = label
+                    }
+                    member.atoms[idx].componentGroupID = componentGroupID
+                }
+
+                merge(member, into: &molecule)
+            }
+        }
+    }
+
     private static func applySGroupSemantics(_ lines: [String], to molecule: inout Molecule) {
         guard !lines.isEmpty else { return }
 
@@ -764,6 +866,7 @@ public enum CDKMDLV3000Reader {
         for idx in molecule.bonds.indices {
             bondIndexByID[molecule.bonds[idx].id] = idx
         }
+        var nextMarkushComponentGroupID = (molecule.atoms.compactMap(\.componentGroupID).max() ?? 0) + 1
 
         var parsedSgroups: [(sourceIndex: Int, parentIndex: Int?, sgroup: MoleculeSgroup)] = []
 
@@ -779,12 +882,29 @@ public enum CDKMDLV3000Reader {
             let crossingBondKey = sgroupType == "DAT" ? "CBONDS" : "XBONDS"
             let crossingBondIDs = parseIntegerListValue(attributes[crossingBondKey] ?? "")
             let parentIndex = parseIntAttribute("PARENT", in: attributes)
+            let subtype = parseQuotedOrBareString(attributes["SUBTYPE"] ?? "")?.uppercased()
 
             if let attchpt = parseIntAttribute("ATTCHPT", in: attributes) {
                 for atomID in atomIDs.isEmpty ? parentAtomIDs : atomIDs {
                     guard let idx = atomIndexByID[atomID] else { continue }
                     molecule.atoms[idx].attachmentPoint = attchpt
                 }
+            }
+
+            if sgroupType == "SUP",
+               subtype == markushDefinitionSubtype,
+               let rawLabel = attributes["LABEL"],
+               let label = parseQuotedOrBareString(rawLabel), !label.isEmpty {
+                let componentGroupID = parseIntAttribute("COMPNO", in: attributes) ?? nextMarkushComponentGroupID
+                if parseIntAttribute("COMPNO", in: attributes) == nil {
+                    nextMarkushComponentGroupID += 1
+                }
+                for atomID in atomIDs {
+                    guard let idx = atomIndexByID[atomID] else { continue }
+                    molecule.atoms[idx].rGroupMembership = label
+                    molecule.atoms[idx].componentGroupID = componentGroupID
+                }
+                continue
             }
 
             if sgroupType == "SUP",
@@ -931,6 +1051,92 @@ public enum CDKMDLV3000Reader {
             return String(value.dropFirst().dropLast())
         }
         return value
+    }
+
+    private static func wrappedMolfileLines(for ctabLines: [String], title: String) -> [String] {
+        [title, "", "", "  0  0  0     0  0            999 V3000"] + ctabLines + ["M  END"]
+    }
+
+    private static func merge(_ source: Molecule, into destination: inout Molecule) {
+        var atomMap: [Int: Int] = [:]
+        var bondMap: [Int: Int] = [:]
+        var nextAtomID = destination.atoms.map(\.id).max() ?? 0
+        var nextBondID = destination.bonds.map(\.id).max() ?? 0
+
+        for atom in source.atoms {
+            nextAtomID += 1
+            atomMap[atom.id] = nextAtomID
+            destination.atoms.append(
+                Atom(id: nextAtomID,
+                     element: atom.element,
+                     position: atom.position,
+                     zPosition: atom.zPosition,
+                     charge: atom.charge,
+                     isotopeMassNumber: atom.isotopeMassNumber,
+                     aromatic: atom.aromatic,
+                     chirality: atom.chirality,
+                     explicitHydrogenCount: atom.explicitHydrogenCount,
+                     queryType: atom.queryType,
+                     atomList: atom.atomList,
+                     atomListIsNegated: atom.atomListIsNegated,
+                     radical: atom.radical,
+                     radicalType: atom.radicalType,
+                     atomValue: atom.atomValue,
+                     rGroupLabel: atom.rGroupLabel,
+                     rGroupMembership: atom.rGroupMembership,
+                     componentGroupID: atom.componentGroupID,
+                     substitutionCount: atom.substitutionCount,
+                     unsaturated: atom.unsaturated,
+                     ringBondCount: atom.ringBondCount,
+                     attachmentPoint: atom.attachmentPoint,
+                     valenceOverride: atom.valenceOverride,
+                     cxStereoGroup: atom.cxStereoGroup,
+                     ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
+                     atomClass: atom.atomClass,
+                     atomMapNumber: atom.atomMapNumber,
+                     aliasLabel: atom.aliasLabel)
+            )
+        }
+
+        for bond in source.bonds {
+            guard let a1 = atomMap[bond.a1], let a2 = atomMap[bond.a2] else { continue }
+            nextBondID += 1
+            bondMap[bond.id] = nextBondID
+            destination.bonds.append(Bond(id: nextBondID,
+                                          a1: a1,
+                                          a2: a2,
+                                          order: bond.order,
+                                          stereo: bond.stereo,
+                                          queryType: bond.queryType,
+                                          topology: bond.topology))
+        }
+
+        for sgroup in source.sgroups {
+            let atomIDs = sgroup.atomIDs.compactMap { atomMap[$0] }
+            guard !atomIDs.isEmpty else { continue }
+            let crossingBondIDs = sgroup.crossingBondIDs.compactMap { bondMap[$0] }
+            destination.sgroups.append(
+                MoleculeSgroup(kind: sgroup.kind,
+                               keyword: sgroup.keyword,
+                               atomIDs: atomIDs,
+                               crossingBondIDs: crossingBondIDs,
+                               subscriptText: sgroup.subscriptText,
+                               superscriptText: sgroup.superscriptText,
+                               roundBrackets: sgroup.roundBrackets,
+                               connectivity: sgroup.connectivity,
+                               dataFieldName: sgroup.dataFieldName,
+                               dataValue: sgroup.dataValue,
+                               dataOperator: sgroup.dataOperator,
+                               dataUnit: sgroup.dataUnit,
+                               dataTag: sgroup.dataTag,
+                               subtype: sgroup.subtype,
+                               parentAtomIDs: sgroup.parentAtomIDs.compactMap { atomMap[$0] },
+                               componentNumber: sgroup.componentNumber,
+                               expanded: sgroup.expanded,
+                               brackets: sgroup.brackets,
+                               childGroupIndices: sgroup.childGroupIndices)
+            )
+        }
     }
 
     private static func tokenizeV30(_ line: String) -> [String] {

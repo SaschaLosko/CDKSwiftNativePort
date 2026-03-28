@@ -10,6 +10,27 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Changed
 
+## [1.3.0] - 2026-03-28
+
+### Added
+
+- Linux Swift Package Manager support for the headless chemistry core, including
+  cross-platform geometry compatibility, conditional platform imports, and
+  Linux verification coverage.
+- RGFile import/export support with round-trip-focused tests.
+- A dedicated Linux integration guide with runnable SwiftPM executable examples.
+
+### Changed
+
+- Refined rendering and label-clipping fallbacks so the depiction and
+  scene-generation paths behave consistently on Linux as well as Apple
+  platforms.
+- Updated the GitHub-facing documentation set to present the package as a
+  standalone cross-platform release, including Linux installation guidance and
+  upstream CDK attribution/citations.
+- Strengthened package-boundary checks to keep package-source scanning robust on
+  Linux and to preserve the no-AtomLens-coupling contract.
+
 ## [1.2.0] - 2026-03-14
 
 ### Added

@@ -13,11 +13,17 @@ swift test
 
 Required before publishing:
 
-- the package test suite passes
+- the package test suite passes on macOS and on at least one Linux environment
 - `README.md` and the documentation set match the current public API
+- Linux installation and usage examples have been reviewed against the current
+  release candidate
 - `CHANGELOG.md` is updated
 - package boundary checks remain green
 - `LICENSE` and `NOTICE.md` are present
+
+Recommended Linux verification target:
+
+- Ubuntu 24.04 with Swift 6.3
 
 If you are working in the first-party monorepo, also verify that AtomLens still
 builds against the package product:
@@ -33,6 +39,7 @@ Before release, make sure these documents are current:
 - `README.md`
 - `Documentation/API.md`
 - `Documentation/INTEGRATION.md`
+- `Documentation/LINUX.md`
 - `Documentation/ARCHITECTURE.md`
 - `Documentation/CDK_COMPARISON.md`
 - `Documentation/MACOS.md`
@@ -43,7 +50,7 @@ Before release, make sure these documents are current:
 Choose the release version and commit the release-prep changes:
 
 ```bash
-VERSION=1.2.0
+VERSION=1.3.0
 git add .
 git commit -m "Prepare v${VERSION} release"
 ```

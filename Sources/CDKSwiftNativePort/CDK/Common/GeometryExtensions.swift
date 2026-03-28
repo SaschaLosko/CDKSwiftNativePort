@@ -1,4 +1,7 @@
+import Foundation
+#if canImport(CoreGraphics)
 import CoreGraphics
+#endif
 
 extension CGPoint {
     func distance(to other: CGPoint) -> CGFloat {
