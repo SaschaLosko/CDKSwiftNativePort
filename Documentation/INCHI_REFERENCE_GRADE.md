@@ -22,9 +22,15 @@ used as a test oracle, not as a runtime dependency.
 - `CDKInChIToStructure` is still a partial Swift parser.
 - InChIKey derivation now follows the official major/minor block split and
   base-26 encoding in native Swift instead of the earlier pseudo-key path.
+- The generator now handles disconnected official-style multicomponent output
+  for repeated simple fragments and metal-disconnected salts on the supported
+  subset, instead of collapsing those cases back into a single aggregate
+  formula.
 - Parsed InChI molecules now carry a signature-guarded source cache so
   unchanged parser output re-exports the exact original InChI while edited
   structures still fall back to native regeneration.
+- The parser now accepts repeated hydrogen multiplicity tokens such as
+  `2*1H3` and `72*1H` without warning.
 - The package now vendors an official-reference parity corpus derived from the
   upstream InChI CI regression data.
 - The current vendored snapshot is pinned to official InChI commit
@@ -42,10 +48,11 @@ used as a test oracle, not as a runtime dependency.
     known-gap inventory
   - strict mode (`CDK_INCHI_REQUIRE_REFERENCE_GRADE=1`) requires zero known
     gaps
-- The current measured known-gap inventory is `69` gaps across that corpus:
-  - `33` exact InChI mismatches
-  - `33` InChIKey mismatches
-  - `3` parser warning cases
+- The current measured known-gap inventory is `51` gaps across that corpus:
+  - `25` exact InChI mismatches
+  - `25` InChIKey mismatches
+  - `1` parser warning case
+- Measured completion against the original `128`-gap baseline is `60.2%`.
 
 ## Milestones
 

@@ -123,4 +123,18 @@ final class InChIToStructureTests: XCTestCase {
         let molecule = try parser.getAtomContainer()
         XCTAssertEqual(try CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule).getInchi(), inchi)
     }
+
+    func testParsesRepeatedComponentHydrogenTokensWithoutWarning() throws {
+        let cases = [
+            "InChI=1S/2CH3.Zn/h2*1H3;",
+            "InChI=1S/BH3.72FH/h1H3;72*1H"
+        ]
+
+        for inchi in cases {
+            let parser = CDKInChIGeneratorFactory.shared.getInChIToStructure(inchi)
+            XCTAssertNotEqual(parser.getStatus(), .error, "Parser errored for \(inchi)")
+            XCTAssertNotEqual(parser.getStatus(), .warning, "Parser warned for \(inchi)")
+            _ = try parser.getAtomContainer()
+        }
+    }
 }

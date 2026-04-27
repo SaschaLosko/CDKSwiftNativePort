@@ -1,6 +1,17 @@
 import XCTest
 @testable import CDKSwiftNativePort
 
+private struct InChIOfficialReferenceFixtures: Decodable {
+    struct Case: Decodable {
+        let id: String
+        let expectedInChI: String
+        let expectedInChIKey: String
+        let molfile: String
+    }
+
+    let cases: [Case]
+}
+
 final class InChIGeneratorPortTests: XCTestCase {
     private let smilesParser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
 
@@ -164,6 +175,47 @@ M  END
                        "InChI=1S/H2O/h1H2/i/hTD")
     }
 
+    func testGeneratesReferenceInchiForSimpleTreeCases() throws {
+        let cases = [
+            ("CO", "InChI=1S/CH4O/c1-2/h2H,1H3"),
+            ("CC", "InChI=1S/C2H6/c1-2/h1-2H3"),
+            ("C=C", "InChI=1S/C2H4/c1-2/h1-2H2"),
+            ("C[P](C)C", "InChI=1S/C3H9P/c1-4(2)3/h1-3H3")
+        ]
+
+        for (smiles, expectedInChI) in cases {
+            let molecule = try smilesParser.parseSmiles(smiles)
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+            XCTAssertEqual(generator.getStatus(), .success)
+            XCTAssertEqual(try generator.getInchi(), expectedInChI, "Unexpected InChI for \(smiles)")
+        }
+    }
+
+    func testGeneratesReferenceInchiForTetrafluoroborate() throws {
+        let mol = """
+BF4
+CDKSwiftNativePort
+
+  5  4  0  0  0  0            999 V2000
+    0.0000    0.0000    0.0000 B   0  0
+    1.3000    0.0000    0.0000 F   0  0
+   -1.3000    0.0000    0.0000 F   0  0
+    0.0000    1.3000    0.0000 F   0  0
+    0.0000   -1.3000    0.0000 F   0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+M  CHG  1   1  -1
+M  END
+"""
+        let molecule = try CDKMDLV2000Reader.read(text: mol)
+        let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+
+        XCTAssertEqual(generator.getStatus(), .success)
+        XCTAssertEqual(try generator.getInchi(), "InChI=1S/BF4/c2-1(3,4)5/q-1")
+    }
+
     func testDerivesOfficialInchiKeysFromReferenceStrings() throws {
         let references = [
             ("InChI=1S/CH4/h1H4/i1TD", "VNWKTOKETHGBQD-XIGASBNHSA-N"),
@@ -214,6 +266,29 @@ M  END
         }
     }
 
+    func testGeneratesReferenceInchiForSelectedOfficialMulticomponentCases() throws {
+        let ids = [
+            "mcule:2940963212",
+            "mcule:8769289721",
+            "mcule:9786532355"
+        ]
+
+        let fixtures = try loadOfficialReferenceFixturesByID()
+        for id in ids {
+            guard let fixture = fixtures[id] else {
+                XCTFail("Missing official reference fixture for \(id)")
+                continue
+            }
+
+            let molecule = try CDKMDLReader.read(text: fixture.molfile)
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+
+            XCTAssertEqual(generator.getStatus(), .success)
+            XCTAssertEqual(try generator.getInchi(), fixture.expectedInChI, "Unexpected multicomponent InChI for \(id)")
+            XCTAssertEqual(try generator.getInchiKey(), fixture.expectedInChIKey, "Unexpected multicomponent InChIKey for \(id)")
+        }
+    }
+
     private func assertInchiKeyFormat(_ key: String,
                                       file: StaticString = #filePath,
                                       line: UInt = #line) {
@@ -226,5 +301,15 @@ M  END
         XCTAssertTrue(key.allSatisfy { $0 == "-" || ("A"..."Z").contains(String($0)) },
                       file: file,
                       line: line)
+    }
+
+    private func loadOfficialReferenceFixturesByID() throws -> [String: InChIOfficialReferenceFixtures.Case] {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("OfficialReference")
+            .appendingPathComponent("official_reference_cases.json")
+        let data = try Data(contentsOf: url)
+        let fixtures = try JSONDecoder().decode(InChIOfficialReferenceFixtures.self, from: data)
+        return Dictionary(uniqueKeysWithValues: fixtures.cases.map { ($0.id, $0) })
     }
 }

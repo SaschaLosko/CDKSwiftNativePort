@@ -410,21 +410,30 @@ private enum CDKInChIParser {
     private static func parseFixedHydrogenToken(_ token: String,
                                                 atomCount: Int,
                                                 into hydrogenByAtom: inout [Int: Int]) -> Bool {
-        guard let hIndex = token.firstIndex(where: { $0 == "H" || $0 == "D" || $0 == "T" }) else {
+        var normalizedToken = token
+        var multiplier = 1
+        if let star = normalizedToken.firstIndex(of: "*"),
+           let prefix = Int(normalizedToken[..<star]),
+           prefix > 0 {
+            multiplier = prefix
+            normalizedToken = String(normalizedToken[normalizedToken.index(after: star)...])
+        }
+
+        guard let hIndex = normalizedToken.firstIndex(where: { $0 == "H" || $0 == "D" || $0 == "T" }) else {
             // InChI allows "h1,2H2" where "1" implies one hydrogen.
-            let atoms = parseAtomSpec(token, atomCount: atomCount)
+            let atoms = parseAtomSpec(normalizedToken, atomCount: atomCount)
             guard !atoms.isEmpty else { return false }
             for atomID in atoms {
-                hydrogenByAtom[atomID, default: 0] += 1
+                hydrogenByAtom[atomID, default: 0] += multiplier
             }
             return true
         }
 
-        let atomSpec = String(token[..<hIndex])
+        let atomSpec = String(normalizedToken[..<hIndex])
         guard !atomSpec.isEmpty else { return false }
 
-        let symbol = token[hIndex]
-        let remainder = String(token[token.index(after: hIndex)...])
+        let symbol = normalizedToken[hIndex]
+        let remainder = String(normalizedToken[normalizedToken.index(after: hIndex)...])
         let count = parseLeadingInt(remainder) ?? 1
         guard count > 0 else { return false }
 
@@ -433,8 +442,23 @@ private enum CDKInChIParser {
 
         // D/T are still hydrogens for valence and depiction.
         _ = symbol
+        if multiplier > 1, atoms.count == 1 {
+            let startAtom: Int
+            if atoms[0] == 1 {
+                startAtom = max(1, (hydrogenByAtom.keys.max() ?? 0) + 1)
+            } else {
+                startAtom = atoms[0]
+            }
+
+            guard startAtom + multiplier - 1 <= atomCount else { return false }
+            for atomID in startAtom..<(startAtom + multiplier) {
+                hydrogenByAtom[atomID, default: 0] += count
+            }
+            return true
+        }
+
         for atomID in atoms {
-            hydrogenByAtom[atomID, default: 0] += count
+            hydrogenByAtom[atomID, default: 0] += count * multiplier
         }
         return true
     }

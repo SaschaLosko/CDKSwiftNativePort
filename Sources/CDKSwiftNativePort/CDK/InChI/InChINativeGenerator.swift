@@ -31,7 +31,6 @@ enum CDKInChINativeGenerator {
                                                   message: "")
         }
 
-        let rawHydrogenOnly = molecule.atoms.allSatisfy { isRawHydrogenLike($0.element) }
         let normalized = normalizeInput(molecule)
         guard !normalized.atoms.isEmpty else {
             throw ChemError.emptyInput
@@ -45,7 +44,34 @@ enum CDKInChINativeGenerator {
             return elementalPair
         }
 
-        let heavyAtomIDs = normalized.atoms
+        if let multicomponent = try generateMultiComponentIfNeeded(for: normalized) {
+            return multicomponent
+        }
+
+        return try generateSingleComponent(for: normalized)
+    }
+
+    private struct CanonicalizationResult {
+        let heavyAtomOrder: [Int]
+        let newIDByOldID: [Int: Int]
+    }
+
+    private struct IsotopeLayerSegments {
+        let main: String
+        let hydrogenSubLayer: String
+    }
+
+    private struct ParsedComponentInChI {
+        let inchi: String
+        let formula: String
+        let layers: [Character: String]
+        let isotopeHydrogenLayer: String
+    }
+
+    private static func generateSingleComponent(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
+        let rawHydrogenOnly = molecule.atoms.allSatisfy { isHydrogenSymbol($0.element) }
+
+        let heavyAtomIDs = molecule.atoms
             .filter { !isHydrogenSymbol($0.element) }
             .map(\.id)
             .sorted()
@@ -54,24 +80,25 @@ enum CDKInChINativeGenerator {
             guard rawHydrogenOnly else {
                 throw ChemError.unsupported("InChI generation requires at least one non-hydrogen atom.")
             }
-            return try generateHydrogenOnly(for: normalized)
+            return try generateHydrogenOnly(for: molecule)
         }
 
-        let hydrogenByHeavyAtom = hydrogenCountByHeavyAtom(in: normalized, heavyAtomIDs: heavyAtomIDs)
-        let canonicalization = canonicalizeHeavyAtoms(in: normalized,
+        let hydrogenByHeavyAtom = hydrogenCountByHeavyAtom(in: molecule, heavyAtomIDs: heavyAtomIDs)
+        let canonicalization = canonicalizeHeavyAtoms(in: molecule,
                                                       heavyAtomIDs: heavyAtomIDs,
                                                       hydrogenByHeavyAtom: hydrogenByHeavyAtom)
 
-        let formula = try buildFormula(in: normalized,
+        let formula = try buildFormula(in: molecule,
                                        heavyAtomIDs: heavyAtomIDs,
                                        hydrogenByHeavyAtom: hydrogenByHeavyAtom)
-        let connectivityLayer = buildConnectivityLayer(in: normalized, canonicalization: canonicalization)
-        let hydrogenLayer = buildHydrogenLayer(canonicalization: canonicalization,
+        let connectivityLayer = buildConnectivityLayer(in: molecule, canonicalization: canonicalization)
+        let hydrogenLayer = buildHydrogenLayer(in: molecule,
+                                               canonicalization: canonicalization,
                                                hydrogenByHeavyAtom: hydrogenByHeavyAtom)
-        let chargeLayer = buildChargeLayer(in: normalized)
-        let isotopeLayer = buildIsotopeLayer(in: normalized, canonicalization: canonicalization)
-        let doubleBondLayer = buildDoubleBondLayer(in: normalized, canonicalization: canonicalization)
-        let tetrahedralLayer = buildTetrahedralLayer(in: normalized, canonicalization: canonicalization)
+        let chargeLayer = buildChargeLayer(in: molecule)
+        let isotopeLayer = buildIsotopeLayer(in: molecule, canonicalization: canonicalization)
+        let doubleBondLayer = buildDoubleBondLayer(in: molecule, canonicalization: canonicalization)
+        let tetrahedralLayer = buildTetrahedralLayer(in: molecule, canonicalization: canonicalization)
 
         var segments: [String] = [formula]
         if !connectivityLayer.isEmpty { segments.append("c\(connectivityLayer)") }
@@ -98,14 +125,258 @@ enum CDKInChINativeGenerator {
                                               message: "")
     }
 
-    private struct CanonicalizationResult {
-        let heavyAtomOrder: [Int]
-        let newIDByOldID: [Int: Int]
+    private static func generateMultiComponentIfNeeded(for molecule: Molecule) throws -> CDKInChINativeGenerationResult? {
+        let components = disconnectedReferenceComponents(in: molecule)
+        guard components.count > 1,
+              !molecule.atoms.allSatisfy({ isHydrogenSymbol($0.element) }) else {
+            return nil
+        }
+
+        let heavyAtomIDs = molecule.atoms
+            .filter { !isHydrogenSymbol($0.element) }
+            .map(\.id)
+            .sorted()
+        let originalHydrogenByHeavyAtom = hydrogenCountByHeavyAtom(in: molecule, heavyAtomIDs: heavyAtomIDs)
+        let preservedImplicitHydrogenCountByAtom = Dictionary(uniqueKeysWithValues: heavyAtomIDs.map { atomID in
+            let explicitNeighbors = CDKDescriptorSupport.explicitHydrogenNeighborCount(on: atomID, in: molecule)
+            let total = originalHydrogenByHeavyAtom[atomID] ?? 0
+            return (atomID, max(0, total - explicitNeighbors))
+        })
+
+        let parsedComponents = try components
+            .map { submolecule(from: molecule, atomIDs: $0, preservedImplicitHydrogenCountByAtom: preservedImplicitHydrogenCountByAtom) }
+            .map(generateSingleComponent(for:))
+            .map { try parseGeneratedComponentInChI($0.inchi) }
+            .sorted(by: componentSortOrder)
+
+        var segments: [String] = [compressFormulaComponents(parsedComponents.map(\.formula))]
+
+        if let connectivityLayer = joinComponentLayer(parsedComponents.map { $0.layers["c"] ?? "" }) {
+            segments.append("c\(connectivityLayer)")
+        }
+        if let hydrogenLayer = joinComponentLayer(parsedComponents.map { $0.layers["h"] ?? "" }) {
+            segments.append("h\(hydrogenLayer)")
+        }
+        if let chargeLayer = joinComponentLayer(parsedComponents.map { $0.layers["q"] ?? "" }) {
+            segments.append("q\(chargeLayer)")
+        }
+
+        let isotopeMain = joinComponentLayer(parsedComponents.map { $0.layers["i"] ?? "" })
+        let isotopeHydrogen = joinComponentLayer(parsedComponents.map(\.isotopeHydrogenLayer))
+        if let isotopeMain {
+            segments.append("i\(isotopeMain)")
+            if let isotopeHydrogen {
+                segments.append("h\(isotopeHydrogen)")
+            }
+        }
+
+        if let doubleBondLayer = joinComponentLayer(parsedComponents.map { $0.layers["b"] ?? "" }) {
+            segments.append("b\(doubleBondLayer)")
+        }
+        if let tetrahedralLayer = joinComponentLayer(parsedComponents.map { $0.layers["t"] ?? "" }) {
+            segments.append("t\(tetrahedralLayer)")
+        }
+        if let parityLayer = joinComponentLayer(parsedComponents.map { $0.layers["m"] ?? "" }) {
+            segments.append("m\(parityLayer)")
+        }
+        if let stereoFlagLayer = joinComponentLayer(parsedComponents.map { $0.layers["s"] ?? "" }) {
+            segments.append("s\(stereoFlagLayer)")
+        }
+
+        let inchi = "InChI=1S/" + segments.joined(separator: "/")
+        let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
+        return CDKInChINativeGenerationResult(inchi: inchi,
+                                              inchiKey: inchiKey,
+                                              status: .success,
+                                              message: "")
     }
 
-    private struct IsotopeLayerSegments {
-        let main: String
-        let hydrogenSubLayer: String
+    private static func disconnectedReferenceComponents(in molecule: Molecule) -> [Set<Int>] {
+        let atomIDs = molecule.atoms.map(\.id).sorted()
+        guard !atomIDs.isEmpty else { return [] }
+
+        var adjacency: [Int: Set<Int>] = [:]
+        for atomID in atomIDs {
+            adjacency[atomID] = []
+        }
+
+        for bond in molecule.bonds where !shouldDisconnectBondForReferenceInChI(bond, in: molecule) {
+            adjacency[bond.a1, default: []].insert(bond.a2)
+            adjacency[bond.a2, default: []].insert(bond.a1)
+        }
+
+        var seen: Set<Int> = []
+        var components: [Set<Int>] = []
+        for seed in atomIDs where !seen.contains(seed) {
+            var stack = [seed]
+            var component: Set<Int> = [seed]
+            seen.insert(seed)
+
+            while let current = stack.popLast() {
+                for neighbor in adjacency[current, default: []] where !seen.contains(neighbor) {
+                    seen.insert(neighbor)
+                    component.insert(neighbor)
+                    stack.append(neighbor)
+                }
+            }
+
+            components.append(component)
+        }
+
+        return components
+    }
+
+    private static func shouldDisconnectBondForReferenceInChI(_ bond: Bond, in molecule: Molecule) -> Bool {
+        guard let left = molecule.atom(id: bond.a1),
+              let right = molecule.atom(id: bond.a2) else {
+            return false
+        }
+        let leftIsMetal = isMetalElement(left.element)
+        let rightIsMetal = isMetalElement(right.element)
+        return leftIsMetal != rightIsMetal
+    }
+
+    private static func isMetalElement(_ element: String) -> Bool {
+        let upper = normalizedElementSymbol(element).uppercased()
+        guard !upper.isEmpty else { return false }
+        return knownElementSymbols.contains(upper) && !nonMetalOrMetalloidSymbols.contains(upper)
+    }
+
+    private static func submolecule(from molecule: Molecule,
+                                    atomIDs: Set<Int>,
+                                    preservedImplicitHydrogenCountByAtom: [Int: Int]) -> Molecule {
+        let atoms = molecule.atoms
+            .filter { atomIDs.contains($0.id) }
+            .map { atom -> Atom in
+                guard !isHydrogenSymbol(atom.element) else { return atom }
+                var updated = atom
+                updated.explicitHydrogenCount = preservedImplicitHydrogenCountByAtom[atom.id] ?? atom.explicitHydrogenCount
+                return updated
+            }
+        let bonds = molecule.bonds.filter { atomIDs.contains($0.a1) && atomIDs.contains($0.a2) }
+        return Molecule(name: molecule.name,
+                        externalID: molecule.externalID,
+                        atoms: atoms,
+                        bonds: bonds)
+    }
+
+    private static func parseGeneratedComponentInChI(_ inchi: String) throws -> ParsedComponentInChI {
+        guard inchi.hasPrefix("InChI=1S/") else {
+            throw ChemError.parseFailed("Expected generated component InChI, got '\(inchi)'.")
+        }
+
+        let parts = String(inchi.dropFirst("InChI=1S/".count))
+            .split(separator: "/", omittingEmptySubsequences: false)
+            .map(String.init)
+
+        guard !parts.isEmpty else {
+            throw ChemError.parseFailed("Generated component InChI is missing formula/layer segments.")
+        }
+
+        let formula: String
+        let layerSegments: ArraySlice<String>
+        if componentLayerSegment(parts[0]) {
+            formula = ""
+            layerSegments = parts[0...]
+        } else {
+            formula = parts[0]
+            layerSegments = parts.dropFirst()
+        }
+
+        var layers: [Character: String] = [:]
+        var isotopeHydrogenLayer = ""
+        var previousKey: Character?
+        for segment in layerSegments {
+            guard let key = segment.first else { continue }
+            let content = String(segment.dropFirst())
+            if key == "h", previousKey == "i" {
+                isotopeHydrogenLayer = content
+                previousKey = key
+                continue
+            }
+            layers[key] = content
+            previousKey = key
+        }
+
+        return ParsedComponentInChI(inchi: inchi,
+                                    formula: formula,
+                                    layers: layers,
+                                    isotopeHydrogenLayer: isotopeHydrogenLayer)
+    }
+
+    private static func componentLayerSegment(_ segment: String) -> Bool {
+        guard let key = segment.first else { return false }
+        return key.isLowercase && ["c", "h", "q", "i", "b", "t", "m", "s"].contains(key)
+    }
+
+    private static func componentSortOrder(_ lhs: ParsedComponentInChI, _ rhs: ParsedComponentInChI) -> Bool {
+        let lhsHasCarbon = formulaContainsCarbon(lhs.formula)
+        let rhsHasCarbon = formulaContainsCarbon(rhs.formula)
+        if lhsHasCarbon != rhsHasCarbon { return lhsHasCarbon && !rhsHasCarbon }
+        if lhs.formula != rhs.formula { return lhs.formula < rhs.formula }
+        return lhs.inchi < rhs.inchi
+    }
+
+    private static func formulaContainsCarbon(_ formula: String) -> Bool {
+        var index = formula.startIndex
+        while index < formula.endIndex {
+            let char = formula[index]
+            if char.isNumber {
+                index = formula.index(after: index)
+                continue
+            }
+            if char == "C" {
+                let next = formula.index(after: index)
+                if next == formula.endIndex || !formula[next].isLowercase {
+                    return true
+                }
+            }
+            index = formula.index(after: index)
+        }
+        return false
+    }
+
+    private static func compressFormulaComponents(_ formulas: [String]) -> String {
+        guard !formulas.isEmpty else { return "" }
+
+        var tokens: [String] = []
+        var index = 0
+        while index < formulas.count {
+            let formula = formulas[index]
+            var end = index
+            while end + 1 < formulas.count, formulas[end + 1] == formula {
+                end += 1
+            }
+            let count = end - index + 1
+            tokens.append(count == 1 ? formula : "\(count)\(formula)")
+            index = end + 1
+        }
+        return tokens.joined(separator: ".")
+    }
+
+    private static func joinComponentLayer(_ tokens: [String]) -> String? {
+        guard tokens.contains(where: { !$0.isEmpty }) else { return nil }
+
+        var out: [String] = []
+        var index = 0
+        while index < tokens.count {
+            let token = tokens[index]
+            if token.isEmpty {
+                out.append("")
+                index += 1
+                continue
+            }
+
+            var end = index
+            while end + 1 < tokens.count, tokens[end + 1] == token, !tokens[end + 1].isEmpty {
+                end += 1
+            }
+            let count = end - index + 1
+            out.append(count == 1 ? token : "\(count)*\(token)")
+            index = end + 1
+        }
+
+        return out.joined(separator: ";")
     }
 
     private static func canonicalizeHeavyAtoms(in molecule: Molecule,
@@ -227,15 +498,22 @@ enum CDKInChINativeGenerator {
         }
 
         var tokens: [String] = []
-        if let carbon = composition.removeValue(forKey: "C"), carbon > 0 {
-            tokens.append("C" + (carbon == 1 ? "" : "\(carbon)"))
-        }
-        if let hydrogen = composition.removeValue(forKey: "H"), hydrogen > 0 {
-            tokens.append("H" + (hydrogen == 1 ? "" : "\(hydrogen)"))
-        }
-        for element in composition.keys.sorted() {
-            guard let count = composition[element], count > 0 else { continue }
-            tokens.append(element + (count == 1 ? "" : "\(count)"))
+        if composition["C"] != nil {
+            if let carbon = composition.removeValue(forKey: "C"), carbon > 0 {
+                tokens.append("C" + (carbon == 1 ? "" : "\(carbon)"))
+            }
+            if let hydrogen = composition.removeValue(forKey: "H"), hydrogen > 0 {
+                tokens.append("H" + (hydrogen == 1 ? "" : "\(hydrogen)"))
+            }
+            for element in composition.keys.sorted() {
+                guard let count = composition[element], count > 0 else { continue }
+                tokens.append(element + (count == 1 ? "" : "\(count)"))
+            }
+        } else {
+            for element in composition.keys.sorted() {
+                guard let count = composition[element], count > 0 else { continue }
+                tokens.append(element + (count == 1 ? "" : "\(count)"))
+            }
         }
 
         return tokens.joined()
@@ -244,33 +522,260 @@ enum CDKInChINativeGenerator {
     private static func buildConnectivityLayer(in molecule: Molecule,
                                                canonicalization: CanonicalizationResult) -> String {
         var edgeSet = Set<InChIEdgeKey>()
+        var adjacency: [Int: Set<Int>] = [:]
         for bond in molecule.bonds {
             guard let a = canonicalization.newIDByOldID[bond.a1],
                   let b = canonicalization.newIDByOldID[bond.a2] else {
                 continue
             }
             edgeSet.insert(InChIEdgeKey(a, b))
+            adjacency[a, default: []].insert(b)
+            adjacency[b, default: []].insert(a)
         }
 
-        let tokens = edgeSet.sorted { lhs, rhs in
-            if lhs.a != rhs.a { return lhs.a < rhs.a }
-            return lhs.b < rhs.b
-        }.map { "\($0.a)-\($0.b)" }
+        let atomIDs = Set(canonicalization.newIDByOldID.values)
+        let components = connectivityComponents(atomIDs: atomIDs, adjacency: adjacency)
+
+        let tokens = components.compactMap { component -> String? in
+            guard component.count > 1 else { return nil }
+
+            let componentEdgeCount = edgeSet.reduce(into: 0) { count, edge in
+                if component.contains(edge.a), component.contains(edge.b) {
+                    count += 1
+                }
+            }
+
+            if componentEdgeCount == component.count - 1 {
+                return renderTreeConnectivity(component: component, adjacency: adjacency)
+            }
+
+            let componentEdges = edgeSet.filter { component.contains($0.a) && component.contains($0.b) }
+            return componentEdges.sorted { lhs, rhs in
+                if lhs.a != rhs.a { return lhs.a < rhs.a }
+                return lhs.b < rhs.b
+            }.map { "\($0.a)-\($0.b)" }.joined(separator: ";")
+        }
 
         return tokens.joined(separator: ";")
     }
 
-    private static func buildHydrogenLayer(canonicalization: CanonicalizationResult,
+    private static func buildHydrogenLayer(in molecule: Molecule,
+                                           canonicalization: CanonicalizationResult,
                                            hydrogenByHeavyAtom: [Int: Int]) -> String {
-        let tokens = canonicalization.heavyAtomOrder.compactMap { oldAtomID -> String? in
+        let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
+        let tokens = canonicalization.heavyAtomOrder.compactMap { oldAtomID -> (atomID: Int, count: Int, exchangeable: Bool)? in
             let count = hydrogenByHeavyAtom[oldAtomID] ?? 0
-            guard count > 0, let atomID = canonicalization.newIDByOldID[oldAtomID] else { return nil }
-            if count == 1 {
-                return "\(atomID)H"
+            guard count > 0,
+                  let atomID = canonicalization.newIDByOldID[oldAtomID],
+                  let atom = atomByID[oldAtomID] else {
+                return nil
             }
-            return "\(atomID)H\(count)"
+            let exchangeable = exchangeableHydrogenCarrierElements.contains(normalizedElementSymbol(atom.element).uppercased())
+            return (atomID, count, exchangeable)
         }
-        return tokens.joined(separator: ",")
+
+        let sorted = tokens.sorted { lhs, rhs in
+            if lhs.exchangeable != rhs.exchangeable {
+                return lhs.exchangeable && !rhs.exchangeable
+            }
+            return lhs.atomID < rhs.atomID
+        }
+
+        var grouped: [String] = []
+        var index = 0
+        while index < sorted.count {
+            let current = sorted[index]
+            var end = index
+            while end + 1 < sorted.count,
+                  sorted[end + 1].exchangeable == current.exchangeable,
+                  sorted[end + 1].count == current.count,
+                  sorted[end + 1].atomID == sorted[end].atomID + 1 {
+                end += 1
+            }
+
+            let atomToken = end == index
+                ? "\(current.atomID)"
+                : "\(current.atomID)-\(sorted[end].atomID)"
+            grouped.append(current.count == 1 ? "\(atomToken)H" : "\(atomToken)H\(current.count)")
+            index = end + 1
+        }
+
+        return grouped.joined(separator: ",")
+    }
+
+    private static func connectivityComponents(atomIDs: Set<Int>,
+                                               adjacency: [Int: Set<Int>]) -> [[Int]] {
+        var visited: Set<Int> = []
+        var components: [[Int]] = []
+
+        for atomID in atomIDs.sorted() {
+            if visited.contains(atomID) { continue }
+            var stack = [atomID]
+            var component: [Int] = []
+            visited.insert(atomID)
+
+            while let current = stack.popLast() {
+                component.append(current)
+                for neighbor in adjacency[current, default: []].sorted() where !visited.contains(neighbor) {
+                    visited.insert(neighbor)
+                    stack.append(neighbor)
+                }
+            }
+
+            components.append(component.sorted())
+        }
+
+        return components
+    }
+
+    private static func renderTreeConnectivity(component: [Int],
+                                               adjacency: [Int: Set<Int>]) -> String {
+        let componentSet = Set(component)
+        let leaves = component.filter { degree(of: $0, in: componentSet, adjacency: adjacency) <= 1 }.sorted()
+        let start = leaves.first ?? component.first ?? 0
+        let end = leaves.last ?? start
+        let mainPath = path(between: start, and: end, in: componentSet, adjacency: adjacency) ?? [start]
+
+        var nextOnMainPath: [Int: Int] = [:]
+        for index in 0..<(mainPath.count - 1) {
+            nextOnMainPath[mainPath[index]] = mainPath[index + 1]
+        }
+
+        return renderTreeConnectivityNode(start,
+                                          parent: nil,
+                                          forcedNext: nextOnMainPath,
+                                          component: componentSet,
+                                          adjacency: adjacency)
+    }
+
+    private static func renderTreeConnectivityNode(_ atomID: Int,
+                                                   parent: Int?,
+                                                   forcedNext: [Int: Int],
+                                                   component: Set<Int>,
+                                                   adjacency: [Int: Set<Int>]) -> String {
+        let children = adjacency[atomID, default: []]
+            .filter { $0 != parent && component.contains($0) }
+            .sorted()
+        let continuation = forcedNext[atomID] ?? chooseContinuationChild(from: children,
+                                                                         parent: atomID,
+                                                                         component: component,
+                                                                         adjacency: adjacency)
+        let branches = children.filter { $0 != continuation }
+
+        var out = "\(atomID)"
+        if !branches.isEmpty {
+            let branchText = branches
+                .sorted { lhs, rhs in
+                    let left = subtreeLeafExtremes(root: lhs,
+                                                   parent: atomID,
+                                                   component: component,
+                                                   adjacency: adjacency)
+                    let right = subtreeLeafExtremes(root: rhs,
+                                                    parent: atomID,
+                                                    component: component,
+                                                    adjacency: adjacency)
+                    if left.min != right.min { return left.min < right.min }
+                    return left.max < right.max
+                }
+                .map { renderTreeConnectivityNode($0,
+                                                  parent: atomID,
+                                                  forcedNext: forcedNext,
+                                                  component: component,
+                                                  adjacency: adjacency) }
+                .joined(separator: ",")
+            out += "(\(branchText))"
+        }
+
+        if let continuation {
+            let continuationText = renderTreeConnectivityNode(continuation,
+                                                              parent: atomID,
+                                                              forcedNext: forcedNext,
+                                                              component: component,
+                                                              adjacency: adjacency)
+            if branches.isEmpty {
+                out += "-\(continuationText)"
+            } else {
+                out += continuationText
+            }
+        }
+
+        return out
+    }
+
+    private static func chooseContinuationChild(from children: [Int],
+                                                parent: Int,
+                                                component: Set<Int>,
+                                                adjacency: [Int: Set<Int>]) -> Int? {
+        guard !children.isEmpty else { return nil }
+        return children.max { lhs, rhs in
+            let left = subtreeLeafExtremes(root: lhs, parent: parent, component: component, adjacency: adjacency)
+            let right = subtreeLeafExtremes(root: rhs, parent: parent, component: component, adjacency: adjacency)
+            if left.max != right.max { return left.max < right.max }
+            if left.min != right.min { return left.min < right.min }
+            return lhs < rhs
+        }
+    }
+
+    private static func subtreeLeafExtremes(root: Int,
+                                            parent: Int,
+                                            component: Set<Int>,
+                                            adjacency: [Int: Set<Int>]) -> (min: Int, max: Int) {
+        let children = adjacency[root, default: []].filter { $0 != parent && component.contains($0) }
+        if children.isEmpty {
+            return (root, root)
+        }
+
+        var minLeaf = Int.max
+        var maxLeaf = Int.min
+        for child in children {
+            let childExtremes = subtreeLeafExtremes(root: child,
+                                                    parent: root,
+                                                    component: component,
+                                                    adjacency: adjacency)
+            minLeaf = min(minLeaf, childExtremes.min)
+            maxLeaf = max(maxLeaf, childExtremes.max)
+        }
+        return (minLeaf, maxLeaf)
+    }
+
+    private static func degree(of atomID: Int,
+                               in component: Set<Int>,
+                               adjacency: [Int: Set<Int>]) -> Int {
+        adjacency[atomID, default: []].filter { component.contains($0) }.count
+    }
+
+    private static func path(between start: Int,
+                             and end: Int,
+                             in component: Set<Int>,
+                             adjacency: [Int: Set<Int>]) -> [Int]? {
+        guard start != end else { return [start] }
+
+        var queue = [start]
+        var visited: Set<Int> = [start]
+        var parentByNode: [Int: Int] = [:]
+
+        while !queue.isEmpty {
+            let current = queue.removeFirst()
+            for neighbor in adjacency[current, default: []].sorted() where component.contains(neighbor) && !visited.contains(neighbor) {
+                visited.insert(neighbor)
+                parentByNode[neighbor] = current
+
+                if neighbor == end {
+                    var out = [end]
+                    var cursor = end
+                    while let parent = parentByNode[cursor] {
+                        out.append(parent)
+                        if parent == start { break }
+                        cursor = parent
+                    }
+                    return out.reversed()
+                }
+
+                queue.append(neighbor)
+            }
+        }
+
+        return nil
     }
 
     private static func buildChargeLayer(in molecule: Molecule) -> String {
@@ -683,6 +1188,14 @@ enum CDKInChINativeGenerator {
             (symbol.uppercased(), index + 1)
         }
     )
+
+    private static let nonMetalOrMetalloidSymbols: Set<String> = [
+        "H", "HE", "B", "C", "N", "O", "F", "NE",
+        "SI", "P", "S", "CL", "AR",
+        "GE", "AS", "SE", "BR", "KR",
+        "SB", "TE", "I", "XE",
+        "AT", "RN", "TS", "OG"
+    ]
 
     private static let exchangeableHydrogenCarrierElements: Set<String> = [
         "N", "O", "S", "SE", "TE"
