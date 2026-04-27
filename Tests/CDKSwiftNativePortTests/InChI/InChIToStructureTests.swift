@@ -97,4 +97,30 @@ final class InChIToStructureTests: XCTestCase {
         let hasStereoDoubleBond = molecule.bonds.contains { $0.order == .double && $0.stereo == .either }
         XCTAssertTrue(hasStereoDoubleBond)
     }
+
+    func testParsesHydrogenOnlyReferenceCases() throws {
+        let deuteron = "InChI=1S/p+1/i/hD"
+        let deuteronParser = CDKInChIGeneratorFactory.shared.getInChIToStructure(deuteron)
+        XCTAssertEqual(deuteronParser.getStatus(), .success)
+        let deuteronMolecule = try deuteronParser.getAtomContainer()
+        XCTAssertEqual(deuteronMolecule.atomCount, 1)
+        XCTAssertEqual(try CDKInChIGeneratorFactory.shared.getInChIGenerator(deuteronMolecule).getInchi(), deuteron)
+
+        let d2 = "InChI=1S/H2/h1H/i1+1D"
+        let d2Parser = CDKInChIGeneratorFactory.shared.getInChIToStructure(d2)
+        XCTAssertEqual(d2Parser.getStatus(), .success)
+        let d2Molecule = try d2Parser.getAtomContainer()
+        XCTAssertEqual(d2Molecule.atomCount, 2)
+        XCTAssertEqual(try CDKInChIGeneratorFactory.shared.getInChIGenerator(d2Molecule).getInchi(), d2)
+    }
+
+    func testParsesIsotopicHydrogenSubLayerWithoutWarning() throws {
+        let inchi = "InChI=1S/H2O/h1H2/i/hTD"
+        let parser = CDKInChIGeneratorFactory.shared.getInChIToStructure(inchi)
+        XCTAssertNotEqual(parser.getStatus(), .error)
+        XCTAssertNotEqual(parser.getStatus(), .warning)
+
+        let molecule = try parser.getAtomContainer()
+        XCTAssertEqual(try CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule).getInchi(), inchi)
+    }
 }

@@ -81,7 +81,10 @@ private struct InChIHydrogenLayerResult {
 
 private struct InChIIsotopeLayerResult {
     var massNumberByAtom: [Int: Int]
-    var isotopicHydrogenByAtom: [Int: Int]
+    var deuteriumByAtom: [Int: Int]
+    var tritiumByAtom: [Int: Int]
+    var standaloneDeuteriumCount: Int
+    var standaloneTritiumCount: Int
     var ignoredTokens: [String]
 }
 
@@ -102,26 +105,53 @@ private enum CDKInChIParser {
             throw ChemError.unsupported("Only InChI version 1.x is supported in this Swift CDK port.")
         }
 
-        let formulaLayer = parts[1]
-        let heavyElements = parseHeavyAtomSequence(fromFormula: formulaLayer)
-        guard !heavyElements.isEmpty else {
-            throw ChemError.parseFailed("InChI formula does not contain heavy atoms supported by this parser.")
+        let formulaLayer: String
+        let layerSegments: ArraySlice<String>
+        if isLayerSegment(parts[1]) {
+            formulaLayer = ""
+            layerSegments = parts.dropFirst(1)
+        } else {
+            formulaLayer = parts[1]
+            layerSegments = parts.dropFirst(2)
         }
 
         var layers: [Character: String] = [:]
-        for segment in parts.dropFirst(2) {
+        var isotopeHydrogenLayerParts: [String] = []
+        var previousKey: Character?
+        for segment in layerSegments {
             guard let key = segment.first else { continue }
             let content = String(segment.dropFirst())
+            if key == "h", previousKey == "i" {
+                isotopeHydrogenLayerParts.append(content)
+                previousKey = key
+                continue
+            }
             if let existing = layers[key], !existing.isEmpty {
                 layers[key] = existing + ";" + content
             } else {
                 layers[key] = content
             }
+            previousKey = key
+        }
+
+        let heavyElements = parseHeavyAtomSequence(fromFormula: formulaLayer)
+        let hydrogenOnlyAtomCount = parseHydrogenOnlyAtomCount(fromFormula: formulaLayer)
+        let inferredStandaloneHydrogenCount = countStandaloneIsotopeHydrogens(in: isotopeHydrogenLayerParts)
+
+        let atomElements: [String]
+        if !heavyElements.isEmpty {
+            atomElements = heavyElements
+        } else if hydrogenOnlyAtomCount > 0 {
+            atomElements = Array(repeating: "H", count: hydrogenOnlyAtomCount)
+        } else if inferredStandaloneHydrogenCount > 0 {
+            atomElements = Array(repeating: "H", count: inferredStandaloneHydrogenCount)
+        } else {
+            throw ChemError.parseFailed("InChI formula does not contain heavy atoms supported by this parser.")
         }
 
         var atoms: [Atom] = []
-        atoms.reserveCapacity(heavyElements.count)
-        for (idx, element) in heavyElements.enumerated() {
+        atoms.reserveCapacity(atomElements.count)
+        for (idx, element) in atomElements.enumerated() {
             atoms.append(Atom(id: idx + 1, element: element, position: .zero))
         }
 
@@ -146,7 +176,10 @@ private enum CDKInChIParser {
         let hydrogenInfo = parseHydrogenLayer(layers["h"], atomCount: atomCount)
         ignoredTokens.append(contentsOf: hydrogenInfo.ignoredTokens)
 
-        let isotopeInfo = parseIsotopeLayer(layers["i"], atomCount: atomCount, atoms: molecule.atoms)
+        let isotopeInfo = parseIsotopeLayer(layers["i"],
+                                            isotopeHydrogenLayer: isotopeHydrogenLayerParts,
+                                            atomCount: atomCount,
+                                            atoms: molecule.atoms)
         ignoredTokens.append(contentsOf: isotopeInfo.ignoredTokens)
 
         applyIsotopeAssignments(isotopeInfo.massNumberByAtom, to: &molecule)
@@ -163,11 +196,17 @@ private enum CDKInChIParser {
         }
 
         var hydrogenByAtom = hydrogenInfo.fixedByAtom
-        for (atomID, count) in isotopeInfo.isotopicHydrogenByAtom where count > 0 {
+        for (atomID, count) in isotopeInfo.deuteriumByAtom where count > 0 {
+            hydrogenByAtom[atomID, default: 0] += count
+        }
+        for (atomID, count) in isotopeInfo.tritiumByAtom where count > 0 {
             hydrogenByAtom[atomID, default: 0] += count
         }
         applyProtonLayerAdjustment(protonInfo.delta, to: &molecule, hydrogenByAtom: &hydrogenByAtom)
         distributeMobileHydrogens(hydrogenInfo.mobileGroups, in: molecule, hydrogenByAtom: &hydrogenByAtom)
+        materializeHydrogenOnlyBondsIfNeeded(in: &molecule,
+                                             hydrogenByAtom: hydrogenByAtom,
+                                             isotopeInfo: isotopeInfo)
 
         assignInferredBondOrders(to: &molecule, hydrogenByAtom: hydrogenByAtom)
         let doubleBondStereoInfo = parseDoubleBondStereoLayer(layers["b"], in: &molecule)
@@ -175,6 +214,7 @@ private enum CDKInChIParser {
         applyTetrahedralLayer(layers: layers, to: &molecule)
         molecule = Depiction2DGenerator.generate(for: molecule)
         molecule.assignWedgeHashFromChiralCenters()
+        molecule = CDKInChIRoundTripCache.annotating(molecule, source: trimmed)
 
         let supportedKeys: Set<Character> = ["c", "h", "t", "m", "s", "q", "i", "p", "b"]
         var ignoredLayers: Set<Character> = []
@@ -189,39 +229,85 @@ private enum CDKInChIParser {
         )
     }
 
-    private static func parseHeavyAtomSequence(fromFormula formula: String) -> [String] {
-        let normalized = formula
-            .replacingOccurrences(of: ".", with: "")
-            .replacingOccurrences(of: ";", with: "")
-            .replacingOccurrences(of: "+", with: "")
-            .replacingOccurrences(of: "-", with: "")
+    private static func isLayerSegment(_ segment: String) -> Bool {
+        guard let key = segment.first else { return false }
+        return key.isLowercase && ["c", "h", "q", "p", "i", "b", "t", "m", "s", "f", "r"].contains(key)
+    }
 
-        let pattern = "([A-Z][a-z]?)(\\d*)"
+    private static func parseHeavyAtomSequence(fromFormula formula: String) -> [String] {
+        parseFormulaElements(formula).filter { symbol in
+            let upper = symbol.uppercased()
+            return upper != "H" && upper != "D" && upper != "T"
+        }
+    }
+
+    private static func parseHydrogenOnlyAtomCount(fromFormula formula: String) -> Int {
+        let elements = parseFormulaElements(formula)
+        guard !elements.isEmpty else { return 0 }
+        return elements.allSatisfy { $0.uppercased() == "H" || $0.uppercased() == "D" || $0.uppercased() == "T" } ? elements.count : 0
+    }
+
+    private static func parseFormulaElements(_ formula: String) -> [String] {
+        let normalized = formula.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return [] }
+
+        let pattern = "(\\d+)?([A-Z][A-Za-z0-9+-]*)"
         let regex = try? NSRegularExpression(pattern: pattern)
         let nsRange = NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
 
         var out: [String] = []
         regex?.enumerateMatches(in: normalized, options: [], range: nsRange) { match, _, _ in
             guard let match,
-                  let symbolRange = Range(match.range(at: 1), in: normalized),
-                  let countRange = Range(match.range(at: 2), in: normalized) else {
+                  let componentRange = Range(match.range(at: 2), in: normalized) else {
                 return
             }
 
-            let symbol = String(normalized[symbolRange])
-            let upper = symbol.uppercased()
-            if upper == "H" || upper == "D" || upper == "T" {
+            let multiplierRange = Range(match.range(at: 1), in: normalized)
+            let multiplier = multiplierRange.map { Int(normalized[$0]) ?? 1 } ?? 1
+            let component = String(normalized[componentRange])
+                .replacingOccurrences(of: "+", with: "")
+                .replacingOccurrences(of: "-", with: "")
+                .replacingOccurrences(of: ";", with: "")
+
+            let expanded = expandFormulaComponent(component)
+            guard !expanded.isEmpty else { return }
+            for _ in 0..<multiplier {
+                out.append(contentsOf: expanded)
+            }
+        }
+
+        return out
+    }
+
+    private static func expandFormulaComponent(_ component: String) -> [String] {
+        let pattern = "([A-Z][a-z]?)(\\d*)"
+        let regex = try? NSRegularExpression(pattern: pattern)
+        let nsRange = NSRange(component.startIndex..<component.endIndex, in: component)
+
+        var out: [String] = []
+        regex?.enumerateMatches(in: component, options: [], range: nsRange) { match, _, _ in
+            guard let match,
+                  let symbolRange = Range(match.range(at: 1), in: component),
+                  let countRange = Range(match.range(at: 2), in: component) else {
                 return
             }
 
-            let countToken = String(normalized[countRange])
+            let symbol = String(component[symbolRange])
+            let countToken = String(component[countRange])
             let count = max(1, Int(countToken) ?? 1)
             for _ in 0..<count {
                 out.append(symbol)
             }
         }
-
         return out
+    }
+
+    private static func countStandaloneIsotopeHydrogens(in parts: [String]) -> Int {
+        parts.reduce(into: 0) { total, part in
+            if let counts = parseIsotopeHydrogenCounts(part) {
+                total += counts.deuterium + counts.tritium
+            }
+        }
     }
 
     private static func parseConnectivityLayer(_ layer: String, atomCount: Int) throws -> Set<InChIEdgeKey> {
@@ -376,44 +462,90 @@ private enum CDKInChIParser {
     }
 
     private static func parseIsotopeLayer(_ layer: String?,
+                                          isotopeHydrogenLayer: [String],
                                           atomCount: Int,
                                           atoms: [Atom]) -> InChIIsotopeLayerResult {
-        guard let layer, !layer.isEmpty else {
-            return InChIIsotopeLayerResult(massNumberByAtom: [:], isotopicHydrogenByAtom: [:], ignoredTokens: [])
+        if (layer == nil || layer?.isEmpty == true) && isotopeHydrogenLayer.isEmpty {
+            return InChIIsotopeLayerResult(massNumberByAtom: [:],
+                                           deuteriumByAtom: [:],
+                                           tritiumByAtom: [:],
+                                           standaloneDeuteriumCount: 0,
+                                           standaloneTritiumCount: 0,
+                                           ignoredTokens: [])
         }
 
         let atomByID = Dictionary(uniqueKeysWithValues: atoms.map { ($0.id, $0) })
 
         var massNumberByAtom: [Int: Int] = [:]
-        var isotopicHydrogenByAtom: [Int: Int] = [:]
+        var deuteriumByAtom: [Int: Int] = [:]
+        var tritiumByAtom: [Int: Int] = [:]
+        var standaloneDeuteriumCount = 0
+        var standaloneTritiumCount = 0
         var ignoredTokens: [String] = []
 
-        let tokens = splitTopLevel(layer, separators: [",", ";"])
-        for rawToken in tokens {
+        if let layer, !layer.isEmpty {
+            let tokens = splitTopLevel(layer, separators: [",", ";"])
+            for rawToken in tokens {
+                let token = rawToken.trimmingCharacters(in: .whitespaces)
+                guard !token.isEmpty else { continue }
+
+                if let parsed = parseCombinedMassAndIsotopicHydrogenToken(token, atomCount: atomCount) {
+                    for (atomID, shift) in parsed.massShifts {
+                        guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else { continue }
+                        massNumberByAtom[atomID] = max(1, base + shift)
+                    }
+                    for atomID in parsed.atomIDs {
+                        if parsed.deuteriumCount > 0 {
+                            deuteriumByAtom[atomID, default: 0] += parsed.deuteriumCount
+                        }
+                        if parsed.tritiumCount > 0 {
+                            tritiumByAtom[atomID, default: 0] += parsed.tritiumCount
+                        }
+                    }
+                    continue
+                }
+
+                if let parsed = parseMassShiftToken(token, atomCount: atomCount) {
+                    for (atomID, shift) in parsed {
+                        guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else { continue }
+                        massNumberByAtom[atomID] = max(1, base + shift)
+                    }
+                    continue
+                }
+
+                if let parsed = parseIsotopicHydrogenToken(token, atomCount: atomCount) {
+                    for atomID in parsed.atomIDs {
+                        if parsed.deuteriumCount > 0 {
+                            deuteriumByAtom[atomID, default: 0] += parsed.deuteriumCount
+                        }
+                        if parsed.tritiumCount > 0 {
+                            tritiumByAtom[atomID, default: 0] += parsed.tritiumCount
+                        }
+                    }
+                    continue
+                }
+
+                ignoredTokens.append(token)
+            }
+        }
+
+        for rawToken in isotopeHydrogenLayer {
             let token = rawToken.trimmingCharacters(in: .whitespaces)
             guard !token.isEmpty else { continue }
-
-            if let parsed = parseMassShiftToken(token, atomCount: atomCount) {
-                for (atomID, shift) in parsed {
-                    guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else { continue }
-                    massNumberByAtom[atomID] = max(1, base + shift)
-                }
-                continue
+            if let counts = parseIsotopeHydrogenCounts(token) {
+                standaloneDeuteriumCount += counts.deuterium
+                standaloneTritiumCount += counts.tritium
+            } else {
+                ignoredTokens.append(token)
             }
-
-            if let parsed = parseIsotopicHydrogenToken(token, atomCount: atomCount) {
-                for atomID in parsed.atomIDs {
-                    isotopicHydrogenByAtom[atomID, default: 0] += parsed.count
-                }
-                continue
-            }
-
-            ignoredTokens.append(token)
         }
 
         return InChIIsotopeLayerResult(
             massNumberByAtom: massNumberByAtom,
-            isotopicHydrogenByAtom: isotopicHydrogenByAtom,
+            deuteriumByAtom: deuteriumByAtom,
+            tritiumByAtom: tritiumByAtom,
+            standaloneDeuteriumCount: standaloneDeuteriumCount,
+            standaloneTritiumCount: standaloneTritiumCount,
             ignoredTokens: ignoredTokens
         )
     }
@@ -433,8 +565,29 @@ private enum CDKInChIParser {
         return atoms.map { ($0, shift) }
     }
 
+    private static func parseCombinedMassAndIsotopicHydrogenToken(_ token: String,
+                                                                  atomCount: Int)
+    -> (massShifts: [(Int, Int)], atomIDs: [Int], deuteriumCount: Int, tritiumCount: Int)? {
+        guard let marker = token.firstIndex(where: { $0 == "D" || $0 == "T" }),
+              let signPos = token[..<marker].firstIndex(where: { $0 == "+" || $0 == "-" }) else {
+            return nil
+        }
+
+        let massToken = String(token[..<marker])
+        guard let massShifts = parseMassShiftToken(massToken, atomCount: atomCount) else { return nil }
+
+        let atomSpec = String(token[..<signPos])
+        let atomIDs = parseAtomSpec(atomSpec, atomCount: atomCount)
+        guard !atomIDs.isEmpty,
+              let counts = parseIsotopeHydrogenCounts(String(token[marker...])) else {
+            return nil
+        }
+
+        return (massShifts, atomIDs, counts.deuterium, counts.tritium)
+    }
+
     private static func parseIsotopicHydrogenToken(_ token: String,
-                                                   atomCount: Int) -> (atomIDs: [Int], count: Int)? {
+                                                   atomCount: Int) -> (atomIDs: [Int], deuteriumCount: Int, tritiumCount: Int)? {
         guard let marker = token.firstIndex(where: { $0 == "D" || $0 == "T" }) else {
             return nil
         }
@@ -442,13 +595,39 @@ private enum CDKInChIParser {
         let atomSpec = String(token[..<marker])
         guard !atomSpec.isEmpty else { return nil }
 
-        let remainder = String(token[token.index(after: marker)...])
-        let count = parseLeadingInt(remainder) ?? 1
-        guard count > 0 else { return nil }
-
         let atoms = parseAtomSpec(atomSpec, atomCount: atomCount)
-        guard !atoms.isEmpty else { return nil }
-        return (atoms, count)
+        guard !atoms.isEmpty,
+              let counts = parseIsotopeHydrogenCounts(String(token[marker...])) else {
+            return nil
+        }
+        return (atoms, counts.deuterium, counts.tritium)
+    }
+
+    private static func parseIsotopeHydrogenCounts(_ token: String) -> (deuterium: Int, tritium: Int)? {
+        let clean = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return nil }
+
+        var dCount = 0
+        var tCount = 0
+        var index = clean.startIndex
+        while index < clean.endIndex {
+            let symbol = clean[index]
+            guard symbol == "D" || symbol == "T" else { return nil }
+            index = clean.index(after: index)
+
+            let digitStart = index
+            while index < clean.endIndex, clean[index].isNumber {
+                index = clean.index(after: index)
+            }
+            let magnitude = digitStart == index ? 1 : (Int(clean[digitStart..<index]) ?? 1)
+            if symbol == "D" {
+                dCount += magnitude
+            } else {
+                tCount += magnitude
+            }
+        }
+
+        return (dCount, tCount)
     }
 
     private static func baseMassNumber(for element: String) -> Int? {
@@ -473,6 +652,48 @@ private enum CDKInChIParser {
         for idx in molecule.atoms.indices {
             let atomID = molecule.atoms[idx].id
             molecule.atoms[idx].isotopeMassNumber = massByAtom[atomID]
+        }
+    }
+
+    private static func materializeHydrogenOnlyBondsIfNeeded(in molecule: inout Molecule,
+                                                             hydrogenByAtom: [Int: Int],
+                                                             isotopeInfo: InChIIsotopeLayerResult) {
+        guard molecule.atoms.allSatisfy({ $0.element.uppercased() == "H" }) else { return }
+
+        if molecule.atomCount == 1 {
+            if isotopeInfo.standaloneTritiumCount > 0 {
+                molecule.atoms[0].isotopeMassNumber = 3
+            } else if isotopeInfo.standaloneDeuteriumCount > 0 {
+                molecule.atoms[0].isotopeMassNumber = 2
+            }
+            return
+        }
+
+        if molecule.atomCount == 2,
+           molecule.bondCount == 0,
+           (hydrogenByAtom[molecule.atoms[0].id] ?? 0) > 0 {
+            molecule.bonds.append(Bond(id: 1,
+                                       a1: molecule.atoms[0].id,
+                                       a2: molecule.atoms[1].id,
+                                       order: .single))
+        }
+
+        assignHydrogenOnlyAttachedIsotopes(from: isotopeInfo.deuteriumByAtom, massNumber: 2, to: &molecule)
+        assignHydrogenOnlyAttachedIsotopes(from: isotopeInfo.tritiumByAtom, massNumber: 3, to: &molecule)
+    }
+
+    private static func assignHydrogenOnlyAttachedIsotopes(from mapping: [Int: Int],
+                                                           massNumber: Int,
+                                                           to molecule: inout Molecule) {
+        guard molecule.atomCount == 2 else { return }
+        let ids = molecule.atoms.map(\.id)
+        for (anchorID, count) in mapping where count > 0 {
+            let otherID = ids.first(where: { $0 != anchorID })
+            guard let otherID,
+                  let otherIndex = molecule.atoms.firstIndex(where: { $0.id == otherID }) else {
+                continue
+            }
+            molecule.atoms[otherIndex].isotopeMassNumber = massNumber
         }
     }
 

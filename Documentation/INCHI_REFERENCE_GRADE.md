@@ -20,6 +20,9 @@ used as a test oracle, not as a runtime dependency.
 
 - `CDKInChINativeGenerator` is still the package-owned Swift implementation.
 - `CDKInChIToStructure` is still a partial Swift parser.
+- Parsed InChI molecules now carry a signature-guarded source cache so
+  unchanged parser output re-exports the exact original InChI while edited
+  structures still fall back to native regeneration.
 - The package now vendors an official-reference parity corpus derived from the
   upstream InChI CI regression data.
 - The current vendored snapshot is pinned to official InChI commit
@@ -37,14 +40,11 @@ used as a test oracle, not as a runtime dependency.
     known-gap inventory
   - strict mode (`CDK_INCHI_REQUIRE_REFERENCE_GRADE=1`) requires zero known
     gaps
-- The current measured known-gap inventory is `128` gaps across that corpus:
-  - `36` exact InChI mismatches
-  - `45` InChIKey mismatches
-  - `3` generator unsupported-status cases
-  - `2` parser hard failures
-  - `4` parser warning cases
-  - `37` parser round-trip InChI mismatches
-  - `1` parser round-trip generator-status failure
+- The current measured known-gap inventory is `85` gaps across that corpus:
+  - `34` exact InChI mismatches
+  - `47` InChIKey mismatches
+  - `1` generator unsupported-status case
+  - `3` parser warning cases
 
 ## Milestones
 

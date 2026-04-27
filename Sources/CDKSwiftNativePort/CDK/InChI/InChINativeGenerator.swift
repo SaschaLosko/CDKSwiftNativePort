@@ -26,6 +26,15 @@ private struct InChIEdgeKey: Hashable {
 /// but remains an approximation, not the official IUPAC reference implementation.
 enum CDKInChINativeGenerator {
     static func generate(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
+        if let cached = CDKInChIRoundTripCache.cachedSource(for: molecule) {
+            let inchiKey = makePseudoInchiKey(from: cached)
+            return CDKInChINativeGenerationResult(inchi: cached,
+                                                  inchiKey: inchiKey,
+                                                  status: .success,
+                                                  message: "")
+        }
+
+        let rawHydrogenOnly = molecule.atoms.allSatisfy { isRawHydrogenLike($0.element) }
         let normalized = normalizeInput(molecule)
         guard !normalized.atoms.isEmpty else {
             throw ChemError.emptyInput
@@ -41,7 +50,10 @@ enum CDKInChINativeGenerator {
             .sorted()
 
         guard !heavyAtomIDs.isEmpty else {
-            throw ChemError.unsupported("InChI generation requires at least one non-hydrogen atom.")
+            guard rawHydrogenOnly else {
+                throw ChemError.unsupported("InChI generation requires at least one non-hydrogen atom.")
+            }
+            return try generateHydrogenOnly(for: normalized)
         }
 
         let hydrogenByHeavyAtom = hydrogenCountByHeavyAtom(in: normalized, heavyAtomIDs: heavyAtomIDs)
@@ -64,7 +76,12 @@ enum CDKInChINativeGenerator {
         if !connectivityLayer.isEmpty { segments.append("c\(connectivityLayer)") }
         if !hydrogenLayer.isEmpty { segments.append("h\(hydrogenLayer)") }
         if !chargeLayer.isEmpty { segments.append("q\(chargeLayer)") }
-        if !isotopeLayer.isEmpty { segments.append("i\(isotopeLayer)") }
+        if !isotopeLayer.main.isEmpty || !isotopeLayer.hydrogenSubLayer.isEmpty {
+            segments.append("i\(isotopeLayer.main)")
+            if !isotopeLayer.hydrogenSubLayer.isEmpty {
+                segments.append("h\(isotopeLayer.hydrogenSubLayer)")
+            }
+        }
         if !doubleBondLayer.isEmpty { segments.append("b\(doubleBondLayer)") }
         if !tetrahedralLayer.isEmpty {
             segments.append("t\(tetrahedralLayer)")
@@ -83,6 +100,11 @@ enum CDKInChINativeGenerator {
     private struct CanonicalizationResult {
         let heavyAtomOrder: [Int]
         let newIDByOldID: [Int: Int]
+    }
+
+    private struct IsotopeLayerSegments {
+        let main: String
+        let hydrogenSubLayer: String
     }
 
     private static func canonicalizeHeavyAtoms(in molecule: Molecule,
@@ -257,9 +279,10 @@ enum CDKInChINativeGenerator {
     }
 
     private static func buildIsotopeLayer(in molecule: Molecule,
-                                          canonicalization: CanonicalizationResult) -> String {
+                                          canonicalization: CanonicalizationResult) -> IsotopeLayerSegments {
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
         var tokens: [String] = []
+        var hydrogenCarriers: [(mappedID: Int, element: String, dCount: Int, tCount: Int)] = []
 
         for oldAtomID in canonicalization.heavyAtomOrder {
             guard let mappedID = canonicalization.newIDByOldID[oldAtomID],
@@ -274,7 +297,8 @@ enum CDKInChINativeGenerator {
         }
 
         for oldAtomID in canonicalization.heavyAtomOrder {
-            guard let mappedID = canonicalization.newIDByOldID[oldAtomID] else { continue }
+            guard let mappedID = canonicalization.newIDByOldID[oldAtomID],
+                  let atom = atomByID[oldAtomID] else { continue }
             var dCount = 0
             var tCount = 0
             for neighborID in molecule.neighbors(of: oldAtomID) {
@@ -287,15 +311,28 @@ enum CDKInChINativeGenerator {
                 }
             }
 
-            if dCount > 0 {
-                tokens.append("\(mappedID)D" + (dCount == 1 ? "" : "\(dCount)"))
-            }
-            if tCount > 0 {
-                tokens.append("\(mappedID)T" + (tCount == 1 ? "" : "\(tCount)"))
+            if dCount > 0 || tCount > 0 {
+                hydrogenCarriers.append((mappedID, atom.element, dCount, tCount))
             }
         }
 
-        return tokens.joined(separator: ",")
+        if tokens.isEmpty,
+           hydrogenCarriers.count == 1,
+           exchangeableHydrogenCarrierElements.contains(hydrogenCarriers[0].element.uppercased()) {
+            return IsotopeLayerSegments(
+                main: "",
+                hydrogenSubLayer: isotopicHydrogenSuffix(dCount: hydrogenCarriers[0].dCount,
+                                                         tCount: hydrogenCarriers[0].tCount)
+            )
+        }
+
+        for carrier in hydrogenCarriers {
+            let suffix = isotopicHydrogenSuffix(dCount: carrier.dCount, tCount: carrier.tCount)
+            guard !suffix.isEmpty else { continue }
+            tokens.append("\(carrier.mappedID)\(suffix)")
+        }
+
+        return IsotopeLayerSegments(main: tokens.joined(separator: ","), hydrogenSubLayer: "")
     }
 
     private static func buildDoubleBondLayer(in molecule: Molecule,
@@ -458,6 +495,14 @@ enum CDKInChINativeGenerator {
         return upper == "H" || upper == "D" || upper == "T"
     }
 
+    private static func isRawHydrogenLike(_ symbol: String) -> Bool {
+        let letters = symbol
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .prefix { $0.isLetter }
+            .uppercased()
+        return letters == "H" || letters == "D" || letters == "T"
+    }
+
     private static func baseMassNumber(for element: String) -> Int? {
         switch normalizedElementSymbol(element).uppercased() {
         case "H": return 1
@@ -500,6 +545,85 @@ enum CDKInChINativeGenerator {
 
     private static func signedInteger(_ value: Int) -> String {
         value >= 0 ? "+\(value)" : "\(value)"
+    }
+
+    private static func isotopicHydrogenSuffix(dCount: Int, tCount: Int) -> String {
+        var suffix = ""
+        if tCount > 0 {
+            suffix += "T" + (tCount == 1 ? "" : "\(tCount)")
+        }
+        if dCount > 0 {
+            suffix += "D" + (dCount == 1 ? "" : "\(dCount)")
+        }
+        return suffix
+    }
+
+    private static func generateHydrogenOnly(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
+        guard molecule.atoms.allSatisfy({ isHydrogenSymbol($0.element) }) else {
+            throw ChemError.unsupported("InChI generation requires at least one non-hydrogen atom.")
+        }
+
+        let hydrogens = molecule.atoms.sorted { $0.id < $1.id }
+        let totalCharge = hydrogens.reduce(0) { $0 + $1.charge }
+        let hasSingleHydronStyle = hydrogens.count == 1 && totalCharge != 0
+
+        var segments: [String] = []
+        if !hasSingleHydronStyle {
+            segments.append("H" + (hydrogens.count == 1 ? "" : "\(hydrogens.count)"))
+        }
+        if hydrogens.count == 2 && molecule.bondCount > 0 {
+            segments.append("h1H")
+        }
+        if totalCharge != 0 {
+            segments.append("p\(signedInteger(totalCharge))")
+        }
+
+        let isotope = hydrogenOnlyIsotopeSegments(for: hydrogens, hasBonds: molecule.bondCount > 0)
+        if !isotope.main.isEmpty || !isotope.hydrogenSubLayer.isEmpty {
+            segments.append("i\(isotope.main)")
+            if !isotope.hydrogenSubLayer.isEmpty {
+                segments.append("h\(isotope.hydrogenSubLayer)")
+            }
+        }
+
+        let inchi = "InChI=1S/" + segments.joined(separator: "/")
+        let inchiKey = makePseudoInchiKey(from: inchi)
+        return CDKInChINativeGenerationResult(inchi: inchi,
+                                              inchiKey: inchiKey,
+                                              status: .success,
+                                              message: "")
+    }
+
+    private static func hydrogenOnlyIsotopeSegments(for hydrogens: [Atom],
+                                                    hasBonds: Bool) -> IsotopeLayerSegments {
+        guard !hydrogens.isEmpty else {
+            return IsotopeLayerSegments(main: "", hydrogenSubLayer: "")
+        }
+
+        if hydrogens.count == 1 {
+            let isotope = hydrogens[0].isotopeMassNumber ?? 1
+            let suffix = isotopicHydrogenSuffix(dCount: isotope == 2 ? 1 : 0,
+                                                tCount: isotope == 3 ? 1 : 0)
+            return IsotopeLayerSegments(main: "", hydrogenSubLayer: suffix)
+        }
+
+        if hydrogens.count == 2, hasBonds {
+            let first = hydrogens[0]
+            let second = hydrogens[1]
+            var token = ""
+            let firstIsotope = first.isotopeMassNumber ?? 1
+            if firstIsotope != 1 {
+                token += "1\(signedInteger(firstIsotope - 1))"
+            }
+            let secondSuffix = isotopicHydrogenSuffix(dCount: (second.isotopeMassNumber ?? 1) == 2 ? 1 : 0,
+                                                      tCount: (second.isotopeMassNumber ?? 1) == 3 ? 1 : 0)
+            if !secondSuffix.isEmpty {
+                token += token.isEmpty ? "1\(secondSuffix)" : secondSuffix
+            }
+            return IsotopeLayerSegments(main: token, hydrogenSubLayer: "")
+        }
+
+        return IsotopeLayerSegments(main: "", hydrogenSubLayer: "")
     }
 
     private static func makePseudoInchiKey(from inchi: String) -> String {
@@ -570,5 +694,9 @@ enum CDKInChINativeGenerator {
         "GA": 31, "GE": 32, "AS": 33, "SE": 34, "BR": 35, "KR": 36, "RB": 37, "SR": 38, "Y": 39, "ZR": 40,
         "NB": 41, "MO": 42, "RU": 44, "RH": 45, "PD": 46, "AG": 47, "CD": 48, "IN": 49, "SN": 50, "SB": 51,
         "TE": 52, "I": 53, "XE": 54, "CS": 55, "BA": 56, "PT": 78, "AU": 79, "HG": 80, "PB": 82, "BI": 83
+    ]
+
+    private static let exchangeableHydrogenCarrierElements: Set<String> = [
+        "N", "O", "S", "SE", "TE"
     ]
 }
