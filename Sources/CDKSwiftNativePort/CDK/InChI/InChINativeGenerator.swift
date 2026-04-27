@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(CryptoKit)
-import CryptoKit
-#endif
 
 struct CDKInChINativeGenerationResult {
     let inchi: String
@@ -27,7 +24,7 @@ private struct InChIEdgeKey: Hashable {
 enum CDKInChINativeGenerator {
     static func generate(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
         if let cached = CDKInChIRoundTripCache.cachedSource(for: molecule) {
-            let inchiKey = makePseudoInchiKey(from: cached)
+            let inchiKey = try CDKInChIKeyCodec.makeKey(from: cached)
             return CDKInChINativeGenerationResult(inchi: cached,
                                                   inchiKey: inchiKey,
                                                   status: .success,
@@ -42,6 +39,10 @@ enum CDKInChINativeGenerator {
 
         if normalized.atoms.contains(where: { $0.queryType != nil || $0.atomList != nil }) {
             throw ChemError.unsupported("InChI generation does not support query atoms in this CDK Swift port.")
+        }
+
+        if let elementalPair = try generateElementalIsotopicPairIfSupported(for: normalized) {
+            return elementalPair
         }
 
         let heavyAtomIDs = normalized.atoms
@@ -90,7 +91,7 @@ enum CDKInChINativeGenerator {
         }
 
         let inchi = "InChI=1S/" + segments.joined(separator: "/")
-        let inchiKey = makePseudoInchiKey(from: inchi)
+        let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
         return CDKInChINativeGenerationResult(inchi: inchi,
                                               inchiKey: inchiKey,
                                               status: .success,
@@ -587,7 +588,7 @@ enum CDKInChINativeGenerator {
         }
 
         let inchi = "InChI=1S/" + segments.joined(separator: "/")
-        let inchiKey = makePseudoInchiKey(from: inchi)
+        let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
         return CDKInChINativeGenerationResult(inchi: inchi,
                                               inchiKey: inchiKey,
                                               status: .success,
@@ -626,75 +627,62 @@ enum CDKInChINativeGenerator {
         return IsotopeLayerSegments(main: "", hydrogenSubLayer: "")
     }
 
-    private static func makePseudoInchiKey(from inchi: String) -> String {
-        let digest = digestBytes(for: inchi)
-        let firstBlock = letterBlock(from: digest, seedOffset: 0, length: 14)
-        let secondCore = letterBlock(from: digest, seedOffset: 14, length: 8)
-        let secondBlock = secondCore + "SA"
-        let protonation = inchi.contains("/p-") ? "M" : (inchi.contains("/p+") ? "O" : "N")
-        return "\(firstBlock)-\(secondBlock)-\(protonation)"
+    private static func generateElementalIsotopicPairIfSupported(for molecule: Molecule) throws -> CDKInChINativeGenerationResult? {
+        guard molecule.atomCount == 2,
+              molecule.atoms.allSatisfy({ !isHydrogenSymbol($0.element) && $0.charge == 0 }),
+              molecule.bonds.allSatisfy({ $0.order == .single }) else {
+            return nil
+        }
+
+        let normalizedSymbols = molecule.atoms.map { normalizedElementSymbol($0.element) }
+        guard let symbol = normalizedSymbols.first,
+              !symbol.isEmpty,
+              normalizedSymbols.dropFirst().allSatisfy({ $0 == symbol }) else {
+            return nil
+        }
+
+        let isotopes = molecule.atoms.compactMap(\.isotopeMassNumber)
+        guard isotopes.count == 2 else { return nil }
+
+        let orderedMasses = isotopes.sorted(by: >)
+        let trailingShift = orderedMasses[1] - orderedMasses[0]
+        guard trailingShift != 0 else { return nil }
+
+        // Official elemental isotope-pair InChI uses count-first formula tokens and
+        // a relative isotope layer without an explicit connectivity segment.
+        let inchi = "InChI=1S/2\(symbol)/i1+0;1\(signedInteger(trailingShift))"
+        let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
+        return CDKInChINativeGenerationResult(inchi: inchi,
+                                              inchiKey: inchiKey,
+                                              status: .success,
+                                              message: "")
     }
 
-    private static func letterBlock(from digest: [UInt8], seedOffset: Int, length: Int) -> String {
-        guard !digest.isEmpty, length > 0 else { return "" }
-        var state: UInt64 = 0x6a09e667f3bcc909 ^ UInt64(seedOffset &* 1315423911)
-        var chars: [Character] = []
-        chars.reserveCapacity(length)
-
-        for index in 0..<length {
-            let byte = UInt64(digest[(seedOffset + index) % digest.count])
-            state = mix(state, byte &+ UInt64(index + 1))
-            let letter = Character(UnicodeScalar(65 + Int(state % 26))!)
-            chars.append(letter)
-        }
-
-        return String(chars)
-    }
-
-    private static func digestBytes(for text: String) -> [UInt8] {
-        let bytes = [UInt8](text.utf8)
-        #if canImport(CryptoKit)
-        if #available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *) {
-            let hash = SHA256.hash(data: Data(bytes))
-            return Array(hash)
-        }
-        #else
-        // Deterministic fallback for platforms without CryptoKit.
-        #endif
-
-        // Deterministic fallback for platforms or OS versions without CryptoKit hashing.
-        var state: UInt64 = 0xcbf29ce484222325
-        for byte in bytes {
-            state ^= UInt64(byte)
-            state &*= 0x100000001b3
-        }
-        var out: [UInt8] = []
-        out.reserveCapacity(32)
-        var current = state
-        for i in 0..<32 {
-            current = mix(current, UInt64(i + 1))
-            out.append(UInt8(truncatingIfNeeded: current & 0xff))
-        }
-        return out
-    }
-
-    private static let knownElementSymbols: Set<String> = [
-        "H", "HE", "LI", "BE", "B", "C", "N", "O", "F", "NE",
-        "NA", "MG", "AL", "SI", "P", "S", "CL", "AR", "K", "CA",
-        "SC", "TI", "V", "CR", "MN", "FE", "CO", "NI", "CU", "ZN",
-        "GA", "GE", "AS", "SE", "BR", "KR", "RB", "SR", "Y", "ZR",
-        "NB", "MO", "RU", "RH", "PD", "AG", "CD", "IN", "SN", "SB",
-        "TE", "I", "XE", "CS", "BA", "PT", "AU", "HG", "PB", "BI"
+    private static let periodicTableSymbols: [String] = [
+        "H", "He",
+        "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+        "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
+        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+        "Ga", "Ge", "As", "Se", "Br", "Kr",
+        "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
+        "In", "Sn", "Sb", "Te", "I", "Xe",
+        "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy",
+        "Ho", "Er", "Tm", "Yb", "Lu",
+        "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg",
+        "Tl", "Pb", "Bi", "Po", "At", "Rn",
+        "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf",
+        "Es", "Fm", "Md", "No", "Lr",
+        "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn",
+        "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
     ]
 
-    private static let atomicNumberByElement: [String: Int] = [
-        "H": 1, "HE": 2, "LI": 3, "BE": 4, "B": 5, "C": 6, "N": 7, "O": 8, "F": 9, "NE": 10,
-        "NA": 11, "MG": 12, "AL": 13, "SI": 14, "P": 15, "S": 16, "CL": 17, "AR": 18, "K": 19, "CA": 20,
-        "SC": 21, "TI": 22, "V": 23, "CR": 24, "MN": 25, "FE": 26, "CO": 27, "NI": 28, "CU": 29, "ZN": 30,
-        "GA": 31, "GE": 32, "AS": 33, "SE": 34, "BR": 35, "KR": 36, "RB": 37, "SR": 38, "Y": 39, "ZR": 40,
-        "NB": 41, "MO": 42, "RU": 44, "RH": 45, "PD": 46, "AG": 47, "CD": 48, "IN": 49, "SN": 50, "SB": 51,
-        "TE": 52, "I": 53, "XE": 54, "CS": 55, "BA": 56, "PT": 78, "AU": 79, "HG": 80, "PB": 82, "BI": 83
-    ]
+    private static let knownElementSymbols: Set<String> = Set(periodicTableSymbols.map { $0.uppercased() })
+
+    private static let atomicNumberByElement: [String: Int] = Dictionary(
+        uniqueKeysWithValues: periodicTableSymbols.enumerated().map { (index, symbol) in
+            (symbol.uppercased(), index + 1)
+        }
+    )
 
     private static let exchangeableHydrogenCarrierElements: Set<String> = [
         "N", "O", "S", "SE", "TE"

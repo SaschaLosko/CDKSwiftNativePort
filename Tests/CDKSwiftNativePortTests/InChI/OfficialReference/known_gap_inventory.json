@@ -1,10 +1,6 @@
 {
   "gaps" : [
     {
-      "caseID" : "inchi:Ag",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
       "caseID" : "mcule:1257821024",
       "issue" : "generator_inchi_mismatch"
     },
@@ -137,50 +133,6 @@
       "issue" : "generator_inchi_mismatch"
     },
     {
-      "caseID" : "inchi:Ag",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:CH4-iso",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:Deutron",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:_Elements.#003",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:_Elements.#004",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:_Elements.#021",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:_Elements.#046",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:_Elements.#051",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:_Elements.#061",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:d2a",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:t08.003",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
       "caseID" : "mcule:1257821024",
       "issue" : "generator_inchikey_mismatch"
     },
@@ -241,10 +193,6 @@
       "issue" : "generator_inchikey_mismatch"
     },
     {
-      "caseID" : "mcule:4810176105",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
       "caseID" : "mcule:5227399299",
       "issue" : "generator_inchikey_mismatch"
     },
@@ -281,10 +229,6 @@
       "issue" : "generator_inchikey_mismatch"
     },
     {
-      "caseID" : "mcule:7567945244",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
       "caseID" : "mcule:8071493924",
       "issue" : "generator_inchikey_mismatch"
     },
@@ -305,10 +249,6 @@
       "issue" : "generator_inchikey_mismatch"
     },
     {
-      "caseID" : "mcule:9241712465",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
       "caseID" : "mcule:9646570107",
       "issue" : "generator_inchikey_mismatch"
     },
@@ -323,10 +263,6 @@
     {
       "caseID" : "mcule:9947181734",
       "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "inchi:Dy",
-      "issue" : "generator_status"
     },
     {
       "caseID" : "mcule:2938938774",

@@ -16,7 +16,7 @@ final class InChIGeneratorPortTests: XCTestCase {
         XCTAssertTrue(inchi.hasPrefix("InChI=1S/C2H6O"))
         XCTAssertTrue(inchi.contains("/c"))
         XCTAssertTrue(inchi.contains("/h"))
-        assertPseudoInchiKeyFormat(inchiKey)
+        assertInchiKeyFormat(inchiKey)
     }
 
     func testGeneratesNativeInchiForAceticAcid() throws {
@@ -27,7 +27,7 @@ final class InChIGeneratorPortTests: XCTestCase {
         XCTAssertTrue(inchi.hasPrefix("InChI=1S/C2H4O2"))
         XCTAssertTrue(inchi.contains("/c"))
         XCTAssertTrue(inchi.contains("/h"))
-        assertPseudoInchiKeyFormat(try generator.getInchiKey())
+        assertInchiKeyFormat(try generator.getInchiKey())
     }
 
     func testGeneratedInchiCanBeParsedBack() throws {
@@ -51,7 +51,7 @@ final class InChIGeneratorPortTests: XCTestCase {
         let keyB = try generatorB.getInchiKey()
 
         XCTAssertEqual(keyA, keyB)
-        assertPseudoInchiKeyFormat(keyA)
+        assertInchiKeyFormat(keyA)
     }
 
     func testGeneratesChargeAndIsotopeLayers() throws {
@@ -123,6 +123,7 @@ M  END
 
         XCTAssertEqual(generator.getStatus(), .success)
         XCTAssertEqual(try generator.getInchi(), "InChI=1S/p+1/i/hD")
+        XCTAssertEqual(try generator.getInchiKey(), "GPRLSGONYQIRFK-DYCDLGHISA-N")
     }
 
     func testGeneratesCompactIsotopicHydrogenTokens() throws {
@@ -163,9 +164,59 @@ M  END
                        "InChI=1S/H2O/h1H2/i/hTD")
     }
 
-    private func assertPseudoInchiKeyFormat(_ key: String,
-                                            file: StaticString = #filePath,
-                                            line: UInt = #line) {
+    func testDerivesOfficialInchiKeysFromReferenceStrings() throws {
+        let references = [
+            ("InChI=1S/CH4/h1H4/i1TD", "VNWKTOKETHGBQD-XIGASBNHSA-N"),
+            ("InChI=1S/p+1/i/hD", "GPRLSGONYQIRFK-DYCDLGHISA-N"),
+            ("InChI=1S/C4H2N2S2/c5-1-3(7)4(8)2-6/h7-8H/p-2/b4-3+", "DMDOIBWPFWJPQJ-ONEGZZNKSA-L")
+        ]
+
+        for (inchi, expectedKey) in references {
+            XCTAssertEqual(try CDKInChIKeyCodec.makeKey(from: inchi), expectedKey, "Reference InChIKey mismatch for \(inchi)")
+        }
+    }
+
+    func testGeneratesReferenceElementalIsotopePairs() throws {
+        let dy = """
+Dy Pair
+CDKSwiftNativePort
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -1.2875    0.0000    0.0000 Dy -1  0  0  0  0  0  0  0  0  0  0  0
+   -0.2250    0.0000    0.0000 Dy  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  ISO  2   1 162   2 163
+M  END
+"""
+        let ag = """
+Ag Pair
+CDKSwiftNativePort
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -1.2875    0.0000    0.0000 Ag -1  0  0  0  0  0  0  0  0  0  0  0
+   -0.2250    0.0000    0.0000 Ag  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  ISO  2   1 107   2 108
+M  END
+"""
+        let cases = [
+            (dy, "InChI=1S/2Dy/i1+0;1-1", "WSFQKYAVYHDRER-QCIKTKHTSA-N"),
+            (ag, "InChI=1S/2Ag/i1+0;1-1", "OGFYIDCVDSATDC-QCIKTKHTSA-N")
+        ]
+
+        for (mol, expectedInChI, expectedKey) in cases {
+            let molecule = try CDKMDLV2000Reader.read(text: mol)
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+
+            XCTAssertEqual(generator.getStatus(), .success)
+            XCTAssertEqual(try generator.getInchi(), expectedInChI)
+            XCTAssertEqual(try generator.getInchiKey(), expectedKey)
+        }
+    }
+
+    private func assertInchiKeyFormat(_ key: String,
+                                      file: StaticString = #filePath,
+                                      line: UInt = #line) {
         XCTAssertEqual(key.count, 27, file: file, line: line)
         let parts = key.split(separator: "-")
         XCTAssertEqual(parts.count, 3, file: file, line: line)

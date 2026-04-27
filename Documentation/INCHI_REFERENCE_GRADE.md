@@ -20,6 +20,8 @@ used as a test oracle, not as a runtime dependency.
 
 - `CDKInChINativeGenerator` is still the package-owned Swift implementation.
 - `CDKInChIToStructure` is still a partial Swift parser.
+- InChIKey derivation now follows the official major/minor block split and
+  base-26 encoding in native Swift instead of the earlier pseudo-key path.
 - Parsed InChI molecules now carry a signature-guarded source cache so
   unchanged parser output re-exports the exact original InChI while edited
   structures still fall back to native regeneration.
@@ -40,10 +42,9 @@ used as a test oracle, not as a runtime dependency.
     known-gap inventory
   - strict mode (`CDK_INCHI_REQUIRE_REFERENCE_GRADE=1`) requires zero known
     gaps
-- The current measured known-gap inventory is `85` gaps across that corpus:
-  - `34` exact InChI mismatches
-  - `47` InChIKey mismatches
-  - `1` generator unsupported-status case
+- The current measured known-gap inventory is `69` gaps across that corpus:
+  - `33` exact InChI mismatches
+  - `33` InChIKey mismatches
   - `3` parser warning cases
 
 ## Milestones
@@ -61,8 +62,8 @@ used as a test oracle, not as a runtime dependency.
    - Close exact-string mismatches before treating InChIKey parity as done.
 
 3. InChIKey parity
-   - Replace the current pseudo-key path with the official-equivalent key
-     derivation pipeline in Swift.
+   - Keep the official-equivalent key derivation pipeline in Swift aligned
+     with the remaining generator exact-string work.
 
 4. Parser parity
    - Replace partial layer parsing and ignored-token behavior with a full Swift
