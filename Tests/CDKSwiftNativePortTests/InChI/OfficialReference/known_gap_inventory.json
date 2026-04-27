@@ -5,18 +5,6 @@
       "issue" : "generator_inchi_mismatch"
     },
     {
-      "caseID" : "mcule:1292201352",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:1803511350",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:1837794750",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
       "caseID" : "mcule:2760618869",
       "issue" : "generator_inchi_mismatch"
     },
@@ -29,35 +17,7 @@
       "issue" : "generator_inchi_mismatch"
     },
     {
-      "caseID" : "mcule:4028583412",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:4053513648",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
       "caseID" : "mcule:4110275859",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:4525381422",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:4699275687",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:5227399299",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:5269746171",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:5369504805",
       "issue" : "generator_inchi_mismatch"
     },
     {
@@ -70,10 +30,6 @@
     },
     {
       "caseID" : "mcule:6249110648",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:6601882022",
       "issue" : "generator_inchi_mismatch"
     },
     {
@@ -90,14 +46,6 @@
     },
     {
       "caseID" : "mcule:9118920745",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:9646570107",
-      "issue" : "generator_inchi_mismatch"
-    },
-    {
-      "caseID" : "mcule:9872974813",
       "issue" : "generator_inchi_mismatch"
     },
     {
@@ -105,18 +53,6 @@
       "issue" : "generator_inchikey_mismatch"
     },
     {
-      "caseID" : "mcule:1292201352",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:1803511350",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:1837794750",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
       "caseID" : "mcule:2760618869",
       "issue" : "generator_inchikey_mismatch"
     },
@@ -129,35 +65,7 @@
       "issue" : "generator_inchikey_mismatch"
     },
     {
-      "caseID" : "mcule:4028583412",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:4053513648",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
       "caseID" : "mcule:4110275859",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:4525381422",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:4699275687",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:5227399299",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:5269746171",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:5369504805",
       "issue" : "generator_inchikey_mismatch"
     },
     {
@@ -170,10 +78,6 @@
     },
     {
       "caseID" : "mcule:6249110648",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:6601882022",
       "issue" : "generator_inchikey_mismatch"
     },
     {
@@ -191,18 +95,6 @@
     {
       "caseID" : "mcule:9118920745",
       "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:9646570107",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:9872974813",
-      "issue" : "generator_inchikey_mismatch"
-    },
-    {
-      "caseID" : "mcule:2938938774",
-      "issue" : "parser_warning"
     }
   ],
   "referenceCommit" : "94c871858c6f15ec686c0417265f4644366ef989",

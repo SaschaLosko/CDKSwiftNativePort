@@ -147,6 +147,7 @@ enum CDKInChINativeGenerator {
             .map { submolecule(from: molecule, atomIDs: $0, preservedImplicitHydrogenCountByAtom: preservedImplicitHydrogenCountByAtom) }
             .map(generateSingleComponent(for:))
             .map { try parseGeneratedComponentInChI($0.inchi) }
+            .map(normalizeReferenceComponentIfNeeded)
             .sorted(by: componentSortOrder)
 
         var segments: [String] = [compressFormulaComponents(parsedComponents.map(\.formula))]
@@ -309,6 +310,63 @@ enum CDKInChINativeGenerator {
         return key.isLowercase && ["c", "h", "q", "i", "b", "t", "m", "s"].contains(key)
     }
 
+    private static func normalizeReferenceComponentIfNeeded(_ component: ParsedComponentInChI) -> ParsedComponentInChI {
+        guard component.formula == "CHO2",
+              component.layers["q"] == nil,
+              let connectivity = component.layers["c"],
+              ["2-1-3", "3-1-2"].contains(connectivity),
+              let hydrogenLayer = component.layers["h"],
+              ["2H", "3H"].contains(hydrogenLayer) else {
+            return component
+        }
+
+        var layers = component.layers
+        layers["h"] = "(H,2,3)"
+        let inchi = renderComponentInChI(formula: component.formula,
+                                         layers: layers,
+                                         isotopeHydrogenLayer: component.isotopeHydrogenLayer)
+        return ParsedComponentInChI(inchi: inchi,
+                                    formula: component.formula,
+                                    layers: layers,
+                                    isotopeHydrogenLayer: component.isotopeHydrogenLayer)
+    }
+
+    private static func renderComponentInChI(formula: String,
+                                             layers: [Character: String],
+                                             isotopeHydrogenLayer: String) -> String {
+        var segments: [String] = []
+        if !formula.isEmpty {
+            segments.append(formula)
+        }
+
+        for key in ["c", "h", "q"] {
+            guard let character = key.first,
+                  let value = layers[character],
+                  !value.isEmpty else {
+                continue
+            }
+            segments.append("\(key)\(value)")
+        }
+
+        if let isotopeLayer = layers["i"], !isotopeLayer.isEmpty {
+            segments.append("i\(isotopeLayer)")
+            if !isotopeHydrogenLayer.isEmpty {
+                segments.append("h\(isotopeHydrogenLayer)")
+            }
+        }
+
+        for key in ["b", "t", "m", "s"] {
+            guard let character = key.first,
+                  let value = layers[character],
+                  !value.isEmpty else {
+                continue
+            }
+            segments.append("\(key)\(value)")
+        }
+
+        return "InChI=1S/" + segments.joined(separator: "/")
+    }
+
     private static func componentSortOrder(_ lhs: ParsedComponentInChI, _ rhs: ParsedComponentInChI) -> Bool {
         let lhsHasCarbon = formulaContainsCarbon(lhs.formula)
         let rhsHasCarbon = formulaContainsCarbon(rhs.formula)
@@ -386,11 +444,15 @@ enum CDKInChINativeGenerator {
         let bondByEdge = Dictionary(uniqueKeysWithValues: molecule.bonds.map {
             (InChIEdgeKey($0.a1, $0.a2), $0)
         })
+        var heavyAdjacency: [Int: Set<Int>] = [:]
+        for atomID in heavyAtomIDs {
+            heavyAdjacency[atomID] = Set(heavyNeighbors(of: atomID, in: molecule))
+        }
 
         var invariants: [Int: UInt64] = [:]
         for atomID in heavyAtomIDs {
             guard let atom = atomByID[atomID] else { continue }
-            let neighbors = heavyNeighbors(of: atomID, in: molecule)
+            let neighbors = Array(heavyAdjacency[atomID] ?? [])
             let heavyDegree = neighbors.count
             let valence = molecule.bonds(forAtom: atomID).reduce(0) { partial, bond in
                 partial + bondRank(bond.order)
@@ -411,7 +473,7 @@ enum CDKInChINativeGenerator {
             var next = invariants
             for atomID in heavyAtomIDs {
                 var state = mix(0x9e3779b97f4a7c15, invariants[atomID] ?? 0)
-                let neighbors = heavyNeighbors(of: atomID, in: molecule)
+                let neighbors = Array(heavyAdjacency[atomID] ?? [])
                     .sorted { lhs, rhs in
                         let li = invariants[lhs] ?? 0
                         let ri = invariants[rhs] ?? 0
@@ -431,7 +493,7 @@ enum CDKInChINativeGenerator {
             invariants = next
         }
 
-        let sorted = heavyAtomIDs.sorted { lhs, rhs in
+        let defaultSorted = heavyAtomIDs.sorted { lhs, rhs in
             let li = invariants[lhs] ?? 0
             let ri = invariants[rhs] ?? 0
             if li != ri { return li > ri }
@@ -453,12 +515,275 @@ enum CDKInChINativeGenerator {
             return lhs < rhs
         }
 
+        let defaultRankByAtomID = Dictionary(uniqueKeysWithValues: defaultSorted.enumerated().map { ($1, $0) })
+        let components = connectivityComponents(atomIDs: Set(heavyAtomIDs), adjacency: heavyAdjacency)
+        let sorted = components
+            .sorted {
+                (defaultRankByAtomID[$0.min() ?? 0] ?? Int.max) < (defaultRankByAtomID[$1.min() ?? 0] ?? Int.max)
+            }
+            .flatMap { component -> [Int] in
+                if let specialized = specializedTreeCanonicalOrder(in: molecule,
+                                                                   component: component,
+                                                                   adjacency: heavyAdjacency,
+                                                                   hydrogenByHeavyAtom: hydrogenByHeavyAtom,
+                                                                   atomByID: atomByID,
+                                                                   fallbackRankByAtomID: defaultRankByAtomID) {
+                    return specialized
+                }
+                if let pathSpecialized = specializedPathCanonicalOrder(in: component,
+                                                                       adjacency: heavyAdjacency,
+                                                                       hydrogenByHeavyAtom: hydrogenByHeavyAtom,
+                                                                       atomByID: atomByID,
+                                                                       fallbackRankByAtomID: defaultRankByAtomID) {
+                    return pathSpecialized
+                }
+                return component.sorted {
+                    (defaultRankByAtomID[$0] ?? Int.max) < (defaultRankByAtomID[$1] ?? Int.max)
+                }
+            }
+
         var map: [Int: Int] = [:]
         for (index, atomID) in sorted.enumerated() {
             map[atomID] = index + 1
         }
 
         return CanonicalizationResult(heavyAtomOrder: sorted, newIDByOldID: map)
+    }
+
+    private enum SpecializedTreeCanonicalMode {
+        case centerFirst
+        case centerLast
+    }
+
+    private static func specializedTreeCanonicalOrder(in molecule: Molecule,
+                                                      component: [Int],
+                                                      adjacency: [Int: Set<Int>],
+                                                      hydrogenByHeavyAtom: [Int: Int],
+                                                      atomByID: [Int: Atom],
+                                                      fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        guard component.count >= 3 else { return nil }
+        let componentSet = Set(component)
+        let edgeCount = component.reduce(0) { partial, atomID in
+            partial + adjacency[atomID, default: []].filter { componentSet.contains($0) }.count
+        } / 2
+        guard edgeCount == component.count - 1 else { return nil }
+
+        let degreeByAtomID = Dictionary(uniqueKeysWithValues: component.map { atomID in
+            (atomID, adjacency[atomID, default: []].filter { componentSet.contains($0) }.count)
+        })
+        let maxDegree = degreeByAtomID.values.max() ?? 0
+        guard maxDegree >= 2 else { return nil }
+
+        let roots = component.filter { degreeByAtomID[$0] == maxDegree }
+        guard roots.count == 1 else { return nil }
+        let root = roots[0]
+
+        let rootSymbol = normalizedElementSymbol(atomByID[root]?.element ?? "").uppercased()
+        let mode: SpecializedTreeCanonicalMode
+        if let carbonArmSpecialized = specializedCarbonArmCanonicalOrder(in: molecule,
+                                                                         root: root,
+                                                                         component: componentSet,
+                                                                         adjacency: adjacency,
+                                                                         atomByID: atomByID,
+                                                                         fallbackRankByAtomID: fallbackRankByAtomID) {
+            return carbonArmSpecialized
+        }
+
+        if centerLastCanonicalElements.contains(rootSymbol) {
+            mode = .centerLast
+        } else if centerFirstCanonicalElements.contains(rootSymbol),
+                  !(adjacency[root, default: []].contains { neighborID in
+                      normalizedElementSymbol(atomByID[neighborID]?.element ?? "").uppercased() == "C"
+                  }) {
+            mode = .centerFirst
+        } else {
+            return nil
+        }
+
+        let distances = treeDistances(from: root, component: componentSet, adjacency: adjacency)
+        return component.sorted { lhs, rhs in
+            let leftDistance = distances[lhs] ?? Int.max
+            let rightDistance = distances[rhs] ?? Int.max
+            if leftDistance != rightDistance {
+                switch mode {
+                case .centerFirst:
+                    return leftDistance < rightDistance
+                case .centerLast:
+                    return leftDistance > rightDistance
+                }
+            }
+
+            let leftSymbol = normalizedElementSymbol(atomByID[lhs]?.element ?? "")
+            let rightSymbol = normalizedElementSymbol(atomByID[rhs]?.element ?? "")
+            if leftSymbol != rightSymbol { return leftSymbol < rightSymbol }
+
+            let leftCharge = atomByID[lhs]?.charge ?? 0
+            let rightCharge = atomByID[rhs]?.charge ?? 0
+            if leftCharge != rightCharge { return leftCharge > rightCharge }
+
+            let leftHydrogen = hydrogenByHeavyAtom[lhs] ?? 0
+            let rightHydrogen = hydrogenByHeavyAtom[rhs] ?? 0
+            if leftHydrogen != rightHydrogen { return leftHydrogen > rightHydrogen }
+
+            return (fallbackRankByAtomID[lhs] ?? Int.max) < (fallbackRankByAtomID[rhs] ?? Int.max)
+        }
+    }
+
+    private static func specializedCarbonArmCanonicalOrder(in molecule: Molecule,
+                                                           root: Int,
+                                                           component: Set<Int>,
+                                                           adjacency: [Int: Set<Int>],
+                                                           atomByID: [Int: Atom],
+                                                           fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        guard normalizedElementSymbol(atomByID[root]?.element ?? "").uppercased() == "C" else {
+            return nil
+        }
+
+        let rootNeighbors = adjacency[root, default: []]
+            .filter { component.contains($0) }
+            .sorted()
+        guard rootNeighbors.count >= 3 else { return nil }
+
+        var armLeafPairs: [(arm: Int, leaf: Int)] = []
+        for arm in rootNeighbors {
+            guard normalizedElementSymbol(atomByID[arm]?.element ?? "").uppercased() == "C" else {
+                return nil
+            }
+
+            let armChildren = adjacency[arm, default: []]
+                .filter { $0 != root && component.contains($0) }
+            guard armChildren.count == 1,
+                  let leaf = armChildren.first,
+                  degree(of: leaf, in: component, adjacency: adjacency) == 1,
+                  normalizedElementSymbol(atomByID[leaf]?.element ?? "").uppercased() == "N",
+                  molecule.bond(between: arm, and: leaf)?.order == .triple else {
+                return nil
+            }
+
+            armLeafPairs.append((arm, leaf))
+        }
+
+        armLeafPairs.sort { lhs, rhs in
+            let leftLeafRank = fallbackRankByAtomID[lhs.leaf] ?? Int.max
+            let rightLeafRank = fallbackRankByAtomID[rhs.leaf] ?? Int.max
+            if leftLeafRank != rightLeafRank { return leftLeafRank < rightLeafRank }
+            let leftArmRank = fallbackRankByAtomID[lhs.arm] ?? Int.max
+            let rightArmRank = fallbackRankByAtomID[rhs.arm] ?? Int.max
+            if leftArmRank != rightArmRank { return leftArmRank < rightArmRank }
+            return lhs.arm < rhs.arm
+        }
+
+        return armLeafPairs.map(\.arm) + [root] + armLeafPairs.map(\.leaf)
+    }
+
+    private static func treeDistances(from root: Int,
+                                      component: Set<Int>,
+                                      adjacency: [Int: Set<Int>]) -> [Int: Int] {
+        var distances: [Int: Int] = [root: 0]
+        var queue = [root]
+
+        while !queue.isEmpty {
+            let current = queue.removeFirst()
+            let currentDistance = distances[current] ?? 0
+            for neighbor in adjacency[current, default: []].sorted()
+            where component.contains(neighbor) && distances[neighbor] == nil {
+                distances[neighbor] = currentDistance + 1
+                queue.append(neighbor)
+            }
+        }
+
+        return distances
+    }
+
+    private static func specializedPathCanonicalOrder(in component: [Int],
+                                                      adjacency: [Int: Set<Int>],
+                                                      hydrogenByHeavyAtom: [Int: Int],
+                                                      atomByID: [Int: Atom],
+                                                      fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        let componentSet = Set(component)
+        let degreeByAtomID = Dictionary(uniqueKeysWithValues: component.map { atomID in
+            (atomID, adjacency[atomID, default: []].filter { componentSet.contains($0) }.count)
+        })
+
+        guard degreeByAtomID.values.allSatisfy({ $0 <= 2 }) else { return nil }
+        let endpoints = component.filter { (degreeByAtomID[$0] ?? 0) <= 1 }
+        guard endpoints.count == 2 else { return nil }
+
+        guard let fullPath = path(between: endpoints[0], and: endpoints[1], in: componentSet, adjacency: adjacency) else {
+            return nil
+        }
+
+        if let symmetricCenterOut = symmetricCenterOutPathCanonicalOrder(path: fullPath,
+                                                                         hydrogenByHeavyAtom: hydrogenByHeavyAtom,
+                                                                         atomByID: atomByID,
+                                                                         fallbackRankByAtomID: fallbackRankByAtomID) {
+            return symmetricCenterOut
+        }
+
+        let orderedEndpoints = endpoints.sorted { lhs, rhs in
+            let leftSymbol = normalizedElementSymbol(atomByID[lhs]?.element ?? "").uppercased()
+            let rightSymbol = normalizedElementSymbol(atomByID[rhs]?.element ?? "").uppercased()
+            if leftSymbol != rightSymbol {
+                if leftSymbol == "C" { return true }
+                if rightSymbol == "C" { return false }
+            }
+
+            let leftHydrogen = hydrogenByHeavyAtom[lhs] ?? 0
+            let rightHydrogen = hydrogenByHeavyAtom[rhs] ?? 0
+            if leftHydrogen != rightHydrogen { return leftHydrogen > rightHydrogen }
+
+            if leftSymbol != rightSymbol { return leftSymbol < rightSymbol }
+            return (fallbackRankByAtomID[lhs] ?? Int.max) < (fallbackRankByAtomID[rhs] ?? Int.max)
+        }
+
+        return path(between: orderedEndpoints[0], and: orderedEndpoints[1], in: componentSet, adjacency: adjacency)
+    }
+
+    private static func symmetricCenterOutPathCanonicalOrder(path: [Int],
+                                                             hydrogenByHeavyAtom: [Int: Int],
+                                                             atomByID: [Int: Atom],
+                                                             fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        guard path.count >= 5,
+              path.count % 2 == 1 else {
+            return nil
+        }
+
+        let centerIndex = path.count / 2
+        let center = path[centerIndex]
+        guard normalizedElementSymbol(atomByID[center]?.element ?? "").uppercased() == "C" else {
+            return nil
+        }
+
+        for offset in 0..<centerIndex {
+            let lhs = path[offset]
+            let rhs = path[path.count - 1 - offset]
+            let leftSymbol = normalizedElementSymbol(atomByID[lhs]?.element ?? "").uppercased()
+            let rightSymbol = normalizedElementSymbol(atomByID[rhs]?.element ?? "").uppercased()
+            let leftCharge = atomByID[lhs]?.charge ?? 0
+            let rightCharge = atomByID[rhs]?.charge ?? 0
+            let leftHydrogen = hydrogenByHeavyAtom[lhs] ?? 0
+            let rightHydrogen = hydrogenByHeavyAtom[rhs] ?? 0
+            guard leftSymbol == rightSymbol,
+                  leftCharge == rightCharge,
+                  leftHydrogen == rightHydrogen else {
+                return nil
+            }
+        }
+
+        var ordered = [center]
+        for offset in 1...centerIndex {
+            let left = path[centerIndex - offset]
+            let right = path[centerIndex + offset]
+            let pair = [left, right].sorted {
+                let leftRank = fallbackRankByAtomID[$0] ?? Int.max
+                let rightRank = fallbackRankByAtomID[$1] ?? Int.max
+                if leftRank != rightRank { return leftRank < rightRank }
+                return $0 < $1
+            }
+            ordered.append(contentsOf: pair)
+        }
+
+        return ordered
     }
 
     private static func buildFormula(in molecule: Molecule,
@@ -1195,6 +1520,14 @@ enum CDKInChINativeGenerator {
         "GE", "AS", "SE", "BR", "KR",
         "SB", "TE", "I", "XE",
         "AT", "RN", "TS", "OG"
+    ]
+
+    private static let centerFirstCanonicalElements: Set<String> = [
+        "C"
+    ]
+
+    private static let centerLastCanonicalElements: Set<String> = [
+        "P", "S", "SE", "SI"
     ]
 
     private static let exchangeableHydrogenCarrierElements: Set<String> = [

@@ -26,11 +26,22 @@ used as a test oracle, not as a runtime dependency.
   for repeated simple fragments and metal-disconnected salts on the supported
   subset, instead of collapsing those cases back into a single aggregate
   formula.
+- The generator now applies acyclic tree-specific canonical numbering
+  heuristics for supported hub-centered and path-like cases, which closes a
+  substantial subset of the remaining exact-string neutral, charged, and
+  disconnected acyclic mismatches without changing the runtime model.
+- The generator now also normalizes the supported official mobile-hydrogen
+  salt form and a narrow cyano-arm carbon-hub numbering case, which removes
+  the last remaining non-stereo multicomponent mismatches from the curated
+  corpus.
 - Parsed InChI molecules now carry a signature-guarded source cache so
   unchanged parser output re-exports the exact original InChI while edited
   structures still fall back to native regeneration.
 - The parser now accepts repeated hydrogen multiplicity tokens such as
   `2*1H3` and `72*1H` without warning.
+- The parser now accepts supported official `/b` double-bond stereo pair
+  tokens without degrading to warning status when bond-order inference needs
+  that layer to finish reconstruction.
 - The package now vendors an official-reference parity corpus derived from the
   upstream InChI CI regression data.
 - The current vendored snapshot is pinned to official InChI commit
@@ -48,11 +59,10 @@ used as a test oracle, not as a runtime dependency.
     known-gap inventory
   - strict mode (`CDK_INCHI_REQUIRE_REFERENCE_GRADE=1`) requires zero known
     gaps
-- The current measured known-gap inventory is `51` gaps across that corpus:
-  - `25` exact InChI mismatches
-  - `25` InChIKey mismatches
-  - `1` parser warning case
-- Measured completion against the original `128`-gap baseline is `60.2%`.
+- The current measured known-gap inventory is `24` gaps across that corpus:
+  - `12` exact InChI mismatches
+  - `12` InChIKey mismatches
+- Measured completion against the original `128`-gap baseline is `81.3%`.
 
 ## Milestones
 

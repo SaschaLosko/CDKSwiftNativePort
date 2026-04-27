@@ -268,6 +268,8 @@ M  END
 
     func testGeneratesReferenceInchiForSelectedOfficialMulticomponentCases() throws {
         let ids = [
+            "mcule:4028583412",
+            "mcule:4699275687",
             "mcule:2940963212",
             "mcule:8769289721",
             "mcule:9786532355"
@@ -286,6 +288,37 @@ M  END
             XCTAssertEqual(generator.getStatus(), .success)
             XCTAssertEqual(try generator.getInchi(), fixture.expectedInChI, "Unexpected multicomponent InChI for \(id)")
             XCTAssertEqual(try generator.getInchiKey(), fixture.expectedInChIKey, "Unexpected multicomponent InChIKey for \(id)")
+        }
+    }
+
+    func testGeneratesReferenceInchiForSelectedOfficialAcyclicTreeCases() throws {
+        let ids = [
+            "mcule:1292201352",
+            "mcule:1803511350",
+            "mcule:1837794750",
+            "mcule:4053513648",
+            "mcule:4525381422",
+            "mcule:5227399299",
+            "mcule:5269746171",
+            "mcule:5369504805",
+            "mcule:6601882022",
+            "mcule:9646570107",
+            "mcule:9872974813"
+        ]
+
+        let fixtures = try loadOfficialReferenceFixturesByID()
+        for id in ids {
+            guard let fixture = fixtures[id] else {
+                XCTFail("Missing official reference fixture for \(id)")
+                continue
+            }
+
+            let molecule = try CDKMDLReader.read(text: fixture.molfile)
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+
+            XCTAssertEqual(generator.getStatus(), .success)
+            XCTAssertEqual(try generator.getInchi(), fixture.expectedInChI, "Unexpected acyclic-tree InChI for \(id)")
+            XCTAssertEqual(try generator.getInchiKey(), fixture.expectedInChIKey, "Unexpected acyclic-tree InChIKey for \(id)")
         }
     }
 

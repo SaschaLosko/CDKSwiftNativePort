@@ -98,6 +98,16 @@ final class InChIToStructureTests: XCTestCase {
         XCTAssertTrue(hasStereoDoubleBond)
     }
 
+    func testParsesOfficialDoubleBondStereoTokenWithoutWarning() throws {
+        let inchi = "InChI=1S/C6H8/c1-3-5-6-4-2/h3-6H,1-2H2/b6-5+"
+        let parser = CDKInChIGeneratorFactory.shared.getInChIToStructure(inchi)
+        XCTAssertEqual(parser.getStatus(), .success)
+
+        let molecule = try parser.getAtomContainer()
+        XCTAssertTrue(molecule.bonds.contains { $0.order == .double && $0.stereo == .either })
+        XCTAssertEqual(try CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule).getInchi(), inchi)
+    }
+
     func testParsesHydrogenOnlyReferenceCases() throws {
         let deuteron = "InChI=1S/p+1/i/hD"
         let deuteronParser = CDKInChIGeneratorFactory.shared.getInChIToStructure(deuteron)

@@ -192,7 +192,7 @@ enum CDKDescriptorSupport {
         case "P":
             return atom.charge > 0 ? 4.0 : 3.0
         case "B":
-            return 3.0
+            return atom.charge < 0 ? 4.0 : 3.0
         case "F", "CL", "BR", "I":
             return 1.0
         default:

@@ -799,12 +799,12 @@ private enum CDKInChIParser {
                 continue
             }
             guard let idx = molecule.bonds.firstIndex(where: { bond in
-                ((bond.a1 == pair.0 && bond.a2 == pair.1) || (bond.a1 == pair.1 && bond.a2 == pair.0))
-                    && bond.order == .double
+                (bond.a1 == pair.0 && bond.a2 == pair.1) || (bond.a1 == pair.1 && bond.a2 == pair.0)
             }) else {
                 ignored.append(token)
                 continue
             }
+            molecule.bonds[idx].order = .double
             molecule.bonds[idx].stereo = .either
         }
 
@@ -1227,7 +1227,7 @@ private enum CDKInChIParser {
         case "P":
             return atom.charge > 0 ? 4 : 3
         case "B":
-            return 3
+            return atom.charge < 0 ? 4 : 3
         case "F", "CL", "BR", "I":
             return 1
         default:
