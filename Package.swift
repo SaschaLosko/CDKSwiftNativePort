@@ -24,7 +24,9 @@ let package = Package(
                 "CML/port_metadata.json",
                 "Smiles/port_metadata.json",
                 "MDL/port_metadata.json",
-                "InChI/port_metadata.json"
+                "InChI/port_metadata.json",
+                "InChI/OfficialReference/official_reference_cases.json",
+                "InChI/OfficialReference/known_gap_inventory.json"
             ]
         )
     ]

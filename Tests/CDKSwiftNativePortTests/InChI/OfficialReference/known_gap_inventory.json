@@ -1,0 +1,520 @@
+{
+  "gaps" : [
+    {
+      "caseID" : "inchi:Ag",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "inchi:CH4-iso",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "inchi:t08.003",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1257821024",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1292201352",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1370061678",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1803511350",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1837794750",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2746019379",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2760618869",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2938938774",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2940963212",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:3935778305",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4028583412",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4053513648",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4110275859",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4525381422",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4699275687",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5227399299",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5269746171",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5369504805",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5513289219",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6222162383",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6249110648",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6601882022",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6703190251",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:7211934293",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8071493924",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8523724511",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8677953674",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8769289721",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9118920745",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9646570107",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9786532355",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9872974813",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9947181734",
+      "issue" : "generator_inchi_mismatch"
+    },
+    {
+      "caseID" : "inchi:Ag",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:CH4-iso",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:_Elements.#003",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:_Elements.#004",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:_Elements.#021",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:_Elements.#046",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:_Elements.#051",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:_Elements.#061",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:t08.003",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:1257821024",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:1292201352",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:1370061678",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:1803511350",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:1837794750",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:2746019379",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:2760618869",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:2938938774",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:2940963212",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:3935778305",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:4028583412",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:4053513648",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:4110275859",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:4525381422",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:4699275687",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:4810176105",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:5227399299",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:5269746171",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:5369504805",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:5513289219",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:6222162383",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:6249110648",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:6601882022",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:6703190251",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:7211934293",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:7567945244",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:8071493924",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:8523724511",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:8677953674",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:8769289721",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:9118920745",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:9241712465",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:9646570107",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:9786532355",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:9872974813",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "mcule:9947181734",
+      "issue" : "generator_inchikey_mismatch"
+    },
+    {
+      "caseID" : "inchi:Deutron",
+      "issue" : "generator_status"
+    },
+    {
+      "caseID" : "inchi:Dy",
+      "issue" : "generator_status"
+    },
+    {
+      "caseID" : "inchi:d2a",
+      "issue" : "generator_status"
+    },
+    {
+      "caseID" : "inchi:Deutron",
+      "issue" : "parser_error"
+    },
+    {
+      "caseID" : "inchi:d2a",
+      "issue" : "parser_error"
+    },
+    {
+      "caseID" : "inchi:Dy",
+      "issue" : "parser_roundtrip_generator_status"
+    },
+    {
+      "caseID" : "inchi:Ag",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "inchi:CH4-iso",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "inchi:t08.003",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1257821024",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1292201352",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1370061678",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1803511350",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:1837794750",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2746019379",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2760618869",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2938938774",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:2940963212",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:3935778305",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4028583412",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4053513648",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4110275859",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4525381422",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:4699275687",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5227399299",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5269746171",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5369504805",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:5513289219",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6222162383",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6249110648",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6601882022",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:6703190251",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:7211934293",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8071493924",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8523724511",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8677953674",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:8769289721",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9118920745",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9241712465",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9646570107",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9786532355",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9872974813",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "mcule:9947181734",
+      "issue" : "parser_roundtrip_inchi_mismatch"
+    },
+    {
+      "caseID" : "inchi:t08.003",
+      "issue" : "parser_warning"
+    },
+    {
+      "caseID" : "mcule:2938938774",
+      "issue" : "parser_warning"
+    },
+    {
+      "caseID" : "mcule:2940963212",
+      "issue" : "parser_warning"
+    },
+    {
+      "caseID" : "mcule:9786532355",
+      "issue" : "parser_warning"
+    }
+  ],
+  "referenceCommit" : "94c871858c6f15ec686c0417265f4644366ef989",
+  "schemaVersion" : 1,
+  "suite" : "Official InChI Reference CI Corpus",
+  "totalCases" : 48
+}

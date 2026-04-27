@@ -69,6 +69,7 @@ That does not mean every CDK module is ported.
 - RXN and RDF support
 - CML molecule and reaction support
 - InChI integration
+- official-reference InChI parity harness for a curated upstream InChI CI corpus
 - CDK-derived 2D layout
 - depiction support for:
   - aromatic display modes
@@ -122,3 +123,8 @@ Parity-oriented metadata lives under:
 
 Those metadata files link the current Swift test surface back to the upstream
 CDK 2.12 tests that informed the port.
+
+For InChI specifically, reference-grade work is tracked separately in
+[`INCHI_REFERENCE_GRADE.md`](INCHI_REFERENCE_GRADE.md). The runtime remains
+Swift native, but the package now vendors an official InChI reference corpus
+and uses it as a parity oracle.

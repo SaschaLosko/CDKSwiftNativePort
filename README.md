@@ -131,6 +131,14 @@ Quick Look, Spotlight, or AtomLens internals. That makes it suitable for:
 - Quick Look and Spotlight-style host integrations on Apple platforms
 - Linux command-line tools, batch converters, and service-side workflows
 
+## InChI Status
+
+The package includes a native Swift InChI implementation and an official
+reference parity harness. The runtime stays Swift native, while the vendored
+official InChI corpus is used as the correctness oracle for the
+reference-grade work tracked in
+[`Documentation/INCHI_REFERENCE_GRADE.md`](Documentation/INCHI_REFERENCE_GRADE.md).
+
 ## Installation
 
 ### Xcode
