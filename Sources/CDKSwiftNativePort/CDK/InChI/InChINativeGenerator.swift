@@ -530,12 +530,26 @@ enum CDKInChINativeGenerator {
                                                                    fallbackRankByAtomID: defaultRankByAtomID) {
                     return specialized
                 }
+                if let stereoAwareTree = stereoAwareTreeCanonicalOrder(in: molecule,
+                                                                       component: component,
+                                                                       adjacency: heavyAdjacency,
+                                                                       hydrogenByHeavyAtom: hydrogenByHeavyAtom,
+                                                                       fallbackRankByAtomID: defaultRankByAtomID) {
+                    return stereoAwareTree
+                }
                 if let pathSpecialized = specializedPathCanonicalOrder(in: component,
                                                                        adjacency: heavyAdjacency,
                                                                        hydrogenByHeavyAtom: hydrogenByHeavyAtom,
                                                                        atomByID: atomByID,
                                                                        fallbackRankByAtomID: defaultRankByAtomID) {
                     return pathSpecialized
+                }
+                if let smallReference = smallReferenceComponentCanonicalOrder(in: molecule,
+                                                                              component: component,
+                                                                              adjacency: heavyAdjacency,
+                                                                              hydrogenByHeavyAtom: hydrogenByHeavyAtom,
+                                                                              fallbackRankByAtomID: defaultRankByAtomID) {
+                    return smallReference
                 }
                 return component.sorted {
                     (defaultRankByAtomID[$0] ?? Int.max) < (defaultRankByAtomID[$1] ?? Int.max)
@@ -627,6 +641,293 @@ enum CDKInChINativeGenerator {
 
             return (fallbackRankByAtomID[lhs] ?? Int.max) < (fallbackRankByAtomID[rhs] ?? Int.max)
         }
+    }
+
+    private static func stereoAwareTreeCanonicalOrder(in molecule: Molecule,
+                                                      component: [Int],
+                                                      adjacency: [Int: Set<Int>],
+                                                      hydrogenByHeavyAtom: [Int: Int],
+                                                      fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        guard component.count >= 4,
+              component.count <= 12 else {
+            return nil
+        }
+
+        let componentSet = Set(component)
+        let edgeCount = component.reduce(0) { partial, atomID in
+            partial + adjacency[atomID, default: []].filter { componentSet.contains($0) }.count
+        } / 2
+        guard edgeCount == component.count - 1 else { return nil }
+
+        let hasTetrahedralStereo = component.contains { atomID in
+            molecule.atom(id: atomID)?.chirality != AtomChirality.none
+        }
+        let provisionalOrder = component.sorted {
+            let leftRank = fallbackRankByAtomID[$0] ?? Int.max
+            let rightRank = fallbackRankByAtomID[$1] ?? Int.max
+            if leftRank != rightRank { return leftRank < rightRank }
+            return $0 < $1
+        }
+        let provisionalCanonicalization = canonicalizationResult(from: provisionalOrder)
+        let hasDoubleBondStereo = molecule.bonds.contains { bond in
+            bond.order == .double
+                && componentSet.contains(bond.a1)
+                && componentSet.contains(bond.a2)
+                && perceivedDoubleBondStereoDescriptor(for: bond,
+                                                       in: molecule,
+                                                       canonicalization: provisionalCanonicalization) != nil
+        }
+        guard hasTetrahedralStereo || hasDoubleBondStereo else {
+            return nil
+        }
+
+        let leaves = component.filter {
+            adjacency[$0, default: []].filter { componentSet.contains($0) }.count <= 1
+        }.sorted {
+            let leftRank = fallbackRankByAtomID[$0] ?? Int.max
+            let rightRank = fallbackRankByAtomID[$1] ?? Int.max
+            if leftRank != rightRank { return leftRank < rightRank }
+            return $0 < $1
+        }
+        guard leaves.count >= 2 else { return nil }
+
+        var bestOrder: [Int]?
+        var bestScore: String?
+        var seenOrders = Set<[Int]>()
+
+        func consider(_ order: [Int]) {
+            guard order.count == component.count,
+                  seenOrders.insert(order).inserted else {
+                return
+            }
+
+            let score = canonicalizationScore(in: molecule,
+                                              order: order,
+                                              hydrogenByHeavyAtom: hydrogenByHeavyAtom)
+
+            if bestScore == nil || score < bestScore! {
+                bestScore = score
+                bestOrder = order
+            }
+        }
+
+        for start in leaves {
+            for end in leaves where start != end {
+                guard let mainPath = path(between: start, and: end, in: componentSet, adjacency: adjacency) else {
+                    continue
+                }
+                consider(treeTraversalOrder(mainPath: mainPath,
+                                            component: componentSet,
+                                            adjacency: adjacency,
+                                            fallbackRankByAtomID: fallbackRankByAtomID))
+            }
+        }
+
+        return bestOrder
+    }
+
+    private static func smallReferenceComponentCanonicalOrder(in molecule: Molecule,
+                                                              component: [Int],
+                                                              adjacency: [Int: Set<Int>],
+                                                              hydrogenByHeavyAtom: [Int: Int],
+                                                              fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        guard component.count >= 4,
+              component.count <= 12 else {
+            return nil
+        }
+
+        let componentSet = Set(component)
+        let componentBonds = molecule.bonds.filter { bond in
+            componentSet.contains(bond.a1) && componentSet.contains(bond.a2)
+        }
+        let extraEdgeCount = componentBonds.count - (component.count - 1)
+        guard extraEdgeCount >= 1,
+              extraEdgeCount <= 2 else {
+            return nil
+        }
+
+        let removableEdges = componentBonds.map { InChIEdgeKey($0.a1, $0.a2) }.sorted {
+            if $0.a != $1.a { return $0.a < $1.a }
+            return $0.b < $1.b
+        }
+
+        var bestOrder: [Int]?
+        var bestScore: String?
+        var seenOrders = Set<[Int]>()
+
+        func consider(_ order: [Int]) {
+            guard order.count == component.count,
+                  seenOrders.insert(order).inserted else {
+                return
+            }
+
+            let score = canonicalizationScore(in: molecule,
+                                              order: order,
+                                              hydrogenByHeavyAtom: hydrogenByHeavyAtom)
+            if bestScore == nil || score < bestScore! {
+                bestScore = score
+                bestOrder = order
+            }
+        }
+
+        func search(remaining removalsNeeded: Int, startAt index: Int, chosen: [InChIEdgeKey]) {
+            if removalsNeeded == 0 {
+                let removedEdges = Set(chosen)
+                var treeAdjacency: [Int: Set<Int>] = [:]
+                for atomID in component {
+                    treeAdjacency[atomID] = []
+                }
+                for edge in removableEdges where !removedEdges.contains(edge) {
+                    treeAdjacency[edge.a, default: []].insert(edge.b)
+                    treeAdjacency[edge.b, default: []].insert(edge.a)
+                }
+
+                guard connectivityComponents(atomIDs: componentSet, adjacency: treeAdjacency).count == 1 else {
+                    return
+                }
+
+                let leaves = component.filter {
+                    treeAdjacency[$0, default: []].count <= 1
+                }.sorted {
+                    let leftRank = fallbackRankByAtomID[$0] ?? Int.max
+                    let rightRank = fallbackRankByAtomID[$1] ?? Int.max
+                    if leftRank != rightRank { return leftRank < rightRank }
+                    return $0 < $1
+                }
+                guard leaves.count >= 2 else { return }
+
+                for start in leaves {
+                    for end in leaves where start != end {
+                        guard let mainPath = path(between: start,
+                                                  and: end,
+                                                  in: componentSet,
+                                                  adjacency: treeAdjacency) else {
+                            continue
+                        }
+                        consider(treeTraversalOrder(mainPath: mainPath,
+                                                    component: componentSet,
+                                                    adjacency: treeAdjacency,
+                                                    fallbackRankByAtomID: fallbackRankByAtomID))
+                    }
+                }
+                return
+            }
+
+            guard index < removableEdges.count else { return }
+            let lastStart = removableEdges.count - removalsNeeded
+            guard index <= lastStart else { return }
+
+            for candidateIndex in index...lastStart {
+                search(remaining: removalsNeeded - 1,
+                       startAt: candidateIndex + 1,
+                       chosen: chosen + [removableEdges[candidateIndex]])
+            }
+        }
+
+        search(remaining: extraEdgeCount, startAt: 0, chosen: [])
+        return bestOrder
+    }
+
+    private static func canonicalizationResult(from order: [Int]) -> CanonicalizationResult {
+        var newIDByOldID: [Int: Int] = [:]
+        for (index, atomID) in order.enumerated() {
+            newIDByOldID[atomID] = index + 1
+        }
+        return CanonicalizationResult(heavyAtomOrder: order, newIDByOldID: newIDByOldID)
+    }
+
+    private static func treeTraversalOrder(mainPath: [Int],
+                                           component: Set<Int>,
+                                           adjacency: [Int: Set<Int>],
+                                           fallbackRankByAtomID: [Int: Int]) -> [Int] {
+        guard !mainPath.isEmpty else { return [] }
+
+        let pathSet = Set(mainPath)
+        var ordered: [Int] = []
+
+        func appendSubtree(_ atomID: Int, parent: Int?) {
+            ordered.append(atomID)
+
+            let children = adjacency[atomID, default: []]
+                .filter { $0 != parent && component.contains($0) }
+                .sorted {
+                    let leftRank = fallbackRankByAtomID[$0] ?? Int.max
+                    let rightRank = fallbackRankByAtomID[$1] ?? Int.max
+                    if leftRank != rightRank { return leftRank < rightRank }
+                    return $0 < $1
+                }
+
+            guard !children.isEmpty else { return }
+            let continuation = children.max { lhs, rhs in
+                let leftDepth = subtreeDepth(of: lhs, parent: atomID, component: component, adjacency: adjacency)
+                let rightDepth = subtreeDepth(of: rhs, parent: atomID, component: component, adjacency: adjacency)
+                if leftDepth != rightDepth { return leftDepth < rightDepth }
+                let leftRank = fallbackRankByAtomID[lhs] ?? Int.max
+                let rightRank = fallbackRankByAtomID[rhs] ?? Int.max
+                if leftRank != rightRank { return leftRank > rightRank }
+                return lhs > rhs
+            }
+
+            for child in children where child != continuation {
+                appendSubtree(child, parent: atomID)
+            }
+            if let continuation {
+                appendSubtree(continuation, parent: atomID)
+            }
+        }
+
+        for (index, atomID) in mainPath.enumerated() {
+            ordered.append(atomID)
+            let previous = index > 0 ? mainPath[index - 1] : nil
+            let next = index + 1 < mainPath.count ? mainPath[index + 1] : nil
+            let branchRoots = adjacency[atomID, default: []]
+                .filter { $0 != previous && $0 != next && component.contains($0) && !pathSet.contains($0) }
+                .sorted {
+                    let leftRank = fallbackRankByAtomID[$0] ?? Int.max
+                    let rightRank = fallbackRankByAtomID[$1] ?? Int.max
+                    if leftRank != rightRank { return leftRank < rightRank }
+                    return $0 < $1
+                }
+            for branchRoot in branchRoots {
+                appendSubtree(branchRoot, parent: atomID)
+            }
+        }
+
+        return ordered
+    }
+
+    private static func subtreeDepth(of atomID: Int,
+                                     parent: Int,
+                                     component: Set<Int>,
+                                     adjacency: [Int: Set<Int>]) -> Int {
+        let children = adjacency[atomID, default: []].filter { $0 != parent && component.contains($0) }
+        guard !children.isEmpty else { return 1 }
+        return 1 + (children.map { subtreeDepth(of: $0, parent: atomID, component: component, adjacency: adjacency) }.max() ?? 0)
+    }
+
+    private static func canonicalizationScore(in molecule: Molecule,
+                                              order: [Int],
+                                              hydrogenByHeavyAtom: [Int: Int]) -> String {
+        let candidate = canonicalizationResult(from: order)
+        let connectivity = buildConnectivityLayer(in: molecule, canonicalization: candidate)
+        let hydrogen = buildHydrogenLayer(in: molecule,
+                                          canonicalization: candidate,
+                                          hydrogenByHeavyAtom: hydrogenByHeavyAtom)
+        let doubleBond = buildDoubleBondLayer(in: molecule, canonicalization: candidate)
+        let tetrahedral = buildTetrahedralLayer(in: molecule, canonicalization: candidate)
+        return stereoSortKey(connectivity)
+            + "|"
+            + stereoSortKey(hydrogen)
+            + "|"
+            + stereoSortKey(doubleBond)
+            + "|"
+            + stereoSortKey(tetrahedral)
+    }
+
+    private static func stereoSortKey(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "-", with: "0")
+            .replacingOccurrences(of: "+", with: "1")
     }
 
     private static func specializedCarbonArmCanonicalOrder(in molecule: Molecule,
@@ -874,6 +1175,10 @@ enum CDKInChINativeGenerator {
                 return renderTreeConnectivity(component: component, adjacency: adjacency)
             }
 
+            if let rendered = renderOrderedCyclicConnectivity(component: component.sorted(), adjacency: adjacency) {
+                return rendered
+            }
+
             let componentEdges = edgeSet.filter { component.contains($0.a) && component.contains($0.b) }
             return componentEdges.sorted { lhs, rhs in
                 if lhs.a != rhs.a { return lhs.a < rhs.a }
@@ -971,6 +1276,101 @@ enum CDKInChINativeGenerator {
                                           forcedNext: nextOnMainPath,
                                           component: componentSet,
                                           adjacency: adjacency)
+    }
+
+    private static func renderOrderedCyclicConnectivity(component: [Int],
+                                                        adjacency: [Int: Set<Int>]) -> String? {
+        guard let root = component.first else { return nil }
+        let componentSet = Set(component)
+
+        var parentByNode: [Int: Int] = [:]
+        for atomID in component.dropFirst() {
+            let earlierNeighbors = adjacency[atomID, default: []]
+                .filter { componentSet.contains($0) && $0 < atomID }
+                .sorted()
+            guard let parent = earlierNeighbors.max() else {
+                return nil
+            }
+            parentByNode[atomID] = parent
+        }
+
+        var childrenByParent: [Int: [Int]] = [:]
+        for (child, parent) in parentByNode {
+            childrenByParent[parent, default: []].append(child)
+        }
+        for parent in childrenByParent.keys {
+            childrenByParent[parent]?.sort()
+        }
+
+        func subtreeLeafExtremesInParentTree(root atomID: Int) -> (min: Int, max: Int) {
+            let children = childrenByParent[atomID, default: []]
+            guard !children.isEmpty else { return (atomID, atomID) }
+
+            var minLeaf = Int.max
+            var maxLeaf = Int.min
+            for child in children {
+                let childExtremes = subtreeLeafExtremesInParentTree(root: child)
+                minLeaf = min(minLeaf, childExtremes.min)
+                maxLeaf = max(maxLeaf, childExtremes.max)
+            }
+            return (minLeaf, maxLeaf)
+        }
+
+        func continuationChild(for atomID: Int) -> Int? {
+            let children = childrenByParent[atomID, default: []]
+            guard !children.isEmpty else { return nil }
+            return children.max { lhs, rhs in
+                let left = subtreeLeafExtremesInParentTree(root: lhs)
+                let right = subtreeLeafExtremesInParentTree(root: rhs)
+                if left.max != right.max { return left.max < right.max }
+                if left.min != right.min { return left.min < right.min }
+                return lhs < rhs
+            }
+        }
+
+        struct BranchItem {
+            let min: Int
+            let max: Int
+            let text: String
+        }
+
+        func renderNode(_ atomID: Int) -> String {
+            let continuation = continuationChild(for: atomID)
+            let childBranches = childrenByParent[atomID, default: []].filter { $0 != continuation }
+            let closureBranches = adjacency[atomID, default: []]
+                .filter { componentSet.contains($0) && $0 < atomID && parentByNode[atomID] != $0 }
+                .sorted()
+
+            var branchItems = closureBranches.map { BranchItem(min: $0, max: $0, text: "\($0)") }
+            branchItems.append(contentsOf: childBranches.map { child in
+                let extremes = subtreeLeafExtremesInParentTree(root: child)
+                return BranchItem(min: extremes.min,
+                                  max: extremes.max,
+                                  text: renderNode(child))
+            })
+            branchItems.sort {
+                if $0.min != $1.min { return $0.min < $1.min }
+                return $0.max < $1.max
+            }
+
+            var out = "\(atomID)"
+            if !branchItems.isEmpty {
+                out += "(\(branchItems.map(\.text).joined(separator: ",")))"
+            }
+
+            if let continuation {
+                let continuationText = renderNode(continuation)
+                if branchItems.isEmpty {
+                    out += "-\(continuationText)"
+                } else {
+                    out += continuationText
+                }
+            }
+
+            return out
+        }
+
+        return renderNode(root)
     }
 
     private static func renderTreeConnectivityNode(_ atomID: Int,
@@ -1168,21 +1568,22 @@ enum CDKInChINativeGenerator {
 
     private static func buildDoubleBondLayer(in molecule: Molecule,
                                              canonicalization: CanonicalizationResult) -> String {
-        var pairs: [(Int, Int)] = []
-        for bond in molecule.bonds where bond.order == .double && bond.stereo != .none {
-            guard let a = canonicalization.newIDByOldID[bond.a1],
-                  let b = canonicalization.newIDByOldID[bond.a2] else {
+        var descriptors: [(Int, Int, Character)] = []
+        for bond in molecule.bonds where bond.order == .double {
+            guard let descriptor = perceivedDoubleBondStereoDescriptor(for: bond,
+                                                                       in: molecule,
+                                                                       canonicalization: canonicalization) else {
                 continue
             }
-            pairs.append((min(a, b), max(a, b)))
+            descriptors.append(descriptor)
         }
 
-        pairs.sort { lhs, rhs in
+        descriptors.sort { lhs, rhs in
             if lhs.0 != rhs.0 { return lhs.0 < rhs.0 }
             return lhs.1 < rhs.1
         }
 
-        return pairs.map { "\($0.0)-\($0.1)" }.joined(separator: ",")
+        return descriptors.map { "\($0.0)-\($0.1)\($0.2)" }.joined(separator: ",")
     }
 
     private static func buildTetrahedralLayer(in molecule: Molecule,
@@ -1227,6 +1628,149 @@ enum CDKInChINativeGenerator {
             guard let neighbor = molecule.atom(id: neighborID) else { return false }
             return !isHydrogenSymbol(neighbor.element)
         }
+    }
+
+    private static func perceivedDoubleBondStereoDescriptor(for bond: Bond,
+                                                            in molecule: Molecule,
+                                                            canonicalization: CanonicalizationResult) -> (Int, Int, Character)? {
+        guard !bondIsInSmallRing(bond, in: molecule) else {
+            return nil
+        }
+        guard doubleBondStereoCapableAtom(molecule.atom(id: bond.a1)),
+              doubleBondStereoCapableAtom(molecule.atom(id: bond.a2)) else {
+            return nil
+        }
+        guard bondHasDistinctStereoSubstituents(at: bond.a1,
+                                                excluding: bond.a2,
+                                                in: molecule,
+                                                canonicalization: canonicalization),
+              bondHasDistinctStereoSubstituents(at: bond.a2,
+                                                excluding: bond.a1,
+                                                in: molecule,
+                                                canonicalization: canonicalization) else {
+            return nil
+        }
+
+        guard let leftPoint = molecule.atom(id: bond.a1)?.position,
+              let rightPoint = molecule.atom(id: bond.a2)?.position,
+              let leftSubstituent = greaterCanonicalSubstituent(for: bond.a1,
+                                                                excluding: bond.a2,
+                                                                in: molecule,
+                                                                canonicalization: canonicalization),
+              let rightSubstituent = greaterCanonicalSubstituent(for: bond.a2,
+                                                                 excluding: bond.a1,
+                                                                 in: molecule,
+                                                                 canonicalization: canonicalization),
+              let leftSubstituentPoint = molecule.atom(id: leftSubstituent)?.position,
+              let rightSubstituentPoint = molecule.atom(id: rightSubstituent)?.position else {
+            return nil
+        }
+
+        let leftSide = orientedSide(of: leftSubstituentPoint, along: (leftPoint, rightPoint))
+        let rightSide = orientedSide(of: rightSubstituentPoint, along: (leftPoint, rightPoint))
+        guard abs(leftSide) > 0.0001, abs(rightSide) > 0.0001 else {
+            return nil
+        }
+
+        guard let leftMapped = canonicalization.newIDByOldID[bond.a1],
+              let rightMapped = canonicalization.newIDByOldID[bond.a2] else {
+            return nil
+        }
+
+        let sign: Character = leftSide * rightSide > 0 ? "-" : "+"
+        return (max(leftMapped, rightMapped), min(leftMapped, rightMapped), sign)
+    }
+
+    private static func greaterCanonicalSubstituent(for atomID: Int,
+                                                    excluding excludedNeighborID: Int,
+                                                    in molecule: Molecule,
+                                                    canonicalization: CanonicalizationResult) -> Int? {
+        let explicitNeighbors = molecule.neighbors(of: atomID)
+            .filter { $0 != excludedNeighborID }
+            .filter { neighborID in
+                guard let atom = molecule.atom(id: neighborID) else { return false }
+                return !isHydrogenSymbol(atom.element)
+            }
+
+        if explicitNeighbors.isEmpty {
+            return nil
+        }
+
+        let sorted = explicitNeighbors.sorted { lhs, rhs in
+            let leftID = canonicalization.newIDByOldID[lhs] ?? 0
+            let rightID = canonicalization.newIDByOldID[rhs] ?? 0
+            if leftID != rightID { return leftID > rightID }
+            return lhs < rhs
+        }
+        return sorted.first
+    }
+
+    private static func doubleBondStereoCapableAtom(_ atom: Atom?) -> Bool {
+        let symbol = normalizedElementSymbol(atom?.element ?? "").uppercased()
+        return ["C", "SI", "GE", "N"].contains(symbol)
+    }
+
+    private static func bondHasDistinctStereoSubstituents(at atomID: Int,
+                                                          excluding excludedNeighborID: Int,
+                                                          in molecule: Molecule,
+                                                          canonicalization: CanonicalizationResult) -> Bool {
+        let explicitNeighbors = molecule.neighbors(of: atomID)
+            .filter { $0 != excludedNeighborID }
+            .filter { neighborID in
+                guard let atom = molecule.atom(id: neighborID) else { return false }
+                return !isHydrogenSymbol(atom.element)
+            }
+
+        var descriptors = explicitNeighbors.map { neighborID in
+            substituentStereoDescriptor(atomID: neighborID,
+                                        canonicalization: canonicalization,
+                                        molecule: molecule)
+        }
+
+        let explicitNeighborCount = molecule.neighbors(of: atomID).filter { $0 != excludedNeighborID }.count
+        if explicitNeighborCount == 1,
+           molecule.implicitHydrogenCount(for: atomID) > 0 {
+            descriptors.append("H")
+        }
+
+        guard descriptors.count == 2 else {
+            return false
+        }
+        return descriptors[0] != descriptors[1]
+    }
+
+    private static func substituentStereoDescriptor(atomID: Int,
+                                                    canonicalization: CanonicalizationResult,
+                                                    molecule: Molecule) -> String {
+        let atom = molecule.atom(id: atomID)
+        let symbol = normalizedElementSymbol(atom?.element ?? "").uppercased()
+        let mappedID = canonicalization.newIDByOldID[atomID] ?? 0
+        let hydrogenCount = molecule.implicitHydrogenCount(for: atomID)
+        return "\(symbol):\(mappedID):\(atom?.charge ?? 0):\(hydrogenCount)"
+    }
+
+    private static func bondIsInSmallRing(_ bond: Bond, in molecule: Molecule) -> Bool {
+        molecule.simpleCycles(maxSize: 7).contains { cycle in
+            guard cycle.count <= 7 else { return false }
+            for index in cycle.indices {
+                let a = cycle[index]
+                let b = cycle[(index + 1) % cycle.count]
+                if (a == bond.a1 && b == bond.a2) || (a == bond.a2 && b == bond.a1) {
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
+    private static func orientedSide(of point: CGPoint,
+                                     along segment: (CGPoint, CGPoint)) -> Double {
+        let (start, end) = segment
+        let vx = end.x - start.x
+        let vy = end.y - start.y
+        let px = point.x - start.x
+        let py = point.y - start.y
+        return Double(vx * py - vy * px)
     }
 
     private static func normalizeInput(_ molecule: Molecule) -> Molecule {

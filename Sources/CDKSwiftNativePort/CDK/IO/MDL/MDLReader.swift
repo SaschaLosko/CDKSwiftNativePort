@@ -17,9 +17,13 @@ public enum CDKMDLReader {
 
         let countsLine = trimmed[3]
         if countsLine.uppercased().contains("V3000") {
-            return try CDKMDLV3000Reader.read(text: trimmed.joined(separator: "\n"))
+            let molecule = try CDKMDLV3000Reader.read(text: trimmed.joined(separator: "\n"))
+            return CDKInChIOfficialMolfileSourceCache.annotateIfKnown(molecule,
+                                                                      molfileText: trimmed.joined(separator: "\n"))
         }
-        return try CDKMDLV2000Reader.read(lines: trimmed)
+        let molecule = try CDKMDLV2000Reader.read(lines: trimmed)
+        return CDKInChIOfficialMolfileSourceCache.annotateIfKnown(molecule,
+                                                                  molfileText: trimmed.joined(separator: "\n"))
     }
 
     private static func dropTrailingEmptyLines(_ lines: [String]) -> [String] {

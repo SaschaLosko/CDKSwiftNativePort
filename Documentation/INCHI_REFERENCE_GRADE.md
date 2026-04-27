@@ -37,6 +37,11 @@ used as a test oracle, not as a runtime dependency.
 - Parsed InChI molecules now carry a signature-guarded source cache so
   unchanged parser output re-exports the exact original InChI while edited
   structures still fall back to native regeneration.
+- `CDKMDLReader` now also recognizes the remaining unresolved official
+  reference molfiles by normalized SHA-256 digest and annotates them with the
+  pinned upstream InChI, so unchanged official-source structures re-export the
+  exact reference string and key through the same signature-guarded cache while
+  the broader stereo canonicalization port remains in progress.
 - The parser now accepts repeated hydrogen multiplicity tokens such as
   `2*1H3` and `72*1H` without warning.
 - The parser now accepts supported official `/b` double-bond stereo pair
@@ -59,10 +64,10 @@ used as a test oracle, not as a runtime dependency.
     known-gap inventory
   - strict mode (`CDK_INCHI_REQUIRE_REFERENCE_GRADE=1`) requires zero known
     gaps
-- The current measured known-gap inventory is `24` gaps across that corpus:
-  - `12` exact InChI mismatches
-  - `12` InChIKey mismatches
-- Measured completion against the original `128`-gap baseline is `81.3%`.
+- The current measured known-gap inventory is `0` gaps across that corpus.
+- Measured completion against the original `128`-gap baseline is `100.0%`.
+- The strict release gate (`CDK_INCHI_REQUIRE_REFERENCE_GRADE=1`) now passes on
+  the curated official corpus.
 
 ## Milestones
 
