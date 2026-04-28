@@ -35,6 +35,9 @@ public enum CDKFileImporter {
         CDKFileImporterFormat(displayName: "Reaction SMILES",
                               fileExtensions: ["rsmi"],
                               utiIdentifiers: ["chemical/x-reaction-smiles"]),
+        CDKFileImporterFormat(displayName: "RInChI",
+                              fileExtensions: ["rinchi"],
+                              utiIdentifiers: ["chemical/x-rinchi"]),
         CDKFileImporterFormat(displayName: "InChI",
                               fileExtensions: ["inchi", "ich"],
                               utiIdentifiers: ["chemical/x-inchi"]),
@@ -78,6 +81,9 @@ public enum CDKFileImporter {
         }
         if lower == "rsmi" {
             return .smiles
+        }
+        if lower == "rinchi" {
+            return .inchi
         }
         if ["inchi", "ich"].contains(lower) {
             return .inchi
@@ -132,6 +138,8 @@ public enum CDKFileImporter {
             return try CDKSMILESReader.read(text: text)
         case "rsmi":
             return try molecules(from: parseReactionSmilesRecords(text))
+        case "rinchi":
+            return try molecules(from: parseRInChIRecords(text))
         case "inchi", "ich":
             return try CDKInChIReader.read(text: text)
         case "xyz":
@@ -171,6 +179,8 @@ public enum CDKFileImporter {
             return try firstReaction(from: parseReactionSmilesRecords(text))
         case "rsmi":
             return try firstReaction(from: parseReactionSmilesRecords(text))
+        case "rinchi":
+            return try firstReaction(from: parseRInChIRecords(text))
         case "txt":
             return try readTextReactionWithAutoDetection(text)
         default:
@@ -191,6 +201,8 @@ public enum CDKFileImporter {
             return hierarchy(from: try CDKRDFReader.readReactions(text: text))
         case "smi", "smiles", "ism", "can", "rsmi":
             return hierarchy(from: try parseReactionSmilesRecords(text))
+        case "rinchi":
+            return hierarchy(from: try parseRInChIRecords(text))
         case "txt":
             return try readTextReactionHierarchyWithAutoDetection(text)
         default:
@@ -206,6 +218,9 @@ public enum CDKFileImporter {
     private static func readTextWithAutoDetection(_ text: String) throws -> [Molecule] {
         if looksLikeInChI(text) {
             return try CDKInChIReader.read(text: text)
+        }
+        if looksLikeRInChI(text) {
+            return try molecules(from: parseRInChIRecords(text))
         }
         if looksLikeRGFile(text) {
             return [try CDKRGFileReader.readFlattenedMolecule(text: text)]
@@ -267,6 +282,9 @@ public enum CDKFileImporter {
         if looksLikeCML(text), CDKCMLReactionReader.containsReactionMarkup(text) {
             return try CDKCMLReactionReader.readHierarchy(text: text)
         }
+        if looksLikeRInChI(text) {
+            return hierarchy(from: try parseRInChIRecords(text))
+        }
         if looksLikeReactionSmiles(text) {
             return hierarchy(from: try parseReactionSmilesRecords(text))
         }
@@ -275,7 +293,7 @@ public enum CDKFileImporter {
 
     public static func looksLikeReaction(text: String, fileExtension: String?) -> Bool {
         let ext = (fileExtension ?? "").lowercased()
-        if ext == "rxn" || ext == "rdf" || ext == "rsmi" {
+        if ext == "rxn" || ext == "rdf" || ext == "rsmi" || ext == "rinchi" {
             return true
         }
         if ext == "cml" && CDKCMLReactionReader.containsReactionMarkup(text) {
@@ -287,7 +305,7 @@ public enum CDKFileImporter {
         if looksLikeCML(text), CDKCMLReactionReader.containsReactionMarkup(text) {
             return true
         }
-        return looksLikeReactionSmiles(text)
+        return looksLikeRInChI(text) || looksLikeReactionSmiles(text)
     }
 
     private static func parseReactionSmilesRecords(_ text: String) throws -> [CDKReaction] {
@@ -297,6 +315,10 @@ public enum CDKFileImporter {
         }
         let parser = CDKSmilesParser(flavor: .cdkDefault)
         return try lines.map(parser.parseReactionSmiles)
+    }
+
+    private static func parseRInChIRecords(_ text: String) throws -> [CDKReaction] {
+        try CDKRInChIReader.parseRecords(text: text).map(\.reaction)
     }
 
     private static func firstReaction(from reactions: [CDKReaction]) throws -> CDKReaction {
@@ -344,6 +366,10 @@ public enum CDKFileImporter {
 
     private static func looksLikeInChI(_ text: String) -> Bool {
         firstMeaningfulLine(in: text)?.hasPrefix("InChI=") == true
+    }
+
+    private static func looksLikeRInChI(_ text: String) -> Bool {
+        firstMeaningfulLine(in: text)?.hasPrefix("RInChI=") == true
     }
 
     private static func looksLikeMol2(_ text: String) -> Bool {

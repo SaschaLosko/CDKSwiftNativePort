@@ -12,6 +12,7 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertTrue(supported.contains("smi"))
         XCTAssertTrue(supported.contains("ism"))
         XCTAssertTrue(supported.contains("inchi"))
+        XCTAssertTrue(supported.contains("rinchi"))
         XCTAssertTrue(supported.contains("mol2"))
         XCTAssertTrue(supported.contains("pdb"))
         XCTAssertTrue(supported.contains("xyz"))
@@ -140,6 +141,11 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed[0].atomCount, molecule.atomCount)
     }
 
+    func testWritingRInChIForMoleculesThrows() throws {
+        let molecule = try referenceMolecule(name: "Ethanol")
+        XCTAssertThrowsError(try CDKFileExporter.write(molecule: molecule, as: .rinchi))
+    }
+
     func testWritesXYZAndRoundTrips() throws {
         let molecule = try referenceMolecule(name: "Aspirin")
         let text = try CDKFileExporter.write(molecule: molecule, as: .xyz)
@@ -200,6 +206,44 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed.reactantCount, 1)
         XCTAssertEqual(parsed.productCount, 1)
         XCTAssertEqual(parsed.properties["Ka"], "3")
+    }
+
+    func testWritesRInChIAndRoundTrips() throws {
+        let reaction = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
+                                   agents: [],
+                                   products: [try referenceMolecule(name: "Product")],
+                                   direction: .forward,
+                                   name: "hydration")
+
+        let text = try CDKFileExporter.write(reaction: reaction, as: .rinchi)
+        let parsed = try CDKFileImporter.readReaction(text: text, fileExtension: "rinchi")
+
+        XCTAssertTrue(text.hasPrefix("RInChI=1.00.1S/"))
+        XCTAssertEqual(text.components(separatedBy: .newlines).filter { !$0.isEmpty }.count, 1)
+        XCTAssertEqual(parsed.reactantCount, 1)
+        XCTAssertEqual(parsed.productCount, 1)
+        XCTAssertEqual(parsed.direction, .forward)
+        XCTAssertEqual(parsed.name, "hydration")
+    }
+
+    func testWritesMultipleReactionsAsMultiLineRInChI() throws {
+        let first = CDKReaction(reactants: [try referenceMolecule(name: "A")],
+                                agents: [],
+                                products: [try referenceMolecule(name: "B")],
+                                direction: .forward)
+        let second = CDKReaction(reactants: [try referenceMolecule(name: "B")],
+                                 agents: [],
+                                 products: [try referenceMolecule(name: "C")],
+                                 direction: .forward)
+
+        let text = try CDKFileExporter.write(reactions: [first, second], as: .rinchi)
+        let parsed = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: "rinchi")
+
+        XCTAssertEqual(text.components(separatedBy: .newlines).filter { !$0.isEmpty }.count, 2)
+        guard case .set(let set) = parsed else {
+            return XCTFail("Expected multi-line RInChI export to round-trip as a reaction set.")
+        }
+        XCTAssertEqual(set.flattenedReactions.count, 2)
     }
 
     func testWritesV3000RXNWhenRequestedAndRoundTrips() throws {

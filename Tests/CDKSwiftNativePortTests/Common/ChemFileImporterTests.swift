@@ -11,6 +11,7 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertTrue(supported.contains("rxn"))
         XCTAssertTrue(supported.contains("rdf"))
         XCTAssertTrue(supported.contains("rsmi"))
+        XCTAssertTrue(supported.contains("rinchi"))
         XCTAssertTrue(supported.contains("cxsmiles"))
         XCTAssertTrue(supported.contains("rgf"))
     }
@@ -147,6 +148,54 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertEqual(set.flattenedReactions.count, 2)
         XCTAssertEqual(set.flattenedReactions[0].agentCount, 1)
         XCTAssertEqual(set.flattenedReactions[1].productCount, 1)
+    }
+
+    func testReadsRInChIByExtension() throws {
+        let text = "RInChI=1.00.1S/C7H13BrN2O2/c1-3-7(8,4-2)5(11)10-6(9)12<>C7H14N2O2/c1-3-5(4-2)6(10)9-7(8)11/d+"
+
+        let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "rinchi")
+        XCTAssertEqual(molecules.count, 2)
+
+        let reaction = try CDKFileImporter.readReaction(text: text, fileExtension: "rinchi")
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.agentCount, 0)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertEqual(reaction.direction, .forward)
+    }
+
+    func testReadsMultiRecordRInChIAsReactionSet() throws {
+        let text = """
+        RInChI=1.00.1S/C7H13BrN2O2/c1-3-7(8,4-2)5(11)10-6(9)12<>C7H14N2O2/c1-3-5(4-2)6(10)9-7(8)11/d+
+        RInChI=1.00.1S/C4H4O2/c1-2-3-4(5)6<>C4H5IO2/c1-3(5)2-4(6)7/d+
+        """
+
+        let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "rinchi")
+        let hierarchy = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: "rinchi")
+        let firstReaction = try CDKFileImporter.readReaction(text: text, fileExtension: "rinchi")
+
+        XCTAssertEqual(molecules.count, 4)
+        XCTAssertEqual(firstReaction.reactantCount, 1)
+        XCTAssertEqual(firstReaction.productCount, 1)
+
+        guard case .set(let set) = hierarchy else {
+            return XCTFail("Expected reaction set for multi-record RInChI.")
+        }
+        XCTAssertEqual(set.flattenedReactions.count, 2)
+        XCTAssertEqual(set.flattenedReactions[0].direction, .forward)
+        XCTAssertEqual(set.flattenedReactions[1].productCount, 1)
+    }
+
+    func testAutoDetectsRInChIFromPlainTextIgnoringAuxInfoLines() throws {
+        let text = """
+        RInChI=1.00.1S/C4H4O2/c1-2-3-4(5)6<>C4H5IO2/c1-3(5)2-4(6)7/d+
+        RAuxInfo=1.00.1/unused
+        Long-RInChIKey=unused
+        """
+
+        let reaction = try CDKFileImporter.readReaction(text: text, fileExtension: "txt")
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertEqual(reaction.direction, .forward)
     }
 
     func testReadsV3000ReactionByExtension() throws {

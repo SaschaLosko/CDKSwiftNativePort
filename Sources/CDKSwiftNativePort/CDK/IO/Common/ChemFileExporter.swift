@@ -11,6 +11,7 @@ public enum CDKFileExportFormat: String, CaseIterable, Identifiable {
     case smiles
     case isomericSmiles
     case inchi
+    case rinchi
     case mol2
     case pdb
     case xyz
@@ -108,6 +109,10 @@ public enum CDKFileExporter {
                               displayName: "InChI",
                               fileExtensions: ["inchi", "ich"],
                               utiIdentifiers: ["chemical/x-inchi"]),
+        CDKFileExporterFormat(format: .rinchi,
+                              displayName: "RInChI",
+                              fileExtensions: ["rinchi"],
+                              utiIdentifiers: ["chemical/x-rinchi"]),
         CDKFileExporterFormat(format: .mol2,
                               displayName: "Tripos MOL2",
                               fileExtensions: ["mol2"],
@@ -197,6 +202,8 @@ public enum CDKFileExporter {
             return try CDKSMILESWriter.write(molecules, flavor: options.isomericSmilesFlavor)
         case .inchi:
             return try CDKInChIWriter.write(molecules)
+        case .rinchi:
+            throw ChemError.unsupported("RInChI export supports reactions only.")
         case .mol2:
             return try CDKMol2Writer.write(molecules)
         case .pdb:
@@ -276,6 +283,8 @@ public enum CDKFileExporter {
         case .smiles, .isomericSmiles:
             let generator = CDKSmilesGenerator(flavor: format == .smiles ? options.smilesFlavor : options.isomericSmilesFlavor)
             return reactions.map(generator.create).joined(separator: "\n") + "\n"
+        case .rinchi:
+            return try CDKRInChIWriter.write(reactions)
         default:
             throw ChemError.unsupported("Format \(format.rawValue) does not support reaction export.")
         }

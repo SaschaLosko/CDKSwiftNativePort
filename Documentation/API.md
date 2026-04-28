@@ -257,6 +257,7 @@ Current CX support includes:
     - `readReactionList(text:)`
     - `readReactionScheme(text:)`
     - `readReactionSet(text:)`
+  - `CDKRInChIReader`
   - `CDKRXNReader`
     - `Mode`
     - `Options`
@@ -308,6 +309,7 @@ and extension-style host integrations.
 - `.smiles`
 - `.isomericSmiles`
 - `.inchi`
+- `.rinchi`
 - `.mol2`
 - `.pdb`
 - `.xyz`
@@ -326,6 +328,7 @@ and extension-style host integrations.
 - SMILES / InChI:
   - `CDKSMILESWriter`
   - `CDKInChIWriter`
+  - `CDKRInChIWriter`
 - MOL2 / PDB / XYZ / CML:
   - `CDKMol2Writer`
   - `CDKPDBWriter`

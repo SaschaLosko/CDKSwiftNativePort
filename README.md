@@ -69,6 +69,7 @@ Import and export coverage currently includes:
 - SDF
 - SMILES and CXSMILES
 - reaction SMILES
+- RInChI text files
 - InChI
 - MOL2
 - PDB
@@ -360,6 +361,20 @@ let reaction = try CDKFileImporter.readReaction(
 
 let cml = try CDKFileExporter.write(reaction: reaction, as: .cml)
 print(cml.prefix(120))
+```
+
+### Read and Export a Reaction as RInChI
+
+```swift
+import CDKSwiftNativePort
+
+let reaction = try CDKFileImporter.readReaction(
+    text: "RInChI=1.00.1S/C7H13BrN2O2/c1-3-7(8,4-2)5(11)10-6(9)12<>C7H14N2O2/c1-3-5(4-2)6(10)9-7(8)11/d+",
+    fileExtension: "rinchi"
+)
+
+let rinchi = try CDKFileExporter.write(reaction: reaction, as: .rinchi)
+print(rinchi)
 ```
 
 ### Preserve a CML Reaction Scheme Hierarchy
