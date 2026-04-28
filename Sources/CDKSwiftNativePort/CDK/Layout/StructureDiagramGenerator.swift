@@ -1447,7 +1447,15 @@ enum CDKStructureDiagramGenerator {
         guard ring.count >= 3 else { return }
         let n = CGFloat(ring.count)
         let radius = bondLength / (2 * sin(.pi / n))
-        let base = CGFloat((ring[0] * 11) % 360) * .pi / 180.0
+        let base: CGFloat
+        if ring.count.isMultiple(of: 2) {
+            // Canonical even-membered rings with near-vertical side edges read
+            // closer to the conventional "benzene-like" hexagon than an
+            // arbitrary atom-id-derived rotation.
+            base = -(.pi / n)
+        } else {
+            base = .pi / 2
+        }
         let step = (2 * .pi) / n
 
         for (idx, atomID) in ring.enumerated() {

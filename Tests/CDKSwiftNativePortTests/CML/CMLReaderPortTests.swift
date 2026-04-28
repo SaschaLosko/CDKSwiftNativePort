@@ -109,6 +109,52 @@ final class CMLReaderPortTests: XCTestCase {
         XCTAssertEqual(molecule.bonds.map(\.stereo), [.down, .up, .up, .up])
     }
 
+    func testParsesAtomParityAndInfersDisplayStereoAfterLayout() throws {
+        let text = """
+        <cml>
+          <molecule id="trans12dichlorocyclohexane">
+            <atomArray>
+              <atom id="a1" elementType="C">
+                <atomParity atomRefs4="a7 a2 a6 a8">1</atomParity>
+              </atom>
+              <atom id="a2" elementType="C">
+                <atomParity atomRefs4="a8 a3 a1 a7">-1</atomParity>
+              </atom>
+              <atom id="a3" elementType="C" />
+              <atom id="a4" elementType="C" />
+              <atom id="a5" elementType="C" />
+              <atom id="a6" elementType="C" />
+              <atom id="a7" elementType="Cl" />
+              <atom id="a8" elementType="Cl" />
+            </atomArray>
+            <bondArray>
+              <bond atomRefs2="a1 a2" order="S" />
+              <bond atomRefs2="a2 a3" order="S" />
+              <bond atomRefs2="a3 a4" order="S" />
+              <bond atomRefs2="a4 a5" order="S" />
+              <bond atomRefs2="a5 a6" order="S" />
+              <bond atomRefs2="a6 a1" order="S" />
+              <bond atomRefs2="a1 a7" order="S" />
+              <bond atomRefs2="a2 a8" order="S" />
+            </bondArray>
+          </molecule>
+        </cml>
+        """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: text).first)
+        XCTAssertEqual(molecule.atoms.filter { $0.chirality != .none }.count, 2)
+
+        let chlorineStereo = molecule.bonds.filter { bond in
+            let a1 = molecule.atom(id: bond.a1)?.element.uppercased()
+            let a2 = molecule.atom(id: bond.a2)?.element.uppercased()
+            return a1 == "CL" || a2 == "CL"
+        }.map(\.stereo)
+
+        XCTAssertEqual(chlorineStereo.count, 2)
+        XCTAssertTrue(chlorineStereo.contains(.up) || chlorineStereo.contains(.upReversed))
+        XCTAssertTrue(chlorineStereo.contains(.down) || chlorineStereo.contains(.downReversed))
+    }
+
     func testParsesAromaticBondTypeChildAndMarksAtomsAromatic() throws {
         let text = """
         <molecule id="m1">

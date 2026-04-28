@@ -61,6 +61,25 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         XCTAssertGreaterThan(box.height, 1.0)
     }
 
+    func testCyclohexaneLayoutUsesCanonicalRegularRingOrientation() throws {
+        let molecule = try parse("C1CCCCC1")
+
+        let nearVerticalBondCount = molecule.bonds.reduce(into: 0) { count, bond in
+            guard let p1 = molecule.atom(id: bond.a1)?.position,
+                  let p2 = molecule.atom(id: bond.a2)?.position else {
+                return
+            }
+            let dx = abs(p2.x - p1.x)
+            let dy = abs(p2.y - p1.y)
+            if dy > 0.5, dx < 0.15 {
+                count += 1
+            }
+        }
+
+        XCTAssertGreaterThanOrEqual(nearVerticalBondCount, 2,
+                                    "Expected cyclohexane to seed with the conventional vertical-side hexagon orientation.")
+    }
+
     func testMarkushDefinitionsAreLaidOutBelowRootStructure() throws {
         let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
         let components = connectedComponents(in: molecule)

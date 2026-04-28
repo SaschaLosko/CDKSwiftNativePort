@@ -50,6 +50,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         var hydrogenCount: Int?
         var aromatic: Bool
         var aliasLabel: String?
+        var chirality: AtomChirality
+        var ligandOrderingRefs: [String]?
     }
 
     private struct PendingBond {
@@ -116,7 +118,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                 currentBond?.aromatic = true
             }
 
-        case "bondstereo", "label", "scalar", "string", "float", "integer":
+        case "bondstereo", "atomparity", "label", "scalar", "string", "float", "integer":
             guard currentAtom != nil || currentBond != nil else { return }
             textCaptures.append(TextCapture(elementName: lower, attributes: attributeDict, text: ""))
 
@@ -153,7 +155,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                 parsedMolecules.append(molecule)
             }
 
-        case "bondstereo", "label", "scalar", "string", "float", "integer":
+        case "bondstereo", "atomparity", "label", "scalar", "string", "float", "integer":
             guard let capture = popCapture(for: lower) else { return }
             applyCapture(capture)
 
@@ -190,7 +192,9 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                                   charge: atomSource.charge,
                                   isotopeMassNumber: atomSource.isotope,
                                   aromatic: atomSource.aromatic,
+                                  chirality: atomSource.chirality,
                                   explicitHydrogenCount: atomSource.hydrogenCount,
+                                  ligandOrderingAtomIDs: atomSource.ligandOrderingRefs?.compactMap { atomIDByXMLID[$0] },
                                   aliasLabel: atomSource.aliasLabel))
             }
 
@@ -227,6 +231,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
                 molecule = Depiction2DGenerator.generate(for: molecule)
             }
+            molecule.assignWedgeHashFromChiralCenters()
             output.append(molecule)
         }
 
@@ -274,7 +279,9 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                            isotope: isotope,
                            hydrogenCount: hydrogenCount,
                            aromatic: aromatic,
-                           aliasLabel: aliasLabel)
+                           aliasLabel: aliasLabel,
+                           chirality: .none,
+                           ligandOrderingRefs: nil)
     }
 
     private func makeBond(attributes: [String: String]) -> PendingBond? {
@@ -343,7 +350,9 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                                               isotope: idx < isotopes.count ? isotopes[idx] : nil,
                                               hydrogenCount: idx < hydrogens.count ? hydrogens[idx] : nil,
                                               aromatic: idx < aromaticFlags.count ? aromaticFlags[idx] : false,
-                                              aliasLabel: nil))
+                                              aliasLabel: nil,
+                                              chirality: .none,
+                                              ligandOrderingRefs: nil))
         }
     }
 
@@ -398,6 +407,10 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                 currentBond?.stereo = stereo
             }
 
+        case "atomparity":
+            guard currentAtom != nil else { return }
+            applyAtomParityCapture(capture)
+
         case "label":
             guard currentAtom != nil else { return }
             applyAtomLabel(capture.text)
@@ -419,6 +432,26 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         currentAtom?.aliasLabel = label
         if let atom = currentAtom, isPseudoElement(atom.element) || atom.element == "*" || atom.element.isEmpty {
             currentAtom?.element = "R"
+        }
+    }
+
+    private func applyAtomParityCapture(_ capture: TextCapture) {
+        let parityText = capture.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parity = Int(parityText) ?? 0
+        switch parity.signum() {
+        case 1:
+            currentAtom?.chirality = .clockwise
+        case -1:
+            currentAtom?.chirality = .anticlockwise
+        default:
+            currentAtom?.chirality = .none
+        }
+
+        if let refs = capture.attributes["atomRefs4"]?
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init),
+           refs.count == 4 {
+            currentAtom?.ligandOrderingRefs = refs
         }
     }
 
