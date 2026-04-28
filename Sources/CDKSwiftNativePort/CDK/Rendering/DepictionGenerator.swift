@@ -316,7 +316,7 @@ public enum CDKDepictionGenerator {
                                                                                 padding: labelClipPadding) else {
                     return
                 }
-                let w = max(7.2, style.bondWidth * 3.9)
+                let w = max(6.0, style.bondWidth * 3.0)
                 let edge1 = start.offsetBy(dx: px * w, dy: py * w)
                 let edge2 = start.offsetBy(dx: -px * w, dy: -py * w)
                 addPolygon(points: [end, edge1, edge2], opacity: 0.96, color: baseColor)
@@ -330,7 +330,7 @@ public enum CDKDepictionGenerator {
                     return
                 }
                 let segments = 9
-                let w = max(7.6, style.bondWidth * 4.15)
+                let w = max(6.0, style.bondWidth * 3.0)
                 for i in 1...segments {
                     let t = CGFloat(i) / CGFloat(segments + 1)
                     let c = CGPoint(x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t)

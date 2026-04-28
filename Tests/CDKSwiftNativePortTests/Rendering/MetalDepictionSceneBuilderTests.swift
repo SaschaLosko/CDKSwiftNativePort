@@ -73,8 +73,8 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         let emphasizedWedgeSegments = scene.bondSegments.filter { $0.opacity >= 0.969 }
         XCTAssertGreaterThanOrEqual(
             emphasizedWedgeSegments.count,
-            8,
-            "Expected stereo up wedge to emit multiple emphasized segments, but only got \(emphasizedWedgeSegments.count)."
+            16,
+            "Expected stereo up wedge to render as a dense filled wedge, but only got \(emphasizedWedgeSegments.count) emphasized slices."
         )
     }
 

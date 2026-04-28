@@ -522,11 +522,11 @@ public enum CDKMetalDepictionSceneBuilder {
         let baseBondWidth = max(1.0, layoutBondWidth * zoomedStrokeScale)
         let stereoScale = style.stereoAttenuation.clamped(to: 0.4...1.2)
         let hashedStereoScale = style.hashedStereoAttenuation.clamped(to: 0.5...1.05)
-        // Keep stereo wedges visually balanced against compact CDK-like label sizes,
-        // especially in reaction depictions where participant styles are reduced.
-        let stereoBaseHalfWidth = max(style.fontSize * 0.24, style.bondWidth * 2.15) * stereoScale * viewportStrokeScale
-        let stereoSolidWedgeHalfWidth = stereoBaseHalfWidth * zoomedStrokeScale
-        let stereoHashedWedgeHalfWidth = max(stereoBaseHalfWidth * 1.02, style.bondWidth * 2.35 * viewportStrokeScale) * zoomedStrokeScale * hashedStereoScale
+        // Match CDK's default standard generator more closely: the wide end of stereo wedges
+        // is derived directly from the bond stroke width rather than a label-relative heuristic.
+        let cdkDefaultStereoHalfWidth = baseBondWidth * 3.0
+        let stereoSolidWedgeHalfWidth = cdkDefaultStereoHalfWidth * stereoScale
+        let stereoHashedWedgeHalfWidth = cdkDefaultStereoHalfWidth * stereoScale * hashedStereoScale
         let doubleBondSeparation = max(3.4, style.bondWidth * 2.25 * viewportStrokeScale) * zoomedStrokeScale
         let doubleBondHalfSeparation = doubleBondSeparation * 0.5
         let tripleBondOffset = max(3.1, style.bondWidth * 2.2 * viewportStrokeScale) * zoomedStrokeScale
@@ -673,8 +673,9 @@ public enum CDKMetalDepictionSceneBuilder {
             let px = -dy / len
             let py = dx / len
 
-            let maxHalfWidth = min(stereoSolidWedgeHalfWidth, len * 0.34)
-            let stripeCount = max(5, min(11, Int(len / 10.0)))
+            let maxHalfWidth = min(stereoSolidWedgeHalfWidth, len * 0.42)
+            let stripeCount = max(16, min(40, Int(len / max(1.6, baseBondWidth * 0.28))))
+            let step = len / CGFloat(stripeCount + 1)
             for i in 1...stripeCount {
                 let t = CGFloat(i) / CGFloat(stripeCount + 1)
                 let cx = start.x + dx * t
@@ -684,8 +685,8 @@ public enum CDKMetalDepictionSceneBuilder {
                 let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
                 appendSegment(left,
                               right,
-                              width: max(0.78, baseBondWidth * 0.58 * stereoScale),
-                              opacity: 0.97,
+                              width: max(step * 1.35, baseBondWidth * 0.95 * stereoScale),
+                              opacity: 0.985,
                               color: color,
                               into: &segments)
             }
@@ -701,8 +702,8 @@ public enum CDKMetalDepictionSceneBuilder {
             let px = -dy / len
             let py = dx / len
 
-            let maxHalfWidth = min(stereoHashedWedgeHalfWidth * 0.82, len * 0.24)
-            let tickCount = max(10, min(24, Int(len / 6.6)))
+            let maxHalfWidth = min(stereoHashedWedgeHalfWidth, len * 0.34)
+            let tickCount = max(9, min(22, Int(len / max(4.8, baseBondWidth * 1.55))))
             for i in 1...tickCount {
                 let t = CGFloat(i) / CGFloat(tickCount + 1)
                 let cx = start.x + dx * t
