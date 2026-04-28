@@ -117,6 +117,44 @@ final class CMLReactionWriterPortTests: XCTestCase {
         XCTAssertTrue(parsedStepList.isStepList)
     }
 
+    func testWritesStepListContainingNestedSchemeAndRoundTripsHierarchy() throws {
+        let branchA = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
+                                  agents: [],
+                                  products: [Molecule(name: "B", externalID: "B")],
+                                  id: "r1")
+        let branchB = CDKReaction(reactants: [Molecule(name: "B", externalID: "B")],
+                                  agents: [],
+                                  products: [Molecule(name: "C", externalID: "C")],
+                                  id: "r2")
+        let finalReaction = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
+                                        agents: [],
+                                        products: [Molecule(name: "D", externalID: "D")],
+                                        id: "r3")
+
+        let stepList = CDKReactionList(id: "rsl-branch",
+                                       entries: [
+                                        .scheme(CDKReactionScheme(id: "rs-branch",
+                                                                  entries: [.reaction(branchA), .reaction(branchB)])),
+                                        .reaction(finalReaction)
+                                       ],
+                                       isStepList: true)
+
+        let text = try CDKCMLReactionWriter.write(stepList)
+        let parsedList = try CDKCMLReactionReader.readReactionList(text: text)
+
+        XCTAssertTrue(text.contains("<reactionStepList"))
+        XCTAssertTrue(text.contains("<reactionScheme"))
+        XCTAssertEqual(parsedList.entries.count, 2)
+        guard case .scheme(let parsedBranch) = parsedList.entries[0] else {
+            return XCTFail("Expected nested scheme to survive step-list round-trip.")
+        }
+        guard case .reaction(let parsedFinalReaction) = parsedList.entries[1] else {
+            return XCTFail("Expected terminal reaction to survive step-list round-trip.")
+        }
+        XCTAssertEqual(parsedBranch.flattenedReactions.map(\.id), ["r1", "r2"])
+        XCTAssertEqual(parsedFinalReaction.id, "r3")
+    }
+
     func testWritesFormulaOnlyParticipantMolecule() throws {
         var formulaOnly = Molecule(name: "A", externalID: "A")
         formulaOnly.appendDataFieldValue("C 28 H 60 N 1", named: "Formula")

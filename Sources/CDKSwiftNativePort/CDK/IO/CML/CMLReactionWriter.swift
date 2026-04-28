@@ -98,18 +98,35 @@ public enum CDKCMLReactionWriter {
         lines.append("\(indent)<\(tagName) \(attrs.joined(separator: " "))>")
         lines.append(contentsOf: propertyLines(list.properties, indent: indent + "  "))
 
-        for (index, reaction) in list.reactions.enumerated() {
+        for (index, entry) in list.entries.enumerated() {
             if list.isStepList {
                 lines.append("\(indent)  <reactionStep>")
-                lines.append(contentsOf: reactionLines(reaction, indent: indent + "    ", defaultIndex: index + 1))
+                lines.append(contentsOf: reactionListEntryLines(entry,
+                                                                indent: indent + "    ",
+                                                                defaultIndex: index + 1))
                 lines.append("\(indent)  </reactionStep>")
             } else {
-                lines.append(contentsOf: reactionLines(reaction, indent: indent + "  ", defaultIndex: index + 1))
+                lines.append(contentsOf: reactionListEntryLines(entry,
+                                                                indent: indent + "  ",
+                                                                defaultIndex: index + 1))
             }
         }
 
         lines.append("\(indent)</\(tagName)>")
         return lines
+    }
+
+    private static func reactionListEntryLines(_ entry: CDKReactionListEntry,
+                                               indent: String,
+                                               defaultIndex: Int) -> [String] {
+        switch entry {
+        case .reaction(let reaction):
+            return reactionLines(reaction, indent: indent, defaultIndex: defaultIndex)
+        case .list(let list):
+            return reactionListLines(list, indent: indent, defaultIndex: defaultIndex)
+        case .scheme(let scheme):
+            return reactionSchemeLines(scheme, indent: indent, defaultIndex: defaultIndex)
+        }
     }
 
     private static func reactionSchemeLines(_ scheme: CDKReactionScheme,

@@ -110,9 +110,11 @@ The following CDK areas are still outside the package’s current parity target:
 - the broader long tail of CDK QSAR descriptors
 - every configurable reader/writer mode from upstream CDK
 
-Reaction CML now has native Swift hierarchy types for sets, lists, and schemes.
-The remaining reaction parity work is broader than file parsing alone: the
-package still does not attempt to match all of upstream CDK's reaction
+Reaction CML now has native Swift hierarchy types for sets, lists, schemes,
+and list entries, and the reader/writer preserve branching and step grouping
+through hierarchy round-trips instead of collapsing everything to flat reaction
+arrays. The remaining reaction parity work is broader than file parsing alone:
+the package still does not attempt to match all of upstream CDK's reaction
 manipulation utilities or every configurable IO mode.
 
 ## Parity Tracking

@@ -163,6 +163,7 @@ Current CX support includes:
 - `CDKReactionSet`
 - `CDKReactionSetMember`
 - `CDKReactionList`
+- `CDKReactionListEntry`
 - `CDKReactionScheme`
 - `CDKReactionSchemeEntry`
 - `CDKReactionHierarchy`

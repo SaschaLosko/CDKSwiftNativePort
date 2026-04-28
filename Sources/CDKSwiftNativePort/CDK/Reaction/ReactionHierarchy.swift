@@ -41,7 +41,7 @@ public indirect enum CDKReactionSetMember: Equatable {
         case .reaction(let reaction):
             return [reaction]
         case .list(let list):
-            return list.reactions
+            return list.flattenedReactions
         case .scheme(let scheme):
             return scheme.flattenedReactions
         }
@@ -51,22 +51,58 @@ public indirect enum CDKReactionSetMember: Equatable {
 public struct CDKReactionList: Equatable {
     public var id: String?
     public var name: String?
-    public var reactions: [CDKReaction]
+    public var entries: [CDKReactionListEntry]
     public var properties: [String: String]
     public var isStepList: Bool
 
-    public var flattenedReactions: [CDKReaction] { reactions }
+    public var reactions: [CDKReaction] {
+        get { entries.flatMap(\.flattenedReactions) }
+        set { entries = newValue.map(CDKReactionListEntry.reaction) }
+    }
+
+    public var flattenedReactions: [CDKReaction] {
+        entries.flatMap(\.flattenedReactions)
+    }
+
+    public init(id: String? = nil,
+                name: String? = nil,
+                entries: [CDKReactionListEntry],
+                properties: [String: String] = [:],
+                isStepList: Bool = false) {
+        self.id = id
+        self.name = name
+        self.entries = entries
+        self.properties = properties
+        self.isStepList = isStepList
+    }
 
     public init(id: String? = nil,
                 name: String? = nil,
                 reactions: [CDKReaction],
                 properties: [String: String] = [:],
                 isStepList: Bool = false) {
-        self.id = id
-        self.name = name
-        self.reactions = reactions
-        self.properties = properties
-        self.isStepList = isStepList
+        self.init(id: id,
+                  name: name,
+                  entries: reactions.map(CDKReactionListEntry.reaction),
+                  properties: properties,
+                  isStepList: isStepList)
+    }
+}
+
+public indirect enum CDKReactionListEntry: Equatable {
+    case reaction(CDKReaction)
+    case list(CDKReactionList)
+    case scheme(CDKReactionScheme)
+
+    public var flattenedReactions: [CDKReaction] {
+        switch self {
+        case .reaction(let reaction):
+            return [reaction]
+        case .list(let list):
+            return list.flattenedReactions
+        case .scheme(let scheme):
+            return scheme.flattenedReactions
+        }
     }
 }
 
@@ -101,7 +137,7 @@ public indirect enum CDKReactionSchemeEntry: Equatable {
         case .reaction(let reaction):
             return [reaction]
         case .list(let list):
-            return list.reactions
+            return list.flattenedReactions
         case .scheme(let scheme):
             return scheme.flattenedReactions
         }
@@ -119,7 +155,7 @@ public enum CDKReactionHierarchy: Equatable {
         case .reaction(let reaction):
             return [reaction]
         case .list(let list):
-            return list.reactions
+            return list.flattenedReactions
         case .scheme(let scheme):
             return scheme.flattenedReactions
         case .set(let set):

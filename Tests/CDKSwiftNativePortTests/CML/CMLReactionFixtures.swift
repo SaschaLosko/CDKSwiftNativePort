@@ -144,6 +144,30 @@ enum CMLReactionFixtures {
     </reactionScheme>
     """
 
+    static let reactionStepListWithNestedScheme = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <reactionStepList id="rsl-branch">
+      <reactionStep>
+        <reactionScheme id="rs-branch">
+          <reaction id="r1">
+            <reactantList><reactant ref="A"/></reactantList>
+            <productList><product ref="B"/></productList>
+          </reaction>
+          <reaction id="r2">
+            <reactantList><reactant ref="B"/></reactantList>
+            <productList><product ref="C"/></productList>
+          </reaction>
+        </reactionScheme>
+      </reactionStep>
+      <reactionStep>
+        <reaction id="r3">
+          <reactantList><reactant ref="A"/></reactantList>
+          <productList><product ref="D"/></productList>
+        </reaction>
+      </reactionStep>
+    </reactionStepList>
+    """
+
     static let sharedMoleculeListBeforeReaction = """
     <?xml version="1.0" encoding="UTF-8"?>
     <cml xmlns="http://www.xml-cml.org/schema">

@@ -94,6 +94,22 @@ final class CMLReactionReaderPortTests: XCTestCase {
         XCTAssertEqual(stepList.reactions.map(\.id), ["r2.1", "r2.2"])
     }
 
+    func testParsesStepListContainingNestedSchemeWithoutFlatteningToRoot() throws {
+        let list = try CDKCMLReactionReader.readReactionList(text: CMLReactionFixtures.reactionStepListWithNestedScheme)
+
+        XCTAssertTrue(list.isStepList)
+        XCTAssertEqual(list.flattenedReactions.map(\.id), ["r1", "r2", "r3"])
+        XCTAssertEqual(list.entries.count, 2)
+        guard case .scheme(let branchScheme) = list.entries[0] else {
+            return XCTFail("Expected first step to preserve nested reaction scheme.")
+        }
+        guard case .reaction(let terminalReaction) = list.entries[1] else {
+            return XCTFail("Expected second step to preserve direct reaction.")
+        }
+        XCTAssertEqual(branchScheme.flattenedReactions.map(\.id), ["r1", "r2"])
+        XCTAssertEqual(terminalReaction.id, "r3")
+    }
+
     func testParsesSharedMoleculeReferencesDefinedBeforeReaction() throws {
         let reaction = try CDKCMLReactionReader.readReaction(text: CMLReactionFixtures.sharedMoleculeListBeforeReaction)
 

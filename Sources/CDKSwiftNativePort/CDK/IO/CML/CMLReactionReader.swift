@@ -124,7 +124,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var id: String?
         var name: String?
         var properties: [String: String] = [:]
-        var reactions: [PendingReaction] = []
+        var entries: [PendingHierarchyNode] = []
 
         init(id: String?, name: String?, isStepList: Bool) {
             self.id = id
@@ -137,7 +137,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var id: String?
         var name: String?
         var properties: [String: String] = [:]
-        var entries: [PendingReactionSchemeEntry] = []
+        var entries: [PendingHierarchyNode] = []
 
         init(id: String?, name: String?) {
             self.id = id
@@ -145,13 +145,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         }
     }
 
-    private enum PendingReactionSchemeEntry {
-        case reaction(PendingReaction)
-        case list(PendingReactionList)
-        case scheme(PendingReactionScheme)
-    }
-
-    private enum PendingRootNode {
+    private enum PendingHierarchyNode {
         case reaction(PendingReaction)
         case list(PendingReactionList)
         case scheme(PendingReactionScheme)
@@ -191,7 +185,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private var participantStack: [PendingParticipant] = []
     private var reactionStack: [PendingReaction] = []
     private var containerStack: [PendingContainerRef] = []
-    private var rootNodes: [PendingRootNode] = []
+    private var rootNodes: [PendingHierarchyNode] = []
     private var currentAtom: PendingAtom?
     private var currentBond: PendingBond?
     private var textCaptures: [TextCapture] = []
@@ -387,7 +381,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         return .set(CDKReactionSet(members: hierarchyNodes.map(asSetMember)))
     }
 
-    private func buildHierarchyNode(_ node: PendingRootNode) -> CDKReactionHierarchy {
+    private func buildHierarchyNode(_ node: PendingHierarchyNode) -> CDKReactionHierarchy {
         switch node {
         case .reaction(let reaction):
             return .reaction(buildReaction(from: reaction, index: 1))
@@ -423,12 +417,12 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     }
 
     private func buildReactionList(from pending: PendingReactionList) -> CDKReactionList {
-        let reactions = pending.reactions.enumerated().map { offset, reaction in
-            buildReaction(from: reaction, index: offset + 1)
+        let entries = pending.entries.enumerated().map { offset, entry in
+            buildReactionListEntry(entry, defaultIndex: offset + 1)
         }
         return CDKReactionList(id: pending.id,
                                name: pending.name,
-                               reactions: reactions,
+                               entries: entries,
                                properties: pending.properties,
                                isStepList: pending.isStepList)
     }
@@ -443,7 +437,19 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                                  properties: pending.properties)
     }
 
-    private func buildReactionSchemeEntry(_ entry: PendingReactionSchemeEntry,
+    private func buildReactionListEntry(_ entry: PendingHierarchyNode,
+                                        defaultIndex: Int) -> CDKReactionListEntry {
+        switch entry {
+        case .reaction(let reaction):
+            return .reaction(buildReaction(from: reaction, index: defaultIndex))
+        case .list(let list):
+            return .list(buildReactionList(from: list))
+        case .scheme(let scheme):
+            return .scheme(buildReactionScheme(from: scheme))
+        }
+    }
+
+    private func buildReactionSchemeEntry(_ entry: PendingHierarchyNode,
                                           defaultIndex: Int) -> CDKReactionSchemeEntry {
         switch entry {
         case .reaction(let reaction):
@@ -543,7 +549,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         if let lastContainer = containerStack.last {
             switch lastContainer {
             case .list(let list):
-                list.reactions.append(reaction)
+                list.entries.append(.reaction(reaction))
             case .scheme(let scheme):
                 scheme.entries.append(.reaction(reaction))
             }
@@ -555,8 +561,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private func append(list: PendingReactionList) {
         if let lastContainer = containerStack.last {
             switch lastContainer {
-            case .list:
-                rootNodes.append(.list(list))
+            case .list(let parentList):
+                parentList.entries.append(.list(list))
             case .scheme(let scheme):
                 scheme.entries.append(.list(list))
             }
@@ -568,8 +574,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private func append(scheme: PendingReactionScheme) {
         if let lastContainer = containerStack.last {
             switch lastContainer {
-            case .list:
-                rootNodes.append(.scheme(scheme))
+            case .list(let list):
+                list.entries.append(.scheme(scheme))
             case .scheme(let parentScheme):
                 parentScheme.entries.append(.scheme(scheme))
             }
@@ -891,7 +897,18 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         case .scheme(let scheme):
             return .scheme(scheme)
         case .set(let set):
-            return .list(CDKReactionList(reactions: set.flattenedReactions))
+            return .list(CDKReactionList(entries: set.members.map(asListEntry)))
+        }
+    }
+
+    private func asListEntry(_ member: CDKReactionSetMember) -> CDKReactionListEntry {
+        switch member {
+        case .reaction(let reaction):
+            return .reaction(reaction)
+        case .list(let list):
+            return .list(list)
+        case .scheme(let scheme):
+            return .scheme(scheme)
         }
     }
 

@@ -31,7 +31,7 @@ or app session logic.
 
 - SMILES parsing and generation
 - reaction SMILES parsing and generation
-- native reaction hierarchy types for sets, lists, and schemes
+- native reaction hierarchy types for sets, lists, schemes, and lossless list entries
 - CXSMILES parsing for:
   - atom labels and atom values
   - 2D and 3D coordinates
@@ -91,7 +91,7 @@ All CDK-derived implementation lives under `Sources/CDKSwiftNativePort`.
 The package owns:
 
 - molecule and reaction models
-- reaction hierarchy models (`CDKReactionSet`, `CDKReactionList`, `CDKReactionScheme`)
+- reaction hierarchy models (`CDKReactionSet`, `CDKReactionList`, `CDKReactionScheme`) and entry enums
 - readers, writers, parsers, generators
 - layout and depiction algorithms
 - scene building for host renderers
@@ -348,6 +348,10 @@ if case .scheme(let scheme) = hierarchy {
     print(scheme.flattenedReactions.count)
 }
 ```
+
+Step lists now preserve nested scheme/list entries as well, so branching and
+step grouping survive `readHierarchy` -> `write(_:)` -> `readHierarchy`
+round-trips without being collapsed to flat reaction arrays.
 
 ## Documentation
 
