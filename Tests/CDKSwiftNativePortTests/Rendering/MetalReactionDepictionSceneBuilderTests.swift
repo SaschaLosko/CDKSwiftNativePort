@@ -68,6 +68,17 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
         let rightWidth = (rightLabels.map(\.position.x).max() ?? 0) - (rightLabels.map(\.position.x).min() ?? 0)
         XCTAssertGreaterThan(rightWidth, 120,
                              "Single products should retain a reasonably wide lane instead of being squeezed into a narrow vertical strip.")
+
+        let rightBondPoints = scene.bondSegments
+            .filter { min($0.from.x, $0.to.x) > (canvas.midX + 90) }
+            .flatMap { [$0.from, $0.to] }
+        XCTAssertFalse(rightBondPoints.isEmpty)
+        let rightBounds = CGRect(x: rightBondPoints.map(\.x).min() ?? 0,
+                                 y: rightBondPoints.map(\.y).min() ?? 0,
+                                 width: (rightBondPoints.map(\.x).max() ?? 0) - (rightBondPoints.map(\.x).min() ?? 0),
+                                 height: (rightBondPoints.map(\.y).max() ?? 0) - (rightBondPoints.map(\.y).min() ?? 0))
+        XCTAssertGreaterThan(rightBounds.width, rightBounds.height * 1.05,
+                             "The bromination product should read horizontally on the product side instead of as a tall vertical participant.")
     }
 
     func testReactionSceneScalesLabelFontWithZoom() {
@@ -481,8 +492,41 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
         XCTAssertFalse(CDKReactionParticipantLayoutRefiner.shouldRecompute2DLayout(for: good))
 
         let refined = CDKReactionParticipantLayoutRefiner.recomputeIfLowQuality(good)
-        XCTAssertEqual(refined, good,
-                       "Participants with good coordinates should remain unchanged.")
+        let goodPenalty = CDKReactionParticipantLayoutRefiner.qualityPenalty(for: good)
+        let refinedPenalty = CDKReactionParticipantLayoutRefiner.qualityPenalty(for: refined)
+        XCTAssertLessThanOrEqual(refinedPenalty, goodPenalty + 0.001,
+                                 "Participants with good coordinates should stay layout-stable and not degrade during reaction refinement.")
+
+        if let goodBox = good.boundingBox(), let refinedBox = refined.boundingBox() {
+            let goodRatio = goodBox.width / max(0.0001, goodBox.height)
+            let refinedRatio = refinedBox.width / max(0.0001, refinedBox.height)
+            XCTAssertGreaterThanOrEqual(refinedRatio + 0.01, goodRatio,
+                                        "Reaction refinement may reorient a good participant, but it should not make it less readable horizontally.")
+        }
+    }
+
+    func testUnmappedElongatedReactionParticipantsPreferHorizontalOrientation() throws {
+        let reaction = try brominationStyleReaction()
+        let elongatedParticipants = [reaction.reactants[0], reaction.products[0]]
+
+        for molecule in elongatedParticipants {
+            guard let originalBox = molecule.boundingBox() else {
+                XCTFail("Expected bounding box for elongated participant.")
+                continue
+            }
+            let refined = CDKReactionParticipantLayoutRefiner.recomputeIfLowQuality(molecule)
+            guard let refinedBox = refined.boundingBox() else {
+                XCTFail("Expected bounding box after reaction-layout refinement.")
+                continue
+            }
+
+            let originalRatio = originalBox.width / max(0.0001, originalBox.height)
+            let refinedRatio = refinedBox.width / max(0.0001, refinedBox.height)
+            XCTAssertGreaterThanOrEqual(refinedRatio + 0.01, originalRatio,
+                                        "Reaction-layout refinement should not make an elongated unmapped participant less horizontal.")
+            XCTAssertGreaterThan(refinedRatio, 1.05,
+                                 "Elongated unmapped reaction participants should prefer a horizontal presentation for reaction readability.")
+        }
     }
 
     func testReactionMapHighlightAppliesConsistentColorAcrossSides() {

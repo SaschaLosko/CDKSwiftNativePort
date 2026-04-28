@@ -928,11 +928,7 @@ enum CDKReactionParticipantLayoutRefiner {
             return (map: map, id: atom.id)
         }
         let hasUsefulMaps = mappedPairs.count >= 3
-        if !hasUsefulMaps && (mapTemplate?.isEmpty ?? true) {
-            // Keep non-mapped participants stable; orientation heuristics are most useful
-            // for mapped reaction components where left-to-right correspondence matters.
-            return molecule
-        }
+        let hasTemplate = !(mapTemplate?.isEmpty ?? true)
         let center = CGPoint(x: baseBox.midX, y: baseBox.midY)
 
         struct OrientationCandidate {
@@ -944,22 +940,28 @@ enum CDKReactionParticipantLayoutRefiner {
             OrientationCandidate(rotationRadians: 0, mirrorX: false),
             OrientationCandidate(rotationRadians: .pi / 2, mirrorX: false),
             OrientationCandidate(rotationRadians: -.pi / 2, mirrorX: false),
-            OrientationCandidate(rotationRadians: .pi, mirrorX: false),
-            OrientationCandidate(rotationRadians: 0, mirrorX: true),
-            OrientationCandidate(rotationRadians: .pi / 2, mirrorX: true),
-            OrientationCandidate(rotationRadians: -.pi / 2, mirrorX: true),
-            OrientationCandidate(rotationRadians: .pi, mirrorX: true)
+            OrientationCandidate(rotationRadians: .pi, mirrorX: false)
         ]
+        if hasUsefulMaps || hasTemplate {
+            candidates.append(contentsOf: [
+                OrientationCandidate(rotationRadians: 0, mirrorX: true),
+                OrientationCandidate(rotationRadians: .pi / 2, mirrorX: true),
+                OrientationCandidate(rotationRadians: -.pi / 2, mirrorX: true),
+                OrientationCandidate(rotationRadians: .pi, mirrorX: true)
+            ])
+        }
 
         if let axisAngle = principalAxisAngle(of: molecule) {
             // CDK-like readability: additionally evaluate orientations that make the
-            // dominant participant axis horizontal (not only quarter-turn candidates).
+            // dominant participant axis horizontal, including ordinary unmapped reactions.
             let align = -axisAngle
             let opposite = align + .pi
             candidates.append(OrientationCandidate(rotationRadians: align, mirrorX: false))
             candidates.append(OrientationCandidate(rotationRadians: opposite, mirrorX: false))
-            candidates.append(OrientationCandidate(rotationRadians: align, mirrorX: true))
-            candidates.append(OrientationCandidate(rotationRadians: opposite, mirrorX: true))
+            if hasUsefulMaps || hasTemplate {
+                candidates.append(OrientationCandidate(rotationRadians: align, mirrorX: true))
+                candidates.append(OrientationCandidate(rotationRadians: opposite, mirrorX: true))
+            }
         }
 
         var best = molecule
