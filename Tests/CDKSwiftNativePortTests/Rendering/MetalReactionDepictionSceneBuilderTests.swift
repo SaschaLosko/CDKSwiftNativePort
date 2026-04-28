@@ -25,6 +25,8 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
                                                                 rotationDegrees: 0)
 
         XCTAssertFalse(scene.bondSegments.isEmpty)
+        XCTAssertTrue(scene.gridSegments.isEmpty,
+                      "Reaction canvases should use a plain background instead of the old decorative grid.")
         XCTAssertTrue(scene.labels.contains(where: { $0.text == "+" }),
                       "Expected plus markers between multiple reaction participants.")
 

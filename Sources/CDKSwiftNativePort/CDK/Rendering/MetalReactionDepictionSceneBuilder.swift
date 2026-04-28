@@ -27,7 +27,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             return CDKMetalDepictionScene(gridSegments: [], bondSegments: [], labels: [])
         }
 
-        let gridSegments = makeGridSegments(in: canvasRect)
+        let gridSegments: [CDKMetalDepictionScene.LineSegment] = []
         let pad = style.padding
         let available = CGRect(x: canvasRect.minX + pad,
                                y: canvasRect.minY + pad,
@@ -466,15 +466,37 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         for row in rowAssignments {
             let rowIndices = Array(row)
             let rowSpacing = max(14, style.fontSize * 0.48)
-            let rowWeightSum = max(0.0001, rowIndices.reduce(CGFloat.zero) { partial, idx in
-                partial + weights[idx]
-            })
-            let availableRowWidth = max(1, region.width - (CGFloat(max(0, rowIndices.count - 1)) * rowSpacing))
+            let dampedWeights = rowIndices.map { sqrt(max(0.25, weights[$0])) }
+            let rowWeightSum = max(0.0001, dampedWeights.reduce(CGFloat.zero, +))
+            let baseAvailableRowWidth = max(1, region.width - (CGFloat(max(0, rowIndices.count - 1)) * rowSpacing))
+            let availableRowWidth: CGFloat
+            if rowIndices.count == 1 {
+                availableRowWidth = min(baseAvailableRowWidth, region.width * 0.74)
+            } else {
+                availableRowWidth = baseAvailableRowWidth
+            }
             let minimumWidth = min(max(54, availableRowWidth * 0.16),
                                    availableRowWidth / CGFloat(max(1, rowIndices.count)))
             let remainderWidth = max(0, availableRowWidth - (minimumWidth * CGFloat(rowIndices.count)))
-            let widths = rowIndices.map { idx in
-                minimumWidth + (remainderWidth * (weights[idx] / rowWeightSum))
+            var widths = rowIndices.enumerated().map { offset, idx in
+                minimumWidth + (remainderWidth * (dampedWeights[offset] / rowWeightSum))
+            }
+            if rowIndices.count == 1 {
+                widths[0] = min(widths[0], region.width * 0.62)
+            } else {
+                let maxWidth = region.width * 0.52
+                let cappedWidths = widths.map { min($0, maxWidth) }
+                let freedWidth = widths.reduce(CGFloat.zero, +) - cappedWidths.reduce(CGFloat.zero, +)
+                widths = cappedWidths
+                if freedWidth > 0.5 {
+                    let uncappedSlots = widths.indices.filter { widths[$0] < maxWidth - 0.5 }
+                    if !uncappedSlots.isEmpty {
+                        let bonus = freedWidth / CGFloat(uncappedSlots.count)
+                        for index in uncappedSlots {
+                            widths[index] = min(maxWidth, widths[index] + bonus)
+                        }
+                    }
+                }
             }
             let totalRowWidth = widths.reduce(0, +) + (CGFloat(max(0, rowIndices.count - 1)) * rowSpacing)
             var x = region.midX - (totalRowWidth * 0.5)
@@ -525,7 +547,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                 let second = total - first
                 let rowImbalance = abs(first - second)
                 let countImbalance = abs(CGFloat(breakIndex) - CGFloat(count - breakIndex))
-                let singletonTopPenalty: CGFloat = (breakIndex == 1 && count > 2) ? 0.45 : 0
+                let singletonTopPenalty: CGFloat = (breakIndex == 1 && count > 2) ? max(0.45, total * 0.16) : 0
                 let score = max(first, second) + (rowImbalance * 0.24) + (countImbalance * 0.30) + singletonTopPenalty
                 if score < bestScore {
                     bestScore = score
@@ -746,33 +768,6 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         default:
             return nil
         }
-    }
-
-    private static func makeGridSegments(in rect: CGRect) -> [CDKMetalDepictionScene.LineSegment] {
-        let gridStep: CGFloat = 40
-        var gridSegments: [CDKMetalDepictionScene.LineSegment] = []
-
-        var x: CGFloat = 0
-        while x <= rect.maxX {
-            gridSegments.append(CDKMetalDepictionScene.LineSegment(from: CGPoint(x: x, y: rect.minY),
-                                                                   to: CGPoint(x: x, y: rect.maxY),
-                                                                   width: 1,
-                                                                   opacity: 0.05,
-                                                                   color: .grid))
-            x += gridStep
-        }
-
-        var y: CGFloat = 0
-        while y <= rect.maxY {
-            gridSegments.append(CDKMetalDepictionScene.LineSegment(from: CGPoint(x: rect.minX, y: y),
-                                                                   to: CGPoint(x: rect.maxX, y: y),
-                                                                   width: 1,
-                                                                   opacity: 0.05,
-                                                                   color: .grid))
-            y += gridStep
-        }
-
-        return gridSegments
     }
 }
 

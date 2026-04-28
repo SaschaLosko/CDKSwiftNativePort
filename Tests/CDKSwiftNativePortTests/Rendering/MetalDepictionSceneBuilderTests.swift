@@ -23,6 +23,9 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                                                         zoom: 1.0,
                                                         pan: .zero)
 
+        XCTAssertTrue(scene.gridSegments.isEmpty,
+                      "Live metal depictions should render on a plain background without the old decorative grid.")
+
         let labelPositionByAtomID = Dictionary(uniqueKeysWithValues: scene.labels.map { ($0.id, $0.position) })
         XCTAssertEqual(labelPositionByAtomID.count, molecule.atomCount)
 

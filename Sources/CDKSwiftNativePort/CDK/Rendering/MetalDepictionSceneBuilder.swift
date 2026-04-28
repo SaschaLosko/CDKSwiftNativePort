@@ -321,27 +321,7 @@ public enum CDKMetalDepictionSceneBuilder {
             return CDKMetalDepictionScene(gridSegments: [], backgroundBoxes: [], bondSegments: [], labels: [])
         }
 
-        let gridStep: CGFloat = 40
-        var gridSegments: [CDKMetalDepictionScene.LineSegment] = []
-        var x: CGFloat = 0
-        while x <= canvasRect.maxX {
-            gridSegments.append(CDKMetalDepictionScene.LineSegment(from: CGPoint(x: x, y: canvasRect.minY),
-                                                                   to: CGPoint(x: x, y: canvasRect.maxY),
-                                                                   width: 1,
-                                                                   opacity: 0.05,
-                                                                   color: .grid))
-            x += gridStep
-        }
-
-        var y: CGFloat = 0
-        while y <= canvasRect.maxY {
-            gridSegments.append(CDKMetalDepictionScene.LineSegment(from: CGPoint(x: canvasRect.minX, y: y),
-                                                                   to: CGPoint(x: canvasRect.maxX, y: y),
-                                                                   width: 1,
-                                                                   opacity: 0.05,
-                                                                   color: .grid))
-            y += gridStep
-        }
+        let gridSegments: [CDKMetalDepictionScene.LineSegment] = []
 
         let pad = style.padding
         let available = CGRect(x: canvasRect.minX + pad,
