@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 1,
+  "suite": "CDK Reaction Reference Corpus",
+  "referenceRepository": "https://github.com/cdk/cdk",
+  "referenceTag": "cdk-2.12",
+  "referenceCommit": "ca4faabbc37a42fed16cfc2ee683636b519b91cd",
+  "sourceTests": [
+    "storage/libiocml/src/test/java/org/openscience/cdk/io/cml/CML2Test.java",
+    "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNReaderTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesParserTest.java",
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesTest.java"
+  ],
+  "cases": [
+    {
+      "id": "cml_reaction_with_agents",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testCMLReactionWithAgents",
+      "inputFile": "CML/reaction.1.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "list",
+          "children": [
+            {
+              "kind": "reaction",
+              "id": "reaction.1",
+              "reactants": {
+                "count": 1,
+                "ids": ["react"],
+                "atomCounts": [6]
+              },
+              "agents": {
+                "count": 2,
+                "ids": ["water", "H+"],
+                "atomCounts": [1, 1]
+              },
+              "products": {
+                "count": 1,
+                "ids": ["product"],
+                "atomCounts": [6]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cml_reaction_with_properties",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testReactionProperties",
+      "inputFile": "CML/reaction.2.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "list",
+          "children": [
+            {
+              "kind": "reaction",
+              "id": "reaction.2",
+              "reactants": {
+                "count": 1,
+                "ids": ["react"],
+                "atomCounts": [6]
+              },
+              "products": {
+                "count": 1,
+                "ids": ["product"],
+                "atomCounts": [6]
+              },
+              "properties": {
+                "Ka": "3"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cml_reaction_list",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testCMLReactionList",
+      "inputFile": "CML/reactionList.1.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "list",
+          "children": [
+            {
+              "kind": "reaction",
+              "id": "1.3.2",
+              "reactants": {
+                "count": 1,
+                "ids": ["actey"],
+                "atomCounts": [6]
+              },
+              "products": {
+                "count": 1,
+                "ids": ["prod1"],
+                "atomCounts": [6]
+              }
+            },
+            {
+              "kind": "reaction",
+              "id": "1.3.3",
+              "reactants": {
+                "count": 1,
+                "ids": ["react2"],
+                "atomCounts": [6]
+              },
+              "products": {
+                "count": 1,
+                "ids": ["prod2"],
+                "atomCounts": [6]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cml_reaction_scheme",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testCMLScheme1",
+      "inputFile": "CML/reactionScheme.1.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "scheme",
+          "id": "rs0",
+          "children": [
+            {
+              "kind": "scheme",
+              "id": "rs1",
+              "children": [
+                {
+                  "kind": "reaction",
+                  "id": "r1",
+                  "reactants": { "count": 1, "ids": ["A"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["B"], "atomCounts": [0] }
+                },
+                {
+                  "kind": "reaction",
+                  "id": "r2",
+                  "reactants": { "count": 1, "ids": ["B"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["C"], "atomCounts": [0] }
+                }
+              ]
+            },
+            {
+              "kind": "scheme",
+              "id": "rs2",
+              "children": [
+                {
+                  "kind": "reaction",
+                  "id": "r3",
+                  "reactants": { "count": 1, "ids": ["A"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["F"], "atomCounts": [0] }
+                },
+                {
+                  "kind": "reaction",
+                  "id": "r4",
+                  "reactants": { "count": 1, "ids": ["F"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["G"], "atomCounts": [0] }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cml_reaction_step_list",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testCMLStepList",
+      "inputFile": "CML/reactionStepList.1.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "list",
+          "id": "rsl1",
+          "isStepList": true,
+          "children": [
+            {
+              "kind": "reaction",
+              "id": "r1",
+              "reactants": { "count": 1, "ids": ["A"], "atomCounts": [0] },
+              "products": { "count": 1, "ids": ["B"], "atomCounts": [0] }
+            },
+            {
+              "kind": "reaction",
+              "id": "r2",
+              "reactants": { "count": 1, "ids": ["B"], "atomCounts": [0] },
+              "products": { "count": 1, "ids": ["C"], "atomCounts": [0] }
+            },
+            {
+              "kind": "reaction",
+              "id": "r3",
+              "reactants": { "count": 1, "ids": ["C"], "atomCounts": [0] },
+              "products": { "count": 1, "ids": ["D"], "atomCounts": [0] }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cml_reaction_scheme_step_list",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testCMLSchemeStepList1",
+      "inputFile": "CML/reactionSchemeStepList.1.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "scheme",
+          "id": "rs0",
+          "children": [
+            {
+              "kind": "scheme",
+              "id": "rs1",
+              "children": [
+                {
+                  "kind": "reaction",
+                  "id": "r1.1",
+                  "reactants": { "count": 1, "ids": ["A"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["B"], "atomCounts": [0] }
+                },
+                {
+                  "kind": "reaction",
+                  "id": "r1.2",
+                  "reactants": { "count": 1, "ids": ["B"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["C"], "atomCounts": [0] }
+                }
+              ]
+            },
+            {
+              "kind": "list",
+              "id": "rsl1",
+              "isStepList": true,
+              "children": [
+                {
+                  "kind": "reaction",
+                  "id": "r2.1",
+                  "reactants": { "count": 1, "ids": ["A"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["D"], "atomCounts": [0] }
+                },
+                {
+                  "kind": "reaction",
+                  "id": "r2.2",
+                  "reactants": { "count": 1, "ids": ["D"], "atomCounts": [0] },
+                  "products": { "count": 1, "ids": ["E"], "atomCounts": [0] }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cml_reaction_scheme_molecule_set",
+      "format": "cml",
+      "sourceTest": "CML2Test.java",
+      "sourceCase": "testCMLSchemeMoleculeSet",
+      "inputFile": "CML/reactionSchemeMoleculeSet.cml",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "scheme",
+          "id": "rs_0",
+          "children": [
+            {
+              "kind": "reaction",
+              "id": "react_1",
+              "reactants": {
+                "count": 1,
+                "ids": ["A"],
+                "atomCounts": [0],
+                "formulaByID": {
+                  "A": "C 28 H 60 N 1"
+                }
+              },
+              "products": {
+                "count": 2,
+                "ids": ["B", "C"],
+                "atomCounts": [0, 1],
+                "formulaByID": {
+                  "B": "C 9 H 20 N 1"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rxn_basic_reaction",
+      "format": "rxn",
+      "sourceTest": "MDLRXNReaderTest.java",
+      "sourceCase": "testReadReactions1",
+      "inputFile": "MDL/reaction-1.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": {
+            "count": 2,
+            "atomCounts": [4, 1]
+          },
+          "products": {
+            "count": 1,
+            "atomCounts": [9]
+          }
+        }
+      }
+    },
+    {
+      "id": "rdf_reaction_set",
+      "format": "rdf",
+      "sourceTest": "MDLRXNReaderTest.java",
+      "sourceCase": "testRDFChemFile",
+      "inputFile": "MDL/qsar-reaction-test.rdf",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "set",
+          "children": [
+            {
+              "kind": "reaction",
+              "reactants": {
+                "count": 2,
+                "atomCounts": [3, 2]
+              },
+              "products": {
+                "count": 2,
+                "atomCounts": [2, 2]
+              }
+            },
+            {
+              "kind": "reaction",
+              "reactants": {
+                "count": 1,
+                "atomCounts": [3]
+              },
+              "products": {
+                "count": 1,
+                "atomCounts": [2]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rsmi_reaction_counts",
+      "format": "rsmi",
+      "sourceTest": "SmilesParserTest.java",
+      "sourceCase": "testReaction",
+      "inputFile": "Smiles/reaction_counts.rsmi",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 1 },
+          "products": { "count": 2 }
+        }
+      }
+    },
+    {
+      "id": "rsmi_reaction_with_agents",
+      "format": "rsmi",
+      "sourceTest": "SmilesParserTest.java",
+      "sourceCase": "testReactionWithAgents",
+      "inputFile": "Smiles/reaction_with_agents.rsmi",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 2 },
+          "agents": { "count": 1 },
+          "products": { "count": 2 }
+        }
+      }
+    },
+    {
+      "id": "rsmi_fragment_grouping_reactants",
+      "format": "rsmi",
+      "sourceTest": "CxSmilesTest.java",
+      "sourceCase": "fragmentGroupingReactants",
+      "inputFile": "Smiles/fragment_grouping_reactants.rsmi",
+      "roundTrip": false,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 3 },
+          "agents": { "count": 1 },
+          "products": { "count": 1 }
+        }
+      }
+    },
+    {
+      "id": "rsmi_invalid_reaction_syntax",
+      "format": "rsmi",
+      "sourceTest": "SmilesParserTest.java",
+      "sourceCase": "invalid reaction syntax examples",
+      "inputFile": "Smiles/invalid_reaction_syntax.rsmi",
+      "roundTrip": false,
+      "expected": {
+        "outcome": "error",
+        "errorContains": "exactly two '>' separators"
+      }
+    }
+  ]
+}

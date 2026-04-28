@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reactionScheme id="rs0">
+  <reactionScheme id="rs1">
+    <reaction id="r1.1">
+      <reactantList><reactant ref="A"/></reactantList>
+      <productList><product ref="B"/></productList>
+    </reaction>
+    <reaction id="r1.2">
+      <reactantList><reactant ref="B"/></reactantList>
+      <productList><product ref="C"/></productList>
+    </reaction>
+  </reactionScheme>
+  <reactionStepList id="rsl1">
+    <reactionStep>
+      <reaction id="r2.1">
+        <reactantList><reactant ref="A"/></reactantList>
+        <productList><product ref="D"/></productList>
+      </reaction>
+    </reactionStep>
+    <reactionStep>
+      <reaction id="r2.2">
+        <reactantList><reactant ref="D"/></reactantList>
+        <productList><product ref="E"/></productList>
+      </reaction>
+    </reactionStep>
+  </reactionStepList>
+</reactionScheme>

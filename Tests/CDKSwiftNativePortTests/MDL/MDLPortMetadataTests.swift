@@ -32,6 +32,7 @@ final class MDLPortMetadataTests: XCTestCase {
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000ReaderTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000WriterTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLReaderTest.java") }))
+        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLRXNReaderTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000AtomBlockTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV2000BondBlockTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLV3000ReaderTest.java") }))
@@ -40,7 +41,7 @@ final class MDLPortMetadataTests: XCTestCase {
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("SDFReaderTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("SDFWriterTest.java") }))
 
-        XCTAssertGreaterThanOrEqual(metadata.portedCases.count, 35)
+        XCTAssertGreaterThanOrEqual(metadata.portedCases.count, 37)
         XCTAssertTrue(metadata.portedCases.allSatisfy { !$0.id.isEmpty && !$0.source.isEmpty })
 
         let uniqueIDs = Set(metadata.portedCases.map(\.id))

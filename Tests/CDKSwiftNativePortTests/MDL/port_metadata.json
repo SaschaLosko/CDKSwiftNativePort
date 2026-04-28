@@ -7,6 +7,7 @@
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000ReaderTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000WriterTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLReaderTest.java",
+    "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNReaderTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000AtomBlockTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000BondBlockTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV3000ReaderTest.java",
@@ -18,6 +19,8 @@
   "portedCases": [
     { "id": "mol_v2000_basic_counts", "source": "MDLV2000ReaderTest" },
     { "id": "mol_v2000_empty_structure", "source": "MDLReaderTest" },
+    { "id": "rxn_basic_reaction", "source": "MDLRXNReaderTest.testReadReactions1" },
+    { "id": "rdf_reaction_set", "source": "MDLRXNReaderTest.testRDFChemFile" },
     { "id": "mol_atom_block_charge_code", "source": "MDLV2000ReaderTest" },
     { "id": "mol_m_chg_property", "source": "MDLV2000ReaderTest" },
     { "id": "mol_m_iso_property", "source": "MDLV2000ReaderTest" },

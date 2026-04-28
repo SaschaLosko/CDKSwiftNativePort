@@ -130,3 +130,8 @@ For InChI specifically, reference-grade work is tracked separately in
 [`INCHI_REFERENCE_GRADE.md`](INCHI_REFERENCE_GRADE.md). The runtime remains
 Swift native, but the package now vendors an official InChI reference corpus
 and uses it as a parity oracle.
+
+Reaction hierarchy and reaction IO parity are tracked separately in
+[`REACTION_PARITY.md`](REACTION_PARITY.md). That harness vendors an
+upstream-derived reaction corpus and keeps a committed known-gap inventory plus
+an opt-in strict parity gate for reaction CML, RXN/RDF, and reaction SMILES.

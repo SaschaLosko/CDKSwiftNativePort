@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reactionList>
+  <reaction id="reaction.2">
+    <scalar dictRef="cdk:reactionProperty" title="Ka" dataType="xsd:string">3</scalar>
+    <reactantList>
+      <reactant>
+        <molecule id="react">
+          <atomArray>
+            <atom id="a14293164" elementType="C"/>
+            <atom id="a2" elementType="C"/>
+            <atom id="a3" elementType="C"/>
+            <atom id="a4" elementType="C"/>
+            <atom id="a5" elementType="C"/>
+            <atom id="a6" elementType="C"/>
+          </atomArray>
+        </molecule>
+      </reactant>
+    </reactantList>
+    <productList>
+      <product>
+        <molecule id="product">
+          <atomArray>
+            <atom id="b1" elementType="C"/>
+            <atom id="b2" elementType="C"/>
+            <atom id="b3" elementType="C"/>
+            <atom id="b4" elementType="C"/>
+            <atom id="b5" elementType="C"/>
+            <atom id="b6" elementType="C"/>
+          </atomArray>
+        </molecule>
+      </product>
+    </productList>
+  </reaction>
+</reactionList>

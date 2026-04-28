@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reactionStepList id="rsl1">
+  <reactionStep>
+    <reaction id="r1">
+      <reactantList><reactant ref="A"/></reactantList>
+      <productList><product ref="B"/></productList>
+    </reaction>
+  </reactionStep>
+  <reactionStep>
+    <reaction id="r2">
+      <reactantList><reactant ref="B"/></reactantList>
+      <productList><product ref="C"/></productList>
+    </reaction>
+  </reactionStep>
+  <reactionStep>
+    <reaction id="r3">
+      <reactantList><reactant ref="C"/></reactantList>
+      <productList><product ref="D"/></productList>
+    </reaction>
+  </reactionStep>
+</reactionStepList>

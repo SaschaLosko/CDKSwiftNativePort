@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reactionList>
+  <reaction id="reaction.1">
+    <reactantList>
+      <reactant>
+        <molecule id="react">
+          <atomArray>
+            <atom id="r1" elementType="C"/>
+            <atom id="r2" elementType="C"/>
+            <atom id="r3" elementType="C"/>
+            <atom id="r4" elementType="C"/>
+            <atom id="r5" elementType="C"/>
+            <atom id="r6" elementType="C"/>
+          </atomArray>
+        </molecule>
+      </reactant>
+    </reactantList>
+    <productList>
+      <product>
+        <molecule id="product">
+          <atomArray>
+            <atom id="p1" elementType="C"/>
+            <atom id="p2" elementType="C"/>
+            <atom id="p3" elementType="C"/>
+            <atom id="p4" elementType="C"/>
+            <atom id="p5" elementType="C"/>
+            <atom id="p6" elementType="C"/>
+          </atomArray>
+        </molecule>
+      </product>
+    </productList>
+    <substanceList>
+      <substance>
+        <molecule id="water">
+          <atomArray>
+            <atom id="w1" elementType="O"/>
+          </atomArray>
+        </molecule>
+      </substance>
+      <substance>
+        <molecule id="H+">
+          <atomArray>
+            <atom id="h1" elementType="H" formalCharge="1"/>
+          </atomArray>
+        </molecule>
+      </substance>
+    </substanceList>
+  </reaction>
+</reactionList>

@@ -141,6 +141,14 @@ official InChI corpus is used as the correctness oracle for the
 reference-grade work tracked in
 [`Documentation/INCHI_REFERENCE_GRADE.md`](Documentation/INCHI_REFERENCE_GRADE.md).
 
+## Reaction Parity Status
+
+Reaction hierarchy and reaction-IO parity now have a committed upstream-derived
+reference corpus as well. The vendored reaction fixtures cover CML hierarchy
+cases, RXN/RDF parsing, and reaction SMILES behavior, with inventory/gate
+commands documented in
+[`Documentation/REACTION_PARITY.md`](Documentation/REACTION_PARITY.md).
+
 ## Installation
 
 ### Xcode

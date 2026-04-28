@@ -26,7 +26,8 @@ let package = Package(
                 "MDL/port_metadata.json",
                 "InChI/port_metadata.json",
                 "InChI/OfficialReference/official_reference_cases.json",
-                "InChI/OfficialReference/known_gap_inventory.json"
+                "InChI/OfficialReference/known_gap_inventory.json",
+                "Reaction/UpstreamReference"
             ]
         )
     ]

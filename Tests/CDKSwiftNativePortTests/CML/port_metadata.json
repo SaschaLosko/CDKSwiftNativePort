@@ -28,6 +28,7 @@
     { "id": "cml_writer_aromatic_roundtrip", "source": "CMLRoundTripTest" },
     { "id": "cml_writer_multiple_molecules_roundtrip", "source": "MDLCMLRoundtripTest" },
     { "id": "cml_reaction_fragment_with_agent", "source": "CML23FragmentsTest" },
+    { "id": "cml_reaction_with_agents", "source": "CML2Test" },
     { "id": "cml_reaction_properties", "source": "CML2Test" },
     { "id": "cml_reaction_list", "source": "CML2Test" },
     { "id": "cml_reaction_scheme", "source": "CML2Test" },
