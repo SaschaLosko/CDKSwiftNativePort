@@ -383,7 +383,7 @@ public enum CDKMetalDepictionSceneBuilder {
             basePositionByAtomID[atom.id] = basePosition
         }
 
-        let visibleAtomLabelCount = depictionMolecule.atoms.reduce(into: 0) { partial, atom in
+        let visibleLabelAtomIDs = depictionMolecule.atoms.reduce(into: Set<Int>()) { partial, atom in
             let atomDegree = prepared.degreeByAtomID[atom.id] ?? 0
             if CDKLabelText.shouldDrawLabel(atom: atom,
                                             degree: atomDegree,
@@ -393,9 +393,10 @@ public enum CDKMetalDepictionSceneBuilder {
                                             molecule: depictionMolecule,
                                             highlightedAtomIDs: highlightedAtomIDs,
                                             highlightedBondIDs: highlightedBondIDs) {
-                partial += 1
+                partial.insert(atom.id)
             }
         }
+        let visibleAtomLabelCount = visibleLabelAtomIDs.count
         let representativeBaseBondLength = representativeBondLength(molecule: depictionMolecule,
                                                                     positionsByAtomID: basePositionByAtomID)
         let clampedMinimumLabelFontSize = max(2.5, minimumLabelFontSize)
@@ -416,6 +417,8 @@ public enum CDKMetalDepictionSceneBuilder {
                                                 zoomOutExponent: 0.68,
                                                 zoomInExponent: 1.14)
         let renderedLabelFontSize = max(clampedMinimumLabelFontSize, labelLayoutFontSize * zoomedLabelScale)
+        let stereoTerminalLabelInset = max(renderedLabelFontSize * 0.22,
+                                           max(1.8, style.bondWidth * 0.85 * viewportStrokeScale) * zoomedStrokeScale)
 
         func pointBounds(_ points: some Sequence<CGPoint>) -> CGRect? {
             var iterator = points.makeIterator()
@@ -665,10 +668,17 @@ public enum CDKMetalDepictionSceneBuilder {
 
         func appendSolidWedge(from start: CGPoint,
                               to end: CGPoint,
+                              endInset: CGFloat,
                               color: CDKRenderColor,
                               into segments: inout [CDKMetalDepictionScene.LineSegment]) {
-            let dx = end.x - start.x
-            let dy = end.y - start.y
+            let rawDX = end.x - start.x
+            let rawDY = end.y - start.y
+            let rawLen = max(0.0001, hypot(rawDX, rawDY))
+            let inset = min(endInset, rawLen * 0.32)
+            let trimmedEnd = CGPoint(x: end.x - (rawDX / rawLen) * inset,
+                                     y: end.y - (rawDY / rawLen) * inset)
+            let dx = trimmedEnd.x - start.x
+            let dy = trimmedEnd.y - start.y
             let len = max(0.0001, hypot(dx, dy))
             let px = -dy / len
             let py = dx / len
@@ -694,10 +704,17 @@ public enum CDKMetalDepictionSceneBuilder {
 
         func appendHashedWedge(from start: CGPoint,
                                to end: CGPoint,
+                               endInset: CGFloat,
                                color: CDKRenderColor,
                                into segments: inout [CDKMetalDepictionScene.LineSegment]) {
-            let dx = end.x - start.x
-            let dy = end.y - start.y
+            let rawDX = end.x - start.x
+            let rawDY = end.y - start.y
+            let rawLen = max(0.0001, hypot(rawDX, rawDY))
+            let inset = min(endInset, rawLen * 0.32)
+            let trimmedEnd = CGPoint(x: end.x - (rawDX / rawLen) * inset,
+                                     y: end.y - (rawDY / rawLen) * inset)
+            let dx = trimmedEnd.x - start.x
+            let dy = trimmedEnd.y - start.y
             let len = max(0.0001, hypot(dx, dy))
             let px = -dy / len
             let py = dx / len
@@ -855,6 +872,8 @@ public enum CDKMetalDepictionSceneBuilder {
                                                                 molecule: depictionMolecule,
                                                                 style: style,
                                                                 highlightedBondIDs: highlightedBondIDs)
+            let labelInsetAtA1 = visibleLabelAtomIDs.contains(bond.a1) ? stereoTerminalLabelInset : 0
+            let labelInsetAtA2 = visibleLabelAtomIDs.contains(bond.a2) ? stereoTerminalLabelInset : 0
 
             let dx = p2.x - p1.x
             let dy = p2.y - p1.y
@@ -988,22 +1007,38 @@ public enum CDKMetalDepictionSceneBuilder {
                     if glowHighlighted {
                         appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSolidWedge(from: p1, to: p2, color: bondColor, into: &bondSegments)
+                    appendSolidWedge(from: p1,
+                                     to: p2,
+                                     endInset: labelInsetAtA2,
+                                     color: bondColor,
+                                     into: &bondSegments)
                 case .upReversed:
                     if glowHighlighted {
                         appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSolidWedge(from: p2, to: p1, color: bondColor, into: &bondSegments)
+                    appendSolidWedge(from: p2,
+                                     to: p1,
+                                     endInset: labelInsetAtA1,
+                                     color: bondColor,
+                                     into: &bondSegments)
                 case .down:
                     if glowHighlighted {
                         appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendHashedWedge(from: p1, to: p2, color: bondColor, into: &bondSegments)
+                    appendHashedWedge(from: p1,
+                                      to: p2,
+                                      endInset: labelInsetAtA2,
+                                      color: bondColor,
+                                      into: &bondSegments)
                 case .downReversed:
                     if glowHighlighted {
                         appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendHashedWedge(from: p2, to: p1, color: bondColor, into: &bondSegments)
+                    appendHashedWedge(from: p2,
+                                      to: p1,
+                                      endInset: labelInsetAtA1,
+                                      color: bondColor,
+                                      into: &bondSegments)
                 case .either:
                     if glowHighlighted {
                         appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.72), into: &bondSegments)

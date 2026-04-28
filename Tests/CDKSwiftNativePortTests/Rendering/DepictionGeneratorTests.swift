@@ -126,6 +126,41 @@ final class DepictionGeneratorTests: XCTestCase {
         }
     }
 
+    func testSVGStereoTerminalLabelsKeepExtraClearanceFromWedgeTips() {
+        let molecule = Molecule(
+            name: "TerminalHashedWedge",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "Cl", position: CGPoint(x: 0.0, y: 1.35))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single, stereo: .down)
+            ]
+        )
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 24.0,
+                                padding: 24.0)
+
+        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
+                                              style: style,
+                                              canvasSize: CGSize(width: 420, height: 320))
+
+        let label = try? XCTUnwrap(textCoordinates(in: svg).first)
+        guard let label else {
+            XCTFail("Expected a terminal label in the SVG depiction.")
+            return
+        }
+        let nearest = lineEndpoints(in: svg)
+            .map { hypot($0.x - label.x, $0.y - label.y) }
+            .min() ?? .greatestFiniteMagnitude
+
+        XCTAssertGreaterThan(nearest, 7.0,
+                             "SVG stereo wedges should leave extra white space before terminal labels.")
+    }
+
     func testSVGSuppressesSimpleExplicitHydrogensByDefault() {
         let molecule = Molecule(
             name: "AlcoholFragment",
@@ -413,6 +448,26 @@ M  END
             return nil
         }
         return (CGPoint(x: x1, y: y1), CGPoint(x: x2, y: y2))
+    }
+
+    private func lineEndpoints(in svg: String) -> [CGPoint] {
+        let pattern = #"<line x1="([\-0-9.]+)" y1="([\-0-9.]+)" x2="([\-0-9.]+)" y2="([\-0-9.]+)""#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let range = NSRange(svg.startIndex..., in: svg)
+        return regex.matches(in: svg, range: range).flatMap { match -> [CGPoint] in
+            guard match.numberOfRanges == 5,
+                  let x1Range = Range(match.range(at: 1), in: svg),
+                  let y1Range = Range(match.range(at: 2), in: svg),
+                  let x2Range = Range(match.range(at: 3), in: svg),
+                  let y2Range = Range(match.range(at: 4), in: svg),
+                  let x1 = Double(svg[x1Range]),
+                  let y1 = Double(svg[y1Range]),
+                  let x2 = Double(svg[x2Range]),
+                  let y2 = Double(svg[y2Range]) else {
+                return []
+            }
+            return [CGPoint(x: x1, y: y1), CGPoint(x: x2, y: y2)]
+        }
     }
 
     private func textCoordinates(in svg: String) -> [CGPoint] {

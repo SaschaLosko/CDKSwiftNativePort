@@ -107,6 +107,18 @@ public enum CDKDepictionGenerator {
         }
 
         let labelClipPadding = max(1.4, style.bondWidth * 0.55)
+        let visibleLabelAtomIDs = depictionMolecule.atoms.reduce(into: Set<Int>()) { partial, atom in
+            let atomDegree = degree[atom.id] ?? 0
+            if CDKLabelText.shouldDrawLabel(atom: atom,
+                                            degree: atomDegree,
+                                            style: style,
+                                            molecule: depictionMolecule,
+                                            highlightedAtomIDs: highlightedAtomIDs,
+                                            highlightedBondIDs: highlightedBondIDs) {
+                partial.insert(atom.id)
+            }
+        }
+        let stereoTerminalLabelInset = max(style.fontSize * 0.22, labelClipPadding * 1.35)
         let labelClipObstacles: [CDKLabelObstacle] = depictionMolecule.atoms.compactMap { atom in
             let atomDegree = degree[atom.id] ?? 0
             guard CDKLabelText.shouldDrawLabel(atom: atom,
@@ -205,6 +217,8 @@ public enum CDKDepictionGenerator {
 
         for bond in depictionMolecule.bonds {
             guard let p1 = p(bond.a1), let p2 = p(bond.a2) else { continue }
+            let labelInsetAtA1 = visibleLabelAtomIDs.contains(bond.a1) ? stereoTerminalLabelInset : 0
+            let labelInsetAtA2 = visibleLabelAtomIDs.contains(bond.a2) ? stereoTerminalLabelInset : 0
 
             let v = CGVector(dx: p2.x - p1.x, dy: p2.y - p1.y)
             let len = max(0.0001, hypot(v.dx, v.dy))
@@ -309,9 +323,15 @@ public enum CDKDepictionGenerator {
                 }
             }
 
-            func drawSolidWedge(from a: CGPoint, to b: CGPoint) {
+            func drawSolidWedge(from a: CGPoint, to b: CGPoint, endInset: CGFloat) {
+                let rawDX = b.x - a.x
+                let rawDY = b.y - a.y
+                let rawLen = max(0.0001, hypot(rawDX, rawDY))
+                let inset = min(endInset, rawLen * 0.32)
+                let trimmedB = CGPoint(x: b.x - (rawDX / rawLen) * inset,
+                                       y: b.y - (rawDY / rawLen) * inset)
                 guard let (start, end) = CDKLabelClipping.clipSegmentEndpoints(a,
-                                                                                b,
+                                                                                trimmedB,
                                                                                 labelObstacles: labelClipObstacles,
                                                                                 padding: labelClipPadding) else {
                     return
@@ -322,9 +342,15 @@ public enum CDKDepictionGenerator {
                 addPolygon(points: [start, edge1, edge2], opacity: 0.96, color: baseColor)
             }
 
-            func drawHashedWedge(from a: CGPoint, to b: CGPoint) {
+            func drawHashedWedge(from a: CGPoint, to b: CGPoint, endInset: CGFloat) {
+                let rawDX = b.x - a.x
+                let rawDY = b.y - a.y
+                let rawLen = max(0.0001, hypot(rawDX, rawDY))
+                let inset = min(endInset, rawLen * 0.32)
+                let trimmedB = CGPoint(x: b.x - (rawDX / rawLen) * inset,
+                                       y: b.y - (rawDY / rawLen) * inset)
                 guard let (start, end) = CDKLabelClipping.clipSegmentEndpoints(a,
-                                                                                b,
+                                                                                trimmedB,
                                                                                 labelObstacles: labelClipObstacles,
                                                                                 padding: labelClipPadding) else {
                     return
@@ -407,25 +433,25 @@ public enum CDKDepictionGenerator {
                     if glowHighlighted {
                         addGlowLine(p1, p2, width: style.bondWidth)
                     }
-                    drawSolidWedge(from: p1, to: p2)
+                    drawSolidWedge(from: p1, to: p2, endInset: labelInsetAtA2)
                     continue
                 case .down:
                     if glowHighlighted {
                         addGlowLine(p1, p2, width: style.bondWidth)
                     }
-                    drawHashedWedge(from: p1, to: p2)
+                    drawHashedWedge(from: p1, to: p2, endInset: labelInsetAtA2)
                     continue
                 case .upReversed:
                     if glowHighlighted {
                         addGlowLine(p1, p2, width: style.bondWidth)
                     }
-                    drawSolidWedge(from: p2, to: p1)
+                    drawSolidWedge(from: p2, to: p1, endInset: labelInsetAtA1)
                     continue
                 case .downReversed:
                     if glowHighlighted {
                         addGlowLine(p1, p2, width: style.bondWidth)
                     }
-                    drawHashedWedge(from: p2, to: p1)
+                    drawHashedWedge(from: p2, to: p1, endInset: labelInsetAtA1)
                     continue
                 case .either:
                     if glowHighlighted {

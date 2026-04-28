@@ -106,6 +106,55 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                        "Upstream-style atom labels should render without opaque backdrop rectangles.")
     }
 
+    func testStereoTerminalLabelsKeepExtraClearanceFromWedgeTips() throws {
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 24.0,
+                                padding: 24.0)
+
+        let solidWedge = Molecule(
+            name: "TerminalSolidWedge",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "Cl", position: CGPoint(x: 0.0, y: 1.35))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single, stereo: .up)
+            ]
+        )
+        let solidScene = CDKMetalDepictionSceneBuilder.build(molecule: solidWedge,
+                                                             style: style,
+                                                             canvasRect: CGRect(x: 0, y: 0, width: 420, height: 320),
+                                                             zoom: 1.0,
+                                                             pan: .zero)
+        let solidLabel = try XCTUnwrap(solidScene.labels.first(where: { $0.id == 2 })?.position)
+        let solidNearest = nearestEndpointDistance(in: solidScene.bondSegments, to: solidLabel)
+        XCTAssertGreaterThan(solidNearest, 7.0,
+                             "Solid stereo wedges should leave extra white space before terminal labels.")
+
+        let hashedWedge = Molecule(
+            name: "TerminalHashedWedge",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "Cl", position: CGPoint(x: 0.0, y: 1.35))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single, stereo: .down)
+            ]
+        )
+        let hashedScene = CDKMetalDepictionSceneBuilder.build(molecule: hashedWedge,
+                                                              style: style,
+                                                              canvasRect: CGRect(x: 0, y: 0, width: 420, height: 320),
+                                                              zoom: 1.0,
+                                                              pan: .zero)
+        let hashedLabel = try XCTUnwrap(hashedScene.labels.first(where: { $0.id == 2 })?.position)
+        let hashedNearest = nearestEndpointDistance(in: hashedScene.bondSegments, to: hashedLabel)
+        XCTAssertGreaterThan(hashedNearest, 7.0,
+                             "Hashed stereo wedges should leave extra white space before terminal labels.")
+    }
+
     func testReversedStereoWedgesBroadenAwayFromStereocenter() throws {
         let style = RenderStyle(showCarbons: true,
                                 showImplicitHydrogens: false,
@@ -1596,6 +1645,14 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
 
         guard !lengths.isEmpty else { return 0 }
         return lengths.reduce(0, +) / CGFloat(lengths.count)
+    }
+
+    private func nearestEndpointDistance(in segments: [CDKMetalDepictionScene.LineSegment],
+                                         to point: CGPoint) -> CGFloat {
+        segments
+            .flatMap { [hypot($0.from.x - point.x, $0.from.y - point.y),
+                        hypot($0.to.x - point.x, $0.to.y - point.y)] }
+            .min() ?? .greatestFiniteMagnitude
     }
 
     private func longestBondLength(in segments: [CDKMetalDepictionScene.LineSegment]) -> CGFloat {
