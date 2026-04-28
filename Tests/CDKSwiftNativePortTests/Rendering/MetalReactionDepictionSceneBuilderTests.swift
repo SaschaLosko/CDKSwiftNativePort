@@ -35,6 +35,41 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
                        "Expected a reaction arrow baseline in the rendered reaction scene.")
     }
 
+    func testThreeReactantReactionWrapsParticipantsWithoutFlatPlusRow() throws {
+        let reaction = try brominationStyleReaction()
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.1,
+                                fontSize: 15,
+                                padding: 22)
+        let canvas = CGRect(x: 0, y: 0, width: 1360, height: 620)
+
+        let scene = CDKMetalReactionDepictionSceneBuilder.build(reaction: reaction,
+                                                                style: style,
+                                                                canvasRect: canvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero,
+                                                                rotationDegrees: 0)
+
+        XCTAssertFalse(scene.labels.contains(where: { $0.text == "+" }),
+                       "Wrapped multi-row reaction layouts should suppress plus glyphs and pack participants more like publication-style depictions.")
+
+        let leftLabels = scene.labels.filter {
+            $0.text != "+" && $0.position.x < (canvas.midX - 50)
+        }
+        let rowBands = Set(leftLabels.map { Int(($0.position.y / 72).rounded()) })
+        XCTAssertGreaterThanOrEqual(rowBands.count, 2,
+                                    "Expected multi-row packing on the reactant side for dense three-reactant reactions.")
+
+        let rightLabels = scene.labels.filter {
+            $0.text != "+" && $0.position.x > (canvas.midX + 70)
+        }
+        let rightWidth = (rightLabels.map(\.position.x).max() ?? 0) - (rightLabels.map(\.position.x).min() ?? 0)
+        XCTAssertGreaterThan(rightWidth, 120,
+                             "Single products should retain a reasonably wide lane instead of being squeezed into a narrow vertical strip.")
+    }
+
     func testReactionSceneScalesLabelFontWithZoom() {
         let reaction = CDKReaction(reactants: [ethane(name: "R")], agents: [], products: [ethane(name: "P")])
         let style = RenderStyle(showCarbons: true,
@@ -691,6 +726,17 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
                                    Bond(id: 10, a1: 10, a2: 11, order: .single)
                                ])
         return CDKReaction(reactants: [reactant], agents: [], products: [product])
+    }
+
+    private func brominationStyleReaction() throws -> CDKReaction {
+        let sorbate = try parseSmiles("COC(=O)C=CC=CC")
+        let nbs = try parseSmiles("BrN1C(=O)CCC1=O")
+        let peroxide = try parseSmiles("O=C(OOC(=O)c1ccccc1)c1ccccc1")
+        let benzene = try parseSmiles("c1ccccc1")
+        let product = try parseSmiles("COC(=O)C=CC(Br)CC")
+        return CDKReaction(reactants: [sorbate, nbs, peroxide],
+                           agents: [benzene],
+                           products: [product])
     }
 
     private func parseSmiles(_ smiles: String) throws -> Molecule {

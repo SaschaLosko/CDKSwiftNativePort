@@ -75,22 +75,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                  width: available.width,
                                  height: max(1, agentBandHeight))
 
-        let arrowGap = max(56, min(120, mainRegion.width * 0.16))
-        let totalSideCount = max(1, reactants.count + products.count)
-        let leftShareRaw = CGFloat(max(1, reactants.count)) / CGFloat(totalSideCount)
-        let leftShare = leftShareRaw.clamped(to: 0.33...0.67)
-        let sideWidth = max(1, mainRegion.width - arrowGap)
-        let leftWidth = sideWidth * leftShare
-        let rightWidth = sideWidth - leftWidth
-
-        let leftRegion = CGRect(x: mainRegion.minX,
-                                y: mainRegion.minY,
-                                width: max(1, leftWidth),
-                                height: mainRegion.height)
-        let rightRegion = CGRect(x: leftRegion.maxX + arrowGap,
-                                 y: mainRegion.minY,
-                                 width: max(1, rightWidth),
-                                 height: mainRegion.height)
+        let splitRegions = reactionSideRegions(in: mainRegion,
+                                               reactants: reactants,
+                                               products: products)
+        let arrowGap = splitRegions.arrowGap
+        let leftRegion = splitRegions.leftRegion
+        let rightRegion = splitRegions.rightRegion
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
@@ -351,22 +341,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                  width: available.width,
                                  height: max(1, agentBandHeight))
 
-        let arrowGap = max(56, min(120, mainRegion.width * 0.16))
-        let totalSideCount = max(1, reactants.count + products.count)
-        let leftShareRaw = CGFloat(max(1, reactants.count)) / CGFloat(totalSideCount)
-        let leftShare = leftShareRaw.clamped(to: 0.33...0.67)
-        let sideWidth = max(1, mainRegion.width - arrowGap)
-        let leftWidth = sideWidth * leftShare
-        let rightWidth = sideWidth - leftWidth
-
-        let leftRegion = CGRect(x: mainRegion.minX,
-                                y: mainRegion.minY,
-                                width: max(1, leftWidth),
-                                height: mainRegion.height)
-        let rightRegion = CGRect(x: leftRegion.maxX + arrowGap,
-                                 y: mainRegion.minY,
-                                 width: max(1, rightWidth),
-                                 height: mainRegion.height)
+        let splitRegions = reactionSideRegions(in: mainRegion,
+                                               reactants: reactants,
+                                               products: products)
+        let leftRegion = splitRegions.leftRegion
+        let rightRegion = splitRegions.rightRegion
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
@@ -410,6 +389,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let plusPositions: [CGPoint]
     }
 
+    private struct ReactionSideRegions {
+        let leftRegion: CGRect
+        let rightRegion: CGRect
+        let arrowGap: CGFloat
+    }
+
     private static func layoutBoxes(for molecules: [Molecule], in region: CGRect, style: RenderStyle) -> MoleculeBoxLayout {
         guard !molecules.isEmpty else {
             return MoleculeBoxLayout(items: [], plusPositions: [])
@@ -426,6 +411,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let itemY = region.midY - (itemHeight * 0.5)
 
         let rawWeights = molecules.map { preferredWidthWeight(for: $0) }
+        if shouldWrapParticipants(molecules, in: region, style: style) {
+            return wrappedLayoutBoxes(for: molecules,
+                                      weights: rawWeights,
+                                      in: region,
+                                      style: style)
+        }
         let weightSum = max(0.0001, rawWeights.reduce(0, +))
         let minimumWidth = min(max(38, availableWidth * 0.08), availableWidth / CGFloat(count))
         let remainderWidth = max(0, availableWidth - (minimumWidth * CGFloat(count)))
@@ -454,6 +445,133 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         return MoleculeBoxLayout(items: items, plusPositions: plusPositions)
+    }
+
+    private static func wrappedLayoutBoxes(for molecules: [Molecule],
+                                           weights: [CGFloat],
+                                           in region: CGRect,
+                                           style: RenderStyle) -> MoleculeBoxLayout {
+        let rowAssignments = balancedRowAssignments(for: weights, maxRows: min(2, molecules.count))
+        let rowCount = max(1, rowAssignments.count)
+        let rowGap = max(14, style.fontSize * 0.72)
+        let totalGap = CGFloat(max(0, rowCount - 1)) * rowGap
+        let rowHeight = max(1, (region.height - totalGap) / CGFloat(rowCount))
+        let innerHeight = max(1, rowHeight * 0.88)
+        let totalInnerHeight = (CGFloat(rowCount) * innerHeight) + totalGap
+        var y = region.midY - (totalInnerHeight * 0.5)
+
+        var items: [MoleculeBoxLayout.Item] = []
+        items.reserveCapacity(molecules.count)
+
+        for row in rowAssignments {
+            let rowIndices = Array(row)
+            let rowSpacing = max(14, style.fontSize * 0.48)
+            let rowWeightSum = max(0.0001, rowIndices.reduce(CGFloat.zero) { partial, idx in
+                partial + weights[idx]
+            })
+            let availableRowWidth = max(1, region.width - (CGFloat(max(0, rowIndices.count - 1)) * rowSpacing))
+            let minimumWidth = min(max(54, availableRowWidth * 0.16),
+                                   availableRowWidth / CGFloat(max(1, rowIndices.count)))
+            let remainderWidth = max(0, availableRowWidth - (minimumWidth * CGFloat(rowIndices.count)))
+            let widths = rowIndices.map { idx in
+                minimumWidth + (remainderWidth * (weights[idx] / rowWeightSum))
+            }
+            let totalRowWidth = widths.reduce(0, +) + (CGFloat(max(0, rowIndices.count - 1)) * rowSpacing)
+            var x = region.midX - (totalRowWidth * 0.5)
+
+            for (offset, idx) in rowIndices.enumerated() {
+                let width = widths[offset]
+                let rect = CGRect(x: x,
+                                  y: y,
+                                  width: max(1, width),
+                                  height: innerHeight)
+                items.append(MoleculeBoxLayout.Item(molecule: molecules[idx], rect: rect))
+                x = rect.maxX + rowSpacing
+            }
+
+            y += innerHeight + rowGap
+        }
+
+        return MoleculeBoxLayout(items: items, plusPositions: [])
+    }
+
+    private static func shouldWrapParticipants(_ molecules: [Molecule],
+                                               in region: CGRect,
+                                               style: RenderStyle) -> Bool {
+        guard molecules.count >= 3 else { return false }
+        return region.height >= max(132, style.fontSize * 8.5)
+    }
+
+    private static func balancedRowAssignments(for weights: [CGFloat],
+                                               maxRows: Int) -> [[Int]] {
+        let count = weights.count
+        guard count > 0 else { return [] }
+        guard maxRows > 1, count > 1 else {
+            return [Array(0..<count)]
+        }
+
+        if maxRows == 2 {
+            var prefixSums: [CGFloat] = Array(repeating: 0, count: count + 1)
+            for index in weights.indices {
+                prefixSums[index + 1] = prefixSums[index] + weights[index]
+            }
+
+            let total = prefixSums[count]
+            var bestBreak = max(1, min(count - 1, (count + 1) / 2))
+            var bestScore = CGFloat.greatestFiniteMagnitude
+
+            for breakIndex in 1..<count {
+                let first = prefixSums[breakIndex]
+                let second = total - first
+                let rowImbalance = abs(first - second)
+                let countImbalance = abs(CGFloat(breakIndex) - CGFloat(count - breakIndex))
+                let singletonTopPenalty: CGFloat = (breakIndex == 1 && count > 2) ? 0.45 : 0
+                let score = max(first, second) + (rowImbalance * 0.24) + (countImbalance * 0.30) + singletonTopPenalty
+                if score < bestScore {
+                    bestScore = score
+                    bestBreak = breakIndex
+                }
+            }
+
+            return [Array(0..<bestBreak), Array(bestBreak..<count)]
+        }
+
+        return [Array(0..<count)]
+    }
+
+    private static func reactionSideRegions(in mainRegion: CGRect,
+                                            reactants: [Molecule],
+                                            products: [Molecule]) -> ReactionSideRegions {
+        let arrowGap = max(56, min(120, mainRegion.width * 0.16))
+        let sideWidth = max(1, mainRegion.width - arrowGap)
+
+        let reactantDemand = layoutDemandWeight(for: reactants)
+        let productDemand = layoutDemandWeight(for: products)
+        let leftShareRaw: CGFloat
+        if reactants.isEmpty && !products.isEmpty {
+            leftShareRaw = 0.28
+        } else if products.isEmpty && !reactants.isEmpty {
+            leftShareRaw = 0.72
+        } else {
+            leftShareRaw = reactantDemand / max(0.0001, reactantDemand + productDemand)
+        }
+
+        let wrapAware = reactants.count >= 3 || products.count >= 3
+        let leftShare = leftShareRaw.clamped(to: wrapAware ? 0.36...0.64 : 0.33...0.67)
+        let leftWidth = sideWidth * leftShare
+        let rightWidth = sideWidth - leftWidth
+
+        let leftRegion = CGRect(x: mainRegion.minX,
+                                y: mainRegion.minY,
+                                width: max(1, leftWidth),
+                                height: mainRegion.height)
+        let rightRegion = CGRect(x: leftRegion.maxX + arrowGap,
+                                 y: mainRegion.minY,
+                                 width: max(1, rightWidth),
+                                 height: mainRegion.height)
+        return ReactionSideRegions(leftRegion: leftRegion,
+                                   rightRegion: rightRegion,
+                                   arrowGap: arrowGap)
     }
 
     private static func inverseViewportTransform(_ point: CGPoint,
@@ -567,6 +685,21 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let extent = sqrt(max(1, box.width * box.height)).clamped(to: 1.0...10.0)
         let extentFactor = (extent / 2.2).clamped(to: 0.7...2.4)
         return max(0.5, aspect * atomFactor * labelPressure * extentFactor)
+    }
+
+    private static func layoutDemandWeight(for molecules: [Molecule]) -> CGFloat {
+        guard !molecules.isEmpty else { return 1 }
+        let weights = molecules.map { preferredWidthWeight(for: $0) }
+        let total = max(1, weights.reduce(CGFloat.zero, +))
+        guard molecules.count >= 3 else { return total }
+
+        let rows = balancedRowAssignments(for: weights, maxRows: 2)
+        let rowMax = rows.reduce(CGFloat.zero) { partial, row in
+            max(partial, row.reduce(CGFloat.zero) { subtotal, idx in
+                subtotal + weights[idx]
+            })
+        }
+        return max(1, rowMax)
     }
 
     private static func reactionMapTemplate(from molecules: [Molecule]) -> [Int: CGPoint] {
