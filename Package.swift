@@ -28,7 +28,8 @@ let package = Package(
                 "InChI/OfficialReference/official_reference_cases.json",
                 "InChI/OfficialReference/known_gap_inventory.json",
                 "Reaction/UpstreamReference",
-                "Reaction/port_metadata.json"
+                "Reaction/port_metadata.json",
+                "RInChI/UpstreamReference"
             ]
         )
     ]

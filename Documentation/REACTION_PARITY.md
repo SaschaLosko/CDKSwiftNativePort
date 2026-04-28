@@ -55,7 +55,8 @@ The strict gate tracks the upstream-derived reaction surface that
 It does not currently claim parity for separate upstream subsystems such as:
 
 - the `base/reaction` reaction-engine and reaction-type algorithms
-- the `storage/rinchi` RInChI module
+
+`RInChI` is tracked separately in [`RINCHI_PARITY.md`](RINCHI_PARITY.md).
 
 ## Workflow
 

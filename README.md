@@ -82,6 +82,7 @@ Import and export coverage currently includes:
 ### Identifiers and descriptors
 
 - SMILES, isomeric SMILES, InChI, InChIKey
+- RInChI, RAuxInfo, Long-RInChIKey, Short-RInChIKey, Web-RInChIKey
 - formula, molecular weight, exact mass
 - heavy atom count, donor/acceptor counts, ring count, rotatable bonds
 - XLogP, Mannhold LogP, TPSA, van der Waals volume
@@ -156,6 +157,14 @@ scheme-manipulator coverage is tracked separately through executable upstream
 port metadata and direct Swift regression tests. Inventory/gate commands are
 documented in
 [`Documentation/REACTION_PARITY.md`](Documentation/REACTION_PARITY.md).
+
+## RInChI Status
+
+The package now also includes a native Swift `RInChI` surface for reactions,
+including `RInChI` generation, `RAuxInfo`, Long/Short/Web keys,
+decomposition, and `RInChI`-to-reaction reconstruction. Vendored upstream CDK
+`storage/rinchi` fixtures are exercised through a strict executable gate
+documented in [`Documentation/RINCHI_PARITY.md`](Documentation/RINCHI_PARITY.md).
 
 ## Installation
 

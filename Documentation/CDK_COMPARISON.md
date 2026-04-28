@@ -125,7 +125,10 @@ model/IO/manipulator surface is now tracked by a zero-gap strict parity gate in
 What remains outside that reaction parity claim is a different layer of CDK:
 
 - the `base/reaction` reaction-engine, mechanism, and reaction-type modules
-- the separate `storage/rinchi` Reaction InChI (`RInChI`) module
+
+`RInChI` is no longer outside the maintained Swift surface. The package now
+includes a native `RInChI` implementation plus a vendored upstream-derived
+reference gate documented in [`RINCHI_PARITY.md`](RINCHI_PARITY.md).
 
 ## Parity Tracking
 

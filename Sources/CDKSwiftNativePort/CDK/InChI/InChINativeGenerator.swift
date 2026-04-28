@@ -3,6 +3,7 @@ import Foundation
 struct CDKInChINativeGenerationResult {
     let inchi: String
     let inchiKey: String
+    let auxInfo: String
     let status: CDKInChIStatus
     let message: String
 }
@@ -25,8 +26,10 @@ enum CDKInChINativeGenerator {
     static func generate(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
         if let cached = CDKInChIRoundTripCache.cachedSource(for: molecule) {
             let inchiKey = try CDKInChIKeyCodec.makeKey(from: cached)
+            let auxInfo = buildGenericAuxInfo(for: molecule)
             return CDKInChINativeGenerationResult(inchi: cached,
                                                   inchiKey: inchiKey,
+                                                  auxInfo: auxInfo,
                                                   status: .success,
                                                   message: "")
         }
@@ -119,8 +122,10 @@ enum CDKInChINativeGenerator {
 
         let inchi = "InChI=1S/" + segments.joined(separator: "/")
         let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
+        let auxInfo = buildGenericAuxInfo(for: molecule)
         return CDKInChINativeGenerationResult(inchi: inchi,
                                               inchiKey: inchiKey,
+                                              auxInfo: auxInfo,
                                               status: .success,
                                               message: "")
     }
@@ -186,10 +191,104 @@ enum CDKInChINativeGenerator {
 
         let inchi = "InChI=1S/" + segments.joined(separator: "/")
         let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
+        let auxInfo = buildGenericAuxInfo(for: molecule)
         return CDKInChINativeGenerationResult(inchi: inchi,
                                               inchiKey: inchiKey,
+                                              auxInfo: auxInfo,
                                               status: .success,
                                               message: "")
+    }
+
+    private static func buildGenericAuxInfo(for molecule: Molecule) -> String {
+        let sortedAtoms = molecule.atoms.sorted { lhs, rhs in lhs.id < rhs.id }
+        let sortedBonds = molecule.bonds.sorted { lhs, rhs in
+            if lhs.id != rhs.id {
+                return lhs.id < rhs.id
+            }
+            if min(lhs.a1, lhs.a2) != min(rhs.a1, rhs.a2) {
+                return min(lhs.a1, lhs.a2) < min(rhs.a1, rhs.a2)
+            }
+            return max(lhs.a1, lhs.a2) < max(rhs.a1, rhs.a2)
+        }
+
+        let numbering = sortedAtoms.isEmpty ? "" : sortedAtoms.enumerated().map { "\($0.offset + 1)" }.joined(separator: ",")
+        let atomIndexByID = Dictionary(uniqueKeysWithValues: sortedAtoms.enumerated().map { ($0.element.id, $0.offset + 1) })
+
+        let atomPayload = sortedAtoms.map { atom in
+            var symbol = normalizedElementSymbol(atom.element)
+            if atom.aromatic {
+                symbol = symbol.lowercased()
+            }
+            if let isotope = atom.isotopeMassNumber {
+                symbol += ".i\(isotope)"
+            }
+            if atom.charge > 0 {
+                symbol += atom.charge == 1 ? "+" : "+\(atom.charge)"
+            } else if atom.charge < 0 {
+                symbol += atom.charge == -1 ? "-" : "\(atom.charge)"
+            }
+            if let radicalType = atom.radicalType {
+                symbol += ".r\(radicalType.rawValue)"
+            } else if let radical = atom.radical, radical > 0 {
+                symbol += ".r\(radical)"
+            }
+            return symbol
+        }.joined()
+
+        let bondPayload = sortedBonds.map { bond in
+            let orderToken: String
+            switch bond.order {
+            case .single:
+                orderToken = "s"
+            case .double:
+                orderToken = "d"
+            case .triple:
+                orderToken = "t"
+            case .aromatic:
+                orderToken = "a"
+            }
+            let left = atomIndexByID[bond.a1] ?? bond.a1
+            let right = atomIndexByID[bond.a2] ?? bond.a2
+            return "\(orderToken)\(min(left, right))-\(max(left, right))"
+        }.joined(separator: ";")
+
+        let coordinatePayload = sortedAtoms.map { atom in
+            [
+                formatAuxCoordinate(atom.position.x),
+                formatAuxCoordinate(atom.position.y),
+                formatAuxCoordinate(atom.zPosition ?? 0),
+            ].joined(separator: ",")
+        }.joined(separator: ";")
+
+        var segments = ["AuxInfo=1/0"]
+        if !numbering.isEmpty {
+            segments.append("N:\(numbering)")
+        }
+        segments.append("rA:\(sortedAtoms.count)n\(atomPayload)")
+        segments.append("rB:\(bondPayload)")
+        segments.append("rC:\(coordinatePayload)")
+        return segments.joined(separator: "/")
+    }
+
+    private static func formatAuxCoordinate(_ value: Double) -> String {
+        if value == 0 {
+            return "0"
+        }
+
+        let formatted = String(format: "%.4f", value)
+        var out = formatted
+        while out.contains(".") && out.hasSuffix("0") {
+            out.removeLast()
+        }
+        if out.hasSuffix(".") {
+            out.removeLast()
+        }
+        if out.hasPrefix("0."), out.count > 1 {
+            out.removeFirst()
+        } else if out.hasPrefix("-0."), out.count > 2 {
+            out.remove(at: out.index(after: out.startIndex))
+        }
+        return out
     }
 
     private static func disconnectedReferenceComponents(in molecule: Molecule) -> [Set<Int>] {
@@ -1963,8 +2062,10 @@ enum CDKInChINativeGenerator {
 
         let inchi = "InChI=1S/" + segments.joined(separator: "/")
         let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
+        let auxInfo = buildGenericAuxInfo(for: molecule)
         return CDKInChINativeGenerationResult(inchi: inchi,
                                               inchiKey: inchiKey,
+                                              auxInfo: auxInfo,
                                               status: .success,
                                               message: "")
     }
@@ -2026,8 +2127,10 @@ enum CDKInChINativeGenerator {
         // a relative isotope layer without an explicit connectivity segment.
         let inchi = "InChI=1S/2\(symbol)/i1+0;1\(signedInteger(trailingShift))"
         let inchiKey = try CDKInChIKeyCodec.makeKey(from: inchi)
+        let auxInfo = buildGenericAuxInfo(for: molecule)
         return CDKInChINativeGenerationResult(inchi: inchi,
                                               inchiKey: inchiKey,
+                                              auxInfo: auxInfo,
                                               status: .success,
                                               message: "")
     }

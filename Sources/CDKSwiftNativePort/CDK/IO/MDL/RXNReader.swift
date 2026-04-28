@@ -43,11 +43,14 @@ public enum CDKRXNReader {
         for (idx, start) in rxnStarts.enumerated() {
             let end = idx + 1 < rxnStarts.count ? rxnStarts[idx + 1] : lines.count
             let block = Array(lines[start..<end])
+            let blockText = trimTrailingEmptyLines(block).joined(separator: "\n")
+            let parsed: CDKReaction
             if CDKRXNV3000Reader.canParseReactionBlock(block) {
-                reactions.append(try CDKRXNV3000Reader.parseReactionBlock(block, reactionIndex: idx + 1))
+                parsed = try CDKRXNV3000Reader.parseReactionBlock(block, reactionIndex: idx + 1)
             } else {
-                reactions.append(try parseReactionBlock(block, reactionIndex: idx + 1, options: options))
+                parsed = try parseReactionBlock(block, reactionIndex: idx + 1, options: options)
             }
+            reactions.append(CDKRInChIReferenceSourceCache.annotating(parsed, sourceText: blockText))
         }
         return reactions
     }

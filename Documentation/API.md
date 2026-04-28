@@ -183,7 +183,34 @@ Current CX support includes:
   - `getMessage()`
   - `getInchi()`
   - `getInchiKey()`
+  - `getAuxInfo()`
 - `CDKInChIStatus`
+
+## 4.1 RInChI
+
+- `CDKRInChIOptions`
+- `CDKRInChIStatus`
+- `CDKRInChIGenerator`
+  - `generate(_:)`
+  - `getStatus()`
+  - `getMessages()`
+  - `getRInChI()`
+  - `getAuxInfo()`
+  - `getLongRInChIKey()`
+  - `getShortRInChIKey()`
+  - `getWebRInChIKey()`
+- `CDKRInChIDecomposition`
+  - `decompose()`
+  - `getStatus()`
+  - `getMessages()`
+  - `getReactionDirection()`
+  - `getComponents()`
+  - `decomposeRAuxInfo(_:)`
+- `CDKRInChIDecompositionComponent`
+- `CDKRInChIToReaction`
+  - `getStatus()`
+  - `getMessages()`
+  - `getReaction()`
 
 ## 5. Unified Import APIs
 

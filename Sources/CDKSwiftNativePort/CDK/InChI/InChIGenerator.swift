@@ -5,6 +5,7 @@ import Foundation
 public final class CDKInChIGenerator {
     private let inchi: String?
     private let inchiKey: String?
+    private let auxInfo: String?
 
     private(set) var status: CDKInChIStatus = .success
     private(set) var message: String = ""
@@ -14,11 +15,13 @@ public final class CDKInChIGenerator {
             let result = try CDKInChINativeGenerator.generate(for: molecule)
             self.inchi = result.inchi
             self.inchiKey = result.inchiKey
+            self.auxInfo = result.auxInfo
             self.status = result.status
             self.message = result.message
         } catch {
             self.inchi = nil
             self.inchiKey = nil
+            self.auxInfo = nil
             self.status = .error
             self.message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -44,5 +47,12 @@ public final class CDKInChIGenerator {
             throw ChemError.parseFailed(message.isEmpty ? "Could not generate InChIKey." : message)
         }
         return inchiKey
+    }
+
+    public func getAuxInfo() throws -> String {
+        guard let auxInfo else {
+            throw ChemError.parseFailed(message.isEmpty ? "Could not generate InChI AuxInfo." : message)
+        }
+        return auxInfo
     }
 }
