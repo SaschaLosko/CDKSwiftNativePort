@@ -126,6 +126,70 @@ final class ChemFileImporterTests: XCTestCase {
         XCTAssertEqual(reaction.productCount, 1)
     }
 
+    func testReadsMultiRecordReactionSmilesAsReactionSet() throws {
+        let text = """
+        CCO>O>CC=O
+        CC=O>>CCO
+        """
+
+        let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "rsmi")
+        let hierarchy = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: "rsmi")
+        let firstReaction = try CDKFileImporter.readReaction(text: text, fileExtension: "rsmi")
+
+        XCTAssertEqual(molecules.count, 5)
+        XCTAssertEqual(firstReaction.reactantCount, 1)
+        XCTAssertEqual(firstReaction.agentCount, 1)
+        XCTAssertEqual(firstReaction.productCount, 1)
+
+        guard case .set(let set) = hierarchy else {
+            return XCTFail("Expected reaction set for multi-record reaction SMILES.")
+        }
+        XCTAssertEqual(set.flattenedReactions.count, 2)
+        XCTAssertEqual(set.flattenedReactions[0].agentCount, 1)
+        XCTAssertEqual(set.flattenedReactions[1].productCount, 1)
+    }
+
+    func testReadsV3000ReactionByExtension() throws {
+        let text = """
+        $RXN V3000
+        ImporterV3000
+          CDKSwiftNativePort
+
+        M  V30 COUNTS 1 1 1
+        M  V30 BEGIN REACTANT
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 1 0 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 C 0.0 0.0 0.0 1
+        M  V30 END ATOM
+        M  V30 END CTAB
+        M  V30 END REACTANT
+        M  V30 BEGIN PRODUCT
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 1 0 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 O 0.0 0.0 0.0 1
+        M  V30 END ATOM
+        M  V30 END CTAB
+        M  V30 END PRODUCT
+        M  V30 BEGIN AGENT
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 1 0 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 N 0.0 0.0 0.0 0
+        M  V30 END ATOM
+        M  V30 END CTAB
+        M  V30 END AGENT
+        M  END
+        """
+
+        let reaction = try CDKFileImporter.readReaction(text: text, fileExtension: "rxn")
+        XCTAssertEqual(reaction.name, "ImporterV3000")
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.agentCount, 1)
+        XCTAssertEqual(reaction.productCount, 1)
+    }
+
     func testReadsReactionCMLByCMLExtension() throws {
         let reaction = try CDKFileImporter.readReaction(text: CMLReactionFixtures.reactionWithProperties,
                                                         fileExtension: "cml")

@@ -18,6 +18,13 @@ It currently covers:
 - RDF parsing and RDF round-tripping for multi-reaction sets
 - reaction SMILES parsing and SMILES round-tripping
 
+In addition to the curated vendored corpus, the direct Swift regression suite now
+also exercises:
+
+- RXN V3000 parsing and writing
+- multi-record reaction SMILES import into native reaction sets
+- native reaction manipulator utilities and inline reaction conversion helpers
+
 The executable gate is:
 
 - `Tests/CDKSwiftNativePortTests/Reaction/ReactionReferenceParityTests.swift`

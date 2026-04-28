@@ -7,6 +7,27 @@ public enum CDKReactionRole: String, CaseIterable, Codable, Hashable, Sendable {
     case product
 }
 
+public enum CDKReactionDirection: String, CaseIterable, Codable, Hashable, Sendable {
+    case forward
+    case backward
+    case bidirectional
+    case noGo
+    case retroSynthetic
+    case resonance
+    case undirected
+
+    public var reversed: CDKReactionDirection {
+        switch self {
+        case .forward:
+            return .backward
+        case .backward:
+            return .forward
+        case .bidirectional, .noGo, .retroSynthetic, .resonance, .undirected:
+            return self
+        }
+    }
+}
+
 public struct CDKReactionParticipant: Equatable, Hashable, Codable, Sendable {
     public var molecule: Molecule
     public var role: CDKReactionRole
@@ -24,6 +45,7 @@ public struct CDKReaction: Equatable {
     public var reactantParticipants: [CDKReactionParticipant]
     public var agentParticipants: [CDKReactionParticipant]
     public var productParticipants: [CDKReactionParticipant]
+    public var direction: CDKReactionDirection = .forward
     public var name: String? = nil
     public var properties: [String: String] = [:]
     public var cxState: CDKCxSmilesState? = nil
@@ -66,6 +88,7 @@ public struct CDKReaction: Equatable {
                 agents: [Molecule],
                 products: [Molecule],
                 id: String? = nil,
+                direction: CDKReactionDirection = .forward,
                 name: String? = nil,
                 properties: [String: String] = [:],
                 cxState: CDKCxSmilesState? = nil) {
@@ -79,6 +102,7 @@ public struct CDKReaction: Equatable {
         self.productParticipants = products.map { molecule in
             CDKReactionParticipant(molecule: molecule, role: .product)
         }
+        self.direction = direction
         self.name = name
         self.properties = properties
         self.cxState = cxState
@@ -88,6 +112,7 @@ public struct CDKReaction: Equatable {
                 agentParticipants: [CDKReactionParticipant],
                 productParticipants: [CDKReactionParticipant],
                 id: String? = nil,
+                direction: CDKReactionDirection = .forward,
                 name: String? = nil,
                 properties: [String: String] = [:],
                 cxState: CDKCxSmilesState? = nil) {
@@ -95,6 +120,7 @@ public struct CDKReaction: Equatable {
         self.reactantParticipants = Self.normalizedParticipants(reactantParticipants, role: .reactant)
         self.agentParticipants = Self.normalizedParticipants(agentParticipants, role: .agent)
         self.productParticipants = Self.normalizedParticipants(productParticipants, role: .product)
+        self.direction = direction
         self.name = name
         self.properties = properties
         self.cxState = cxState
@@ -102,6 +128,7 @@ public struct CDKReaction: Equatable {
 
     public init(participants: [CDKReactionParticipant],
                 id: String? = nil,
+                direction: CDKReactionDirection = .forward,
                 name: String? = nil,
                 properties: [String: String] = [:],
                 cxState: CDKCxSmilesState? = nil) {
@@ -112,6 +139,7 @@ public struct CDKReaction: Equatable {
             .filter { $0.role == .agent }
         self.productParticipants = participants
             .filter { $0.role == .product }
+        self.direction = direction
         self.name = name
         self.properties = properties
         self.cxState = cxState

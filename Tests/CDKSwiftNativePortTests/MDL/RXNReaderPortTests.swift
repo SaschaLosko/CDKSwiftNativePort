@@ -34,6 +34,7 @@ final class RXNReaderPortTests: XCTestCase {
         XCTAssertEqual(reaction.reactantCount, 1)
         XCTAssertEqual(reaction.productCount, 1)
         XCTAssertEqual(reaction.agentCount, 0)
+        XCTAssertEqual(reaction.name, "DemoReaction")
         XCTAssertEqual(reaction.reactants.first?.atoms.first?.element.uppercased(), "C")
         XCTAssertEqual(reaction.products.first?.atoms.first?.element.uppercased(), "O")
     }
@@ -114,5 +115,70 @@ final class RXNReaderPortTests: XCTestCase {
         XCTAssertNil(reaction.productParticipants.first?.stoichiometry)
         let agentStoich = try XCTUnwrap(reaction.agentParticipants.first?.stoichiometry)
         XCTAssertEqual(agentStoich, 0.5, accuracy: 0.000_001)
+    }
+
+    func testParsesV3000ReactionBlockWithAgents() throws {
+        let text = """
+        $RXN V3000
+        DemoV3000
+          CDKSwiftNativePort
+
+        M  V30 COUNTS 2 1 2
+        M  V30 BEGIN REACTANT
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 2 1 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 C 0.0 0.0 0.0 1
+        M  V30 2 O 1.0 0.0 0.0 2
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 1 1 2
+        M  V30 END BOND
+        M  V30 END CTAB
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 1 0 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 Cl 0.0 0.0 0.0 0
+        M  V30 END ATOM
+        M  V30 END CTAB
+        M  V30 END REACTANT
+        M  V30 BEGIN PRODUCT
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 2 1 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 C 0.0 0.0 0.0 1
+        M  V30 2 N 1.0 0.0 0.0 2
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 2 1 2
+        M  V30 END BOND
+        M  V30 END CTAB
+        M  V30 END PRODUCT
+        M  V30 BEGIN AGENT
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 1 0 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 Al 0.0 0.0 0.0 0 CHG=3
+        M  V30 END ATOM
+        M  V30 END CTAB
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 1 0 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 Cl 0.0 0.0 0.0 0 CHG=-1
+        M  V30 END ATOM
+        M  V30 END CTAB
+        M  V30 END AGENT
+        M  END
+        """
+
+        let reaction = try CDKRXNReader.readReaction(text: text)
+        XCTAssertEqual(reaction.name, "DemoV3000")
+        XCTAssertEqual(reaction.reactantCount, 2)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertEqual(reaction.agentCount, 2)
+        XCTAssertEqual(reaction.reactants[0].atoms.compactMap(\.atomMapNumber), [1, 2])
+        XCTAssertEqual(reaction.products[0].atoms.compactMap(\.atomMapNumber), [1, 2])
+        XCTAssertEqual(reaction.agents[0].atoms.first?.charge, 3)
+        XCTAssertEqual(reaction.agents[1].atoms.first?.charge, -1)
     }
 }

@@ -17,7 +17,7 @@ public enum CDKRDFReader {
         let lines = normalized.components(separatedBy: "\n")
 
         let rxnStarts = lines.enumerated().compactMap { idx, line in
-            line.trimmingCharacters(in: .whitespacesAndNewlines) == "$RXN" ? idx : nil
+            line.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().hasPrefix("$RXN") ? idx : nil
         }
 
         guard !rxnStarts.isEmpty else {

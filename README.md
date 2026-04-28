@@ -23,6 +23,7 @@ or app session logic.
 ### Core chemistry model
 
 - `Molecule`, `Atom`, `Bond`, `MoleculeSgroup`
+- `CDKReaction`, `CDKReactionParticipant`, `CDKReactionDirection`
 - stereochemistry, atom maps, aliases, attachment points
 - query atoms and query bonds
 - SDF-style data fields and Sgroup metadata
@@ -32,6 +33,8 @@ or app session logic.
 - SMILES parsing and generation
 - reaction SMILES parsing and generation
 - native reaction hierarchy types for sets, lists, schemes, and lossless list entries
+- native reaction manipulator utilities for counts, reversal, inline conversion,
+  mapped-object lookup, and set-level queries
 - CXSMILES parsing for:
   - atom labels and atom values
   - 2D and 3D coordinates
@@ -72,7 +75,7 @@ Import and export coverage currently includes:
 - XYZ
 - CML molecules
 - CML reactions
-- RXN
+- RXN V2000 and V3000
 - RDF
 - SVG depiction export
 
@@ -92,6 +95,7 @@ The package owns:
 
 - molecule and reaction models
 - reaction hierarchy models (`CDKReactionSet`, `CDKReactionList`, `CDKReactionScheme`) and entry enums
+- reaction manipulator helpers (`CDKReactionManipulator`, `CDKReactionSetManipulator`)
 - readers, writers, parsers, generators
 - layout and depiction algorithms
 - scene building for host renderers

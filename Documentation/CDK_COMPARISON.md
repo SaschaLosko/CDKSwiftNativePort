@@ -113,9 +113,13 @@ The following CDK areas are still outside the package’s current parity target:
 Reaction CML now has native Swift hierarchy types for sets, lists, schemes,
 and list entries, and the reader/writer preserve branching and step grouping
 through hierarchy round-trips instead of collapsing everything to flat reaction
-arrays. The remaining reaction parity work is broader than file parsing alone:
-the package still does not attempt to match all of upstream CDK's reaction
-manipulation utilities or every configurable IO mode.
+arrays. The package now also exposes a native reaction manipulator layer for
+counts, reversal, mapped-object lookup, inline reaction-to-molecule conversion,
+and set-level queries, plus RXN V3000 parsing/writing and multi-record reaction
+SMILES set import. The remaining reaction parity work is therefore narrower:
+the biggest open gap is not basic model/IO coverage anymore, but the longer tail
+of upstream CDK reaction utilities and configurable reader/writer behaviors that
+still have no direct Swift counterpart.
 
 ## Parity Tracking
 

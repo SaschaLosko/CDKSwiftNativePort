@@ -131,7 +131,7 @@ public enum CDKFileImporter {
         case "smi", "smiles", "ism", "can":
             return try CDKSMILESReader.read(text: text)
         case "rsmi":
-            return try molecules(from: parseReactionSmiles(text))
+            return try molecules(from: parseReactionSmilesRecords(text))
         case "inchi", "ich":
             return try CDKInChIReader.read(text: text)
         case "xyz":
@@ -168,9 +168,9 @@ public enum CDKFileImporter {
         case "rdf":
             return try CDKRDFReader.readReaction(text: text)
         case "smi", "smiles", "ism", "can":
-            return try parseReactionSmiles(text)
+            return try firstReaction(from: parseReactionSmilesRecords(text))
         case "rsmi":
-            return try parseReactionSmiles(text)
+            return try firstReaction(from: parseReactionSmilesRecords(text))
         case "txt":
             return try readTextReactionWithAutoDetection(text)
         default:
@@ -190,7 +190,7 @@ public enum CDKFileImporter {
         case "rdf":
             return hierarchy(from: try CDKRDFReader.readReactions(text: text))
         case "smi", "smiles", "ism", "can", "rsmi":
-            return .reaction(try parseReactionSmiles(text))
+            return hierarchy(from: try parseReactionSmilesRecords(text))
         case "txt":
             return try readTextReactionHierarchyWithAutoDetection(text)
         default:
@@ -217,7 +217,7 @@ public enum CDKFileImporter {
             return try CDKRDFReader.read(text: text)
         }
         if looksLikeReactionSmiles(text) {
-            return try molecules(from: parseReactionSmiles(text))
+            return try molecules(from: parseReactionSmilesRecords(text))
         }
         if looksLikeMol2(text) {
             return try CDKMol2Reader.read(text: text)
@@ -268,7 +268,7 @@ public enum CDKFileImporter {
             return try CDKCMLReactionReader.readHierarchy(text: text)
         }
         if looksLikeReactionSmiles(text) {
-            return .reaction(try parseReactionSmiles(text))
+            return hierarchy(from: try parseReactionSmilesRecords(text))
         }
         throw ChemError.unsupported("Unable to detect a supported reaction format.")
     }
@@ -290,12 +290,20 @@ public enum CDKFileImporter {
         return looksLikeReactionSmiles(text)
     }
 
-    private static func parseReactionSmiles(_ text: String) throws -> CDKReaction {
-        guard let line = firstMeaningfulLine(in: text) else {
+    private static func parseReactionSmilesRecords(_ text: String) throws -> [CDKReaction] {
+        let lines = meaningfulLines(in: text)
+        guard !lines.isEmpty else {
             throw ChemError.emptyInput
         }
         let parser = CDKSmilesParser(flavor: .cdkDefault)
-        return try parser.parseReactionSmiles(line)
+        return try lines.map(parser.parseReactionSmiles)
+    }
+
+    private static func firstReaction(from reactions: [CDKReaction]) throws -> CDKReaction {
+        guard let first = reactions.first else {
+            throw ChemError.emptyInput
+        }
+        return first
     }
 
     private static func molecules(from reaction: CDKReaction) -> [Molecule] {
@@ -321,14 +329,17 @@ public enum CDKFileImporter {
     }
 
     private static func firstMeaningfulLine(in text: String) -> String? {
-        for raw in text.components(separatedBy: .newlines) {
+        meaningfulLines(in: text).first
+    }
+
+    private static func meaningfulLines(in text: String) -> [String] {
+        text.components(separatedBy: .newlines).compactMap { raw in
             let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             if line.isEmpty || line.hasPrefix("#") || line.hasPrefix("//") {
-                continue
+                return nil
             }
             return line
         }
-        return nil
     }
 
     private static func looksLikeInChI(_ text: String) -> Bool {
@@ -345,7 +356,7 @@ public enum CDKFileImporter {
 
     private static func looksLikeRXN(_ text: String) -> Bool {
         text.components(separatedBy: .newlines).contains {
-            $0.trimmingCharacters(in: .whitespacesAndNewlines) == "$RXN"
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().hasPrefix("$RXN")
         }
     }
 

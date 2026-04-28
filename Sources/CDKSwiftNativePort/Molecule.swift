@@ -217,6 +217,7 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public var rGroupLabel: Int? = nil
     public var rGroupMembership: String? = nil
     public var componentGroupID: Int? = nil
+    public var reactionRole: CDKReactionRole? = nil
     public var substitutionCount: Int? = nil
     public var unsaturated: Int? = nil
     public var ringBondCount: Int? = nil
@@ -266,6 +267,7 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
                 rGroupLabel: Int? = nil,
                 rGroupMembership: String? = nil,
                 componentGroupID: Int? = nil,
+                reactionRole: CDKReactionRole? = nil,
                 substitutionCount: Int? = nil,
                 unsaturated: Int? = nil,
                 ringBondCount: Int? = nil,
@@ -295,6 +297,7 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         self.rGroupLabel = rGroupLabel
         self.rGroupMembership = rGroupMembership
         self.componentGroupID = componentGroupID
+        self.reactionRole = reactionRole
         self.substitutionCount = substitutionCount
         self.unsaturated = unsaturated
         self.ringBondCount = ringBondCount

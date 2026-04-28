@@ -231,6 +231,7 @@ Current CX support includes:
     - `readReactionScheme(text:)`
     - `readReactionSet(text:)`
   - `CDKRXNReader`
+  - `CDKRXNV3000Reader`
   - `CDKRDFReader`
 
 ### 5.3 File access helper
@@ -305,7 +306,60 @@ and extension-style host integrations.
     - `write(_ list:)`
     - `write(_ scheme:)`
   - `CDKRXNWriter`
+    - `Options`
+    - `write(reaction:options:)`
+    - `write(reactions:options:)`
   - `CDKRDFWriter`
+    - `Options`
+    - `write(reaction:options:)`
+    - `write(reactions:options:)`
+
+## 6.3 Reaction utilities
+
+- `CDKReactionRole`
+- `CDKReactionDirection`
+- `CDKReactionParticipant`
+- `CDKReaction`
+- `CDKReactionSet`
+- `CDKReactionList`
+- `CDKReactionScheme`
+- `CDKReactionHierarchy`
+- `CDKReactionAtomReference`
+- `CDKReactionBondReference`
+- `CDKReactionManipulator`
+  - `getAtomCount(_:)`
+  - `getBondCount(_:)`
+  - `getAllMolecules(_:)`
+  - `getAllReactants(_:)`
+  - `getAllAgents(_:)`
+  - `getAllProducts(_:)`
+  - `reverse(_:)`
+  - `getAllIDs(_:)`
+  - `getRelevantAtomContainer(_:atom:)`
+  - `getRelevantAtomContainer(_:bond:)`
+  - `removeAtomAndConnectedElectronContainers(_:_:)`
+  - `removeElectronContainer(_:_:)`
+  - `getMappedChemObject(_:_:)`
+  - `findMappedBonds(_:)`
+  - `toMolecule(_:)`
+  - `toReaction(_:)`
+- `CDKReactionSetManipulator`
+  - `getAtomCount(_:)`
+  - `getBondCount(_:)`
+  - `getAllMolecules(_:)`
+  - `getAllAtomContainers(_:)`
+  - `getAllIDs(_:)`
+  - `getRelevantReaction(_:atom:)`
+  - `getRelevantReaction(_:bond:)`
+  - `getRelevantAtomContainer(_:atom:)`
+  - `getRelevantAtomContainer(_:bond:)`
+  - `removeAtomAndConnectedElectronContainers(_:_:)`
+  - `removeElectronContainer(_:_:)`
+  - `getRelevantReactions(_:,molecule:)`
+  - `getRelevantReactionsAsReactant(_:,molecule:)`
+  - `getRelevantReactionsAsProduct(_:,molecule:)`
+  - `getReactionByAtomContainerID(_:,id:)`
+  - `getReactionByReactionID(_:,id:)`
 
 ## 7. Identifier and Property Services
 

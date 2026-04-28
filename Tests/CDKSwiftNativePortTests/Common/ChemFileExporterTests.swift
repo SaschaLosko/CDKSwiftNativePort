@@ -202,6 +202,42 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed.properties["Ka"], "3")
     }
 
+    func testWritesV3000RXNWhenRequestedAndRoundTrips() throws {
+        let reaction = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
+                                   agents: [try referenceMolecule(name: "Agent")],
+                                   products: [try referenceMolecule(name: "Product")],
+                                   name: "V3000 Reaction")
+        var options = CDKFileExportOptions()
+        options.rxnOptions = CDKRXNWriter.Options(alwaysV3000: true)
+
+        let text = try CDKFileExporter.write(reaction: reaction, as: .rxn, options: options)
+        let parsed = try CDKRXNReader.readReaction(text: text)
+
+        XCTAssertTrue(text.contains("$RXN V3000"))
+        XCTAssertTrue(text.contains("M  V30 BEGIN AGENT"))
+        XCTAssertEqual(parsed.name, "V3000 Reaction")
+        XCTAssertEqual(parsed.reactantCount, 1)
+        XCTAssertEqual(parsed.agentCount, 1)
+        XCTAssertEqual(parsed.productCount, 1)
+    }
+
+    func testWritesMultipleReactionsAsConcatenatedRXNBlocks() throws {
+        let first = CDKReaction(reactants: [try referenceMolecule(name: "A")],
+                                agents: [],
+                                products: [try referenceMolecule(name: "B")],
+                                name: "First")
+        let second = CDKReaction(reactants: [try referenceMolecule(name: "B")],
+                                 agents: [],
+                                 products: [try referenceMolecule(name: "C")],
+                                 name: "Second")
+
+        let text = try CDKFileExporter.write(reactions: [first, second], as: .rxn)
+        let parsed = try CDKRXNReader.readReactions(text: text)
+
+        XCTAssertEqual(text.components(separatedBy: "$RXN").count - 1, 2)
+        XCTAssertEqual(parsed.map(\.name), ["First", "Second"])
+    }
+
     func testWritesReactionSchemeAsCMLAndRoundTripsHierarchy() throws {
         let first = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
                                 agents: [],

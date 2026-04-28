@@ -49,6 +49,8 @@ public struct CDKFileExportOptions {
     public var smilesFlavor: CDKSmiFlavor
     public var isomericSmilesFlavor: CDKSmiFlavor
     public var sdfOptions: CDKSDFWriterOptions
+    public var rxnOptions: CDKRXNWriter.Options
+    public var rdfOptions: CDKRDFWriter.Options
     public var renderStyle: RenderStyle
     public var svgCanvasSize: CGSize
     public var svgIncludeBackground: Bool
@@ -56,12 +58,16 @@ public struct CDKFileExportOptions {
     public init(smilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .strict],
                 isomericSmilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .isomeric, .strict],
                 sdfOptions: CDKSDFWriterOptions = CDKSDFWriterOptions(),
+                rxnOptions: CDKRXNWriter.Options = CDKRXNWriter.Options(),
+                rdfOptions: CDKRDFWriter.Options = CDKRDFWriter.Options(),
                 renderStyle: RenderStyle = RenderStyle(),
                 svgCanvasSize: CGSize = CGSize(width: 1400, height: 920),
                 svgIncludeBackground: Bool = true) {
         self.smilesFlavor = smilesFlavor
         self.isomericSmilesFlavor = isomericSmilesFlavor
         self.sdfOptions = sdfOptions
+        self.rxnOptions = rxnOptions
+        self.rdfOptions = rdfOptions
         self.renderStyle = renderStyle
         self.svgCanvasSize = svgCanvasSize
         self.svgIncludeBackground = svgIncludeBackground
@@ -200,9 +206,9 @@ public enum CDKFileExporter {
         case .cml:
             return try CDKCMLWriter.write(molecules)
         case .rxn:
-            return try CDKRXNWriter.write(reactants: molecules)
+            return try CDKRXNWriter.write(reactants: molecules, options: options.rxnOptions)
         case .rdf:
-            return try CDKRDFWriter.write(reactants: molecules)
+            return try CDKRDFWriter.write(reactants: molecules, options: options.rdfOptions)
         case .svg:
             guard let first = molecules.first, molecules.count == 1 else {
                 throw ChemError.unsupported("SVG depiction export supports a single molecule only.")
@@ -261,29 +267,12 @@ public enum CDKFileExporter {
         case .cml:
             return try CDKCMLReactionWriter.write(reactionHierarchy)
         case .rxn:
-            guard reactions.count == 1, let reaction = reactions.first else {
-                throw ChemError.unsupported("RXN export supports a single reaction only.")
-            }
-            return try CDKRXNWriter.write(reactants: reaction.reactants,
-                                          products: reaction.products,
-                                          agents: reaction.agents,
-                                          reactionName: reaction.name ?? reaction.id ?? "CDKSwiftNativePort Reaction")
-        case .rdf:
             if reactions.count == 1, let reaction = reactions.first {
-                return try CDKRDFWriter.write(reactants: reaction.reactants,
-                                              products: reaction.products,
-                                              agents: reaction.agents,
-                                              reactionName: reaction.name ?? reaction.id ?? "CDKSwiftNativePort RDF")
+                return try CDKRXNWriter.write(reaction: reaction, options: options.rxnOptions)
             }
-
-            return try reactions.enumerated().map { index, reaction in
-                try CDKRDFWriter.write(reactants: reaction.reactants,
-                                       products: reaction.products,
-                                       agents: reaction.agents,
-                                       reactionName: reaction.name ?? reaction.id ?? "CDKSwiftNativePort RDF \(index + 1)")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-            }.joined(separator: "\n")
-                + "\n"
+            return try CDKRXNWriter.write(reactions: reactions, options: options.rxnOptions)
+        case .rdf:
+            return try CDKRDFWriter.write(reactions: reactions, options: options.rdfOptions)
         case .smiles, .isomericSmiles:
             let generator = CDKSmilesGenerator(flavor: format == .smiles ? options.smilesFlavor : options.isomericSmilesFlavor)
             return reactions.map(generator.create).joined(separator: "\n") + "\n"

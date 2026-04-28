@@ -17,7 +17,7 @@ public enum CDKRXNReader {
         let lines = normalized.components(separatedBy: "\n")
 
         let rxnStarts = lines.enumerated().compactMap { idx, line in
-            line.trimmingCharacters(in: .whitespacesAndNewlines) == "$RXN" ? idx : nil
+            line.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().hasPrefix("$RXN") ? idx : nil
         }
 
         guard !rxnStarts.isEmpty else {
@@ -28,7 +28,11 @@ public enum CDKRXNReader {
         for (idx, start) in rxnStarts.enumerated() {
             let end = idx + 1 < rxnStarts.count ? rxnStarts[idx + 1] : lines.count
             let block = Array(lines[start..<end])
-            reactions.append(try parseReactionBlock(block, reactionIndex: idx + 1))
+            if CDKRXNV3000Reader.canParseReactionBlock(block) {
+                reactions.append(try CDKRXNV3000Reader.parseReactionBlock(block, reactionIndex: idx + 1))
+            } else {
+                reactions.append(try parseReactionBlock(block, reactionIndex: idx + 1))
+            }
         }
         return reactions
     }
@@ -118,11 +122,12 @@ public enum CDKRXNReader {
                 CDKReactionParticipant(molecule: participant.molecule,
                                        role: .reactant,
                                        stoichiometry: participant.stoichiometry)
-            }, agentParticipants: [], productParticipants: [])
+            }, agentParticipants: [], productParticipants: [], name: reactionName.isEmpty ? nil : reactionName)
         }
         return CDKReaction(reactantParticipants: reactants,
                            agentParticipants: agents,
-                           productParticipants: products)
+                           productParticipants: products,
+                           name: reactionName.isEmpty ? nil : reactionName)
     }
 
     private static func parseCounts(line: String) -> (reactants: Int, products: Int, agents: Int) {
