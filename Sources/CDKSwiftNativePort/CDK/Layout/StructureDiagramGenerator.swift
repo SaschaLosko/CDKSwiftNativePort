@@ -343,6 +343,7 @@ enum CDKStructureDiagramGenerator {
                     if lCount != rCount { return lCount > rCount }
                     return lhs.count > rhs.count
                 }
+            let rigidRingAtoms = simpleRingLockAtoms(ringSystems)
 
             if let primaryRingSystem = ringSystems.first {
                 placeRingSystem(primaryRingSystem,
@@ -427,6 +428,7 @@ enum CDKStructureDiagramGenerator {
             // Keep aromatic systems rigid while allowing aliphatic fused/bridged systems
             // to relax and untangle if they start with a rough placement.
             let lockedAtoms = Set(component.filter { isAromaticAtom($0, molecule: molecule) })
+                .union(rigidRingAtoms)
             optimizeByBondFlips(component: component,
                                 graph: graph,
                                 positions: &positions,
@@ -975,6 +977,13 @@ enum CDKStructureDiagramGenerator {
             out.append(group.map { rings[$0] })
         }
         return out
+    }
+
+    private static func simpleRingLockAtoms(_ ringSystems: [[[Int]]]) -> Set<Int> {
+        Set(ringSystems.compactMap { system -> [Int]? in
+            guard system.count == 1 else { return nil }
+            return system[0]
+        }.flatMap { $0 })
     }
 
     private static func ringEdgeMultiplicity(_ rings: [[Int]]) -> [CDKEdgeKey: Int] {

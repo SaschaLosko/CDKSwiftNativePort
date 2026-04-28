@@ -78,6 +78,73 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         )
     }
 
+    func testReversedStereoWedgesBroadenAtStereocenterEnd() throws {
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 12.0,
+                                padding: 24.0)
+
+        let solidWedge = Molecule(
+            name: "ReversedSolidWedge",
+            atoms: [
+                Atom(id: 1, element: "N", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "Cl", position: CGPoint(x: 1.35, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 2, a2: 1, order: .single, stereo: .upReversed)
+            ]
+        )
+        let solidScene = CDKMetalDepictionSceneBuilder.build(molecule: solidWedge,
+                                                             style: style,
+                                                             canvasRect: CGRect(x: 0, y: 0, width: 420, height: 240),
+                                                             zoom: 1.0,
+                                                             pan: .zero)
+        let solidStart = try XCTUnwrap(solidScene.labels.first(where: { $0.id == 1 })?.position)
+        let solidEnd = try XCTUnwrap(solidScene.labels.first(where: { $0.id == 2 })?.position)
+        let solidNearStart = averageStereoStripeLength(in: solidScene.bondSegments,
+                                                       from: solidStart,
+                                                       to: solidEnd,
+                                                       tRange: 0.12...0.38)
+        let solidNearEnd = averageStereoStripeLength(in: solidScene.bondSegments,
+                                                     from: solidStart,
+                                                     to: solidEnd,
+                                                     tRange: 0.62...0.88)
+        XCTAssertGreaterThan(solidNearStart,
+                             solidNearEnd * 1.7,
+                             "Expected reversed solid wedge to stay broad near the stereocenter end.")
+
+        let hashedWedge = Molecule(
+            name: "ReversedHashedWedge",
+            atoms: [
+                Atom(id: 1, element: "N", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "Cl", position: CGPoint(x: 1.35, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 2, a2: 1, order: .single, stereo: .downReversed)
+            ]
+        )
+        let hashedScene = CDKMetalDepictionSceneBuilder.build(molecule: hashedWedge,
+                                                              style: style,
+                                                              canvasRect: CGRect(x: 0, y: 0, width: 420, height: 240),
+                                                              zoom: 1.0,
+                                                              pan: .zero)
+        let hashedStart = try XCTUnwrap(hashedScene.labels.first(where: { $0.id == 1 })?.position)
+        let hashedEnd = try XCTUnwrap(hashedScene.labels.first(where: { $0.id == 2 })?.position)
+        let hashedNearStart = averageStereoStripeLength(in: hashedScene.bondSegments,
+                                                        from: hashedStart,
+                                                        to: hashedEnd,
+                                                        tRange: 0.12...0.38)
+        let hashedNearEnd = averageStereoStripeLength(in: hashedScene.bondSegments,
+                                                      from: hashedStart,
+                                                      to: hashedEnd,
+                                                      tRange: 0.62...0.88)
+        XCTAssertGreaterThan(hashedNearStart,
+                             hashedNearEnd * 1.7,
+                             "Expected reversed hashed wedge to stay broad near the stereocenter end.")
+    }
+
     func testBondSegmentsAreClippedAwayFromLabelCenters() {
         let molecule = Molecule(
             name: "OO",
@@ -1462,6 +1529,45 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
 
             return alongDistance <= bondLength * 0.30 && perpendicularDistance <= bondLength * 0.40
         }.count
+    }
+
+    private func averageStereoStripeLength(in segments: [CDKMetalDepictionScene.LineSegment],
+                                           from start: CGPoint,
+                                           to end: CGPoint,
+                                           tRange: ClosedRange<CGFloat>) -> CGFloat {
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let bondLength = hypot(dx, dy)
+        guard bondLength > 0.0001 else { return 0 }
+
+        let ux = dx / bondLength
+        let uy = dy / bondLength
+        let nx = -uy
+        let ny = ux
+
+        let lengths = segments.compactMap { segment -> CGFloat? in
+            let sx = segment.to.x - segment.from.x
+            let sy = segment.to.y - segment.from.y
+            let segLength = hypot(sx, sy)
+            guard segLength > 0.0001 else { return nil }
+
+            let sux = sx / segLength
+            let suy = sy / segLength
+            let perpendicularAlignment = abs((sux * nx) + (suy * ny))
+            guard perpendicularAlignment >= 0.94 else { return nil }
+
+            let mid = CGPoint(x: (segment.from.x + segment.to.x) * 0.5,
+                              y: (segment.from.y + segment.to.y) * 0.5)
+            let rx = mid.x - start.x
+            let ry = mid.y - start.y
+            let t = ((rx * ux) + (ry * uy)) / bondLength
+            guard tRange.contains(t) else { return nil }
+
+            return segLength
+        }
+
+        guard !lengths.isEmpty else { return 0 }
+        return lengths.reduce(0, +) / CGFloat(lengths.count)
     }
 
     private func longestBondLength(in segments: [CDKMetalDepictionScene.LineSegment]) -> CGFloat {

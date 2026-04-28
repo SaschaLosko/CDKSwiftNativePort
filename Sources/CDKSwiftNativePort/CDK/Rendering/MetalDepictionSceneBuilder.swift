@@ -679,7 +679,7 @@ public enum CDKMetalDepictionSceneBuilder {
                 let t = CGFloat(i) / CGFloat(stripeCount + 1)
                 let cx = start.x + dx * t
                 let cy = start.y + dy * t
-                let halfTick = max(baseBondWidth * 0.10 * stereoScale, t * maxHalfWidth)
+                let halfTick = max(baseBondWidth * 0.10 * stereoScale, (1 - t) * maxHalfWidth)
                 let left = CGPoint(x: cx + px * halfTick, y: cy + py * halfTick)
                 let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
                 appendSegment(left,
@@ -707,7 +707,7 @@ public enum CDKMetalDepictionSceneBuilder {
                 let t = CGFloat(i) / CGFloat(tickCount + 1)
                 let cx = start.x + dx * t
                 let cy = start.y + dy * t
-                let halfTick = max(baseBondWidth * 0.12 * stereoScale * hashedStereoScale, t * maxHalfWidth)
+                let halfTick = max(baseBondWidth * 0.12 * stereoScale * hashedStereoScale, (1 - t) * maxHalfWidth)
                 let left = CGPoint(x: cx + px * halfTick, y: cy + py * halfTick)
                 let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
                 appendSegment(left,
