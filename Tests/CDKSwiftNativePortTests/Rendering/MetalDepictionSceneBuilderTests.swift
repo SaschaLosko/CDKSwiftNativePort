@@ -78,7 +78,7 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         )
     }
 
-    func testReversedStereoWedgesBroadenAtStereocenterEnd() throws {
+    func testReversedStereoWedgesBroadenAwayFromStereocenter() throws {
         let style = RenderStyle(showCarbons: true,
                                 showImplicitHydrogens: false,
                                 showAtomIDs: false,
@@ -111,9 +111,9 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                                                      from: solidStart,
                                                      to: solidEnd,
                                                      tRange: 0.62...0.88)
-        XCTAssertGreaterThan(solidNearStart,
-                             solidNearEnd * 1.7,
-                             "Expected reversed solid wedge to stay broad near the stereocenter end.")
+        XCTAssertGreaterThan(solidNearEnd,
+                             solidNearStart * 1.7,
+                             "Expected reversed solid wedge to broaden away from the stereocenter.")
 
         let hashedWedge = Molecule(
             name: "ReversedHashedWedge",
@@ -140,9 +140,9 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                                                       from: hashedStart,
                                                       to: hashedEnd,
                                                       tRange: 0.62...0.88)
-        XCTAssertGreaterThan(hashedNearStart,
-                             hashedNearEnd * 1.7,
-                             "Expected reversed hashed wedge to stay broad near the stereocenter end.")
+        XCTAssertGreaterThan(hashedNearEnd,
+                             hashedNearStart * 1.7,
+                             "Expected reversed hashed wedge to broaden away from the stereocenter.")
     }
 
     func testBondSegmentsAreClippedAwayFromLabelCenters() {

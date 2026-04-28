@@ -317,9 +317,9 @@ public enum CDKDepictionGenerator {
                     return
                 }
                 let w = max(6.0, style.bondWidth * 3.0)
-                let edge1 = start.offsetBy(dx: px * w, dy: py * w)
-                let edge2 = start.offsetBy(dx: -px * w, dy: -py * w)
-                addPolygon(points: [end, edge1, edge2], opacity: 0.96, color: baseColor)
+                let edge1 = end.offsetBy(dx: px * w, dy: py * w)
+                let edge2 = end.offsetBy(dx: -px * w, dy: -py * w)
+                addPolygon(points: [start, edge1, edge2], opacity: 0.96, color: baseColor)
             }
 
             func drawHashedWedge(from a: CGPoint, to b: CGPoint) {
@@ -334,7 +334,7 @@ public enum CDKDepictionGenerator {
                 for i in 1...segments {
                     let t = CGFloat(i) / CGFloat(segments + 1)
                     let c = CGPoint(x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t)
-                    let hw = w * (1 - t)
+                    let hw = w * t
                     let l = c.offsetBy(dx: px * hw, dy: py * hw)
                     let r = c.offsetBy(dx: -px * hw, dy: -py * hw)
                     addLine(l, r, width: max(1.15, style.bondWidth * 0.86), opacity: 0.95, color: baseColor)
