@@ -56,7 +56,7 @@ public struct CDKMetalDepictionScene: Hashable {
                     aromatic: Bool,
                     color: CDKRenderColor,
                     italicized: Bool = false,
-                    drawsBackground: Bool = true,
+                    drawsBackground: Bool = false,
                     usesGlowOverlay: Bool = false,
                     suppressesMatchedBackground: Bool = false) {
             self.id = id
@@ -1410,7 +1410,7 @@ public enum CDKMetalDepictionSceneBuilder {
                                                            aromatic: label.aromatic,
                                                            color: label.color,
                                                            italicized: CDKLabelText.usesItalicRGroupFont(text: label.text),
-                                                           drawsBackground: depictionMolecule.atom(id: label.atomID)?.rGroupMembership == nil))
+                                                           drawsBackground: false))
         }
 
         var nextAnnotationID = -1
@@ -1418,7 +1418,7 @@ public enum CDKMetalDepictionSceneBuilder {
         func appendAnnotationLabel(text: String,
                                    position: CGPoint,
                                    fontSize: CGFloat,
-                                   drawsBackground: Bool = true) {
+                                   drawsBackground: Bool = false) {
             labels.append(CDKMetalDepictionScene.AtomLabel(id: nextAnnotationID,
                                                            text: text,
                                                            position: position,

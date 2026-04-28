@@ -225,13 +225,13 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
         XCTAssertFalse(highlightedGlowSegments.isEmpty,
                        "Selected participants should render outer-glow bond overlays.")
 
-        XCTAssertEqual(highlighted.labels.filter(\.drawsBackground).count,
+        XCTAssertEqual(highlighted.labels.filter { !$0.usesGlowOverlay }.count,
                        baseline.labels.count,
                        "Outer glow should add overlays, not replace normal atom labels.")
-        XCTAssertTrue(highlighted.labels.contains(where: { !$0.drawsBackground }),
-                      "Selected participants should render backgroundless outer-glow label overlays.")
-        let baseFonts = highlighted.labels.filter(\.drawsBackground).map(\.fontSize)
-        let glowFonts = highlighted.labels.filter { !$0.drawsBackground }.map(\.fontSize)
+        XCTAssertTrue(highlighted.labels.contains(where: \.usesGlowOverlay),
+                      "Selected participants should render label glow overlays.")
+        let baseFonts = highlighted.labels.filter { !$0.usesGlowOverlay }.map(\.fontSize)
+        let glowFonts = highlighted.labels.filter(\.usesGlowOverlay).map(\.fontSize)
         if let maxBaseFont = baseFonts.max(), let maxGlowFont = glowFonts.max() {
             XCTAssertLessThanOrEqual(maxGlowFont, maxBaseFont * 1.10,
                                      "Outer-glow labels should hug glyph edges and not be heavily oversized.")
@@ -303,7 +303,7 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
                                                                                                                                           index: 0),
                                                                                   withOuterGlowHighlight: false)
 
-        XCTAssertFalse(highlightedWithoutGlow.labels.contains(where: { !$0.drawsBackground }))
+        XCTAssertFalse(highlightedWithoutGlow.labels.contains(where: \.usesGlowOverlay))
         XCTAssertFalse(highlightedWithoutGlow.bondSegments.contains(where: isOuterGlowSegment))
     }
 

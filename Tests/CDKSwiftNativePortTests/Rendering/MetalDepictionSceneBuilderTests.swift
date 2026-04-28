@@ -78,6 +78,34 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
         )
     }
 
+    func testStandardAtomLabelsDoNotRequestOpaqueBackgrounds() {
+        let molecule = Molecule(
+            name: "LabelBackgrounds",
+            atoms: [
+                Atom(id: 1, element: "O", position: CGPoint(x: 0.0, y: 0.0)),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.2, y: 0.0))
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.0,
+                                fontSize: 12.0,
+                                padding: 24.0)
+
+        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                        style: style,
+                                                        canvasRect: CGRect(x: 0, y: 0, width: 360, height: 240),
+                                                        zoom: 1.0,
+                                                        pan: .zero)
+
+        XCTAssertFalse(scene.labels.contains(where: \.drawsBackground),
+                       "Upstream-style atom labels should render without opaque backdrop rectangles.")
+    }
+
     func testReversedStereoWedgesBroadenAwayFromStereocenter() throws {
         let style = RenderStyle(showCarbons: true,
                                 showImplicitHydrogens: false,
