@@ -231,6 +231,11 @@ Current CX support includes:
     - `readReactionScheme(text:)`
     - `readReactionSet(text:)`
   - `CDKRXNReader`
+    - `Mode`
+    - `Options`
+    - `readReaction(text:options:)`
+    - `readReactions(text:options:)`
+    - `read(text:options:)`
   - `CDKRXNV3000Reader`
   - `CDKRDFReader`
 
@@ -326,13 +331,17 @@ and extension-style host integrations.
 - `CDKReactionHierarchy`
 - `CDKReactionAtomReference`
 - `CDKReactionBondReference`
+- `CDKReactionChemObject`
 - `CDKReactionManipulator`
   - `getAtomCount(_:)`
   - `getBondCount(_:)`
   - `getAllMolecules(_:)`
+  - `getAllAtomContainers(_:)`
   - `getAllReactants(_:)`
   - `getAllAgents(_:)`
   - `getAllProducts(_:)`
+  - `setAtomProperties(_:key:value:)`
+  - `getAllChemObjects(_:)`
   - `reverse(_:)`
   - `getAllIDs(_:)`
   - `getRelevantAtomContainer(_:atom:)`
@@ -341,6 +350,9 @@ and extension-style host integrations.
   - `removeElectronContainer(_:_:)`
   - `getMappedChemObject(_:_:)`
   - `findMappedBonds(_:)`
+  - `perceiveAtomTypesAndConfigureAtoms(_:)`
+  - `perceiveAtomTypesAndConfigureUnsetProperties(_:)`
+  - `clearAtomConfigurations(_:)`
   - `toMolecule(_:)`
   - `toReaction(_:)`
 - `CDKReactionSetManipulator`
@@ -348,6 +360,8 @@ and extension-style host integrations.
   - `getBondCount(_:)`
   - `getAllMolecules(_:)`
   - `getAllAtomContainers(_:)`
+  - `setAtomProperties(_:key:value:)`
+  - `getAllChemObjects(_:)`
   - `getAllIDs(_:)`
   - `getRelevantReaction(_:atom:)`
   - `getRelevantReaction(_:bond:)`
@@ -360,6 +374,14 @@ and extension-style host integrations.
   - `getRelevantReactionsAsProduct(_:,molecule:)`
   - `getReactionByAtomContainerID(_:,id:)`
   - `getReactionByReactionID(_:,id:)`
+- `CDKReactionSchemeManipulator`
+  - `getAllAtomContainers(_:)`
+  - `getAllAtomContainers(_:accumulatingInto:)`
+  - `getAllIDs(_:)`
+  - `getAllReactions(_:)`
+  - `createReactionScheme(_:)`
+  - `extractTopReactions(_:)`
+  - `getAtomContainerSet(originMol:finalMol:reactionScheme:)`
 
 ## 7. Identifier and Property Services
 

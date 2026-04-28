@@ -7,8 +7,14 @@
   "sourceTests": [
     "storage/libiocml/src/test/java/org/openscience/cdk/io/cml/CML2Test.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNReaderTest.java",
+    "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNV2000ReaderTest.java",
+    "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNV3000ReaderTest.java",
+    "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNWriterTest.java",
     "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesParserTest.java",
-    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesTest.java"
+    "storage/smiles/src/test/java/org/openscience/cdk/smiles/CxSmilesTest.java",
+    "base/test-standard/src/test/java/org/openscience/cdk/tools/manipulator/ReactionManipulatorTest.java",
+    "base/test-standard/src/test/java/org/openscience/cdk/tools/manipulator/ReactionSetManipulatorTest.java",
+    "base/test-standard/src/test/java/org/openscience/cdk/tools/manipulator/ReactionSchemeManipulatorTest.java"
   ],
   "cases": [
     {
@@ -321,6 +327,167 @@
           "products": {
             "count": 1,
             "atomCounts": [9]
+          }
+        }
+      }
+    },
+    {
+      "id": "rxn_bug1851202",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "testBug1851202",
+      "inputFile": "MDL/0002.stg01.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": {
+            "count": 1,
+            "atomCounts": [30]
+          },
+          "products": {
+            "count": 1,
+            "atomCounts": [30]
+          }
+        }
+      }
+    },
+    {
+      "id": "rxn_0024_resource",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "testReadReactions1",
+      "inputFile": "MDL/0024.stg02.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": {
+            "count": 1,
+            "atomCounts": [46]
+          },
+          "products": {
+            "count": 1,
+            "atomCounts": [46]
+          }
+        }
+      }
+    },
+    {
+      "id": "rxn_counts_agents_relaxed",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "countsLineHasAgents_countsLineMatchesMolfiles_modeRelaxed_test",
+      "inputFile": "MDL/ethylesterification_countsLineHasAgents_countsLineMatchesMolfiles.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 2 },
+          "agents": { "count": 1 },
+          "products": { "count": 2 }
+        }
+      }
+    },
+    {
+      "id": "rxn_counts_agents_strict_error",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "countsLineHasAgents_countsLineMatchesMolfiles_modeStrict_test",
+      "inputFile": "MDL/ethylesterification_countsLineHasAgents_countsLineMatchesMolfiles.rxn",
+      "readerMode": "strict",
+      "roundTrip": false,
+      "expected": {
+        "outcome": "error",
+        "errorContains": "RXN files uses agent count extension. This is not supported in mode STRICT"
+      }
+    },
+    {
+      "id": "rxn_counts_agents_mismatch_relaxed",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "countsLineHasAgents_countsLineMismatchMolfiles_modeRelaxed_test",
+      "inputFile": "MDL/ethylesterification_countsLineHasAgents_countsLineMismatchMolfiles.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 2 },
+          "agents": { "count": 1 },
+          "products": { "count": 2 }
+        }
+      }
+    },
+    {
+      "id": "rxn_counts_no_agents_strict_ok",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "countsLineHasNoAgents_countsLineMatchesMolfiles_modeStrict_test",
+      "inputFile": "MDL/ethylesterification_countsLineHasNoAgents_countsLineMatchesMolfiles.rxn",
+      "readerMode": "strict",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 2 },
+          "agents": { "count": 0 },
+          "products": { "count": 2 }
+        }
+      }
+    },
+    {
+      "id": "rxn_counts_no_agents_mismatch_relaxed",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "countsLineHasNoAgents_countsLineMismatchesMolfiles_modeRelaxed_test",
+      "inputFile": "MDL/ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": { "count": 2 },
+          "agents": { "count": 1 },
+          "products": { "count": 2 }
+        }
+      }
+    },
+    {
+      "id": "rxn_counts_no_agents_mismatch_strict_error",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV2000ReaderTest.java",
+      "sourceCase": "countsLineHasNoAgents_countsLineMismatchMolfiles_modeStrict_test",
+      "inputFile": "MDL/ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn",
+      "readerMode": "strict",
+      "roundTrip": false,
+      "expected": {
+        "outcome": "error",
+        "errorContains": "Agents are not supported in mode STRICT. Found 5 molecular entities, but there are only 4 molecular entities declared on the counts line."
+      }
+    },
+    {
+      "id": "rxn_v3000_reference",
+      "format": "rxn",
+      "sourceTest": "MDLRXNV3000ReaderTest.java",
+      "sourceCase": "testReadReactions1",
+      "inputFile": "MDL/reaction_v3.rxn",
+      "roundTrip": true,
+      "expected": {
+        "outcome": "success",
+        "hierarchy": {
+          "kind": "reaction",
+          "reactants": {
+            "count": 1,
+            "atomCounts": [32]
+          },
+          "products": {
+            "count": 1,
+            "atomCounts": [32]
           }
         }
       }

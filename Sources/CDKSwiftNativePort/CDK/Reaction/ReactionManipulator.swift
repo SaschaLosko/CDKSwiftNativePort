@@ -24,6 +24,14 @@ public struct CDKReactionBondReference: Equatable, Hashable, Sendable {
     }
 }
 
+public enum CDKReactionChemObject: Equatable {
+    case reaction(CDKReaction)
+    case reactionSet(CDKReactionSet)
+    case reactionList(CDKReactionList)
+    case reactionScheme(CDKReactionScheme)
+    case molecule(Molecule)
+}
+
 public enum CDKReactionManipulator {
     private static let propertyPrefix = "__cdkReactionProperty__:"
     private static let directionFieldName = "__cdkReactionDirection__"
@@ -50,6 +58,10 @@ public enum CDKReactionManipulator {
 
     public static func getAllProducts(_ reaction: CDKReaction) -> [Molecule] {
         reaction.products
+    }
+
+    public static func getAllAtomContainers(_ reaction: CDKReaction) -> [Molecule] {
+        getAllMolecules(reaction)
     }
 
     public static func reverse(_ reaction: CDKReaction) -> CDKReaction {
@@ -84,6 +96,24 @@ public enum CDKReactionManipulator {
         getAllMolecules(reaction).first { molecule in
             molecule.bonds.contains(bond)
         }
+    }
+
+    public static func setAtomProperties(_ reaction: inout CDKReaction,
+                                         key: String,
+                                         value: String) {
+        mutateAllParticipants(in: &reaction) { molecule in
+            var updated = molecule
+            updated.atoms = updated.atoms.map { atom in
+                var atom = atom
+                atom.properties[key] = value
+                return atom
+            }
+            return updated
+        }
+    }
+
+    public static func getAllChemObjects(_ reaction: CDKReaction) -> [CDKReactionChemObject] {
+        [.reaction(reaction)] + getAllAtomContainers(reaction).map(CDKReactionChemObject.molecule)
     }
 
     @discardableResult
@@ -340,6 +370,35 @@ public enum CDKReactionManipulator {
                            cxState: molecule.cxState)
     }
 
+    public static func perceiveAtomTypesAndConfigureAtoms(_ reaction: inout CDKReaction) {
+        mutateAllParticipants(in: &reaction) { molecule in
+            configured(molecule: molecule, onlyUnset: false)
+        }
+    }
+
+    public static func perceiveAtomTypesAndConfigureUnsetProperties(_ reaction: inout CDKReaction) {
+        mutateAllParticipants(in: &reaction) { molecule in
+            configured(molecule: molecule, onlyUnset: true)
+        }
+    }
+
+    public static func clearAtomConfigurations(_ reaction: inout CDKReaction) {
+        mutateAllParticipants(in: &reaction) { molecule in
+            var updated = molecule
+            updated.atoms = updated.atoms.map { atom in
+                var atom = atom
+                atom.atomTypeName = nil
+                atom.maximumBondOrder = nil
+                atom.bondOrderSum = nil
+                atom.valency = nil
+                atom.formalNeighbourCount = nil
+                atom.hybridization = nil
+                return atom
+            }
+            return updated
+        }
+    }
+
     private static func normalizedReactionName(_ raw: String?, fallback: String) -> String {
         let trimmed = (raw ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? fallback : trimmed
@@ -494,7 +553,14 @@ public enum CDKReactionManipulator {
                      ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
                      atomClass: atom.atomClass,
                      atomMapNumber: atom.atomMapNumber,
-                     aliasLabel: atom.aliasLabel)
+                     aliasLabel: atom.aliasLabel,
+                     properties: atom.properties,
+                     atomTypeName: atom.atomTypeName,
+                     maximumBondOrder: atom.maximumBondOrder,
+                     bondOrderSum: atom.bondOrderSum,
+                     valency: atom.valency,
+                     formalNeighbourCount: atom.formalNeighbourCount,
+                     hybridization: atom.hybridization)
             )
         }
 
@@ -576,11 +642,133 @@ public enum CDKReactionManipulator {
                  ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
                  atomClass: atom.atomClass,
                  atomMapNumber: atom.atomMapNumber,
-                 aliasLabel: atom.aliasLabel)
+                 aliasLabel: atom.aliasLabel,
+                 properties: atom.properties,
+                 atomTypeName: atom.atomTypeName,
+                 maximumBondOrder: atom.maximumBondOrder,
+                 bondOrderSum: atom.bondOrderSum,
+                 valency: atom.valency,
+                 formalNeighbourCount: atom.formalNeighbourCount,
+                 hybridization: atom.hybridization)
         }
         participant.bonds = group.bonds
         participant.sgroups = group.sgroups
         return participant
+    }
+
+    private static func mutateAllParticipants(in reaction: inout CDKReaction,
+                                              transform: (Molecule) -> Molecule) {
+        reaction.reactantParticipants = reaction.reactantParticipants.map { participant in
+            var participant = participant
+            participant.molecule = transform(participant.molecule)
+            return participant
+        }
+        reaction.agentParticipants = reaction.agentParticipants.map { participant in
+            var participant = participant
+            participant.molecule = transform(participant.molecule)
+            return participant
+        }
+        reaction.productParticipants = reaction.productParticipants.map { participant in
+            var participant = participant
+            participant.molecule = transform(participant.molecule)
+            return participant
+        }
+    }
+
+    private static func configured(molecule: Molecule, onlyUnset: Bool) -> Molecule {
+        var updated = molecule
+        updated.atoms = molecule.atoms.map { atom in
+            configure(atom: atom, in: molecule, onlyUnset: onlyUnset)
+        }
+        return updated
+    }
+
+    private static func configure(atom: Atom,
+                                  in molecule: Molecule,
+                                  onlyUnset: Bool) -> Atom {
+        var atom = atom
+        let bonds = molecule.bonds(forAtom: atom.id)
+        let neighbourCount = molecule.neighbors(of: atom.id).count
+        let maxOrder = bonds.max(by: { $0.order.rawValue < $1.order.rawValue })?.order
+        let orderSum = bonds.reduce(0.0) { $0 + $1.order.valenceContribution }
+        let hybridization = inferredHybridization(for: atom,
+                                                  neighbourCount: neighbourCount,
+                                                  maxBondOrder: maxOrder,
+                                                  bondOrderSum: orderSum)
+        let typeName = inferredAtomTypeName(for: atom, hybridization: hybridization)
+        let valency = inferredValency(for: atom, bondOrderSum: orderSum)
+
+        if !onlyUnset || atom.formalNeighbourCount == nil {
+            atom.formalNeighbourCount = neighbourCount
+        }
+        if !onlyUnset || atom.maximumBondOrder == nil {
+            atom.maximumBondOrder = maxOrder
+        }
+        if !onlyUnset || atom.bondOrderSum == nil {
+            atom.bondOrderSum = orderSum
+        }
+        if !onlyUnset || atom.hybridization == nil {
+            atom.hybridization = hybridization
+        }
+        if !onlyUnset || atom.atomTypeName == nil {
+            atom.atomTypeName = typeName
+        }
+        if !onlyUnset || atom.valency == nil {
+            atom.valency = valency
+        }
+        return atom
+    }
+
+    private static func inferredHybridization(for atom: Atom,
+                                              neighbourCount: Int,
+                                              maxBondOrder: BondOrder?,
+                                              bondOrderSum: Double) -> AtomHybridization {
+        if atom.element.uppercased() == "H" {
+            return .s
+        }
+        if maxBondOrder == .triple || bondOrderSum >= 2.9 && neighbourCount <= 2 {
+            return .sp1
+        }
+        if atom.aromatic || maxBondOrder == .double || bondOrderSum > Double(neighbourCount) {
+            return neighbourCount == 3 ? .planar3 : .sp2
+        }
+        return .sp3
+    }
+
+    private static func inferredAtomTypeName(for atom: Atom,
+                                             hybridization: AtomHybridization) -> String {
+        "\(atom.element.uppercased()).\(hybridization.rawValue.uppercased())"
+    }
+
+    private static func inferredValency(for atom: Atom,
+                                        bondOrderSum: Double) -> Int {
+        if let override = atom.valenceOverride {
+            return override
+        }
+
+        let target: Double
+        switch atom.element.uppercased() {
+        case "C":
+            target = atom.aromatic ? 3.0 : 4.0
+        case "N":
+            target = atom.aromatic ? 3.0 : (atom.charge > 0 ? 4.0 : 3.0)
+        case "O":
+            target = atom.charge > 0 ? 3.0 : (atom.charge < 0 ? 1.0 : 2.0)
+        case "S":
+            target = atom.charge > 0 ? 3.0 : 2.0
+        case "P":
+            target = atom.charge > 0 ? 4.0 : 3.0
+        case "B":
+            target = atom.charge < 0 ? 4.0 : 3.0
+        case "F", "CL", "BR", "I":
+            target = 1.0
+        case "H":
+            target = 1.0
+        default:
+            target = max(0.0, ceil(bondOrderSum))
+        }
+
+        return Int(max(0.0, round(target)))
     }
 }
 
@@ -616,6 +804,24 @@ public enum CDKReactionSetManipulator {
             ids.append(contentsOf: CDKReactionManipulator.getAllIDs(reaction))
         }
         return ids
+    }
+
+    public static func setAtomProperties(_ set: inout CDKReactionSet,
+                                         key: String,
+                                         value: String) {
+        _ = mutateReactions(in: &set) { reaction in
+            var updated = reaction
+            CDKReactionManipulator.setAtomProperties(&updated, key: key, value: value)
+            return (updated, true)
+        }
+    }
+
+    public static func getAllChemObjects(_ set: CDKReactionSet) -> [CDKReactionChemObject] {
+        var objects: [CDKReactionChemObject] = [.reactionSet(set)]
+        for reaction in set.flattenedReactions {
+            objects.append(contentsOf: CDKReactionManipulator.getAllChemObjects(reaction))
+        }
+        return objects
     }
 
     public static func getRelevantReaction(_ set: CDKReactionSet, atom: Atom) -> CDKReaction? {

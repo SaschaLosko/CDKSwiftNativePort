@@ -2,15 +2,30 @@ import Foundation
 
 /// CDK-style MDL RXN reader (V2000 reaction blocks).
 public enum CDKRXNReader {
-    public static func readReaction(text: String) throws -> CDKReaction {
-        let reactions = try readReactions(text: text)
+    public enum Mode: String, Sendable {
+        case relaxed
+        case strict
+    }
+
+    public struct Options: Sendable {
+        public var mode: Mode
+
+        public init(mode: Mode = .relaxed) {
+            self.mode = mode
+        }
+    }
+
+    public static func readReaction(text: String,
+                                    options: Options = Options()) throws -> CDKReaction {
+        let reactions = try readReactions(text: text, options: options)
         guard let first = reactions.first else {
             throw ChemError.parseFailed("RXN file did not contain any reaction blocks.")
         }
         return first
     }
 
-    public static func readReactions(text: String) throws -> [CDKReaction] {
+    public static func readReactions(text: String,
+                                     options: Options = Options()) throws -> [CDKReaction] {
         let normalized = text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
@@ -31,14 +46,15 @@ public enum CDKRXNReader {
             if CDKRXNV3000Reader.canParseReactionBlock(block) {
                 reactions.append(try CDKRXNV3000Reader.parseReactionBlock(block, reactionIndex: idx + 1))
             } else {
-                reactions.append(try parseReactionBlock(block, reactionIndex: idx + 1))
+                reactions.append(try parseReactionBlock(block, reactionIndex: idx + 1, options: options))
             }
         }
         return reactions
     }
 
-    public static func read(text: String) throws -> [Molecule] {
-        let reactions = try readReactions(text: text)
+    public static func read(text: String,
+                            options: Options = Options()) throws -> [Molecule] {
+        let reactions = try readReactions(text: text, options: options)
         let molecules = reactions.flatMap { $0.reactants + $0.products + $0.agents }
 
         guard !molecules.isEmpty else {
@@ -47,7 +63,9 @@ public enum CDKRXNReader {
         return molecules
     }
 
-    private static func parseReactionBlock(_ lines: [String], reactionIndex: Int) throws -> CDKReaction {
+    private static func parseReactionBlock(_ lines: [String],
+                                           reactionIndex: Int,
+                                           options: Options) throws -> CDKReaction {
         guard lines.count >= 5 else {
             throw ChemError.parseFailed("RXN block is truncated.")
         }
@@ -56,8 +74,12 @@ public enum CDKRXNReader {
         let counts = parseCounts(line: lines[4])
         let reactantCount = counts.reactants
         let productCount = counts.products
-        let agentCount = counts.agents
-        let expectedTotal = reactantCount + productCount + agentCount
+        let declaredAgentCount = counts.agents
+        let declaredCoreTotal = reactantCount + productCount
+
+        if options.mode == .strict, counts.hasAgentExtension, declaredAgentCount > 0 {
+            throw ChemError.parseFailed("RXN files uses agent count extension. This is not supported in mode STRICT")
+        }
 
         var parsedParticipants: [(molecule: Molecule, stoichiometry: Double?)] = []
         var lineIndex = 5
@@ -98,13 +120,37 @@ public enum CDKRXNReader {
             parsedParticipants.append((molecule: molecule, stoichiometry: stoichiometry))
         }
 
+        if options.mode == .strict,
+           !counts.hasAgentExtension,
+           parsedParticipants.count > declaredCoreTotal {
+            throw ChemError.parseFailed(
+                "Agents are not supported in mode STRICT. Found \(parsedParticipants.count) molecular entities, but there are only \(declaredCoreTotal) molecular entities declared on the counts line."
+            )
+        }
+
+        let effectiveAgentCount: Int
+        if counts.hasAgentExtension {
+            if options.mode == .relaxed,
+               declaredAgentCount == 0,
+               parsedParticipants.count > declaredCoreTotal {
+                effectiveAgentCount = parsedParticipants.count - declaredCoreTotal
+            } else {
+                effectiveAgentCount = declaredAgentCount
+            }
+        } else if options.mode == .relaxed, parsedParticipants.count > declaredCoreTotal {
+            effectiveAgentCount = parsedParticipants.count - declaredCoreTotal
+        } else {
+            effectiveAgentCount = 0
+        }
+
+        let expectedTotal = reactantCount + productCount + effectiveAgentCount
         if expectedTotal > 0, parsedParticipants.count > expectedTotal {
             parsedParticipants = Array(parsedParticipants.prefix(expectedTotal))
         }
 
         let reactantUpperBound = min(reactantCount, parsedParticipants.count)
         let productUpperBound = min(reactantUpperBound + productCount, parsedParticipants.count)
-        let agentUpperBound = min(productUpperBound + agentCount, parsedParticipants.count)
+        let agentUpperBound = min(productUpperBound + effectiveAgentCount, parsedParticipants.count)
 
         let reactants = Array(parsedParticipants[0..<reactantUpperBound]).map { participant in
             CDKReactionParticipant(molecule: participant.molecule, role: .reactant, stoichiometry: participant.stoichiometry)
@@ -130,7 +176,7 @@ public enum CDKRXNReader {
                            name: reactionName.isEmpty ? nil : reactionName)
     }
 
-    private static func parseCounts(line: String) -> (reactants: Int, products: Int, agents: Int) {
+    private static func parseCounts(line: String) -> (reactants: Int, products: Int, agents: Int, hasAgentExtension: Bool) {
         let fixedReactants = fixedInt(line, start: 0, length: 3)
         let fixedProducts = fixedInt(line, start: 3, length: 3)
         let fixedAgents = fixedInt(line, start: 6, length: 3)
@@ -138,17 +184,19 @@ public enum CDKRXNReader {
         if let fixedReactants, let fixedProducts {
             return (max(0, fixedReactants),
                     max(0, fixedProducts),
-                    max(0, fixedAgents ?? 0))
+                    max(0, fixedAgents ?? 0),
+                    fixedAgents != nil)
         }
 
         let parts = line.split(whereSeparator: \.isWhitespace).compactMap { Int($0) }
         if parts.count >= 2 {
             return (max(0, parts[0]),
                     max(0, parts[1]),
-                    max(0, parts.count > 2 ? parts[2] : 0))
+                    max(0, parts.count > 2 ? parts[2] : 0),
+                    parts.count > 2)
         }
 
-        return (0, 0, 0)
+        return (0, 0, 0, false)
     }
 
     private static func fixedInt(_ line: String, start: Int, length: Int) -> Int? {

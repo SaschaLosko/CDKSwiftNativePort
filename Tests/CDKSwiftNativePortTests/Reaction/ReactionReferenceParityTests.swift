@@ -9,6 +9,7 @@ private struct ReactionReferenceCorpus: Decodable {
         let sourceTest: String
         let sourceCase: String
         let inputFile: String
+        let readerMode: String?
         let roundTrip: Bool
         let expected: ExpectedOutcome
     }
@@ -110,9 +111,15 @@ final class ReactionReferenceParityTests: XCTestCase {
         XCTAssertEqual(corpus.referenceCommit.count, 40)
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("CML2Test.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNReaderTest.java") }))
+        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNV2000ReaderTest.java") }))
+        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNV3000ReaderTest.java") }))
+        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNWriterTest.java") }))
+        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("ReactionManipulatorTest.java") }))
+        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("ReactionSetManipulatorTest.java") }))
+        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("ReactionSchemeManipulatorTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("SmilesParserTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("CxSmilesTest.java") }))
-        XCTAssertEqual(corpus.cases.count, 13)
+        XCTAssertEqual(corpus.cases.count, 22)
         XCTAssertEqual(Set(corpus.cases.map(\.id)).count, corpus.cases.count)
     }
 
@@ -243,7 +250,7 @@ final class ReactionReferenceParityTests: XCTestCase {
                 }
 
                 do {
-                    let parsed = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: entry.format)
+                    let parsed = try parseReactionHierarchy(text: text, caseEntry: entry)
                     let actualSnapshot = snapshot(from: parsed)
                     gaps.append(contentsOf: compare(expected: expectedHierarchy,
                                                     actual: actualSnapshot,
@@ -253,10 +260,8 @@ final class ReactionReferenceParityTests: XCTestCase {
 
                     if entry.roundTrip {
                         do {
-                            let exported = try CDKFileExporter.write(reactionHierarchy: parsed,
-                                                                     as: exportFormat(for: entry.format))
-                            let roundTripped = try CDKFileImporter.readReactionHierarchy(text: exported,
-                                                                                         fileExtension: entry.format)
+                            let exported = try exportReactionHierarchy(parsed, caseEntry: entry)
+                            let roundTripped = try parseReactionHierarchy(text: exported, caseEntry: entry)
                             let roundTripSnapshot = snapshot(from: roundTripped)
                             gaps.append(contentsOf: compare(expected: expectedHierarchy,
                                                             actual: roundTripSnapshot,
@@ -299,7 +304,7 @@ final class ReactionReferenceParityTests: XCTestCase {
 
             case "error":
                 do {
-                    let parsed = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: entry.format)
+                    let parsed = try parseReactionHierarchy(text: text, caseEntry: entry)
                     gaps.append(
                         ReactionReferenceGapDetail(
                             caseID: entry.id,
@@ -632,6 +637,47 @@ final class ReactionReferenceParityTests: XCTestCase {
 
     private func participantLabel(_ molecule: Molecule) -> String {
         molecule.externalID ?? molecule.name
+    }
+
+    private func parseReactionHierarchy(text: String,
+                                        caseEntry: ReactionReferenceCorpus.Case) throws -> CDKReactionHierarchy {
+        switch caseEntry.format {
+        case "rxn":
+            let mode = rxnMode(for: caseEntry.readerMode)
+            return hierarchy(from: try CDKRXNReader.readReactions(text: text,
+                                                                  options: .init(mode: mode)))
+        default:
+            return try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: caseEntry.format)
+        }
+    }
+
+    private func exportReactionHierarchy(_ hierarchy: CDKReactionHierarchy,
+                                         caseEntry: ReactionReferenceCorpus.Case) throws -> String {
+        switch caseEntry.format {
+        case "rxn":
+            let options = CDKRXNWriter.Options(alwaysV3000: caseEntry.inputFile.contains("reaction_v3"))
+            return try CDKRXNWriter.write(reactions: hierarchy.flattenedReactions,
+                                          options: options)
+        default:
+            return try CDKFileExporter.write(reactionHierarchy: hierarchy,
+                                             as: exportFormat(for: caseEntry.format))
+        }
+    }
+
+    private func hierarchy(from reactions: [CDKReaction]) -> CDKReactionHierarchy {
+        if reactions.count == 1, let reaction = reactions.first {
+            return .reaction(reaction)
+        }
+        return .set(CDKReactionSet(reactions: reactions))
+    }
+
+    private func rxnMode(for rawValue: String?) -> CDKRXNReader.Mode {
+        switch rawValue?.lowercased() {
+        case "strict":
+            return .strict
+        default:
+            return .relaxed
+        }
     }
 
     private func exportFormat(for format: String) throws -> CDKFileExportFormat {

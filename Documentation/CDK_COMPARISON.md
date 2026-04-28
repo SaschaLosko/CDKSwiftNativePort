@@ -113,13 +113,19 @@ The following CDK areas are still outside the package’s current parity target:
 Reaction CML now has native Swift hierarchy types for sets, lists, schemes,
 and list entries, and the reader/writer preserve branching and step grouping
 through hierarchy round-trips instead of collapsing everything to flat reaction
-arrays. The package now also exposes a native reaction manipulator layer for
-counts, reversal, mapped-object lookup, inline reaction-to-molecule conversion,
-and set-level queries, plus RXN V3000 parsing/writing and multi-record reaction
-SMILES set import. The remaining reaction parity work is therefore narrower:
-the biggest open gap is not basic model/IO coverage anymore, but the longer tail
-of upstream CDK reaction utilities and configurable reader/writer behaviors that
-still have no direct Swift counterpart.
+arrays. The package now also exposes native reaction, reaction-set, and
+reaction-scheme manipulator layers for counts, reversal, mapped-object lookup,
+inline reaction-to-molecule conversion, atom-property propagation, basic atom
+configuration helpers, and topology/path extraction, plus RXN V2000
+strict/relaxed counts-line behavior, RXN V3000 parsing/writing, and
+multi-record reaction SMILES set import. That maintained reaction
+model/IO/manipulator surface is now tracked by a zero-gap strict parity gate in
+[`REACTION_PARITY.md`](REACTION_PARITY.md).
+
+What remains outside that reaction parity claim is a different layer of CDK:
+
+- the `base/reaction` reaction-engine, mechanism, and reaction-type modules
+- the separate `storage/rinchi` Reaction InChI (`RInChI`) module
 
 ## Parity Tracking
 
@@ -138,4 +144,5 @@ and uses it as a parity oracle.
 Reaction hierarchy and reaction IO parity are tracked separately in
 [`REACTION_PARITY.md`](REACTION_PARITY.md). That harness vendors an
 upstream-derived reaction corpus and keeps a committed known-gap inventory plus
-an opt-in strict parity gate for reaction CML, RXN/RDF, and reaction SMILES.
+an opt-in strict parity gate for reaction CML, RXN V2000/V3000, RDF, reaction
+SMILES, and the maintained reaction manipulator surface.

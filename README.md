@@ -95,7 +95,7 @@ The package owns:
 
 - molecule and reaction models
 - reaction hierarchy models (`CDKReactionSet`, `CDKReactionList`, `CDKReactionScheme`) and entry enums
-- reaction manipulator helpers (`CDKReactionManipulator`, `CDKReactionSetManipulator`)
+- reaction manipulator helpers (`CDKReactionManipulator`, `CDKReactionSetManipulator`, `CDKReactionSchemeManipulator`)
 - readers, writers, parsers, generators
 - layout and depiction algorithms
 - scene building for host renderers
@@ -148,9 +148,13 @@ reference-grade work tracked in
 ## Reaction Parity Status
 
 Reaction hierarchy and reaction-IO parity now have a committed upstream-derived
-reference corpus as well. The vendored reaction fixtures cover CML hierarchy
-cases, RXN/RDF parsing, and reaction SMILES behavior, with inventory/gate
-commands documented in
+reference corpus as well. The vendored reaction fixtures now cover CML
+hierarchy cases, RXN V2000 and V3000 resources, strict/relaxed RXN counts-line
+behavior, RDF parsing, and reaction SMILES behavior, with zero committed gaps
+across the current `22`-case corpus. Native reaction manipulator and
+scheme-manipulator coverage is tracked separately through executable upstream
+port metadata and direct Swift regression tests. Inventory/gate commands are
+documented in
 [`Documentation/REACTION_PARITY.md`](Documentation/REACTION_PARITY.md).
 
 ## Installation

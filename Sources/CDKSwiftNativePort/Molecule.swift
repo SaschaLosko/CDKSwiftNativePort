@@ -64,6 +64,15 @@ public enum AtomChirality: Codable, Hashable, Sendable {
     case anticlockwise
 }
 
+public enum AtomHybridization: String, Codable, Hashable, Sendable {
+    case sp1
+    case sp2
+    case sp3
+    case planar3
+    case s
+    case other
+}
+
 public enum AtomQueryType: String, Codable, Hashable, Sendable {
     case anyAtom
     case anyNonHydrogen
@@ -228,6 +237,13 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
     public var atomClass: Int? = nil
     public var atomMapNumber: Int? = nil
     public var aliasLabel: String? = nil
+    public var properties: [String: String] = [:]
+    public var atomTypeName: String? = nil
+    public var maximumBondOrder: BondOrder? = nil
+    public var bondOrderSum: Double? = nil
+    public var valency: Int? = nil
+    public var formalNeighbourCount: Int? = nil
+    public var hybridization: AtomHybridization? = nil
 
     public var symbolToDraw: String {
         if let aliasLabel {
@@ -277,7 +293,14 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
                 ligandOrderingAtomIDs: [Int]? = nil,
                 atomClass: Int? = nil,
                 atomMapNumber: Int? = nil,
-                aliasLabel: String? = nil) {
+                aliasLabel: String? = nil,
+                properties: [String: String] = [:],
+                atomTypeName: String? = nil,
+                maximumBondOrder: BondOrder? = nil,
+                bondOrderSum: Double? = nil,
+                valency: Int? = nil,
+                formalNeighbourCount: Int? = nil,
+                hybridization: AtomHybridization? = nil) {
         self.id = id
         self.externalID = externalID
         self.element = element
@@ -308,6 +331,57 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         self.atomClass = atomClass
         self.atomMapNumber = atomMapNumber
         self.aliasLabel = aliasLabel
+        self.properties = properties
+        self.atomTypeName = atomTypeName
+        self.maximumBondOrder = maximumBondOrder
+        self.bondOrderSum = bondOrderSum
+        self.valency = valency
+        self.formalNeighbourCount = formalNeighbourCount
+        self.hybridization = hybridization
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(externalID)
+        hasher.combine(element)
+        hasher.combine(position.x)
+        hasher.combine(position.y)
+        hasher.combine(zPosition)
+        hasher.combine(charge)
+        hasher.combine(isotopeMassNumber)
+        hasher.combine(aromatic)
+        hasher.combine(chirality)
+        hasher.combine(explicitHydrogenCount)
+        hasher.combine(queryType)
+        hasher.combine(atomList)
+        hasher.combine(atomListIsNegated)
+        hasher.combine(radical)
+        hasher.combine(radicalType)
+        hasher.combine(atomValue)
+        hasher.combine(rGroupLabel)
+        hasher.combine(rGroupMembership)
+        hasher.combine(componentGroupID)
+        hasher.combine(reactionRole)
+        hasher.combine(substitutionCount)
+        hasher.combine(unsaturated)
+        hasher.combine(ringBondCount)
+        hasher.combine(attachmentPoint)
+        hasher.combine(valenceOverride)
+        hasher.combine(cxStereoGroup)
+        hasher.combine(ligandOrderingAtomIDs)
+        hasher.combine(atomClass)
+        hasher.combine(atomMapNumber)
+        hasher.combine(aliasLabel)
+        for key in properties.keys.sorted() {
+            hasher.combine(key)
+            hasher.combine(properties[key])
+        }
+        hasher.combine(atomTypeName)
+        hasher.combine(maximumBondOrder)
+        hasher.combine(bondOrderSum)
+        hasher.combine(valency)
+        hasher.combine(formalNeighbourCount)
+        hasher.combine(hybridization)
     }
 }
 

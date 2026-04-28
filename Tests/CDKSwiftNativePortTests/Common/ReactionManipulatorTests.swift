@@ -58,6 +58,31 @@ final class ReactionManipulatorTests: XCTestCase {
         XCTAssertEqual(CDKReactionManipulator.getRelevantAtomContainer(reaction, atom: atom!), reaction.reactants[0])
         let bond = try? XCTUnwrap(reaction.products[0].bonds.first)
         XCTAssertEqual(CDKReactionManipulator.getRelevantAtomContainer(reaction, bond: bond!), reaction.products[0])
+        XCTAssertEqual(CDKReactionManipulator.getAllAtomContainers(reaction).count, 3)
+    }
+
+    func testSetsAtomPropertiesAndCollectsChemObjects() {
+        var reaction = CDKReaction(reactants: [makeDiatomic(name: "reactant",
+                                                            moleculeID: "react",
+                                                            leftElement: "C",
+                                                            rightElement: "O")],
+                                   agents: [],
+                                   products: [makeDiatomic(name: "product",
+                                                           moleculeID: "prod",
+                                                           leftElement: "C",
+                                                           rightElement: "N")],
+                                   id: "rxn-props")
+
+        CDKReactionManipulator.setAtomProperties(&reaction, key: "test", value: "ok")
+
+        for molecule in CDKReactionManipulator.getAllAtomContainers(reaction) {
+            for atom in molecule.atoms {
+                XCTAssertEqual(atom.properties["test"], "ok")
+            }
+        }
+
+        let objects = CDKReactionManipulator.getAllChemObjects(reaction)
+        XCTAssertEqual(objects.count, 3)
     }
 
     func testFindsMappedAtomsAndBondsAcrossReactionSides() throws {
@@ -144,6 +169,39 @@ final class ReactionManipulatorTests: XCTestCase {
         XCTAssertEqual(reconstructed.productCount, 1)
     }
 
+    func testPerceivesAndClearsAtomConfigurations() {
+        var reaction = CDKReaction(reactants: [makeMappedEthene(name: "reactant",
+                                                                moleculeID: "reactant",
+                                                                startMap: 1)],
+                                   agents: [],
+                                   products: [])
+
+        CDKReactionManipulator.perceiveAtomTypesAndConfigureAtoms(&reaction)
+        let configuredAtom = reaction.reactants[0].atoms[0]
+        XCTAssertEqual(configuredAtom.atomTypeName, "C.SP2")
+        XCTAssertEqual(configuredAtom.maximumBondOrder, .double)
+        XCTAssertEqual(configuredAtom.formalNeighbourCount, 1)
+        XCTAssertEqual(configuredAtom.hybridization, .sp2)
+        XCTAssertEqual(configuredAtom.valency, 4)
+        XCTAssertEqual(configuredAtom.bondOrderSum ?? 0, 2.0, accuracy: 0.000_001)
+
+        reaction.reactants[0].atoms[0].atomTypeName = "Preset"
+        reaction.reactants[0].atoms[0].formalNeighbourCount = 99
+        CDKReactionManipulator.perceiveAtomTypesAndConfigureUnsetProperties(&reaction)
+        XCTAssertEqual(reaction.reactants[0].atoms[0].atomTypeName, "Preset")
+        XCTAssertEqual(reaction.reactants[0].atoms[0].formalNeighbourCount, 99)
+        XCTAssertEqual(reaction.reactants[0].atoms[0].maximumBondOrder, .double)
+
+        CDKReactionManipulator.clearAtomConfigurations(&reaction)
+        let clearedAtom = reaction.reactants[0].atoms[0]
+        XCTAssertNil(clearedAtom.atomTypeName)
+        XCTAssertNil(clearedAtom.maximumBondOrder)
+        XCTAssertNil(clearedAtom.bondOrderSum)
+        XCTAssertNil(clearedAtom.valency)
+        XCTAssertNil(clearedAtom.formalNeighbourCount)
+        XCTAssertNil(clearedAtom.hybridization)
+    }
+
     func testReactionSetManipulatorFindsRelevantReactionsAndIDs() throws {
         let shared = makeDiatomic(name: "shared", moleculeID: "shared", leftElement: "C", rightElement: "O")
         let other = makeDiatomic(name: "other", moleculeID: "other", leftElement: "O", rightElement: "H")
@@ -169,6 +227,25 @@ final class ReactionManipulatorTests: XCTestCase {
 
         let atom = try XCTUnwrap(shared.atoms.first)
         XCTAssertEqual(CDKReactionSetManipulator.getRelevantReaction(set, atom: atom)?.id, "r1")
+    }
+
+    func testReactionSetManipulatorSetsAtomPropertiesAndCollectsChemObjects() {
+        let shared = makeDiatomic(name: "shared", moleculeID: "shared", leftElement: "C", rightElement: "O")
+        let product = makeDiatomic(name: "product", moleculeID: "product", leftElement: "C", rightElement: "N")
+
+        let first = CDKReaction(reactants: [shared], agents: [], products: [product], id: "r1")
+        var set = CDKReactionSet(id: "set-1", members: [.reaction(first)])
+
+        CDKReactionSetManipulator.setAtomProperties(&set, key: "set-test", value: "ok")
+
+        for molecule in CDKReactionSetManipulator.getAllAtomContainers(set) {
+            for atom in molecule.atoms {
+                XCTAssertEqual(atom.properties["set-test"], "ok")
+            }
+        }
+
+        let objects = CDKReactionSetManipulator.getAllChemObjects(set)
+        XCTAssertEqual(objects.count, 4)
     }
 
     private func makeMappedEthene(name: String, moleculeID: String, startMap: Int) -> Molecule {

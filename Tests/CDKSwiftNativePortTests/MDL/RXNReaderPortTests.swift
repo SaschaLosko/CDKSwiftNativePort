@@ -181,4 +181,56 @@ final class RXNReaderPortTests: XCTestCase {
         XCTAssertEqual(reaction.agents[0].atoms.first?.charge, 3)
         XCTAssertEqual(reaction.agents[1].atoms.first?.charge, -1)
     }
+
+    func testRelaxedModeInfersAgentsFromExtraEntitiesWhenCountsOmitThem() throws {
+        let text = try loadUpstreamReactionFixture(named: "ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn")
+
+        let reaction = try CDKRXNReader.readReaction(text: text, options: .init(mode: .relaxed))
+
+        XCTAssertEqual(reaction.reactantCount, 2)
+        XCTAssertEqual(reaction.productCount, 2)
+        XCTAssertEqual(reaction.agentCount, 1)
+    }
+
+    func testStrictModeRejectsAgentCountExtension() throws {
+        let text = try loadUpstreamReactionFixture(named: "ethylesterification_countsLineHasAgents_countsLineMatchesMolfiles.rxn")
+
+        XCTAssertThrowsError(try CDKRXNReader.readReaction(text: text, options: .init(mode: .strict))) { error in
+            XCTAssertTrue(error.localizedDescription.contains(
+                "RXN files uses agent count extension. This is not supported in mode STRICT"
+            ))
+        }
+    }
+
+    func testStrictModeRejectsExtraEntitiesWhenCountsOmitAgents() throws {
+        let text = try loadUpstreamReactionFixture(named: "ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn")
+
+        XCTAssertThrowsError(try CDKRXNReader.readReaction(text: text, options: .init(mode: .strict))) { error in
+            XCTAssertTrue(error.localizedDescription.contains(
+                "Agents are not supported in mode STRICT. Found 5 molecular entities, but there are only 4 molecular entities declared on the counts line."
+            ))
+        }
+    }
+
+    func testParsesUpstreamV3000Resource() throws {
+        let text = try loadUpstreamReactionFixture(named: "reaction_v3.rxn")
+
+        let reaction = try CDKRXNReader.readReaction(text: text)
+
+        XCTAssertEqual(reaction.reactantCount, 1)
+        XCTAssertEqual(reaction.productCount, 1)
+        XCTAssertEqual(reaction.reactants.first?.atomCount, 32)
+        XCTAssertEqual(reaction.reactants.first?.bondCount, 29)
+        XCTAssertEqual(reaction.products.first?.atomCount, 32)
+        XCTAssertEqual(reaction.products.first?.bondCount, 29)
+    }
+
+    private func loadUpstreamReactionFixture(named name: String) throws -> String {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Reaction/UpstreamReference/MDL")
+            .appendingPathComponent(name)
+        return try String(contentsOf: url, encoding: .utf8)
+    }
 }

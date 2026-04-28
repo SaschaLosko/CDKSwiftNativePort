@@ -809,6 +809,9 @@ public enum CDKMDLV3000Writer {
 
         let trimmed = atom.element.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "C" }
+        if trimmed.range(of: #"^[A-Za-z*][A-Za-z0-9#]{0,2}$"#, options: .regularExpression) == nil {
+            return quoteIfNeeded(trimmed)
+        }
         if atom.aromatic, trimmed.allSatisfy(\.isLetter) {
             return trimmed.lowercased()
         }

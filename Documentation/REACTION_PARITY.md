@@ -1,7 +1,8 @@
 # Reaction Parity
 
 `CDKSwiftNativePort` now tracks a curated reaction parity corpus derived from
-upstream CDK `2.12` reaction tests.
+upstream CDK `2.12` reaction model, reaction-IO, and reaction-manipulator
+tests.
 
 ## Scope
 
@@ -14,16 +15,21 @@ It currently covers:
 - reaction CML hierarchy parsing and round-tripping
 - reaction schemes and step lists
 - reaction molecule-set references
-- RXN parsing and RXN round-tripping for single reactions
+- RXN V2000 parsing and round-tripping, including strict/relaxed counts-line
+  agent behavior
+- RXN V3000 parsing and round-tripping for vendored upstream resources
 - RDF parsing and RDF round-tripping for multi-reaction sets
 - reaction SMILES parsing and SMILES round-tripping
 
 In addition to the curated vendored corpus, the direct Swift regression suite now
 also exercises:
 
+- RXN V3000 agent handling and zero-reactant handling
 - RXN V3000 parsing and writing
+- RXN writer round-trips for V2000 and V3000 reaction blocks
 - multi-record reaction SMILES import into native reaction sets
-- native reaction manipulator utilities and inline reaction conversion helpers
+- native reaction manipulator utilities, scheme-manipulator utilities, and
+  inline reaction conversion helpers
 
 The executable gate is:
 
@@ -32,9 +38,24 @@ The executable gate is:
 ## Current Status
 
 - The committed known-gap inventory is `0` gaps across the current curated
-  reaction corpus.
-- Strict reaction parity can therefore be required today for that vendored
-  surface.
+  `22`-case reaction corpus.
+- Strict reaction parity can therefore be required today for the maintained
+  reaction model/IO/manipulator surface.
+
+## Scope Boundary
+
+The strict gate tracks the upstream-derived reaction surface that
+`CDKSwiftNativePort` currently claims parity for:
+
+- reaction hierarchy/model types
+- reaction CML, RXN, RDF, and reaction-SMILES IO
+- reaction manipulator, reaction-set manipulator, and reaction-scheme
+  manipulator utilities
+
+It does not currently claim parity for separate upstream subsystems such as:
+
+- the `base/reaction` reaction-engine and reaction-type algorithms
+- the `storage/rinchi` RInChI module
 
 ## Workflow
 
