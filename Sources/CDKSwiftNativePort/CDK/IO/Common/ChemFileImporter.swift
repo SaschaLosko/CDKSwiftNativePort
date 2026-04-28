@@ -102,6 +102,18 @@ public enum CDKFileImporter {
         return try readReaction(text: text, fileExtension: ext)
     }
 
+    public static func readReactionHierarchy(from url: URL,
+                                             coordinateAccess: Bool = true) throws -> CDKReactionHierarchy {
+        let ext = url.pathExtension.lowercased()
+        let text = try decodeText(from: url, coordinateAccess: coordinateAccess)
+        return try readReactionHierarchy(text: text, fileExtension: ext)
+    }
+
+    public static func readReactionSet(from url: URL,
+                                       coordinateAccess: Bool = true) throws -> CDKReactionSet {
+        try readReactionHierarchy(from: url, coordinateAccess: coordinateAccess).asSet
+    }
+
     public static func readMolecules(text: String,
                                      fileExtension: String?) throws -> [Molecule] {
         let ext = (fileExtension ?? "").lowercased()
@@ -166,6 +178,31 @@ public enum CDKFileImporter {
         }
     }
 
+    public static func readReactionHierarchy(text: String,
+                                             fileExtension: String?) throws -> CDKReactionHierarchy {
+        let ext = (fileExtension ?? "").lowercased()
+
+        switch ext {
+        case "cml":
+            return try CDKCMLReactionReader.readHierarchy(text: text)
+        case "rxn":
+            return hierarchy(from: try CDKRXNReader.readReactions(text: text))
+        case "rdf":
+            return hierarchy(from: try CDKRDFReader.readReactions(text: text))
+        case "smi", "smiles", "ism", "can", "rsmi":
+            return .reaction(try parseReactionSmiles(text))
+        case "txt":
+            return try readTextReactionHierarchyWithAutoDetection(text)
+        default:
+            return try readTextReactionHierarchyWithAutoDetection(text)
+        }
+    }
+
+    public static func readReactionSet(text: String,
+                                       fileExtension: String?) throws -> CDKReactionSet {
+        try readReactionHierarchy(text: text, fileExtension: fileExtension).asSet
+    }
+
     private static func readTextWithAutoDetection(_ text: String) throws -> [Molecule] {
         if looksLikeInChI(text) {
             return try CDKInChIReader.read(text: text)
@@ -213,17 +250,25 @@ public enum CDKFileImporter {
     }
 
     private static func readTextReactionWithAutoDetection(_ text: String) throws -> CDKReaction {
+        let hierarchy = try readTextReactionHierarchyWithAutoDetection(text)
+        guard let first = hierarchy.flattenedReactions.first else {
+            throw ChemError.unsupported("Unable to detect a supported reaction format.")
+        }
+        return first
+    }
+
+    private static func readTextReactionHierarchyWithAutoDetection(_ text: String) throws -> CDKReactionHierarchy {
         if looksLikeRDF(text) {
-            return try CDKRDFReader.readReaction(text: text)
+            return hierarchy(from: try CDKRDFReader.readReactions(text: text))
         }
         if looksLikeRXN(text) {
-            return try CDKRXNReader.readReaction(text: text)
+            return hierarchy(from: try CDKRXNReader.readReactions(text: text))
         }
         if looksLikeCML(text), CDKCMLReactionReader.containsReactionMarkup(text) {
-            return try CDKCMLReactionReader.readReaction(text: text)
+            return try CDKCMLReactionReader.readHierarchy(text: text)
         }
         if looksLikeReactionSmiles(text) {
-            return try parseReactionSmiles(text)
+            return .reaction(try parseReactionSmiles(text))
         }
         throw ChemError.unsupported("Unable to detect a supported reaction format.")
     }
@@ -259,6 +304,13 @@ public enum CDKFileImporter {
 
     private static func molecules(from reactions: [CDKReaction]) -> [Molecule] {
         reactions.flatMap(molecules(from:))
+    }
+
+    private static func hierarchy(from reactions: [CDKReaction]) -> CDKReactionHierarchy {
+        if reactions.count == 1, let reaction = reactions.first {
+            return .reaction(reaction)
+        }
+        return .set(CDKReactionSet(reactions: reactions))
     }
 
     private static func decodeText(from url: URL,

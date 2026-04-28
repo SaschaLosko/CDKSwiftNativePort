@@ -217,19 +217,49 @@ public enum CDKFileExporter {
     public static func write(reaction: CDKReaction,
                              as format: CDKFileExportFormat,
                              options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
-        try write(reactions: [reaction], as: format, options: options)
+        try write(reactionHierarchy: .reaction(reaction), as: format, options: options)
     }
 
     public static func write(reactions: [CDKReaction],
                              as format: CDKFileExportFormat,
                              options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
         guard !reactions.isEmpty else { throw ChemError.emptyInput }
+        let hierarchy: CDKReactionHierarchy
+        if reactions.count == 1, let reaction = reactions.first {
+            hierarchy = .reaction(reaction)
+        } else {
+            hierarchy = .list(CDKReactionList(reactions: reactions))
+        }
+        return try write(reactionHierarchy: hierarchy, as: format, options: options)
+    }
+
+    public static func write(reactionList: CDKReactionList,
+                             as format: CDKFileExportFormat,
+                             options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
+        try write(reactionHierarchy: .list(reactionList), as: format, options: options)
+    }
+
+    public static func write(reactionScheme: CDKReactionScheme,
+                             as format: CDKFileExportFormat,
+                             options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
+        try write(reactionHierarchy: .scheme(reactionScheme), as: format, options: options)
+    }
+
+    public static func write(reactionSet: CDKReactionSet,
+                             as format: CDKFileExportFormat,
+                             options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
+        try write(reactionHierarchy: .set(reactionSet), as: format, options: options)
+    }
+
+    public static func write(reactionHierarchy: CDKReactionHierarchy,
+                             as format: CDKFileExportFormat,
+                             options: CDKFileExportOptions = CDKFileExportOptions()) throws -> String {
+        let reactions = reactionHierarchy.flattenedReactions
+        guard !reactions.isEmpty else { throw ChemError.emptyInput }
 
         switch format {
         case .cml:
-            return try reactions.count == 1
-                ? CDKCMLReactionWriter.write(reactions[0])
-                : CDKCMLReactionWriter.write(reactions)
+            return try CDKCMLReactionWriter.write(reactionHierarchy)
         case .rxn:
             guard reactions.count == 1, let reaction = reactions.first else {
                 throw ChemError.unsupported("RXN export supports a single reaction only.")

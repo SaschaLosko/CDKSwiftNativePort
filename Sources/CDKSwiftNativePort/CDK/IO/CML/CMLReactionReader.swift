@@ -16,6 +16,10 @@ public enum CDKCMLReactionReader {
     }
 
     public static func readReactions(text: String) throws -> [CDKReaction] {
+        try readHierarchy(text: text).flattenedReactions
+    }
+
+    public static func readHierarchy(text: String) throws -> CDKReactionHierarchy {
         let data = Data(text.utf8)
         let delegate = CMLReactionParserDelegate()
 
@@ -26,11 +30,30 @@ public enum CDKCMLReactionReader {
             throw ChemError.parseFailed(message)
         }
 
-        let reactions = delegate.buildReactions()
-        guard !reactions.isEmpty else {
+        guard let hierarchy = delegate.buildHierarchy() else {
             throw ChemError.parseFailed("CML did not contain any reactions.")
         }
-        return reactions
+        return hierarchy
+    }
+
+    public static func readReactionList(text: String) throws -> CDKReactionList {
+        let hierarchy = try readHierarchy(text: text)
+        guard case .list(let list) = hierarchy else {
+            throw ChemError.parseFailed("CML did not contain a top-level reaction list.")
+        }
+        return list
+    }
+
+    public static func readReactionScheme(text: String) throws -> CDKReactionScheme {
+        let hierarchy = try readHierarchy(text: text)
+        guard case .scheme(let scheme) = hierarchy else {
+            throw ChemError.parseFailed("CML did not contain a top-level reaction scheme.")
+        }
+        return scheme
+    }
+
+    public static func readReactionSet(text: String) throws -> CDKReactionSet {
+        try readHierarchy(text: text).asSet
     }
 
     public static func containsReactionMarkup(_ text: String) -> Bool {
@@ -96,6 +119,49 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var agents: [PendingMolecule] = []
     }
 
+    private final class PendingReactionList {
+        let isStepList: Bool
+        var id: String?
+        var name: String?
+        var properties: [String: String] = [:]
+        var reactions: [PendingReaction] = []
+
+        init(id: String?, name: String?, isStepList: Bool) {
+            self.id = id
+            self.name = name
+            self.isStepList = isStepList
+        }
+    }
+
+    private final class PendingReactionScheme {
+        var id: String?
+        var name: String?
+        var properties: [String: String] = [:]
+        var entries: [PendingReactionSchemeEntry] = []
+
+        init(id: String?, name: String?) {
+            self.id = id
+            self.name = name
+        }
+    }
+
+    private enum PendingReactionSchemeEntry {
+        case reaction(PendingReaction)
+        case list(PendingReactionList)
+        case scheme(PendingReactionScheme)
+    }
+
+    private enum PendingRootNode {
+        case reaction(PendingReaction)
+        case list(PendingReactionList)
+        case scheme(PendingReactionScheme)
+    }
+
+    private enum PendingContainerRef {
+        case list(PendingReactionList)
+        case scheme(PendingReactionScheme)
+    }
+
     private struct PendingParticipant {
         let role: CDKReactionRole
         var molecule: PendingMolecule
@@ -124,7 +190,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private var moleculeStack: [PendingMolecule] = []
     private var participantStack: [PendingParticipant] = []
     private var reactionStack: [PendingReaction] = []
-    private var parsedReactions: [PendingReaction] = []
+    private var containerStack: [PendingContainerRef] = []
+    private var rootNodes: [PendingRootNode] = []
     private var currentAtom: PendingAtom?
     private var currentBond: PendingBond?
     private var textCaptures: [TextCapture] = []
@@ -142,6 +209,20 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         case "reaction":
             reactionStack.append(PendingReaction(id: normalizedLabel(attributeDict["id"]),
                                                  name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"])))
+
+        case "reactionlist":
+            containerStack.append(.list(PendingReactionList(id: normalizedLabel(attributeDict["id"]),
+                                                            name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]),
+                                                            isStepList: false)))
+
+        case "reactionsteplist":
+            containerStack.append(.list(PendingReactionList(id: normalizedLabel(attributeDict["id"]),
+                                                            name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]),
+                                                            isStepList: true)))
+
+        case "reactionscheme":
+            containerStack.append(.scheme(PendingReactionScheme(id: normalizedLabel(attributeDict["id"]),
+                                                                name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]))))
 
         case "reactant":
             ensureCurrentReaction()
@@ -223,7 +304,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                                                 attributes: attributeDict,
                                                 context: .bond,
                                                 text: ""))
-            } else if !reactionStack.isEmpty {
+            } else if !reactionStack.isEmpty || !containerStack.isEmpty {
                 textCaptures.append(TextCapture(elementName: lower,
                                                 attributes: attributeDict,
                                                 context: .reaction,
@@ -273,7 +354,17 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
         case "reaction":
             guard let reaction = reactionStack.popLast() else { return }
-            parsedReactions.append(reaction)
+            append(reaction: reaction)
+
+        case "reactionlist", "reactionsteplist":
+            guard let container = containerStack.popLast() else { return }
+            guard case .list(let list) = container else { return }
+            append(list: list)
+
+        case "reactionscheme":
+            guard let container = containerStack.popLast() else { return }
+            guard case .scheme(let scheme) = container else { return }
+            append(scheme: scheme)
 
         case "formula":
             formulaDepth = max(0, formulaDepth - 1)
@@ -287,9 +378,23 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         }
     }
 
-    func buildReactions() -> [CDKReaction] {
-        parsedReactions.enumerated().map { index, pending in
-            buildReaction(from: pending, index: index + 1)
+    func buildHierarchy() -> CDKReactionHierarchy? {
+        let hierarchyNodes = rootNodes.map(buildHierarchyNode)
+        guard !hierarchyNodes.isEmpty else { return nil }
+        if hierarchyNodes.count == 1 {
+            return hierarchyNodes[0]
+        }
+        return .set(CDKReactionSet(members: hierarchyNodes.map(asSetMember)))
+    }
+
+    private func buildHierarchyNode(_ node: PendingRootNode) -> CDKReactionHierarchy {
+        switch node {
+        case .reaction(let reaction):
+            return .reaction(buildReaction(from: reaction, index: 1))
+        case .list(let list):
+            return .list(buildReactionList(from: list))
+        case .scheme(let scheme):
+            return .scheme(buildReactionScheme(from: scheme))
         }
     }
 
@@ -315,6 +420,39 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                            id: pending.id,
                            name: pending.name,
                            properties: pending.properties)
+    }
+
+    private func buildReactionList(from pending: PendingReactionList) -> CDKReactionList {
+        let reactions = pending.reactions.enumerated().map { offset, reaction in
+            buildReaction(from: reaction, index: offset + 1)
+        }
+        return CDKReactionList(id: pending.id,
+                               name: pending.name,
+                               reactions: reactions,
+                               properties: pending.properties,
+                               isStepList: pending.isStepList)
+    }
+
+    private func buildReactionScheme(from pending: PendingReactionScheme) -> CDKReactionScheme {
+        let entries = pending.entries.enumerated().map { offset, entry in
+            buildReactionSchemeEntry(entry, defaultIndex: offset + 1)
+        }
+        return CDKReactionScheme(id: pending.id,
+                                 name: pending.name,
+                                 entries: entries,
+                                 properties: pending.properties)
+    }
+
+    private func buildReactionSchemeEntry(_ entry: PendingReactionSchemeEntry,
+                                          defaultIndex: Int) -> CDKReactionSchemeEntry {
+        switch entry {
+        case .reaction(let reaction):
+            return .reaction(buildReaction(from: reaction, index: defaultIndex))
+        case .list(let list):
+            return .list(buildReactionList(from: list))
+        case .scheme(let scheme):
+            return .scheme(buildReactionScheme(from: scheme))
+        }
     }
 
     private func buildMolecule(from source: PendingMolecule,
@@ -399,6 +537,45 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         if reactionStack.isEmpty {
             reactionStack.append(PendingReaction())
         }
+    }
+
+    private func append(reaction: PendingReaction) {
+        if let lastContainer = containerStack.last {
+            switch lastContainer {
+            case .list(let list):
+                list.reactions.append(reaction)
+            case .scheme(let scheme):
+                scheme.entries.append(.reaction(reaction))
+            }
+            return
+        }
+        rootNodes.append(.reaction(reaction))
+    }
+
+    private func append(list: PendingReactionList) {
+        if let lastContainer = containerStack.last {
+            switch lastContainer {
+            case .list:
+                rootNodes.append(.list(list))
+            case .scheme(let scheme):
+                scheme.entries.append(.list(list))
+            }
+            return
+        }
+        rootNodes.append(.list(list))
+    }
+
+    private func append(scheme: PendingReactionScheme) {
+        if let lastContainer = containerStack.last {
+            switch lastContainer {
+            case .list:
+                rootNodes.append(.scheme(scheme))
+            case .scheme(let parentScheme):
+                parentScheme.entries.append(.scheme(scheme))
+            }
+            return
+        }
+        rootNodes.append(.scheme(scheme))
     }
 
     private func participantSeedMolecule(attributes: [String: String]) -> PendingMolecule {
@@ -689,12 +866,33 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     }
 
     private func applyReactionCapture(_ capture: TextCapture) {
-        guard !reactionStack.isEmpty else { return }
         let dictRef = normalizedDictRef(capture.attributes["dictRef"])
         guard dictRef?.hasSuffix("reactionproperty") == true else { return }
         guard let title = normalizedLabel(capture.attributes["title"]) else { return }
         let value = capture.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        reactionStack[reactionStack.count - 1].properties[title] = value
+        if !reactionStack.isEmpty {
+            reactionStack[reactionStack.count - 1].properties[title] = value
+        } else if !containerStack.isEmpty {
+            switch containerStack[containerStack.count - 1] {
+            case .list(let list):
+                list.properties[title] = value
+            case .scheme(let scheme):
+                scheme.properties[title] = value
+            }
+        }
+    }
+
+    private func asSetMember(_ hierarchy: CDKReactionHierarchy) -> CDKReactionSetMember {
+        switch hierarchy {
+        case .reaction(let reaction):
+            return .reaction(reaction)
+        case .list(let list):
+            return .list(list)
+        case .scheme(let scheme):
+            return .scheme(scheme)
+        case .set(let set):
+            return .list(CDKReactionList(reactions: set.flattenedReactions))
+        }
     }
 
     private func applyAtomLabel(_ rawText: String) {

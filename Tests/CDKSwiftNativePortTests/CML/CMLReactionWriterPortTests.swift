@@ -74,9 +74,47 @@ final class CMLReactionWriterPortTests: XCTestCase {
         let text = try CDKCMLReactionWriter.write([first, second])
         let roundTripped = try CDKCMLReactionReader.readReactions(text: text)
 
-        XCTAssertTrue(text.contains("<reactionList>"))
+        XCTAssertTrue(text.contains("<reactionList "))
         XCTAssertEqual(roundTripped.count, 2)
         XCTAssertEqual(roundTripped.map(\.id), ["r1", "r2"])
+    }
+
+    func testWritesReactionSchemeAndRoundTripsHierarchy() throws {
+        let first = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
+                                agents: [],
+                                products: [Molecule(name: "B", externalID: "B")],
+                                id: "r1")
+        let second = CDKReaction(reactants: [Molecule(name: "B", externalID: "B")],
+                                 agents: [],
+                                 products: [Molecule(name: "C", externalID: "C")],
+                                 id: "r2")
+        let third = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
+                                agents: [],
+                                products: [Molecule(name: "D", externalID: "D")],
+                                id: "r3")
+
+        let scheme = CDKReactionScheme(id: "rs0",
+                                       entries: [
+                                        .scheme(CDKReactionScheme(id: "rs1",
+                                                                  entries: [.reaction(first), .reaction(second)])),
+                                        .list(CDKReactionList(id: "rsl1",
+                                                              reactions: [third],
+                                                              isStepList: true))
+                                       ])
+
+        let text = try CDKCMLReactionWriter.write(scheme)
+        let hierarchy = try CDKCMLReactionReader.readHierarchy(text: text)
+
+        XCTAssertTrue(text.contains("<reactionScheme"))
+        XCTAssertTrue(text.contains("<reactionStepList"))
+        guard case .scheme(let parsedScheme) = hierarchy else {
+            return XCTFail("Expected reaction scheme root after round-trip.")
+        }
+        XCTAssertEqual(parsedScheme.flattenedReactions.map(\.id), ["r1", "r2", "r3"])
+        guard case .list(let parsedStepList) = parsedScheme.entries[1] else {
+            return XCTFail("Expected nested step list to round-trip.")
+        }
+        XCTAssertTrue(parsedStepList.isStepList)
     }
 
     func testWritesFormulaOnlyParticipantMolecule() throws {

@@ -28,6 +28,7 @@ final class CMLReactionReaderPortTests: XCTestCase {
 
     func testParsesReactionList() throws {
         let reactions = try CDKCMLReactionReader.readReactions(text: CMLReactionFixtures.reactionList)
+        let list = try CDKCMLReactionReader.readReactionList(text: CMLReactionFixtures.reactionList)
 
         XCTAssertEqual(reactions.count, 2)
         XCTAssertEqual(reactions.map(\.id), ["r1", "r2"])
@@ -36,10 +37,13 @@ final class CMLReactionReaderPortTests: XCTestCase {
         XCTAssertEqual(reactions[1].reactants[0].externalID, "B")
         XCTAssertEqual(reactions[1].products[0].externalID, "C")
         XCTAssertTrue(reactions[0].reactants[0].atoms.isEmpty)
+        XCTAssertFalse(list.isStepList)
+        XCTAssertEqual(list.reactions.map(\.id), ["r1", "r2"])
     }
 
     func testParsesNestedReactionScheme() throws {
         let reactions = try CDKCMLReactionReader.readReactions(text: CMLReactionFixtures.reactionScheme)
+        let scheme = try CDKCMLReactionReader.readReactionScheme(text: CMLReactionFixtures.reactionScheme)
 
         XCTAssertEqual(reactions.count, 4)
         XCTAssertEqual(reactions.map(\.id), ["r1", "r2", "r3", "r4"])
@@ -47,24 +51,47 @@ final class CMLReactionReaderPortTests: XCTestCase {
         XCTAssertEqual(reactions[0].products[0].externalID, "B")
         XCTAssertEqual(reactions[3].reactants[0].externalID, "F")
         XCTAssertEqual(reactions[3].products[0].externalID, "G")
+        XCTAssertEqual(scheme.entries.count, 2)
+        guard case .scheme(let leftBranch) = scheme.entries[0] else {
+            return XCTFail("Expected first nested entry to remain a reaction scheme.")
+        }
+        guard case .scheme(let rightBranch) = scheme.entries[1] else {
+            return XCTFail("Expected second nested entry to remain a reaction scheme.")
+        }
+        XCTAssertEqual(leftBranch.flattenedReactions.map(\.id), ["r1", "r2"])
+        XCTAssertEqual(rightBranch.flattenedReactions.map(\.id), ["r3", "r4"])
     }
 
     func testParsesReactionStepList() throws {
         let reactions = try CDKCMLReactionReader.readReactions(text: CMLReactionFixtures.reactionStepList)
+        let list = try CDKCMLReactionReader.readReactionList(text: CMLReactionFixtures.reactionStepList)
 
         XCTAssertEqual(reactions.count, 3)
         XCTAssertEqual(reactions.map(\.id), ["r1", "r2", "r3"])
         XCTAssertEqual(reactions.map { $0.reactants[0].externalID }, ["A", "B", "C"])
         XCTAssertEqual(reactions.map { $0.products[0].externalID }, ["B", "C", "D"])
+        XCTAssertTrue(list.isStepList)
+        XCTAssertEqual(list.reactions.map(\.id), ["r1", "r2", "r3"])
     }
 
     func testParsesReactionSchemeStepList() throws {
         let reactions = try CDKCMLReactionReader.readReactions(text: CMLReactionFixtures.reactionSchemeStepList)
+        let scheme = try CDKCMLReactionReader.readReactionScheme(text: CMLReactionFixtures.reactionSchemeStepList)
 
         XCTAssertEqual(reactions.count, 4)
         XCTAssertEqual(reactions.map(\.id), ["r1.1", "r1.2", "r2.1", "r2.2"])
         XCTAssertEqual(reactions.map { $0.reactants[0].externalID }, ["A", "B", "A", "D"])
         XCTAssertEqual(reactions.map { $0.products[0].externalID }, ["B", "C", "D", "E"])
+        XCTAssertEqual(scheme.entries.count, 2)
+        guard case .scheme(let nestedScheme) = scheme.entries[0] else {
+            return XCTFail("Expected first scheme entry to remain nested.")
+        }
+        guard case .list(let stepList) = scheme.entries[1] else {
+            return XCTFail("Expected second scheme entry to remain a step list.")
+        }
+        XCTAssertEqual(nestedScheme.flattenedReactions.map(\.id), ["r1.1", "r1.2"])
+        XCTAssertTrue(stepList.isStepList)
+        XCTAssertEqual(stepList.reactions.map(\.id), ["r2.1", "r2.2"])
     }
 
     func testParsesSharedMoleculeReferencesDefinedBeforeReaction() throws {

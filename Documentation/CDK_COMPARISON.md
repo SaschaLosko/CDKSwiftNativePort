@@ -108,12 +108,12 @@ The following CDK areas are still outside the package’s current parity target:
 - fingerprint/similarity toolkits
 - force-field and 3D generation workflows
 - the broader long tail of CDK QSAR descriptors
-- first-class reaction-scheme object models
 - every configurable reader/writer mode from upstream CDK
 
-For reaction CML specifically, reaction schemes and lists can be read, but they
-are flattened to `[CDKReaction]` because the Swift package does not currently
-define a separate reaction-scheme type.
+Reaction CML now has native Swift hierarchy types for sets, lists, and schemes.
+The remaining reaction parity work is broader than file parsing alone: the
+package still does not attempt to match all of upstream CDK's reaction
+manipulation utilities or every configurable IO mode.
 
 ## Parity Tracking
 

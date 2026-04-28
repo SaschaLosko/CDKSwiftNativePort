@@ -129,16 +129,36 @@ final class ChemFileImporterTests: XCTestCase {
     func testReadsReactionCMLByCMLExtension() throws {
         let reaction = try CDKFileImporter.readReaction(text: CMLReactionFixtures.reactionWithProperties,
                                                         fileExtension: "cml")
+        let hierarchy = try CDKFileImporter.readReactionHierarchy(text: CMLReactionFixtures.reactionWithProperties,
+                                                                  fileExtension: "cml")
 
         XCTAssertEqual(reaction.id, "reaction.2")
         XCTAssertEqual(reaction.reactantCount, 1)
         XCTAssertEqual(reaction.productCount, 1)
         XCTAssertEqual(reaction.properties["Ka"], "3")
+        guard case .list(let hierarchyList) = hierarchy else {
+            return XCTFail("Expected reaction list hierarchy root.")
+        }
+        XCTAssertEqual(hierarchyList.reactions.map(\.id), ["reaction.2"])
 
         let molecules = try CDKFileImporter.readMolecules(text: CMLReactionFixtures.reactionWithProperties,
                                                           fileExtension: "cml")
         XCTAssertEqual(molecules.count, 2)
         XCTAssertEqual(molecules.map(\.externalID), ["react", "product"])
+    }
+
+    func testReadsReactionHierarchyPreservingSchemeShape() throws {
+        let hierarchy = try CDKFileImporter.readReactionHierarchy(text: CMLReactionFixtures.reactionSchemeStepList,
+                                                                  fileExtension: "cml")
+
+        guard case .scheme(let scheme) = hierarchy else {
+            return XCTFail("Expected reaction scheme hierarchy root.")
+        }
+        XCTAssertEqual(scheme.flattenedReactions.map(\.id), ["r1.1", "r1.2", "r2.1", "r2.2"])
+        guard case .list(let stepList) = scheme.entries[1] else {
+            return XCTFail("Expected step list under scheme.")
+        }
+        XCTAssertTrue(stepList.isStepList)
     }
 
     func testAutoDetectsReactionCMLFromPlainText() throws {

@@ -160,6 +160,12 @@ Current CX support includes:
 - `CDKReactionRole`
 - `CDKReactionParticipant`
 - `CDKReaction`
+- `CDKReactionSet`
+- `CDKReactionSetMember`
+- `CDKReactionList`
+- `CDKReactionScheme`
+- `CDKReactionSchemeEntry`
+- `CDKReactionHierarchy`
 - `CDKReactionParticipantSelection`
 
 ## 4. InChI
@@ -193,6 +199,10 @@ Current CX support includes:
   - `readMolecules(text:fileExtension:)`
   - `readReaction(from:)`
   - `readReaction(text:fileExtension:)`
+  - `readReactionHierarchy(from:)`
+  - `readReactionHierarchy(text:fileExtension:)`
+  - `readReactionSet(from:)`
+  - `readReactionSet(text:fileExtension:)`
   - `looksLikeReaction(text:fileExtension:)`
 
 ### 5.2 Supported molecule readers
@@ -215,6 +225,10 @@ Current CX support includes:
   - `CDKCMLReader`
 - reaction readers:
   - `CDKCMLReactionReader`
+    - `readHierarchy(text:)`
+    - `readReactionList(text:)`
+    - `readReactionScheme(text:)`
+    - `readReactionSet(text:)`
   - `CDKRXNReader`
   - `CDKRDFReader`
 
@@ -245,6 +259,10 @@ and extension-style host integrations.
   - `write(molecules:as:options:)`
   - `write(reaction:as:options:)`
   - `write(reactions:as:options:)`
+  - `write(reactionHierarchy:as:options:)`
+  - `write(reactionSet:as:options:)`
+  - `write(reactionList:as:options:)`
+  - `write(reactionScheme:as:options:)`
   - `write(molecule:to:as:options:)`
   - `write(molecules:to:as:options:)`
 
@@ -281,6 +299,10 @@ and extension-style host integrations.
   - `CDKCMLWriter`
 - reaction writers:
   - `CDKCMLReactionWriter`
+    - `write(_ hierarchy:)`
+    - `write(_ set:)`
+    - `write(_ list:)`
+    - `write(_ scheme:)`
   - `CDKRXNWriter`
   - `CDKRDFWriter`
 

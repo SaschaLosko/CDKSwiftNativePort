@@ -55,6 +55,31 @@ final class ReactionModelTests: XCTestCase {
         XCTAssertEqual(productStoich, 2.0, accuracy: 0.000_001)
     }
 
+    func testReactionHierarchyFlattensNestedSchemeEntries() {
+        let first = CDKReaction(reactants: [makeMolecule(name: "A", element: "C")],
+                                agents: [],
+                                products: [makeMolecule(name: "B", element: "N")],
+                                id: "r1")
+        let second = CDKReaction(reactants: [makeMolecule(name: "B", element: "N")],
+                                 agents: [],
+                                 products: [makeMolecule(name: "C", element: "O")],
+                                 id: "r2")
+        let stepList = CDKReactionList(id: "steps",
+                                       reactions: [second],
+                                       isStepList: true)
+        let scheme = CDKReactionScheme(id: "scheme",
+                                       entries: [
+                                        .reaction(first),
+                                        .list(stepList)
+                                       ])
+
+        XCTAssertEqual(scheme.flattenedReactions.map(\.id), ["r1", "r2"])
+
+        let hierarchy = CDKReactionHierarchy.scheme(scheme)
+        XCTAssertEqual(hierarchy.flattenedReactions.map(\.id), ["r1", "r2"])
+        XCTAssertEqual(hierarchy.asSet.flattenedReactions.map(\.id), ["r1", "r2"])
+    }
+
     private func makeMolecule(name: String, element: String) -> Molecule {
         Molecule(name: name,
                  atoms: [Atom(id: 1, element: element, position: .zero)],

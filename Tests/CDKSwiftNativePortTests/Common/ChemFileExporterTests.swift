@@ -202,6 +202,32 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed.properties["Ka"], "3")
     }
 
+    func testWritesReactionSchemeAsCMLAndRoundTripsHierarchy() throws {
+        let first = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
+                                agents: [],
+                                products: [try referenceMolecule(name: "Intermediate")],
+                                id: "r1")
+        let second = CDKReaction(reactants: [try referenceMolecule(name: "Intermediate")],
+                                 agents: [],
+                                 products: [try referenceMolecule(name: "Product")],
+                                 id: "r2")
+        let scheme = CDKReactionScheme(id: "rs0",
+                                       entries: [
+                                        .list(CDKReactionList(id: "rsl1",
+                                                              reactions: [first, second],
+                                                              isStepList: true))
+                                       ])
+
+        let text = try CDKFileExporter.write(reactionScheme: scheme, as: .cml)
+        let parsed = try CDKCMLReactionReader.readHierarchy(text: text)
+
+        XCTAssertTrue(text.contains("<reactionScheme"))
+        guard case .scheme(let parsedScheme) = parsed else {
+            return XCTFail("Expected reaction scheme after CML round-trip.")
+        }
+        XCTAssertEqual(parsedScheme.flattenedReactions.map(\.id), ["r1", "r2"])
+    }
+
     func testWritesSVG() throws {
         let molecule = try referenceMolecule(name: "Aspirin")
         var options = CDKFileExportOptions()
