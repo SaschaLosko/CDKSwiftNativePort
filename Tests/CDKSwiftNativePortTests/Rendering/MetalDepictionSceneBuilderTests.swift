@@ -1420,7 +1420,7 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                       "Mapped carbons should remain labeled when map-number rendering is enabled.")
     }
 
-    func testCanSuppressAromaticCarbonLabelsWhenCarbonsHidden() {
+    func testCanOptIntoAromaticCarbonLabelsWhenCarbonsHidden() {
         let style = RenderStyle(showCarbons: false,
                                 showImplicitHydrogens: false,
                                 showAtomIDs: false,
@@ -1434,22 +1434,22 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                                                                 canvasRect: canvas,
                                                                 zoom: 1.0,
                                                                 pan: .zero)
-        let suppressedScene = CDKMetalDepictionSceneBuilder.build(molecule: aromaticSixRing,
-                                                                   style: style,
-                                                                   canvasRect: canvas,
-                                                                   zoom: 1.0,
-                                                                   pan: .zero,
-                                                                   includeAromaticCarbonLabelsWhenCarbonsHidden: false)
+        let optInScene = CDKMetalDepictionSceneBuilder.build(molecule: aromaticSixRing,
+                                                              style: style,
+                                                              canvasRect: canvas,
+                                                              zoom: 1.0,
+                                                              pan: .zero,
+                                                              includeAromaticCarbonLabelsWhenCarbonsHidden: true)
 
-        XCTAssertTrue(defaultScene.labels.contains(where: { $0.text == "C" }),
-                      "Default rendering should keep aromatic carbon labels when carbons are hidden.")
-        XCTAssertFalse(suppressedScene.labels.contains(where: { $0.text == "C" }),
-                       "Preview mode should suppress aromatic carbon labels when carbons are hidden.")
-        XCTAssertGreaterThan(suppressedScene.bondSegments.count, 0,
+        XCTAssertFalse(defaultScene.labels.contains(where: { $0.text == "C" }),
+                       "Default rendering should suppress aromatic carbon labels when carbons are hidden.")
+        XCTAssertTrue(optInScene.labels.contains(where: { $0.text == "C" }),
+                      "Callers can opt into aromatic carbon labels when needed.")
+        XCTAssertGreaterThan(defaultScene.bondSegments.count, 0,
                              "Suppressing aromatic carbon labels must not remove bond rendering.")
     }
 
-    func testCanSuppressTerminalCarbonLabelsWhenCarbonsHidden() {
+    func testCanOptIntoTerminalCarbonLabelsWhenCarbonsHidden() {
         let molecule = Molecule(
             name: "TerminalCarbon",
             atoms: [
@@ -1473,18 +1473,18 @@ final class MetalDepictionSceneBuilderTests: XCTestCase {
                                                                 canvasRect: canvas,
                                                                 zoom: 1.0,
                                                                 pan: .zero)
-        let suppressedScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                                   style: style,
-                                                                   canvasRect: canvas,
-                                                                   zoom: 1.0,
-                                                                   pan: .zero,
-                                                                   includeTerminalCarbonLabelsWhenCarbonsHidden: false)
+        let optInScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
+                                                              style: style,
+                                                              canvasRect: canvas,
+                                                              zoom: 1.0,
+                                                              pan: .zero,
+                                                              includeTerminalCarbonLabelsWhenCarbonsHidden: true)
 
-        XCTAssertTrue(defaultScene.labels.contains(where: { $0.id == 1 && $0.text == "C" }),
-                      "Default rendering should keep terminal carbon labels when carbons are hidden.")
-        XCTAssertFalse(suppressedScene.labels.contains(where: { $0.id == 1 && $0.text == "C" }),
-                       "Preview mode should suppress terminal carbon labels when carbons are hidden.")
-        XCTAssertTrue(suppressedScene.labels.contains(where: { $0.id == 2 && $0.text.hasPrefix("O") }))
+        XCTAssertFalse(defaultScene.labels.contains(where: { $0.id == 1 && $0.text == "C" }),
+                       "Default rendering should suppress terminal carbon labels when carbons are hidden.")
+        XCTAssertTrue(optInScene.labels.contains(where: { $0.id == 1 && $0.text == "C" }),
+                      "Callers can opt into terminal carbon labels when needed.")
+        XCTAssertTrue(defaultScene.labels.contains(where: { $0.id == 2 && $0.text.hasPrefix("O") }))
     }
 
     func testMarkushLegendStaysBelowRotatedRootDuringInteractiveRotation() throws {

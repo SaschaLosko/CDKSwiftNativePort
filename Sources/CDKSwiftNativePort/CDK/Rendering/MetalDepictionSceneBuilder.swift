@@ -311,8 +311,8 @@ public enum CDKMetalDepictionSceneBuilder {
                              pan: CGSize,
                              rotationDegrees: CGFloat = 0,
                              minimumLabelFontSize: CGFloat = 8.0,
-                             includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = true,
-                             includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true) -> CDKMetalDepictionScene {
+                             includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = false,
+                             includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = false) -> CDKMetalDepictionScene {
         let prepared = MetalPreparedDepictionCache.preparedData(molecule: molecule, style: style)
         let depictionMolecule = prepared.depictionMolecule
         let highlightedAtomIDs = style.highlightStyle == .none ? Set<Int>() : Set(depictionMolecule.highlightedAtomIDs)

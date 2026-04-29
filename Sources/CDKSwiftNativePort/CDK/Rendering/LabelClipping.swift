@@ -15,8 +15,8 @@ enum CDKLabelText {
     static func shouldDrawLabel(atom: Atom,
                                 degree: Int,
                                 style: RenderStyle,
-                                includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = true,
-                                includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = true,
+                                includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = false,
+                                includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = false,
                                 molecule: Molecule? = nil,
                                 highlightedAtomIDs: Set<Int> = [],
                                 highlightedBondIDs: Set<Int> = []) -> Bool {
