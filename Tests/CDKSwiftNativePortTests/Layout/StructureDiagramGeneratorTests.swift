@@ -80,6 +80,36 @@ final class StructureDiagramGeneratorTests: XCTestCase {
                                     "Expected cyclohexane to seed with the conventional vertical-side hexagon orientation.")
     }
 
+    func testExplicitHydrogensDoNotDistortIbuprofenLikeSideChainAngles() throws {
+        let skeletal = try parse("CC(C)Cc1ccc(cc1)C(C)C(=O)O")
+        let explicitHydrogenExpanded = expandedWithExplicitHydrogens(from: skeletal)
+        let laidOut = Depiction2DGenerator.generate(for: explicitHydrogenExpanded)
+
+        let ringAtomIDs = Set(skeletal.simpleCycles(maxSize: 8).flatMap { $0 })
+        let candidateAtomIDs = skeletal.atoms.compactMap { atom -> Int? in
+            guard atom.element.uppercased() != "H",
+                  !ringAtomIDs.contains(atom.id) else {
+                return nil
+            }
+            let expected = heavyNeighborAngles(in: skeletal, around: atom.id)
+            return expected.isEmpty ? nil : atom.id
+        }
+
+        XCTAssertFalse(candidateAtomIDs.isEmpty)
+
+        for atomID in candidateAtomIDs {
+            let expected = heavyNeighborAngles(in: skeletal, around: atomID)
+            let actual = heavyNeighborAngles(in: laidOut, around: atomID)
+            XCTAssertEqual(actual.count, expected.count, "Expected the same heavy-neighbor angle count for atom \(atomID).")
+            for (expectedAngle, actualAngle) in zip(expected, actual) {
+                XCTAssertEqual(actualAngle,
+                               expectedAngle,
+                               accuracy: 4.0,
+                               "Explicit-hydrogen layout distorted the heavy-atom zig-zag at atom \(atomID).")
+            }
+        }
+    }
+
     func testMarkushDefinitionsAreLaidOutBelowRootStructure() throws {
         let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
         let components = connectedComponents(in: molecule)
@@ -162,6 +192,53 @@ final class StructureDiagramGeneratorTests: XCTestCase {
 
     private func parse(_ smiles: String) throws -> Molecule {
         try parser.parseSmiles(smiles)
+    }
+
+    private func expandedWithExplicitHydrogens(from molecule: Molecule) -> Molecule {
+        var atoms = molecule.atoms.map { atom in
+            var copied = atom
+            copied.position = .zero
+            copied.explicitHydrogenCount = nil
+            return copied
+        }
+        var bonds = molecule.bonds
+        var nextAtomID = (atoms.map(\.id).max() ?? 0) + 1
+        var nextBondID = (bonds.map(\.id).max() ?? 0) + 1
+
+        for atom in molecule.atoms where atom.element.uppercased() != "H" {
+            let hydrogenCount = molecule.implicitHydrogenCount(for: atom.id)
+            guard hydrogenCount > 0 else { continue }
+            for _ in 0..<hydrogenCount {
+                atoms.append(Atom(id: nextAtomID, element: "H", position: .zero))
+                bonds.append(Bond(id: nextBondID, a1: atom.id, a2: nextAtomID, order: .single))
+                nextAtomID += 1
+                nextBondID += 1
+            }
+        }
+
+        return Molecule(name: molecule.name, atoms: atoms, bonds: bonds)
+    }
+
+    private func heavyNeighborAngles(in molecule: Molecule, around atomID: Int) -> [CGFloat] {
+        let heavyNeighborIDs = molecule.neighbors(of: atomID).filter { neighborID in
+            molecule.atom(id: neighborID)?.element.uppercased() != "H"
+        }
+        guard heavyNeighborIDs.count >= 2,
+              let center = molecule.atom(id: atomID)?.position else {
+            return []
+        }
+
+        var angles: [CGFloat] = []
+        for leftIndex in 0..<heavyNeighborIDs.count {
+            for rightIndex in (leftIndex + 1)..<heavyNeighborIDs.count {
+                guard let leftPoint = molecule.atom(id: heavyNeighborIDs[leftIndex])?.position,
+                      let rightPoint = molecule.atom(id: heavyNeighborIDs[rightIndex])?.position else {
+                    continue
+                }
+                angles.append(angleDegrees(a: leftPoint, center: center, b: rightPoint))
+            }
+        }
+        return angles.sorted()
     }
 
     private func connectedComponents(in molecule: Molecule) -> [Set<Int>] {
