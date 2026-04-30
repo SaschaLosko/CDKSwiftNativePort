@@ -1130,7 +1130,7 @@ enum CDKReactionParticipantLayoutRefiner {
     }
 }
 
-private final class ParticipantLayoutCache {
+private final class ParticipantLayoutCache: @unchecked Sendable {
     private let lock = NSLock()
     private let maxEntries: Int
     private var storage: [Molecule: Molecule] = [:]

@@ -3,7 +3,7 @@ import CoreGraphics
 #endif
 import Foundation
 
-public enum CDKAtomColoringMode: String, CaseIterable, Hashable {
+public enum CDKAtomColoringMode: String, CaseIterable, Hashable, Sendable {
     case monochrome
     case cdk2D
     // CDK depiction option for reactions: highlight mapped atoms consistently
@@ -11,12 +11,12 @@ public enum CDKAtomColoringMode: String, CaseIterable, Hashable {
     case atomMapHighlight
 }
 
-public enum CDKAromaticDisplayMode: String, CaseIterable, Hashable {
+public enum CDKAromaticDisplayMode: String, CaseIterable, Hashable, Sendable {
     case innerLine
     case circle
 }
 
-public struct CDKRenderColor: Hashable {
+public struct CDKRenderColor: Hashable, Sendable {
     public var red: CGFloat
     public var green: CGFloat
     public var blue: CGFloat

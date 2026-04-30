@@ -204,7 +204,7 @@ For a Linux command-line tool, use an executable target:
 
 ```swift
 // Package.swift
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(

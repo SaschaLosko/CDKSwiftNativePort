@@ -1,10 +1,10 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
     name: "CDKSwiftNativePort",
     platforms: [
-        .macOS(.v14),
+        .macOS(.v15),
         .iOS(.v13)
     ],
     products: [
@@ -32,5 +32,6 @@ let package = Package(
                 "RInChI/UpstreamReference"
             ]
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

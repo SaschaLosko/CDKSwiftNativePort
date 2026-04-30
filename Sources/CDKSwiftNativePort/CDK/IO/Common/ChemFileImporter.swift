@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CDKFileImporterFormat: Hashable {
+public struct CDKFileImporterFormat: Hashable, Sendable {
     public let displayName: String
     public let fileExtensions: [String]
     public let utiIdentifiers: [String]

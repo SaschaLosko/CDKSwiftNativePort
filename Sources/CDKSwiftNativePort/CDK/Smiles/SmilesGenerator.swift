@@ -900,7 +900,7 @@ public final class CDKSmilesGenerator {
 }
 
 /// Factory facade mirroring CDK-style generator construction patterns.
-public final class CDKSmilesGeneratorFactory {
+public final class CDKSmilesGeneratorFactory: @unchecked Sendable {
     public static let shared = CDKSmilesGeneratorFactory()
 
     private init() {}

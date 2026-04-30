@@ -1,7 +1,7 @@
 import Foundation
 
 /// Lightweight Swift counterpart of CDK's `SmiFlavor` options.
-public struct CDKSmiFlavor: OptionSet {
+public struct CDKSmiFlavor: OptionSet, Sendable {
     public let rawValue: Int
 
     public init(rawValue: Int) {

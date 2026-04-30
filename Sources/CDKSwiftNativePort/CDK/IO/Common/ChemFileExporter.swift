@@ -3,7 +3,7 @@ import Foundation
 import CoreGraphics
 #endif
 
-public enum CDKFileExportFormat: String, CaseIterable, Identifiable {
+public enum CDKFileExportFormat: String, CaseIterable, Identifiable, Sendable {
     case mol
     case molV3000
     case rgfile
@@ -23,7 +23,7 @@ public enum CDKFileExportFormat: String, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-public struct CDKFileExporterFormat: Hashable, Identifiable {
+public struct CDKFileExporterFormat: Hashable, Identifiable, Sendable {
     public let format: CDKFileExportFormat
     public let displayName: String
     public let fileExtensions: [String]

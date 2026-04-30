@@ -115,8 +115,8 @@ private struct MetalPreparedDepictionData {
 private enum MetalPreparedDepictionCache {
     private static let maxEntries = 16
     private static let lock = NSLock()
-    private static var entries: [MetalPreparedDepictionKey: MetalPreparedDepictionData] = [:]
-    private static var lruOrder: [MetalPreparedDepictionKey] = []
+    nonisolated(unsafe) private static var entries: [MetalPreparedDepictionKey: MetalPreparedDepictionData] = [:]
+    nonisolated(unsafe) private static var lruOrder: [MetalPreparedDepictionKey] = []
 
     static func preparedData(molecule: Molecule, style: RenderStyle) -> MetalPreparedDepictionData {
         let key = MetalPreparedDepictionKey(molecule: molecule, style: style)

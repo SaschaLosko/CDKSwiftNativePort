@@ -1,7 +1,7 @@
 import Foundation
 
 /// Swift counterpart of CDK's InChIGeneratorFactory facade.
-public final class CDKInChIGeneratorFactory {
+public final class CDKInChIGeneratorFactory: @unchecked Sendable {
     public static let shared = CDKInChIGeneratorFactory()
 
     private init() {}

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Swift counterpart of CDK's `SmilesParser` construction/facade entry point.
-public final class CDKSmilesParserFactory {
+public final class CDKSmilesParserFactory: @unchecked Sendable {
     public static let shared = CDKSmilesParserFactory()
 
     private init() {}
