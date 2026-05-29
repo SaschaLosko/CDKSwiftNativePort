@@ -123,13 +123,14 @@ This boundary is enforced in tests:
 
 ## Platform and Release Status
 
-- Swift tools: `5.9`
+- Swift tools: `6.0`
+- Swift language mode: `6`
 - Apple deployment targets declared in `Package.swift`:
-  - `macOS 14+`
+  - `macOS 15+`
   - `iOS 13+`
 - Linux:
   - builds and runs as a Swift package under Swift on Linux
-  - verified on Ubuntu 24.04 with Swift 6.3
+  - verified on Ubuntu 26.04 LTS with Swift 6.3.2
 
 The package is headless. It does not depend on `AppKit`, `UIKit`, `SwiftUI`,
 Quick Look, Spotlight, or AtomLens internals. That makes it suitable for:
@@ -183,7 +184,7 @@ Add the dependency in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.3.0")
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
 ]
 ```
 
@@ -210,7 +211,7 @@ import PackageDescription
 let package = Package(
     name: "ChemCLI",
     dependencies: [
-        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.3.0")
+        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
     ],
     targets: [
         .executableTarget(
@@ -414,8 +415,8 @@ swift test
 ```
 
 Before publishing a GitHub release, run the same package suite on at least one
-Linux environment as well. The package has been verified on Ubuntu 24.04 with
-Swift 6.3.
+Linux environment as well. The package has been verified on Ubuntu 26.04 LTS
+with Swift 6.3.2.
 
 If you are validating the first-party monorepo as well, also build AtomLens
 against the package product:

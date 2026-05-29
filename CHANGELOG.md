@@ -10,6 +10,33 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Changed
 
+## [1.4.0] - 2026-05-29
+
+### Added
+
+- Native reaction hierarchy parity coverage for reaction sets, reaction lists,
+  reaction schemes, CML hierarchy round-trips, RXN V2000/V3000, RDF, and
+  reaction SMILES workflows.
+- Native `RInChI` support for generation, decomposition,
+  `RInChI`-to-reaction reconstruction, `RAuxInfo`, and long/short/web
+  `RInChIKey` derivation.
+- Official InChI reference parity fixtures and an opt-in strict release gate
+  for the maintained native Swift InChI surface.
+- Native InChIKey derivation aligned with the official major/minor block split.
+
+### Changed
+
+- Adopted Swift tools 6.0, Swift 6 language mode, and `macOS 15+` as the
+  declared Apple deployment baseline.
+- Improved molecule and reaction depiction geometry for stereo wedges, ring
+  stereo, explicit hydrogens, hidden-carbon defaults, reaction packing, and
+  trigonal carbonate branches.
+- Refined CML, reaction, and InChI round-tripping so source metadata and
+  hierarchy information survive maintained import/export workflows more
+  consistently.
+- Kept generated reaction gap reports out of source control while preserving
+  committed parity inventories used by the test suite.
+
 ## [1.3.0] - 2026-03-28
 
 ### Added

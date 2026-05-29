@@ -10,8 +10,8 @@ The package is headless. It does not require AtomLens, Xcode, `AppKit`,
 
 The package has been verified on:
 
-- Ubuntu 24.04
-- Swift 6.3
+- Ubuntu 26.04 LTS
+- Swift 6.3.2
 
 The same public API is intended to work in other Swift-on-Linux environments as
 long as the package can be built with Swift Package Manager.
@@ -55,7 +55,7 @@ import PackageDescription
 let package = Package(
     name: "ChemCLI",
     dependencies: [
-        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.3.0")
+        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
     ],
     targets: [
         .executableTarget(

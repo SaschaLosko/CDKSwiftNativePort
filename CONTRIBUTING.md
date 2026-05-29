@@ -4,7 +4,7 @@ Thanks for contributing to `CDKSwiftNativePort`.
 
 ## Development Setup
 
-1. Install Xcode with Swift 5.9+ toolchain.
+1. Install Xcode with a Swift 6 toolchain.
 2. Clone the repository.
 3. Run:
 

@@ -1,6 +1,6 @@
 # macOS-Specific Notes
 
-`CDKSwiftNativePort` currently declares `macOS 14+` and is designed to work
+`CDKSwiftNativePort` currently declares `macOS 15+` and is designed to work
 cleanly inside sandboxed native macOS hosts.
 
 ## 1. Sandboxed File Access

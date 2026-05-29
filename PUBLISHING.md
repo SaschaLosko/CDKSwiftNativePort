@@ -23,7 +23,7 @@ Required before publishing:
 
 Recommended Linux verification target:
 
-- Ubuntu 24.04 with Swift 6.3
+- Ubuntu 26.04 LTS with Swift 6.3.2
 
 If you are working in the first-party monorepo, also verify that AtomLens still
 builds against the package product:
@@ -50,7 +50,7 @@ Before release, make sure these documents are current:
 Choose the release version and commit the release-prep changes:
 
 ```bash
-VERSION=1.3.0
+VERSION=1.4.0
 git add .
 git commit -m "Prepare v${VERSION} release"
 ```
