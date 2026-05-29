@@ -110,6 +110,41 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         }
     }
 
+    func testSingleAnchorRingAttachmentUsesExocyclicBisectorConvention() throws {
+        let molecule = try parse("c1ccccc1NCC1OCOC1")
+        let fiveMemberRing = try XCTUnwrap(molecule.simpleCycles(maxSize: 8).first { $0.count == 5 })
+        let ringAtoms = Set(fiveMemberRing)
+        let anchorID = try XCTUnwrap(fiveMemberRing.first { atomID in
+            let neighbors = molecule.neighbors(of: atomID)
+            let ringNeighborCount = neighbors.filter { ringAtoms.contains($0) }.count
+            return ringNeighborCount == 2 && neighbors.contains { !ringAtoms.contains($0) }
+        })
+
+        let ringNeighbors = molecule.neighbors(of: anchorID).filter { ringAtoms.contains($0) }
+        let externalNeighbor = try XCTUnwrap(molecule.neighbors(of: anchorID).first { !ringAtoms.contains($0) })
+
+        XCTAssertEqual(ringNeighbors.count, 2)
+
+        let center = try XCTUnwrap(molecule.atom(id: anchorID)?.position)
+        let firstRingPoint = try XCTUnwrap(molecule.atom(id: ringNeighbors[0])?.position)
+        let secondRingPoint = try XCTUnwrap(molecule.atom(id: ringNeighbors[1])?.position)
+        let externalPoint = try XCTUnwrap(molecule.atom(id: externalNeighbor)?.position)
+
+        let internalRingAngle = angleDegrees(a: firstRingPoint, center: center, b: secondRingPoint)
+        let exocyclicAngles = [
+            angleDegrees(a: firstRingPoint, center: center, b: externalPoint),
+            angleDegrees(a: secondRingPoint, center: center, b: externalPoint)
+        ].sorted()
+
+        XCTAssertEqual(internalRingAngle, 108, accuracy: 8)
+        XCTAssertGreaterThan(exocyclicAngles[0], 116)
+        XCTAssertLessThan(exocyclicAngles[1], 136)
+        XCTAssertEqual(exocyclicAngles[0],
+                       exocyclicAngles[1],
+                       accuracy: 6,
+                       "Single-anchor ring placement should place the external bond on the ring-bond bisector, not collinear with one ring bond.")
+    }
+
     func testMarkushDefinitionsAreLaidOutBelowRootStructure() throws {
         let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
         let components = connectedComponents(in: molecule)

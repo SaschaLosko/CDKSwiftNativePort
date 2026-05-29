@@ -1046,16 +1046,29 @@ enum CDKStructureDiagramGenerator {
             return ordered[a].count > ordered[b].count
         } ?? 0
 
-        if ordered[seedIndex].allSatisfy({ positions[$0] == nil }) {
-            placeRegularRing(ordered[seedIndex],
+        let seedRing = ordered[seedIndex]
+        if seedRing.allSatisfy({ positions[$0] == nil }) {
+            placeRegularRing(seedRing,
                              center: center,
                              bondLength: bondLength,
                              positions: &positions)
+        } else if seedRing.contains(where: { positions[$0] == nil }) {
+            let shared = seedRing.filter { positions[$0] != nil }
+            if let candidate = bestRingPlacementCandidate(ring: seedRing,
+                                                          sharedAnchors: shared,
+                                                          graph: graph,
+                                                          component: component,
+                                                          positions: positions,
+                                                          bondLength: bondLength) {
+                for atomID in seedRing where positions[atomID] == nil {
+                    positions[atomID] = candidate[atomID]
+                }
+            }
         }
 
         var placedRings: Set<Int> = []
         var placementOrder: [Int] = []
-        if ordered[seedIndex].contains(where: { positions[$0] != nil }) {
+        if ordered[seedIndex].allSatisfy({ positions[$0] != nil }) {
             placedRings.insert(seedIndex)
             placementOrder.append(seedIndex)
         }
@@ -1235,7 +1248,11 @@ enum CDKStructureDiagramGenerator {
 
         for anchor in component.sorted() where positions[anchor] != nil {
             let starts = graph.neighbors(of: anchor)
-                .filter { component.contains($0) && positions[$0] == nil }
+                .filter {
+                    component.contains($0)
+                        && positions[$0] == nil
+                        && !ringEdges.contains(CDKEdgeKey(anchor, $0))
+                }
                 .sorted()
 
             for start in starts {
@@ -1634,15 +1651,13 @@ enum CDKStructureDiagramGenerator {
                                                target: CGPoint,
                                                graph: CDKMolecularGraph,
                                                positions: [Int: CGPoint]) -> [[Int: CGPoint]] {
-        guard let idx = ring.firstIndex(of: sharedAtom) else { return [] }
-        let n1 = ring[(idx + 1) % ring.count]
-        let n2 = ring[(idx - 1 + ring.count) % ring.count]
+        guard ring.contains(sharedAtom) else { return [] }
         let preferred = preferredExpansionDirection(for: sharedAtom, graph: graph, positions: positions)
 
-        func makeCandidate(from base: [Int: CGPoint], neighbor: Int) -> [Int: CGPoint]? {
-            guard let ls = base[sharedAtom], let ln = base[neighbor] else { return nil }
-            let localVec = CGVector(dx: ln.x - ls.x, dy: ln.y - ls.y)
-            guard let uLocal = normalize(localVec) else { return nil }
+        func makeCandidate(from base: [Int: CGPoint]) -> [Int: CGPoint]? {
+            guard let ls = base[sharedAtom] else { return nil }
+            let localCenterVector = CGVector(dx: -ls.x, dy: -ls.y)
+            guard let uLocal = normalize(localCenterVector) else { return nil }
             guard let uPref = normalize(preferred) else { return nil }
             let angle = atan2(uPref.dy, uPref.dx) - atan2(uLocal.dy, uLocal.dx)
             let c = cos(angle)
@@ -1662,8 +1677,8 @@ enum CDKStructureDiagramGenerator {
         }
 
         var out: [[Int: CGPoint]] = []
-        if let c1 = makeCandidate(from: local, neighbor: n1) { out.append(c1) }
-        if let c2 = makeCandidate(from: localMirror, neighbor: n2) { out.append(c2) }
+        if let c1 = makeCandidate(from: local) { out.append(c1) }
+        if let c2 = makeCandidate(from: localMirror) { out.append(c2) }
         return out
     }
 
