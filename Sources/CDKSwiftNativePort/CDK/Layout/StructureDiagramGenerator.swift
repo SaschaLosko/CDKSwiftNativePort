@@ -1217,7 +1217,7 @@ enum CDKStructureDiagramGenerator {
                                                 ringAtoms: ringAtoms,
                                                 ringEdges: ringEdges,
                                                 positions: positions),
-                  chain.count >= 2 else { break }
+                  chain.count >= 3 else { break }
 
             let anchor = chain[0]
             let first = chain[1]
@@ -1271,7 +1271,7 @@ enum CDKStructureDiagramGenerator {
             }
         }
 
-        return best.count >= 2 ? best : nil
+        return best.count >= 3 ? best : nil
     }
 
     private static func longestUnplacedChain(anchor: Int,
@@ -1823,7 +1823,7 @@ enum CDKStructureDiagramGenerator {
 
         if placedNeighbors.isEmpty {
             let base = CGFloat((center * 47) % 360) * .pi / 180.0
-            return fanDirections(count: unplacedCount, baseAngle: base, totalSpread: 2 * .pi)
+            return radialDirections(count: unplacedCount, baseAngle: base)
         }
 
         if placedNeighbors.count == 1, let parentPos = positions[placedNeighbors[0]] {
@@ -2113,6 +2113,14 @@ enum CDKStructureDiagramGenerator {
         let step = totalSpread / CGFloat(count - 1)
         return (0..<count).map { i in
             unitVector(angle: start + CGFloat(i) * step)
+        }
+    }
+
+    private static func radialDirections(count: Int, baseAngle: CGFloat) -> [CGVector] {
+        guard count > 0 else { return [] }
+        let step = (2 * .pi) / CGFloat(count)
+        return (0..<count).map { i in
+            unitVector(angle: baseAngle + CGFloat(i) * step)
         }
     }
 

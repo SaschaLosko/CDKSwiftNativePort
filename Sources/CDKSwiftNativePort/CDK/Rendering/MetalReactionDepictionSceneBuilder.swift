@@ -276,7 +276,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             CDKMetalDepictionScene.AtomLabel(id: label.id,
                                              text: label.text,
                                              position: applyViewportTransform(label.position),
-                                             fontSize: max(7.0, label.fontSize * zoom * reactionAutoFitScale),
+                                             fontSize: (label.fontSize * zoom * reactionAutoFitScale).clamped(to: 7.0...16.0),
                                              aromatic: label.aromatic,
                                              color: label.color,
                                              italicized: label.italicized,

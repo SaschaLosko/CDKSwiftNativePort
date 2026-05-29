@@ -88,7 +88,7 @@ final class MDLV3000ReaderScaffoldTests: XCTestCase {
     func testGeneratesLayoutWhenCoordinatesAreMissing() throws {
         let molecule = try CDKMDLV3000Reader.read(text: zeroCoordinateV3000)
         let box = try XCTUnwrap(molecule.boundingBox())
-        XCTAssertGreaterThan(box.width, 0.1)
+        XCTAssertGreaterThan(max(box.width, box.height), 0.1)
     }
 
     func testParseScaffoldRejectsMissingCTAB() {

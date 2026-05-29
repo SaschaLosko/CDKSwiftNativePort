@@ -54,6 +54,30 @@ final class SmilesGeneratorPortTests: XCTestCase {
         XCTAssertEqual(reparsed.bondCount, 0)
     }
 
+    func testBranchesRemainAttachedToMultivalentAtomAfterMainPath() throws {
+        let molecule = try parser.parseSmiles("O=C([O-])[O-]")
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(
+            flavor: [.useAromaticSymbols, .isomeric, .strict]
+        )
+
+        let smiles = generator.create(molecule)
+        XCTAssertFalse(smiles.contains("C=O([O-])([O-])"))
+
+        let reparsed = try parser.parseSmiles(smiles)
+        let carbon = try XCTUnwrap(reparsed.atoms.first { $0.element.uppercased() == "C" })
+        let carbonNeighbors = reparsed.neighbors(of: carbon.id)
+
+        XCTAssertEqual(carbonNeighbors.count, 3)
+        XCTAssertTrue(carbonNeighbors.allSatisfy { neighborID in
+            reparsed.atom(id: neighborID)?.element.uppercased() == "O"
+        })
+        XCTAssertTrue(carbonNeighbors.allSatisfy { neighborID in
+            reparsed.neighbors(of: neighborID).count == 1
+        })
+        XCTAssertEqual(reparsed.bonds(forAtom: carbon.id).filter { $0.order == .double }.count, 1)
+        XCTAssertEqual(reparsed.bonds(forAtom: carbon.id).filter { $0.order == .single }.count, 2)
+    }
+
     func testNonIsomericSmilesOmitsChiralityMarker() throws {
         let molecule = try parser.parseSmiles("C[C@H](N)O")
         let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])

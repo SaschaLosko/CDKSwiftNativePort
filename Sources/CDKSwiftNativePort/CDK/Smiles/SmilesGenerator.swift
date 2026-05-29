@@ -537,7 +537,11 @@ public final class CDKSmilesGenerator {
             .filter { $0 != parent }
             .sorted()
 
-        for (index, childID) in children.enumerated() {
+        guard let mainChild = children.last else {
+            return out
+        }
+
+        for childID in children.dropLast() {
             let edge = EdgeKey(atomID, childID)
             guard let bond = bondByEdge[edge] else { continue }
 
@@ -552,14 +556,22 @@ public final class CDKSmilesGenerator {
                                                          atomOutputOrder: &atomOutputOrder,
                                                          visited: &visited)
 
-            if index == 0 {
-                out += branchText
-            } else {
-                out += "(\(branchText))"
-            }
+            out += "(\(branchText))"
         }
 
-        return out
+        let edge = EdgeKey(atomID, mainChild)
+        guard let bond = bondByEdge[edge] else { return out }
+
+        let mainBond = bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)
+        return out + mainBond + renderTreeAtom(mainChild,
+                                               parent: atomID,
+                                               treeAdjacency: treeAdjacency,
+                                               ringClosuresByAtom: ringClosuresByAtom,
+                                               bondByEdge: bondByEdge,
+                                               atomByID: atomByID,
+                                               aromaticBondIDs: aromaticBondIDs,
+                                               atomOutputOrder: &atomOutputOrder,
+                                               visited: &visited)
     }
 
     private func ringToken(_ number: Int) -> String {

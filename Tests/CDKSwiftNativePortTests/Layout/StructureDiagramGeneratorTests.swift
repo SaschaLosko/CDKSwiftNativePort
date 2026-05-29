@@ -145,6 +145,37 @@ final class StructureDiagramGeneratorTests: XCTestCase {
                        "Single-anchor ring placement should place the external bond on the ring-bond bisector, not collinear with one ring bond.")
     }
 
+    func testTrigonalCarbonateOxygensUseOpenOneHundredTwentyDegreeLayout() throws {
+        let molecule = try parse("O=C([O-])[O-]")
+        let carbon = try XCTUnwrap(molecule.atoms.first { atom in
+            atom.element.uppercased() == "C"
+                && molecule.neighbors(of: atom.id).count == 3
+                && molecule.neighbors(of: atom.id).allSatisfy { neighbor in
+                    molecule.atom(id: neighbor)?.element.uppercased() == "O"
+                }
+        })
+
+        let center = carbon.position
+        let oxygenPoints = molecule.neighbors(of: carbon.id).compactMap { molecule.atom(id: $0)?.position }
+        XCTAssertEqual(oxygenPoints.count, 3)
+
+        var angles: [CGFloat] = []
+        for leftIndex in 0..<oxygenPoints.count {
+            for rightIndex in (leftIndex + 1)..<oxygenPoints.count {
+                angles.append(angleDegrees(a: oxygenPoints[leftIndex],
+                                           center: center,
+                                           b: oxygenPoints[rightIndex]))
+            }
+        }
+
+        for angle in angles {
+            XCTAssertEqual(angle,
+                           120,
+                           accuracy: 8,
+                           "Three-coordinate carbonate-like centers should depict as an open trigonal fan, not a collapsed or near-linear branch.")
+        }
+    }
+
     func testMarkushDefinitionsAreLaidOutBelowRootStructure() throws {
         let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
         let components = connectedComponents(in: molecule)
