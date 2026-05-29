@@ -714,9 +714,10 @@ final class ReactionReferenceParityTests: XCTestCase {
     }
 
     private func writeGapReport(_ report: ReactionReferenceGapReport) throws -> URL {
-        let url = reactionReferenceDirectory().appendingPathComponent("latest_gap_report.json")
         let data = try JSONEncoder.prettySorted.encode(report)
-        try data.write(to: url)
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cdk_reaction_reference_gap_report.json")
+        try data.write(to: url, options: .atomic)
         return url
     }
 
