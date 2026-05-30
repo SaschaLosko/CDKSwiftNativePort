@@ -636,6 +636,13 @@ enum CDKInChINativeGenerator {
                                                                        fallbackRankByAtomID: defaultRankByAtomID) {
                     return stereoAwareTree
                 }
+                if let carboxylicAcidOrder = carboxylicAcidCanonicalOrder(in: molecule,
+                                                                           component: component,
+                                                                           adjacency: heavyAdjacency,
+                                                                           atomByID: atomByID,
+                                                                           fallbackRankByAtomID: defaultRankByAtomID) {
+                    return carboxylicAcidOrder
+                }
                 if let pathSpecialized = specializedPathCanonicalOrder(in: component,
                                                                        adjacency: heavyAdjacency,
                                                                        hydrogenByHeavyAtom: hydrogenByHeavyAtom,
@@ -933,6 +940,84 @@ enum CDKInChINativeGenerator {
             newIDByOldID[atomID] = index + 1
         }
         return CanonicalizationResult(heavyAtomOrder: order, newIDByOldID: newIDByOldID)
+    }
+
+    private static func carboxylicAcidCanonicalOrder(in molecule: Molecule,
+                                                     component: [Int],
+                                                     adjacency: [Int: Set<Int>],
+                                                     atomByID: [Int: Atom],
+                                                     fallbackRankByAtomID: [Int: Int]) -> [Int]? {
+        let componentSet = Set(component)
+        let componentBonds = molecule.bonds.filter { bond in
+            componentSet.contains(bond.a1) && componentSet.contains(bond.a2)
+        }
+        guard componentBonds.count == component.count - 1 else {
+            return nil
+        }
+
+        for atomID in component {
+            guard normalizedElementSymbol(atomByID[atomID]?.element ?? "").uppercased() == "C" else {
+                continue
+            }
+
+            let oxygenNeighbors = adjacency[atomID, default: []].filter {
+                normalizedElementSymbol(atomByID[$0]?.element ?? "").uppercased() == "O"
+            }
+            guard oxygenNeighbors.count == 2 else {
+                continue
+            }
+
+            let doubleOxygens = oxygenNeighbors.filter {
+                molecule.bond(between: atomID, and: $0)?.order == .double
+            }
+            let singleOxygens = oxygenNeighbors.filter {
+                molecule.bond(between: atomID, and: $0)?.order == .single
+            }
+            guard doubleOxygens.count == 1, singleOxygens.count == 1,
+                  let carbonylOxygen = doubleOxygens.first,
+                  let hydroxyOxygen = singleOxygens.first else {
+                continue
+            }
+
+            let substituentNeighbors = adjacency[atomID, default: []].filter {
+                componentSet.contains($0) && $0 != carbonylOxygen && $0 != hydroxyOxygen
+            }
+            guard substituentNeighbors.count <= 1 else {
+                continue
+            }
+
+            var order: [Int] = []
+            if let substituentNeighbor = substituentNeighbors.first {
+                let sideSet = componentSet.subtracting([atomID, carbonylOxygen, hydroxyOxygen])
+                let leaves = sideSet.filter { sideAtomID in
+                    adjacency[sideAtomID, default: []].filter { sideSet.contains($0) }.count <= 1
+                }
+                guard let start = leaves.max(by: { lhs, rhs in
+                    let leftDistance = path(between: lhs, and: substituentNeighbor, in: sideSet, adjacency: adjacency)?.count ?? 0
+                    let rightDistance = path(between: rhs, and: substituentNeighbor, in: sideSet, adjacency: adjacency)?.count ?? 0
+                    if leftDistance != rightDistance { return leftDistance < rightDistance }
+                    return (fallbackRankByAtomID[lhs] ?? Int.max) > (fallbackRankByAtomID[rhs] ?? Int.max)
+                }),
+                let mainPath = path(between: start, and: substituentNeighbor, in: sideSet, adjacency: adjacency) else {
+                    return nil
+                }
+                order.append(contentsOf: treeTraversalOrder(mainPath: mainPath,
+                                                            component: sideSet,
+                                                            adjacency: adjacency,
+                                                            fallbackRankByAtomID: fallbackRankByAtomID))
+            }
+
+            order.append(atomID)
+            order.append(carbonylOxygen)
+            order.append(hydroxyOxygen)
+            guard order.count == component.count,
+                  Set(order) == componentSet else {
+                continue
+            }
+            return order
+        }
+
+        return nil
     }
 
     private static func treeTraversalOrder(mainPath: [Int],
@@ -1292,7 +1377,16 @@ enum CDKInChINativeGenerator {
                                            canonicalization: CanonicalizationResult,
                                            hydrogenByHeavyAtom: [Int: Int]) -> String {
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
+        let mobileGroups = mobileHydrogenGroups(in: molecule,
+                                                canonicalization: canonicalization,
+                                                hydrogenByHeavyAtom: hydrogenByHeavyAtom,
+                                                atomByID: atomByID)
+        let mobileHydrogenAtomIDs = Set(mobileGroups.flatMap(\.sourceOldAtomIDs))
+        let oldIDByCanonicalID = Dictionary(uniqueKeysWithValues: canonicalization.newIDByOldID.map { ($0.value, $0.key) })
         let tokens = canonicalization.heavyAtomOrder.compactMap { oldAtomID -> (atomID: Int, count: Int, exchangeable: Bool)? in
+            guard !mobileHydrogenAtomIDs.contains(oldAtomID) else {
+                return nil
+            }
             let count = hydrogenByHeavyAtom[oldAtomID] ?? 0
             guard count > 0,
                   let atomID = canonicalization.newIDByOldID[oldAtomID],
@@ -1306,6 +1400,13 @@ enum CDKInChINativeGenerator {
         let sorted = tokens.sorted { lhs, rhs in
             if lhs.exchangeable != rhs.exchangeable {
                 return lhs.exchangeable && !rhs.exchangeable
+            }
+            let lhsOld = oldIDByCanonicalID[lhs.atomID]
+            let rhsOld = oldIDByCanonicalID[rhs.atomID]
+            let lhsDegree = lhsOld.map { heavyNeighbors(of: $0, in: molecule).count } ?? 0
+            let rhsDegree = rhsOld.map { heavyNeighbors(of: $0, in: molecule).count } ?? 0
+            if lhsDegree != rhsDegree {
+                return lhsDegree > rhsDegree
             }
             return lhs.atomID < rhs.atomID
         }
@@ -1329,7 +1430,47 @@ enum CDKInChINativeGenerator {
             index = end + 1
         }
 
+        grouped.append(contentsOf: mobileGroups.map(\.token))
         return grouped.joined(separator: ",")
+    }
+
+    private static func mobileHydrogenGroups(in molecule: Molecule,
+                                             canonicalization: CanonicalizationResult,
+                                             hydrogenByHeavyAtom: [Int: Int],
+                                             atomByID: [Int: Atom]) -> [(token: String, sourceOldAtomIDs: [Int])] {
+        var groups: [(token: String, sourceOldAtomIDs: [Int])] = []
+
+        for atomID in canonicalization.heavyAtomOrder {
+            guard normalizedElementSymbol(atomByID[atomID]?.element ?? "").uppercased() == "C" else {
+                continue
+            }
+            let oxygenNeighbors = heavyNeighbors(of: atomID, in: molecule).filter {
+                normalizedElementSymbol(atomByID[$0]?.element ?? "").uppercased() == "O"
+            }
+            guard oxygenNeighbors.count == 2 else {
+                continue
+            }
+
+            let doubleOxygens = oxygenNeighbors.filter {
+                molecule.bond(between: atomID, and: $0)?.order == .double
+            }
+            let singleOxygens = oxygenNeighbors.filter {
+                molecule.bond(between: atomID, and: $0)?.order == .single
+            }
+            guard doubleOxygens.count == 1, singleOxygens.count == 1,
+                  let carbonylOxygen = doubleOxygens.first,
+                  let hydroxyOxygen = singleOxygens.first,
+                  hydrogenByHeavyAtom[hydroxyOxygen] == 1,
+                  let carbonylCanonicalID = canonicalization.newIDByOldID[carbonylOxygen],
+                  let hydroxyCanonicalID = canonicalization.newIDByOldID[hydroxyOxygen] else {
+                continue
+            }
+
+            let oxygenIDs = [carbonylCanonicalID, hydroxyCanonicalID].sorted()
+            groups.append(("(H,\(oxygenIDs[0]),\(oxygenIDs[1]))", [hydroxyOxygen]))
+        }
+
+        return groups
     }
 
     private static func connectivityComponents(atomIDs: Set<Int>,

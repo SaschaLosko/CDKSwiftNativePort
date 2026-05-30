@@ -10,6 +10,10 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Changed
 
+- Tightened native InChI generation for simple alcohol and carboxylic-acid
+  cases so ethanol and acetic acid now produce exact official InChI/InChIKey
+  smoke-test outputs.
+
 ## [1.4.0] - 2026-05-29
 
 ### Added

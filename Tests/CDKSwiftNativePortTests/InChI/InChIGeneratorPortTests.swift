@@ -24,10 +24,8 @@ final class InChIGeneratorPortTests: XCTestCase {
 
         let inchi = try generator.getInchi()
         let inchiKey = try generator.getInchiKey()
-        XCTAssertTrue(inchi.hasPrefix("InChI=1S/C2H6O"))
-        XCTAssertTrue(inchi.contains("/c"))
-        XCTAssertTrue(inchi.contains("/h"))
-        assertInchiKeyFormat(inchiKey)
+        XCTAssertEqual(inchi, "InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3")
+        XCTAssertEqual(inchiKey, "LFQSCWFLJHTTHZ-UHFFFAOYSA-N")
     }
 
     func testGeneratesNativeInchiForAceticAcid() throws {
@@ -35,10 +33,8 @@ final class InChIGeneratorPortTests: XCTestCase {
         let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
 
         let inchi = try generator.getInchi()
-        XCTAssertTrue(inchi.hasPrefix("InChI=1S/C2H4O2"))
-        XCTAssertTrue(inchi.contains("/c"))
-        XCTAssertTrue(inchi.contains("/h"))
-        assertInchiKeyFormat(try generator.getInchiKey())
+        XCTAssertEqual(inchi, "InChI=1S/C2H4O2/c1-2(3)4/h1H3,(H,3,4)")
+        XCTAssertEqual(try generator.getInchiKey(), "QTBSBXVTEAMEQO-UHFFFAOYSA-N")
     }
 
     func testGeneratedInchiCanBeParsedBack() throws {

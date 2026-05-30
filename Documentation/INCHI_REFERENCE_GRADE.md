@@ -26,6 +26,9 @@ used as a test oracle, not as a runtime dependency.
   for repeated simple fragments and metal-disconnected salts on the supported
   subset, instead of collapsing those cases back into a single aggregate
   formula.
+- The generator now covers exact native InChI and InChIKey output for the
+  simple ethanol/acetic-acid smoke cases, including alcohol hydrogen-layer
+  ordering and the mobile hydrogen layer used by carboxylic acids.
 - The generator now applies acyclic tree-specific canonical numbering
   heuristics for supported hub-centered and path-like cases, which closes a
   substantial subset of the remaining exact-string neutral, charged, and
