@@ -50,7 +50,7 @@ Before release, make sure these documents are current:
 Choose the release version and commit the release-prep changes:
 
 ```bash
-VERSION=1.4.0
+VERSION=1.4.2
 git add .
 git commit -m "Prepare v${VERSION} release"
 ```

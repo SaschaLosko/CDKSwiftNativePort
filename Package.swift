@@ -15,7 +15,28 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "CDKSwiftNativePort"
+            name: "IUPACInChI",
+            path: "Sources/IUPACInChI",
+            exclude: [
+                "External-contributors-IUPAC-InChI.txt",
+                "LICENSE-IUPAC-InChI.txt"
+            ],
+            publicHeadersPath: "include",
+            cSettings: [
+                .define("COMPILE_ANSI_ONLY"),
+                .define("TARGET_API_LIB"),
+                .headerSearchPath("include"),
+                .headerSearchPath("official/INCHI-1-SRC/INCHI_BASE/src"),
+                .headerSearchPath("official/INCHI-1-SRC/INCHI_API/libinchi/src"),
+                .headerSearchPath("official/INCHI-1-SRC/INCHI_API/libinchi/src/ixa")
+            ],
+            linkerSettings: [
+                .linkedLibrary("m", .when(platforms: [.linux]))
+            ]
+        ),
+        .target(
+            name: "CDKSwiftNativePort",
+            dependencies: ["IUPACInChI"]
         ),
         .testTarget(
             name: "CDKSwiftNativePortTests",

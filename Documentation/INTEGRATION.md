@@ -16,7 +16,7 @@ or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.2")
 ]
 ```
 

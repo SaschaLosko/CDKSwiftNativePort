@@ -66,7 +66,7 @@ final class InChIGeneratorPortTests: XCTestCase {
         let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
 
         let inchi = try generator.getInchi()
-        XCTAssertTrue(inchi.contains("/q+1"))
+        XCTAssertTrue(inchi.contains("/p+1"))
         XCTAssertTrue(inchi.contains("/i"))
     }
 

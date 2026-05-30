@@ -55,7 +55,7 @@ import PackageDescription
 let package = Package(
     name: "ChemCLI",
     dependencies: [
-        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
+        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.2")
     ],
     targets: [
         .executableTarget(

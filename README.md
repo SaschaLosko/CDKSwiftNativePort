@@ -142,10 +142,12 @@ Quick Look, Spotlight, or AtomLens internals. That makes it suitable for:
 
 ## InChI Status
 
-The package includes a native Swift InChI implementation and an official
-reference parity harness. The runtime stays Swift native, while the vendored
-official InChI corpus is used as the correctness oracle for the
-reference-grade work tracked in
+The package vendors the official IUPAC InChI `v1.07.5` C sources and builds
+them as the native `IUPACInChI` SwiftPM C target. Runtime InChI and InChIKey
+generation now use that in-process native library by default, with the older
+Swift implementation retained only for explicit development comparisons via
+`CDK_INCHI_BACKEND=swift-native`. The official reference parity harness is
+tracked in
 [`Documentation/INCHI_REFERENCE_GRADE.md`](Documentation/INCHI_REFERENCE_GRADE.md).
 
 ## Reaction Parity Status
@@ -184,7 +186,7 @@ Add the dependency in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
+    .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.2")
 ]
 ```
 
@@ -211,7 +213,7 @@ import PackageDescription
 let package = Package(
     name: "ChemCLI",
     dependencies: [
-        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.0")
+        .package(url: "https://github.com/SaschaLosko/CDKSwiftNativePort.git", from: "1.4.2")
     ],
     targets: [
         .executableTarget(

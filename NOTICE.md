@@ -9,6 +9,18 @@ Upstream project:
 Reference target used for parity work in this port:
 - CDK 2.12
 
+`CDKSwiftNativePort` also vendors the official IUPAC InChI source distribution
+as the `IUPACInChI` SwiftPM C target.
+
+Upstream project:
+- https://github.com/IUPAC-InChI/InChI
+
+Vendored source:
+- IUPAC InChI `v1.07.5`
+- Git commit `11a87982bb518f57ac013f0b258c283655e1ea1d`
+- License copy: `Sources/IUPACInChI/LICENSE-IUPAC-InChI.txt`
+- External contributor notice: `Sources/IUPACInChI/External-contributors-IUPAC-InChI.txt`
+
 Reference citations:
 
 - Willighagen et al. (2017), The Chemistry Development Kit (CDK) v2.0:
@@ -25,5 +37,7 @@ Reference citations:
 
 Licensing:
 - This repository is distributed under LGPL-2.1-or-later (`LICENSE`).
+- The vendored IUPAC InChI source files are distributed under the MIT license
+  terms preserved in `Sources/IUPACInChI/LICENSE-IUPAC-InChI.txt`.
 - When redistributing binaries or modified source, ensure LGPL obligations
   (including notice and source availability requirements) are satisfied.

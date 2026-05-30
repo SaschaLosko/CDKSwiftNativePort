@@ -18,14 +18,14 @@ private struct InChIEdgeKey: Hashable {
     }
 }
 
-/// Pure Swift InChI/InChIKey generator used by the CDKSwiftNativePort package.
+/// InChI/InChIKey generator used by the CDKSwiftNativePort package.
 ///
-/// This follows CDK-style layering conventions (`/c`, `/h`, `/q`, `/i`, `/t`, `/m`, `/s`, `/b`)
-/// but remains an approximation, not the official IUPAC reference implementation.
+/// The default path uses the vendored official IUPAC InChI C library. The Swift implementation below is
+/// retained as a development fallback for explicitly requested native-port comparisons.
 enum CDKInChINativeGenerator {
     static func generate(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
         if let cached = CDKInChIRoundTripCache.cachedSource(for: molecule) {
-            let inchiKey = try CDKInChIKeyCodec.makeKey(from: cached)
+            let inchiKey = try CDKInChIOfficialLibraryGenerator.inchiKey(for: cached)
             let auxInfo = buildGenericAuxInfo(for: molecule)
             return CDKInChINativeGenerationResult(inchi: cached,
                                                   inchiKey: inchiKey,
@@ -35,16 +35,20 @@ enum CDKInChINativeGenerator {
         }
 
         let normalized = normalizeInput(molecule)
+        if let elementalPair = try generateElementalIsotopicPairIfSupported(for: normalized) {
+            return elementalPair
+        }
+
+        if ProcessInfo.processInfo.environment["CDK_INCHI_BACKEND"] != "swift-native" {
+            return try CDKInChIOfficialLibraryGenerator.generate(for: normalized)
+        }
+
         guard !normalized.atoms.isEmpty else {
             throw ChemError.emptyInput
         }
 
         if normalized.atoms.contains(where: { $0.queryType != nil || $0.atomList != nil }) {
             throw ChemError.unsupported("InChI generation does not support query atoms in this CDK Swift port.")
-        }
-
-        if let elementalPair = try generateElementalIsotopicPairIfSupported(for: normalized) {
-            return elementalPair
         }
 
         if let multicomponent = try generateMultiComponentIfNeeded(for: normalized) {

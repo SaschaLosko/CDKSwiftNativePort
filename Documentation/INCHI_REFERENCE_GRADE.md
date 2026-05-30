@@ -1,24 +1,31 @@
 # Reference-Grade InChI Plan
 
-This document tracks the work required to make the `CDKSwiftNativePort` InChI
-surface reference-grade while keeping the runtime Swift native.
+This document tracks the `CDKSwiftNativePort` InChI surface now that the
+package builds the official IUPAC InChI implementation as an in-process native
+SwiftPM C target.
 
 ## Target
 
-The package must eventually match the official InChI reference implementation
-for:
+The package must match the official InChI reference implementation for:
 
 - generated InChI strings
 - generated InChIKeys
 - InChI-to-structure reconstruction behavior
 - round-trip stability on the supported structure surface
 
-The runtime target remains native Swift. The official InChI implementation is
-used as a test oracle, not as a runtime dependency.
+The runtime target remains native and in-process. Default structure-to-InChI
+and InChIKey generation now call the vendored official IUPAC InChI C library;
+the older Swift generator remains available only for explicit development
+comparisons with `CDK_INCHI_BACKEND=swift-native`.
 
 ## Current State
 
-- `CDKInChINativeGenerator` is still the package-owned Swift implementation.
+- `IUPACInChI` vendors the official IUPAC InChI `v1.07.5` source distribution
+  from commit `11a87982bb518f57ac013f0b258c283655e1ea1d`.
+- `CDKInChINativeGenerator` routes default generation through the official
+  native C library.
+- The previous package-owned Swift generator is retained behind
+  `CDK_INCHI_BACKEND=swift-native` for regression and port-comparison work.
 - `CDKInChIToStructure` is still a partial Swift parser.
 - InChIKey derivation now follows the official major/minor block split and
   base-26 encoding in native Swift instead of the earlier pseudo-key path.
@@ -82,13 +89,14 @@ used as a test oracle, not as a runtime dependency.
      pretending the current implementation is reference-grade.
 
 2. Generator parity
-   - Replace heuristic layer assembly with a Swift port of the official
-     canonicalization and emission pipeline.
-   - Close exact-string mismatches before treating InChIKey parity as done.
+   - Keep default generation on the official native IUPAC library.
+   - Keep the Swift generator as a comparison backend only; do not use it for
+     release identity checks.
 
 3. InChIKey parity
-   - Keep the official-equivalent key derivation pipeline in Swift aligned
-     with the remaining generator exact-string work.
+   - Use the official IUPAC key generation path for default runtime output.
+   - Keep the Swift key codec only for isolated fallback and legacy comparison
+     cases.
 
 4. Parser parity
    - Replace partial layer parsing and ignored-token behavior with a full Swift

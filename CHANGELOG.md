@@ -6,13 +6,28 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-05-30
+
 ### Added
+
+- Vendored the official IUPAC InChI `v1.07.5` C sources as a native
+  SwiftPM C target (`IUPACInChI`) and routed default InChI/InChIKey
+  generation through that in-process library.
 
 ### Changed
 
+- Retained the previous Swift InChI generator as an explicit development
+  fallback via `CDK_INCHI_BACKEND=swift-native`.
 - Tightened native InChI generation for simple alcohol and carboxylic-acid
   cases so ethanol and acetic acid now produce exact official InChI/InChIKey
   smoke-test outputs.
+
+## [1.4.1] - 2026-05-30
+
+### Fixed
+
+- Fixed acyclic alkene 2D layout so substituted open-chain alkenes keep a more
+  conventional zig-zag depiction.
 
 ## [1.4.0] - 2026-05-29
 
