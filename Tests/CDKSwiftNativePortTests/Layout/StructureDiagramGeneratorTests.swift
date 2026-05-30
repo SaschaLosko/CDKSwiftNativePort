@@ -176,6 +176,48 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         }
     }
 
+    func testSubstitutedAlkeneParentChainKeepsConventionalZigZagLayout() throws {
+        let molecule = Molecule(
+            name: "5-ethyl-2,4-dimethyloct-2-ene",
+            atoms: (1...12).map { Atom(id: $0, element: "C", position: .zero) },
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(id: 2, a1: 2, a2: 3, order: .double),
+                Bond(id: 3, a1: 3, a2: 4, order: .single),
+                Bond(id: 4, a1: 4, a2: 5, order: .single),
+                Bond(id: 5, a1: 5, a2: 6, order: .single),
+                Bond(id: 6, a1: 6, a2: 7, order: .single),
+                Bond(id: 7, a1: 7, a2: 8, order: .single),
+                Bond(id: 8, a1: 2, a2: 9, order: .single),
+                Bond(id: 9, a1: 4, a2: 10, order: .single),
+                Bond(id: 10, a1: 5, a2: 11, order: .single),
+                Bond(id: 11, a1: 11, a2: 12, order: .single),
+            ]
+        )
+
+        let laidOut = Depiction2DGenerator.generate(for: molecule)
+        let box = try XCTUnwrap(laidOut.boundingBox())
+        XCTAssertGreaterThan(box.width,
+                             box.height,
+                             "A long substituted acyclic parent chain should be oriented as a readable horizontal zig-zag.")
+
+        let parentChain = [1, 2, 3, 4, 5, 6, 7, 8]
+        let terminalStart = try XCTUnwrap(laidOut.atom(id: parentChain[0])?.position)
+        let terminalEnd = try XCTUnwrap(laidOut.atom(id: parentChain[parentChain.count - 1])?.position)
+        XCTAssertGreaterThan(abs(terminalEnd.x - terminalStart.x),
+                             abs(terminalEnd.y - terminalStart.y),
+                             "The oct-2-ene parent chain should not be laid out vertically after the double bond.")
+
+        for index in 1..<(parentChain.count - 1) {
+            let previous = try XCTUnwrap(laidOut.atom(id: parentChain[index - 1])?.position)
+            let center = try XCTUnwrap(laidOut.atom(id: parentChain[index])?.position)
+            let next = try XCTUnwrap(laidOut.atom(id: parentChain[index + 1])?.position)
+            let angle = angleDegrees(a: previous, center: center, b: next)
+            XCTAssertGreaterThan(angle, 100, "Unexpectedly compressed parent-chain angle at atom \(parentChain[index]).")
+            XCTAssertLessThan(angle, 140, "Unexpectedly linear parent-chain angle at atom \(parentChain[index]).")
+        }
+    }
+
     func testMarkushDefinitionsAreLaidOutBelowRootStructure() throws {
         let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
         let components = connectedComponents(in: molecule)

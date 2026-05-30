@@ -358,7 +358,10 @@ enum CDKStructureDiagramGenerator {
             let ringEdges = Set(ringsInComponent.flatMap { CDKRingSearch.edgeKeys(for: $0) })
 
             if !component.contains(where: { positions[$0] != nil }) {
-                let seed = chooseSeed(in: component, graph: graph, ringSet: Set(ringsInComponent.flatMap { $0 }))
+                let seed = chooseSeed(in: component,
+                                      graph: graph,
+                                      ringSet: Set(ringsInComponent.flatMap { $0 }),
+                                      preferAcyclicTerminalSeed: !isMarkush)
                 positions[seed] = CGPoint(x: offsetX, y: 0)
             }
 
@@ -457,6 +460,13 @@ enum CDKStructureDiagramGenerator {
                 orientMarkushRootComponent(component: component,
                                            molecule: molecule,
                                            positions: &positions)
+            } else if ringsInComponent.isEmpty {
+                selectOrientation(component: component,
+                                  graph: graph,
+                                  molecule: molecule,
+                                  positions: &positions,
+                                  widthDiff: standardBond,
+                                  alignDiff: 1)
             }
 
             if let box = boundingBox(component: component, positions: positions) {
@@ -1345,7 +1355,7 @@ enum CDKStructureDiagramGenerator {
         let key = CDKEdgeKey(a, b)
         guard !ringEdges.contains(key) else { return false }
         guard let bond = graph.edgeBonds[key] else { return false }
-        return bond.order == .single
+        return bond.order == .single || bond.order == .double
     }
 
     private static func placeLinearChain(_ chain: [Int],
@@ -1794,13 +1804,59 @@ enum CDKStructureDiagramGenerator {
 
     private static func chooseSeed(in component: Set<Int>,
                                    graph: CDKMolecularGraph,
-                                   ringSet: Set<Int>) -> Int {
-        component.max { lhs, rhs in
+                                   ringSet: Set<Int>,
+                                   preferAcyclicTerminalSeed: Bool) -> Int {
+        if preferAcyclicTerminalSeed,
+           ringSet.isEmpty,
+           let acyclicSeed = acyclicTerminalSeed(in: component, graph: graph) {
+            return acyclicSeed
+        }
+
+        return component.max { lhs, rhs in
             let lScore = (ringSet.contains(lhs) ? 100 : 0) + graph.neighbors(of: lhs).count
             let rScore = (ringSet.contains(rhs) ? 100 : 0) + graph.neighbors(of: rhs).count
             if lScore != rScore { return lScore < rScore }
             return lhs < rhs
         } ?? (component.min() ?? 0)
+    }
+
+    private static func acyclicTerminalSeed(in component: Set<Int>,
+                                            graph: CDKMolecularGraph) -> Int? {
+        let leaves = component
+            .filter { graph.neighbors(of: $0).filter(component.contains).count <= 1 }
+            .sorted()
+        guard !leaves.isEmpty else { return component.min() }
+
+        return leaves.max { lhs, rhs in
+            let lhsDistance = maximumGraphDistance(from: lhs, in: component, graph: graph)
+            let rhsDistance = maximumGraphDistance(from: rhs, in: component, graph: graph)
+            if lhsDistance != rhsDistance { return lhsDistance < rhsDistance }
+            return lhs > rhs
+        }
+    }
+
+    private static func maximumGraphDistance(from seed: Int,
+                                             in component: Set<Int>,
+                                             graph: CDKMolecularGraph) -> Int {
+        var queue: [Int] = [seed]
+        var head = 0
+        var distance: [Int: Int] = [seed: 0]
+        var maxDistance = 0
+
+        while head < queue.count {
+            let current = queue[head]
+            head += 1
+            let currentDistance = distance[current] ?? 0
+            maxDistance = max(maxDistance, currentDistance)
+
+            for neighbor in graph.neighbors(of: current) where component.contains(neighbor) {
+                guard distance[neighbor] == nil else { continue }
+                distance[neighbor] = currentDistance + 1
+                queue.append(neighbor)
+            }
+        }
+
+        return maxDistance
     }
 
     private static func isAromaticAtom(_ atomID: Int, molecule: Molecule) -> Bool {
