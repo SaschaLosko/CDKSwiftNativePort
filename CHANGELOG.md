@@ -6,6 +6,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.4] - 2026-05-31
+
+### Fixed
+
+- Converted large vendored InChI line buffers from tentative common symbols to
+  explicit zero-initialized storage so Apple linkers no longer emit
+  `__DATA,__common` alignment warnings in downstream app targets.
+
 ## [1.4.3] - 2026-05-31
 
 ### Changed

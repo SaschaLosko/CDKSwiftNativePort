@@ -545,7 +545,7 @@ char *LoadLine( INCHI_IOSTREAM *inp_file,
 
 
 /****************************************************************************/
-char szLine_i2i[INCHI_LINE_LEN]; /* djb-rwth: placed as a global variable to avoid function buffer issues */
+char szLine_i2i[INCHI_LINE_LEN] = { 0 }; /* djb-rwth: placed as a global variable to avoid function buffer issues */
 int InchiToInpAtom( INCHI_IOSTREAM *inp_file,
                      MOL_COORD **szCoord,
                      int bDoNotAddH,

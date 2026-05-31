@@ -578,7 +578,7 @@ int is_element_a_metal( char szEl[] )
 /*****************************************************************************/
 
 /* djb-rwth: placed as global variables to avoid function buffer issues */
-char szLine_i2ia[INCHI_LINE_LEN], szNextLine_i2ia[INCHI_LINE_ADD];
+char szLine_i2ia[INCHI_LINE_LEN] = { 0 }, szNextLine_i2ia[INCHI_LINE_ADD] = { 0 };
 int InchiToInchiAtom( INCHI_IOSTREAM *inp_file,
                       inchi_Stereo0D **stereo0D,
                       int *num_stereo0D,
