@@ -1,8 +1,9 @@
 # RInChI Parity
 
-`CDKSwiftNativePort` now includes a native Swift `RInChI` surface and an
-executable vendored reference gate derived from upstream CDK `2.12`
-`storage/rinchi` resources.
+`CDKSwiftNativePort` includes a native Swift `RInChI` surface for reaction
+identifiers. The implementation follows the official IUPAC RInChI reference
+design from `https://github.com/IUPAC-InChI/RInChI` and keeps the InChI part
+delegated to the vendored official IUPAC libinchi bridge.
 
 ## Scope
 
@@ -11,8 +12,15 @@ The current Swift implementation covers:
 - `CDKRInChIGenerator`
 - `CDKRInChIToReaction`
 - `CDKRInChIDecomposition`
-- native Long/Short/Web `RInChIKey` derivation
+- Long/Short/Web `RInChIKey` derivation
 - vendored upstream reaction-reference fixtures for RXN-based `RInChI` output
+
+The key split is intentional:
+
+- Long RInChIKey component InChIKeys are generated through libinchi.
+- Short and Web RInChIKeys use the RInChI reference SHA-256/base-26 hashing
+  algorithm implemented in Swift, because that hashing is part of RInChI
+  itself rather than a substitute InChI implementation.
 
 The vendored resource corpus lives under:
 
@@ -29,6 +37,8 @@ The executable parity gate is:
 - The direct Swift regression suite also covers nil-input handling,
   decomposition, `RInChI`-to-reaction reconstruction, equilibrium forcing, and
   `AuxInfo` exposure from the native InChI layer.
+- The official InChI strict gate also passes with RInChI using libinchi for
+  component InChIKey generation.
 
 ## Scope Boundary
 

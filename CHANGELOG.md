@@ -6,6 +6,23 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-05-31
+
+### Changed
+
+- Removed the package-owned Swift InChI generator fallback and Swift InChIKey
+  codec from the runtime path. InChI and component InChIKey generation now go
+  through the vendored official IUPAC libinchi bridge.
+- Routed RInChI long-key component InChIKey derivation through the official
+  libinchi bridge while keeping the RInChI-specific short/web hash algorithm in
+  native Swift.
+
+### Fixed
+
+- Preserved two-letter element symbols that are not present in the package's
+  descriptor mass table when passing structures to libinchi, fixing reference
+  isotope cases such as dysprosium.
+
 ## [1.4.2] - 2026-05-30
 
 ### Added
@@ -16,8 +33,6 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Changed
 
-- Retained the previous Swift InChI generator as an explicit development
-  fallback via `CDK_INCHI_BACKEND=swift-native`.
 - Tightened native InChI generation for simple alcohol and carboxylic-acid
   cases so ethanol and acetic acid now produce exact official InChI/InChIKey
   smoke-test outputs.

@@ -212,7 +212,7 @@ M  END
         XCTAssertEqual(try generator.getInchi(), "InChI=1S/BF4/c2-1(3,4)5/q-1")
     }
 
-    func testDerivesOfficialInchiKeysFromReferenceStrings() throws {
+    func testOfficialLibraryDerivesInchiKeysFromReferenceStrings() throws {
         let references = [
             ("InChI=1S/CH4/h1H4/i1TD", "VNWKTOKETHGBQD-XIGASBNHSA-N"),
             ("InChI=1S/p+1/i/hD", "GPRLSGONYQIRFK-DYCDLGHISA-N"),
@@ -220,7 +220,7 @@ M  END
         ]
 
         for (inchi, expectedKey) in references {
-            XCTAssertEqual(try CDKInChIKeyCodec.makeKey(from: inchi), expectedKey, "Reference InChIKey mismatch for \(inchi)")
+            XCTAssertEqual(try CDKInChINativeGenerator.inchiKey(for: inchi), expectedKey, "Reference InChIKey mismatch for \(inchi)")
         }
     }
 

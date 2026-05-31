@@ -122,7 +122,7 @@ enum CDKInChIOfficialLibraryGenerator {
 
         let second = String(source.dropFirst().prefix(1)).lowercased()
         let candidate = first + second
-        return isSupportedElementSymbol(candidate) ? candidate : first
+        return candidate
     }
 
     private static func inferredCharge(fromRawElement raw: String) -> Int {

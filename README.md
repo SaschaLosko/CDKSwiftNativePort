@@ -144,10 +144,10 @@ Quick Look, Spotlight, or AtomLens internals. That makes it suitable for:
 
 The package vendors the official IUPAC InChI `v1.07.5` C sources and builds
 them as the native `IUPACInChI` SwiftPM C target. Runtime InChI and InChIKey
-generation now use that in-process native library by default, with the older
-Swift implementation retained only for explicit development comparisons via
-`CDK_INCHI_BACKEND=swift-native`. The official reference parity harness is
-tracked in
+generation now use that in-process native library. The earlier package-owned
+Swift InChI generator and Swift InChIKey codec have been removed from the
+runtime path; only a small source-preservation cache remains for unchanged
+InChI imports. The official reference parity harness is tracked in
 [`Documentation/INCHI_REFERENCE_GRADE.md`](Documentation/INCHI_REFERENCE_GRADE.md).
 
 ## Reaction Parity Status
@@ -166,9 +166,12 @@ documented in
 
 The package now also includes a native Swift `RInChI` surface for reactions,
 including `RInChI` generation, `RAuxInfo`, Long/Short/Web keys,
-decomposition, and `RInChI`-to-reaction reconstruction. Vendored upstream CDK
-`storage/rinchi` fixtures are exercised through a strict executable gate
-documented in [`Documentation/RINCHI_PARITY.md`](Documentation/RINCHI_PARITY.md).
+decomposition, and `RInChI`-to-reaction reconstruction. The RInChI algorithm is
+implemented in Swift from the IUPAC RInChI reference design; component InChI
+and InChIKey generation is delegated to the vendored official libinchi bridge.
+Vendored upstream reference fixtures are exercised through a strict executable
+gate documented in
+[`Documentation/RINCHI_PARITY.md`](Documentation/RINCHI_PARITY.md).
 
 ## Installation
 

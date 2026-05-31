@@ -14,36 +14,20 @@ The package must match the official InChI reference implementation for:
 - round-trip stability on the supported structure surface
 
 The runtime target remains native and in-process. Default structure-to-InChI
-and InChIKey generation now call the vendored official IUPAC InChI C library;
-the older Swift generator remains available only for explicit development
-comparisons with `CDK_INCHI_BACKEND=swift-native`.
+and InChIKey generation call the vendored official IUPAC InChI C library. The
+older package-owned Swift InChI generator and Swift InChIKey codec have been
+removed from the runtime path.
 
 ## Current State
 
 - `IUPACInChI` vendors the official IUPAC InChI `v1.07.5` source distribution
   from commit `11a87982bb518f57ac013f0b258c283655e1ea1d`.
-- `CDKInChINativeGenerator` routes default generation through the official
-  native C library.
-- The previous package-owned Swift generator is retained behind
-  `CDK_INCHI_BACKEND=swift-native` for regression and port-comparison work.
+- `CDKInChINativeGenerator` routes generation through the official native C
+  library.
+- The previous package-owned Swift generator fallback has been removed.
 - `CDKInChIToStructure` is still a partial Swift parser.
-- InChIKey derivation now follows the official major/minor block split and
-  base-26 encoding in native Swift instead of the earlier pseudo-key path.
-- The generator now handles disconnected official-style multicomponent output
-  for repeated simple fragments and metal-disconnected salts on the supported
-  subset, instead of collapsing those cases back into a single aggregate
-  formula.
-- The generator now covers exact native InChI and InChIKey output for the
-  simple ethanol/acetic-acid smoke cases, including alcohol hydrogen-layer
-  ordering and the mobile hydrogen layer used by carboxylic acids.
-- The generator now applies acyclic tree-specific canonical numbering
-  heuristics for supported hub-centered and path-like cases, which closes a
-  substantial subset of the remaining exact-string neutral, charged, and
-  disconnected acyclic mismatches without changing the runtime model.
-- The generator now also normalizes the supported official mobile-hydrogen
-  salt form and a narrow cyano-arm carbon-hub numbering case, which removes
-  the last remaining non-stereo multicomponent mismatches from the curated
-  corpus.
+- InChIKey derivation now calls the official IUPAC library path rather than a
+  Swift reimplementation.
 - Parsed InChI molecules now carry a signature-guarded source cache so
   unchanged parser output re-exports the exact original InChI while edited
   structures still fall back to native regeneration.
@@ -89,14 +73,12 @@ comparisons with `CDK_INCHI_BACKEND=swift-native`.
      pretending the current implementation is reference-grade.
 
 2. Generator parity
-   - Keep default generation on the official native IUPAC library.
-   - Keep the Swift generator as a comparison backend only; do not use it for
-     release identity checks.
+   - Keep generation on the official native IUPAC library.
+   - Do not restore an alternate Swift InChI generator backend.
 
 3. InChIKey parity
    - Use the official IUPAC key generation path for default runtime output.
-   - Keep the Swift key codec only for isolated fallback and legacy comparison
-     cases.
+   - Do not restore an alternate Swift InChIKey codec for release output.
 
 4. Parser parity
    - Replace partial layer parsing and ignored-token behavior with a full Swift

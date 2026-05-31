@@ -83,7 +83,7 @@ public final class CDKRInChIGenerator {
             } else {
                 self.rinchi = generateRInChI(from: extracted)
                 self.auxInfo = generateRAuxInfo(from: extracted)
-                self.longKey = generateLongKey(from: extracted)
+                self.longKey = try generateLongKey(from: extracted)
                 self.shortKey = try generateShortKey(from: extracted)
                 self.webKey = try generateWebKey(from: extracted)
             }
@@ -249,7 +249,7 @@ public final class CDKRInChIGenerator {
         return output
     }
 
-    private func generateLongKey(from extraction: ExtractionResult) -> String {
+    private func generateLongKey(from extraction: ExtractionResult) throws -> String {
         var output = CDKRInChIConstants.longKeyHeader +
             CDKRInChIConstants.keyVersionHeader +
             CDKRInChIConstants.keyBlockDelimiter +
@@ -259,9 +259,9 @@ public final class CDKRInChIGenerator {
         let baseline = output
 
         for index in 0..<extraction.components.count {
-            let body = extraction.components[index]
+            let body = try extraction.components[index]
                 .filter { !$0.isNoStructure }
-                .compactMap { try? CDKInChIKeyCodec.makeKey(from: $0.inchi) }
+                .map { try CDKInChINativeGenerator.inchiKey(for: $0.inchi) }
                 .joined(separator: CDKRInChIConstants.keyComponentDelimiter)
             output += body
 
