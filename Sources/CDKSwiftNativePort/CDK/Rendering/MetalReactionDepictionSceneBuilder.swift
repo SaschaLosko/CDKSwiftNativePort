@@ -85,6 +85,8 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
         let agentLayout = layoutBoxes(for: agents, in: agentRegion, style: reactionStyle)
+        let participantScale = sharedParticipantScale(for: [reactantLayout, productLayout, agentLayout],
+                                                       style: reactionStyle)
 
         var baseBondSegments: [CDKMetalDepictionScene.LineSegment] = []
         baseBondSegments.reserveCapacity((reactants.count + products.count + agents.count) * 32)
@@ -100,9 +102,13 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         func mergeMolecule(_ molecule: Molecule, into rect: CGRect, highlighted: Bool) {
+            let renderRect = participantCanvasRect(for: molecule,
+                                                   in: rect,
+                                                   style: reactionStyle,
+                                                   sharedScale: participantScale)
             let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
                                                             style: reactionStyle,
-                                                            canvasRect: rect,
+                                                            canvasRect: renderRect,
                                                             zoom: 1.0,
                                                             pan: .zero,
                                                             rotationDegrees: 0)
@@ -393,6 +399,65 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let leftRegion: CGRect
         let rightRegion: CGRect
         let arrowGap: CGFloat
+    }
+
+    private static func sharedParticipantScale(for layouts: [MoleculeBoxLayout],
+                                               style: RenderStyle) -> CGFloat? {
+        let candidates = layouts.flatMap(\.items).compactMap { item in
+            participantScaleCandidate(for: item.molecule,
+                                      in: item.rect,
+                                      style: style)
+        }
+        guard !candidates.isEmpty else {
+            return nil
+        }
+        return candidates.min()
+    }
+
+    private static func participantScaleCandidate(for molecule: Molecule,
+                                                  in rect: CGRect,
+                                                  style: RenderStyle) -> CGFloat? {
+        guard let box = molecule.boundingBox() else {
+            return nil
+        }
+
+        let xPadding = min(style.padding, rect.width * 0.25)
+        let yPadding = min(style.padding, rect.height * 0.25)
+        let availableWidth = max(1, rect.width - (2 * xPadding))
+        let availableHeight = max(1, rect.height - (2 * yPadding))
+
+        var candidates: [CGFloat] = []
+        if box.width > 0.0001 {
+            candidates.append(availableWidth / box.width)
+        }
+        if box.height > 0.0001 {
+            candidates.append(availableHeight / box.height)
+        }
+
+        return candidates.min()
+    }
+
+    private static func participantCanvasRect(for molecule: Molecule,
+                                              in rect: CGRect,
+                                              style: RenderStyle,
+                                              sharedScale: CGFloat?) -> CGRect {
+        guard let sharedScale,
+              sharedScale.isFinite,
+              sharedScale > 0,
+              let box = molecule.boundingBox() else {
+            return rect
+        }
+
+        let minimumCoordinateExtent: CGFloat = 1.2
+        let contentWidth = max(box.width, minimumCoordinateExtent) * sharedScale
+        let contentHeight = max(box.height, minimumCoordinateExtent) * sharedScale
+        let width = max(1, contentWidth + (2 * style.padding))
+        let height = max(1, contentHeight + (2 * style.padding))
+
+        return CGRect(x: rect.midX - (width * 0.5),
+                      y: rect.midY - (height * 0.5),
+                      width: width,
+                      height: height)
     }
 
     private static func layoutBoxes(for molecules: [Molecule], in region: CGRect, style: RenderStyle) -> MoleculeBoxLayout {

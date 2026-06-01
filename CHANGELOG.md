@@ -6,6 +6,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.5] - 2026-06-01
+
+### Fixed
+
+- Applied a shared structural scale across reaction participants so reactants,
+  agents, and products preserve consistent bond lengths and aromatic ring sizes
+  within one reaction depiction.
+
 ## [1.4.4] - 2026-05-31
 
 ### Fixed

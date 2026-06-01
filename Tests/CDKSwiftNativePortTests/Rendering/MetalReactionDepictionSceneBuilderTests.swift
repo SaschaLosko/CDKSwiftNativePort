@@ -83,6 +83,44 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
                              "The bromination product should read horizontally on the product side instead of as a tall vertical participant.")
     }
 
+    func testReactionParticipantsShareStructuralScale() throws {
+        let benzene = try parseSmiles("c1ccccc1")
+        let reaction = CDKReaction(reactants: [benzene,
+                                               try parseSmiles("c1ccccc1"),
+                                               try parseSmiles("c1ccccc1")],
+                                   agents: [],
+                                   products: [try parseSmiles("c1ccccc1")])
+        let style = RenderStyle(showCarbons: false,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.1,
+                                fontSize: 15,
+                                padding: 22)
+        let canvas = CGRect(x: 0, y: 0, width: 1360, height: 620)
+
+        let scene = CDKMetalReactionDepictionSceneBuilder.build(reaction: reaction,
+                                                                style: style,
+                                                                canvasRect: canvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero,
+                                                                rotationDegrees: 0)
+
+        let leftLengths = renderedStructuralBondLengths(in: scene) {
+            segmentMidX($0) < (canvas.midX - 120)
+        }
+        let rightLengths = renderedStructuralBondLengths(in: scene) {
+            segmentMidX($0) > (canvas.midX + 120)
+        }
+        let leftRepresentativeBond = try XCTUnwrap(percentile(leftLengths, rank: 0.75))
+        let rightRepresentativeBond = try XCTUnwrap(percentile(rightLengths, rank: 0.75))
+        let ratio = rightRepresentativeBond / max(0.0001, leftRepresentativeBond)
+
+        XCTAssertLessThan(ratio, 1.12,
+                          "Reaction participants should share one structural scale instead of auto-fitting each side independently.")
+        XCTAssertGreaterThan(ratio, 0.88,
+                             "Reaction participants should share one structural scale instead of auto-fitting each side independently.")
+    }
+
     func testReactionSceneScalesLabelFontWithZoom() {
         let reaction = CDKReaction(reactants: [ethane(name: "R")], agents: [], products: [ethane(name: "P")])
         let style = RenderStyle(showCarbons: true,
@@ -788,6 +826,30 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
     private func parseSmiles(_ smiles: String) throws -> Molecule {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
         return try parser.parseSmiles(smiles)
+    }
+
+    private func renderedStructuralBondLengths(in scene: CDKMetalDepictionScene,
+                                               where predicate: (CDKMetalDepictionScene.LineSegment) -> Bool) -> [CGFloat] {
+        scene.bondSegments
+            .filter(predicate)
+            .map { segmentLength($0) }
+            .filter { $0 >= 16 && $0 <= 240 }
+    }
+
+    private func segmentLength(_ segment: CDKMetalDepictionScene.LineSegment) -> CGFloat {
+        hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y)
+    }
+
+    private func segmentMidX(_ segment: CDKMetalDepictionScene.LineSegment) -> CGFloat {
+        (segment.from.x + segment.to.x) * 0.5
+    }
+
+    private func percentile(_ values: [CGFloat], rank: CGFloat) -> CGFloat? {
+        guard !values.isEmpty else { return nil }
+        let sorted = values.sorted()
+        let clampedRank = min(1, max(0, rank))
+        let index = Int((CGFloat(sorted.count - 1) * clampedRank).rounded())
+        return sorted[index]
     }
 
     private func mapNumberXCorrelation(_ molecule: Molecule) -> CGFloat? {
