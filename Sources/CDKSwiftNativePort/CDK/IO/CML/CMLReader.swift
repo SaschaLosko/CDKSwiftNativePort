@@ -183,8 +183,11 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             atoms.reserveCapacity(source.atoms.count)
 
             for (atomIndex, atomSource) in source.atoms.enumerated() {
+                atomIDByXMLID[atomSource.xmlID] = atomIndex + 1
+            }
+
+            for (atomIndex, atomSource) in source.atoms.enumerated() {
                 let atomID = atomIndex + 1
-                atomIDByXMLID[atomSource.xmlID] = atomID
                 atoms.append(Atom(id: atomID,
                                   element: atomSource.element,
                                   position: atomSource.position,
@@ -440,9 +443,9 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         let parity = Int(parityText) ?? 0
         switch parity.signum() {
         case 1:
-            currentAtom?.chirality = .clockwise
-        case -1:
             currentAtom?.chirality = .anticlockwise
+        case -1:
+            currentAtom?.chirality = .clockwise
         default:
             currentAtom?.chirality = .none
         }

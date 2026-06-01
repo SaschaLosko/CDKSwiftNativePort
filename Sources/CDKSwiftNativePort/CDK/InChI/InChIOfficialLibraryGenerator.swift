@@ -6,6 +6,10 @@ enum CDKInChIOfficialLibraryGenerator {
 
     static func generate(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
         let normalized = normalizeInput(molecule)
+        if normalized.atoms.contains(where: { $0.ligandOrderingAtomIDs?.count == 4 }) {
+            return try generateFromAtoms(normalized)
+        }
+
         let molfile = try CDKMDLV2000Writer.write(
             normalized,
             options: .init(programName: "CDKSwiftNativePort")
@@ -17,6 +21,149 @@ enum CDKInChIOfficialLibraryGenerator {
         var result = CDKInChIResult()
         let bridgeStatus = molfile.withCString { cMolfile in
             cdk_inchi_generate_standard_molfile(cMolfile, &result)
+        }
+        defer {
+            cdk_inchi_free_result(&result)
+        }
+
+        let message = string(from: result.message)
+        let log = string(from: result.log)
+        guard bridgeStatus == 0,
+              let inchiPointer = result.inchi,
+              let keyPointer = result.inchi_key else {
+            let detail = [message, log]
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .first { !$0.isEmpty }
+                ?? "Official InChI generation failed."
+            throw ChemError.parseFailed(detail)
+        }
+
+        return CDKInChINativeGenerationResult(
+            inchi: String(cString: inchiPointer),
+            inchiKey: String(cString: keyPointer),
+            auxInfo: string(from: result.aux_info),
+            status: .success,
+            message: message
+        )
+    }
+
+    private static func generateFromAtoms(_ molecule: Molecule) throws -> CDKInChINativeGenerationResult {
+        let atoms = molecule.atoms.sorted { $0.id < $1.id }
+        let atomIndexByID = Dictionary(uniqueKeysWithValues: atoms.enumerated().map { ($1.id, Int32($0)) })
+        let bonds = molecule.bonds.sorted { $0.id < $1.id }
+        let symbolStride = 8
+
+        var symbols = Array(repeating: CChar(0), count: atoms.count * symbolStride)
+        var charges: [Int32] = []
+        var isotopes: [Int32] = []
+        var implicitHydrogens: [Int32] = []
+
+        let hasExplicitHydrogenAtoms = atoms.contains {
+            CDKDescriptorSupport.canonicalElementSymbol($0.element).uppercased() == "H"
+        }
+        for (atomIndex, atom) in atoms.enumerated() {
+            let symbol = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
+            let encoded = Array(symbol.utf8.prefix(symbolStride - 1))
+            for (byteIndex, byte) in encoded.enumerated() {
+                symbols[atomIndex * symbolStride + byteIndex] = CChar(bitPattern: byte)
+            }
+            charges.append(Int32(atom.charge))
+            isotopes.append(Int32(atom.isotopeMassNumber ?? 0))
+
+            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" || hasExplicitHydrogenAtoms {
+                implicitHydrogens.append(0)
+            } else if let explicitHydrogenCount = atom.explicitHydrogenCount {
+                implicitHydrogens.append(Int32(max(0, explicitHydrogenCount)))
+            } else {
+                implicitHydrogens.append(-1)
+            }
+        }
+
+        var bondFrom: [Int32] = []
+        var bondTo: [Int32] = []
+        var bondOrder: [Int32] = []
+        bondFrom.reserveCapacity(bonds.count)
+        bondTo.reserveCapacity(bonds.count)
+        bondOrder.reserveCapacity(bonds.count)
+
+        for bond in bonds {
+            guard let from = atomIndexByID[bond.a1],
+                  let to = atomIndexByID[bond.a2] else {
+                throw ChemError.parseFailed("Bond references unknown atom while generating InChI.")
+            }
+            bondFrom.append(from)
+            bondTo.append(to)
+            switch bond.order {
+            case .single:
+                bondOrder.append(1)
+            case .double:
+                bondOrder.append(2)
+            case .triple:
+                bondOrder.append(3)
+            case .aromatic:
+                bondOrder.append(4)
+            }
+        }
+
+        var stereoCenters: [Int32] = []
+        var stereoNeighbors: [Int32] = []
+        var stereoParities: [Int32] = []
+
+        for atom in atoms where atom.chirality != .none {
+            guard let ligandOrdering = atom.ligandOrderingAtomIDs,
+                  ligandOrdering.count == 4,
+                  let center = atomIndexByID[atom.id] else {
+                continue
+            }
+
+            let mappedNeighbors = ligandOrdering.compactMap { atomIndexByID[$0] }
+            guard mappedNeighbors.count == 4 else { continue }
+
+            stereoCenters.append(center)
+            stereoNeighbors.append(contentsOf: mappedNeighbors)
+            stereoParities.append(atom.chirality == .clockwise ? 1 : 2)
+        }
+
+        lock.lock()
+        defer { lock.unlock() }
+
+        var result = CDKInChIResult()
+        let bridgeStatus = symbols.withUnsafeBufferPointer { symbolPointer in
+            charges.withUnsafeBufferPointer { chargePointer in
+                isotopes.withUnsafeBufferPointer { isotopePointer in
+                    implicitHydrogens.withUnsafeBufferPointer { hydrogenPointer in
+                        bondFrom.withUnsafeBufferPointer { bondFromPointer in
+                            bondTo.withUnsafeBufferPointer { bondToPointer in
+                                bondOrder.withUnsafeBufferPointer { bondOrderPointer in
+                                    stereoCenters.withUnsafeBufferPointer { stereoCenterPointer in
+                                        stereoNeighbors.withUnsafeBufferPointer { stereoNeighborPointer in
+                                            stereoParities.withUnsafeBufferPointer { stereoParityPointer in
+                                                cdk_inchi_generate_standard_atoms(
+                                                    Int32(atoms.count),
+                                                    symbolPointer.baseAddress,
+                                                    Int32(symbolStride),
+                                                    chargePointer.baseAddress,
+                                                    isotopePointer.baseAddress,
+                                                    hydrogenPointer.baseAddress,
+                                                    Int32(bonds.count),
+                                                    bondFromPointer.baseAddress,
+                                                    bondToPointer.baseAddress,
+                                                    bondOrderPointer.baseAddress,
+                                                    Int32(stereoCenters.count),
+                                                    stereoCenterPointer.baseAddress,
+                                                    stereoNeighborPointer.baseAddress,
+                                                    stereoParityPointer.baseAddress,
+                                                    &result
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         defer {
             cdk_inchi_free_result(&result)

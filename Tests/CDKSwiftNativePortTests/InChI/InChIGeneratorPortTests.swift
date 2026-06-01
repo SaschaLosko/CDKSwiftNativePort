@@ -37,6 +37,85 @@ final class InChIGeneratorPortTests: XCTestCase {
         XCTAssertEqual(try generator.getInchiKey(), "QTBSBXVTEAMEQO-UHFFFAOYSA-N")
     }
 
+    func testGeneratesNativeInchiKeyFromCMLAtomParityLigandOrder() throws {
+        let cases = [
+            ("(R)-butan-2-ol", "-1", "BTANRVKWQNVYAZ-SCSAIBSYSA-N"),
+            ("(S)-butan-2-ol", "1", "BTANRVKWQNVYAZ-BYPYZUCNSA-N"),
+        ]
+
+        for (name, parity, expectedKey) in cases {
+            let cml = """
+        <cml xmlns="http://www.xml-cml.org/schema">
+          <molecule id="m1">
+            <name>\(name)</name>
+            <atomArray>
+              <atom id="a1" elementType="C" />
+              <atom id="a2" elementType="C">
+                <atomParity atomRefs4="a6 a10 a1 a3">\(parity)</atomParity>
+              </atom>
+              <atom id="a3" elementType="C" />
+              <atom id="a4" elementType="C" />
+              <atom id="a6" elementType="O" />
+              <atom id="a7" elementType="H" />
+              <atom id="a8" elementType="H" />
+              <atom id="a9" elementType="H" />
+              <atom id="a10" elementType="H" />
+              <atom id="a11" elementType="H" />
+              <atom id="a12" elementType="H" />
+              <atom id="a13" elementType="H" />
+              <atom id="a14" elementType="H" />
+              <atom id="a15" elementType="H" />
+              <atom id="a16" elementType="H" />
+            </atomArray>
+            <bondArray>
+              <bond atomRefs2="a1 a2" order="S" />
+              <bond atomRefs2="a2 a3" order="S" />
+              <bond atomRefs2="a3 a4" order="S" />
+              <bond atomRefs2="a2 a6" order="S" />
+              <bond atomRefs2="a1 a7" order="S" />
+              <bond atomRefs2="a1 a8" order="S" />
+              <bond atomRefs2="a1 a9" order="S" />
+              <bond atomRefs2="a2 a10" order="S" />
+              <bond atomRefs2="a3 a11" order="S" />
+              <bond atomRefs2="a3 a12" order="S" />
+              <bond atomRefs2="a4 a13" order="S" />
+              <bond atomRefs2="a4 a14" order="S" />
+              <bond atomRefs2="a4 a15" order="S" />
+              <bond atomRefs2="a6 a16" order="S" />
+            </bondArray>
+          </molecule>
+        </cml>
+        """
+            let molecule = try XCTUnwrap(CDKCMLReader.read(text: cml).first)
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+
+            XCTAssertEqual(generator.getStatus(), .success, name)
+            XCTAssertEqual(try generator.getInchiKey(), expectedKey, name)
+        }
+    }
+
+    func testNativeInchiPreservesZeroDimensionalStereoForBridgedRings() throws {
+        let cases = [
+            (
+                "(1S,6R)-3,7,7-trimethylbicyclo[4.1.0]hept-3-ene",
+                Self.trimethylBicycloHeptene(),
+                "BQOFWKZOCNGFEC-BDAKNGLRSA-N"
+            ),
+            (
+                "(1R,4S)-2,2-dimethyl-3-methylidenebicyclo[2.2.1]heptane",
+                Self.dimethylMethylideneBicycloHeptane(),
+                "CRPUJAZIXJMDBK-DTWKUNHWSA-N"
+            ),
+        ]
+
+        for (name, molecule, expectedKey) in cases {
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+
+            XCTAssertEqual(generator.getStatus(), .success, name)
+            XCTAssertEqual(try generator.getInchiKey(), expectedKey, name)
+        }
+    }
+
     func testGeneratedInchiCanBeParsedBack() throws {
         let molecule = try smilesParser.parseSmiles("CC(=O)O")
         let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
@@ -330,6 +409,82 @@ M  END
         XCTAssertTrue(key.allSatisfy { $0 == "-" || ("A"..."Z").contains(String($0)) },
                       file: file,
                       line: line)
+    }
+
+    private static func trimethylBicycloHeptene() -> Molecule {
+        Molecule(
+            name: "(1S,6R)-3,7,7-trimethylbicyclo[4.1.0]hept-3-ene",
+            atoms: carbonAtoms(1...10, zeroHydrogenAtoms: [3, 7], stereo: [
+                1: (.anticlockwise, [7, 11, 2, 6]),
+                6: (.clockwise, [7, 17, 5, 1]),
+            ]) + hydrogenAtoms(11...26),
+            bonds: bonds([
+                (1, 2, .single), (1, 7, .single), (1, 11, .single),
+                (2, 3, .single), (2, 12, .single), (2, 13, .single),
+                (3, 4, .double),
+                (4, 5, .single), (4, 14, .single),
+                (5, 6, .single), (5, 15, .single), (5, 16, .single),
+                (6, 1, .single), (6, 7, .single), (6, 17, .single),
+                (8, 3, .single), (8, 18, .single), (8, 19, .single), (8, 20, .single),
+                (9, 7, .single), (9, 21, .single), (9, 22, .single), (9, 23, .single),
+                (10, 7, .single), (10, 24, .single), (10, 25, .single), (10, 26, .single),
+            ])
+        )
+    }
+
+    private static func dimethylMethylideneBicycloHeptane() -> Molecule {
+        Molecule(
+            name: "(1R,4S)-2,2-dimethyl-3-methylidenebicyclo[2.2.1]heptane",
+            atoms: carbonAtoms(1...10, zeroHydrogenAtoms: [2, 3], stereo: [
+                1: (.clockwise, [2, 11, 6, 7]),
+                4: (.anticlockwise, [3, 12, 5, 7]),
+            ]) + hydrogenAtoms(11...26),
+            bonds: bonds([
+                (1, 2, .single), (1, 6, .single), (1, 7, .single), (1, 11, .single),
+                (2, 3, .single),
+                (3, 4, .single),
+                (4, 5, .single), (4, 7, .single), (4, 12, .single),
+                (5, 6, .single), (5, 13, .single), (5, 14, .single),
+                (6, 15, .single), (6, 16, .single),
+                (7, 17, .single), (7, 18, .single),
+                (8, 2, .single), (8, 19, .single), (8, 20, .single), (8, 21, .single),
+                (9, 2, .single), (9, 22, .single), (9, 23, .single), (9, 24, .single),
+                (10, 3, .double), (10, 25, .single), (10, 26, .single),
+            ])
+        )
+    }
+
+    private static func carbonAtoms(
+        _ ids: ClosedRange<Int>,
+        zeroHydrogenAtoms: Set<Int>,
+        stereo: [Int: (AtomChirality, [Int])]
+    ) -> [Atom] {
+        ids.map { id in
+            let stereochemistry = stereo[id]
+            return Atom(
+                id: id,
+                element: "C",
+                position: .zero,
+                chirality: stereochemistry?.0 ?? .none,
+                explicitHydrogenCount: zeroHydrogenAtoms.contains(id) ? 0 : nil,
+                ligandOrderingAtomIDs: stereochemistry?.1
+            )
+        }
+    }
+
+    private static func hydrogenAtoms(_ ids: ClosedRange<Int>) -> [Atom] {
+        ids.map { Atom(id: $0, element: "H", position: .zero) }
+    }
+
+    private static func bonds(_ definitions: [(Int, Int, BondOrder)]) -> [Bond] {
+        definitions.enumerated().map { index, definition in
+            Bond(
+                id: index + 1,
+                a1: definition.0,
+                a2: definition.1,
+                order: definition.2
+            )
+        }
     }
 
     private func loadOfficialReferenceFixturesByID() throws -> [String: InChIOfficialReferenceFixtures.Case] {

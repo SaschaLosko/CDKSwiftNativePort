@@ -155,6 +155,35 @@ final class CMLReaderPortTests: XCTestCase {
         XCTAssertTrue(chlorineStereo.contains(.down) || chlorineStereo.contains(.downReversed))
     }
 
+    func testAtomParityKeepsLigandOrderWhenRefsPointToLaterAtoms() throws {
+        let text = """
+        <cml>
+          <molecule id="futureRefs">
+            <atomArray>
+              <atom id="a1" elementType="C" />
+              <atom id="a2" elementType="Cl" />
+              <atom id="a3" elementType="C">
+                <atomParity atomRefs4="a2 a1 a4 a5">1</atomParity>
+              </atom>
+              <atom id="a4" elementType="F" />
+              <atom id="a5" elementType="H" />
+            </atomArray>
+            <bondArray>
+              <bond atomRefs2="a3 a1" order="S" />
+              <bond atomRefs2="a3 a2" order="S" />
+              <bond atomRefs2="a3 a4" order="S" />
+              <bond atomRefs2="a3 a5" order="S" />
+            </bondArray>
+          </molecule>
+        </cml>
+        """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: text).first)
+        let stereoAtom = try XCTUnwrap(molecule.atoms.first { $0.externalID == nil && $0.id == 3 })
+        XCTAssertEqual(stereoAtom.chirality, .anticlockwise)
+        XCTAssertEqual(stereoAtom.ligandOrderingAtomIDs, [2, 1, 4, 5])
+    }
+
     func testKeepsExplicitHydrogenCyclohexaneRingRegularWhenInferringStereo() throws {
         let text = """
         <cml xmlns="http://www.xml-cml.org/schema" convention="conventions:molecular" xmlns:conventions="http://www.xml-cml.org/convention/" xmlns:cmlDict="http://www.xml-cml.org/dictionary/cml/" xmlns:nameDict="http://www.xml-cml.org/dictionary/cml/name/"><molecule id="m1"><name dictRef="nameDict:unknown">trans-1,2-dichlorocyclohexane</name><atomArray><atom id="a1" elementType="C"><atomParity atomRefs4="a7 a2 a6 a9">1</atomParity><label value="1" dictRef="cmlDict:locant"/></atom><atom id="a2" elementType="C"><atomParity atomRefs4="a8 a1 a3 a10">-1</atomParity><label value="2" dictRef="cmlDict:locant"/></atom><atom id="a3" elementType="C"/><atom id="a4" elementType="C"/><atom id="a5" elementType="C"/><atom id="a6" elementType="C"/><atom id="a7" elementType="Cl" hydrogenCount="0"/><atom id="a8" elementType="Cl" hydrogenCount="0"/><atom id="a9" elementType="H"/><atom id="a10" elementType="H"/><atom id="a11" elementType="H"/><atom id="a12" elementType="H"/><atom id="a13" elementType="H"/><atom id="a14" elementType="H"/><atom id="a15" elementType="H"/><atom id="a16" elementType="H"/><atom id="a17" elementType="H"/><atom id="a18" elementType="H"/></atomArray><bondArray><bond id="a1_a2" atomRefs2="a1 a2" order="S"/><bond id="a1_a6" atomRefs2="a1 a6" order="S"/><bond id="a1_a9" atomRefs2="a1 a9" order="S"/><bond id="a2_a3" atomRefs2="a2 a3" order="S"/><bond id="a2_a10" atomRefs2="a2 a10" order="S"/><bond id="a3_a4" atomRefs2="a3 a4" order="S"/><bond id="a3_a11" atomRefs2="a3 a11" order="S"/><bond id="a3_a12" atomRefs2="a3 a12" order="S"/><bond id="a4_a5" atomRefs2="a4 a5" order="S"/><bond id="a4_a13" atomRefs2="a4 a13" order="S"/><bond id="a4_a14" atomRefs2="a4 a14" order="S"/><bond id="a5_a6" atomRefs2="a5 a6" order="S"/><bond id="a5_a15" atomRefs2="a5 a15" order="S"/><bond id="a5_a16" atomRefs2="a5 a16" order="S"/><bond id="a6_a17" atomRefs2="a6 a17" order="S"/><bond id="a6_a18" atomRefs2="a6 a18" order="S"/><bond id="a7_a1" atomRefs2="a7 a1" order="S"/><bond id="a8_a2" atomRefs2="a8 a2" order="S"/></bondArray></molecule></cml>
