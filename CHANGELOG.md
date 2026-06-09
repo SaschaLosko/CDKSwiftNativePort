@@ -6,6 +6,21 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.7] - 2026-06-09
+
+### Fixed
+
+- Aligned reaction agent depiction with Java CDK behavior by placing agents in
+  the lane directly above the reaction arrow instead of a separate canvas-wide
+  top band.
+
+## [1.4.6] - 2026-06-09
+
+### Fixed
+
+- Preserved CML atom parity when generating native InChI identifiers through the
+  official libinchi bridge.
+
 ## [1.4.5] - 2026-06-01
 
 ### Fixed
