@@ -64,23 +64,19 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                  participants: participantMolecules,
                                                  in: available)
 
-        let agentBandHeight: CGFloat = agents.isEmpty ? 0 : min(max(52, available.height * 0.18), 116)
-        let sectionSpacing: CGFloat = agents.isEmpty ? 0 : 12
-        let mainRegion = CGRect(x: available.minX,
-                                y: available.minY + agentBandHeight + sectionSpacing,
-                                width: available.width,
-                                height: max(1, available.height - agentBandHeight - sectionSpacing))
-        let agentRegion = CGRect(x: available.minX,
-                                 y: available.minY,
-                                 width: available.width,
-                                 height: max(1, agentBandHeight))
-
+        let mainRegion = available
         let splitRegions = reactionSideRegions(in: mainRegion,
                                                reactants: reactants,
-                                               products: products)
+                                               products: products,
+                                               preferredArrowGap: preferredArrowGap(for: agents,
+                                                                                   in: mainRegion,
+                                                                                   style: reactionStyle))
         let arrowGap = splitRegions.arrowGap
         let leftRegion = splitRegions.leftRegion
         let rightRegion = splitRegions.rightRegion
+        let agentRegion = agentRegion(in: mainRegion,
+                                      splitRegions: splitRegions,
+                                      agentCount: agents.count)
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
@@ -336,22 +332,18 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                                                  participants: reactants + agents + products,
                                                  in: available)
 
-        let agentBandHeight: CGFloat = agents.isEmpty ? 0 : min(max(52, available.height * 0.18), 116)
-        let sectionSpacing: CGFloat = agents.isEmpty ? 0 : 12
-        let mainRegion = CGRect(x: available.minX,
-                                y: available.minY + agentBandHeight + sectionSpacing,
-                                width: available.width,
-                                height: max(1, available.height - agentBandHeight - sectionSpacing))
-        let agentRegion = CGRect(x: available.minX,
-                                 y: available.minY,
-                                 width: available.width,
-                                 height: max(1, agentBandHeight))
-
+        let mainRegion = available
         let splitRegions = reactionSideRegions(in: mainRegion,
                                                reactants: reactants,
-                                               products: products)
+                                               products: products,
+                                               preferredArrowGap: preferredArrowGap(for: agents,
+                                                                                   in: mainRegion,
+                                                                                   style: reactionStyle))
         let leftRegion = splitRegions.leftRegion
         let rightRegion = splitRegions.rightRegion
+        let agentRegion = agentRegion(in: mainRegion,
+                                      splitRegions: splitRegions,
+                                      agentCount: agents.count)
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
@@ -626,10 +618,47 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return [Array(0..<count)]
     }
 
+    private static func agentRegion(in mainRegion: CGRect,
+                                    splitRegions: ReactionSideRegions,
+                                    agentCount: Int) -> CGRect {
+        guard agentCount > 0 else {
+            return .zero
+        }
+
+        let arrowY = mainRegion.midY
+        let sectionSpacing: CGFloat = 12
+        let preferredHeight = min(max(52, mainRegion.height * 0.18), 116)
+        let top = max(mainRegion.minY, arrowY - preferredHeight - sectionSpacing)
+        let height = max(1, min(preferredHeight, arrowY - sectionSpacing - top))
+        return CGRect(x: splitRegions.leftRegion.maxX,
+                      y: top,
+                      width: max(1, splitRegions.arrowGap),
+                      height: height)
+    }
+
+    private static func preferredArrowGap(for agents: [Molecule],
+                                          in mainRegion: CGRect,
+                                          style: RenderStyle) -> CGFloat? {
+        guard !agents.isEmpty else {
+            return nil
+        }
+
+        let plusCount = max(0, agents.count - 1)
+        let plusGlyphWidth = max(14, style.fontSize * 0.58)
+        let interItemSpacing = max(8, style.fontSize * 0.30)
+        let separatorSpace = CGFloat(plusCount) * (plusGlyphWidth + interItemSpacing)
+        let agentDemand = max(CGFloat(agents.count), layoutDemandWeight(for: agents))
+        let unitWidth = max(42, min(92, mainRegion.width * 0.06))
+        return separatorSpace + (agentDemand * unitWidth)
+    }
+
     private static func reactionSideRegions(in mainRegion: CGRect,
                                             reactants: [Molecule],
-                                            products: [Molecule]) -> ReactionSideRegions {
-        let arrowGap = max(56, min(120, mainRegion.width * 0.16))
+                                            products: [Molecule],
+                                            preferredArrowGap: CGFloat? = nil) -> ReactionSideRegions {
+        let baseArrowGap = max(56, min(120, mainRegion.width * 0.16))
+        let maximumArrowGap = max(1, mainRegion.width * 0.46)
+        let arrowGap = min(max(baseArrowGap, preferredArrowGap ?? baseArrowGap), maximumArrowGap)
         let sideWidth = max(1, mainRegion.width - arrowGap)
 
         let reactantDemand = layoutDemandWeight(for: reactants)

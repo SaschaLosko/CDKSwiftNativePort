@@ -37,6 +37,44 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
                        "Expected a reaction arrow baseline in the rendered reaction scene.")
     }
 
+    func testReactionAgentsAreCenteredAboveArrowLane() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let reaction = try parser.parseReactionSmiles("CC(=O)O.CCO>OS(=O)(=O)O>CC(=O)OCC.O")
+        XCTAssertEqual(reaction.agents.count, 1)
+
+        let style = RenderStyle(showCarbons: true,
+                                showImplicitHydrogens: false,
+                                showAtomIDs: false,
+                                bondWidth: 2.1,
+                                fontSize: 15,
+                                padding: 22)
+        let canvas = CGRect(x: 0, y: 0, width: 1600, height: 700)
+
+        let scene = CDKMetalReactionDepictionSceneBuilder.build(reaction: reaction,
+                                                                style: style,
+                                                                canvasRect: canvas,
+                                                                zoom: 1.0,
+                                                                pan: .zero,
+                                                                rotationDegrees: 0)
+        let arrowSegment = try XCTUnwrap(scene.bondSegments
+            .filter { abs($0.from.y - $0.to.y) < 1.5 && segmentLength($0) > 70 }
+            .max { segmentLength($0) < segmentLength($1) })
+        let arrowCenter = CGPoint(x: (arrowSegment.from.x + arrowSegment.to.x) * 0.5,
+                                  y: (arrowSegment.from.y + arrowSegment.to.y) * 0.5)
+        let pointAboveArrow = CGPoint(x: arrowCenter.x, y: arrowCenter.y - 84)
+
+        let hit = CDKMetalReactionDepictionSceneBuilder.participant(at: pointAboveArrow,
+                                                                    in: reaction,
+                                                                    style: style,
+                                                                    canvasRect: canvas,
+                                                                    zoom: 1.0,
+                                                                    pan: .zero,
+                                                                    rotationDegrees: 0)
+
+        XCTAssertEqual(hit, CDKReactionParticipantSelection(role: .agent, index: 0),
+                       "Reaction agents should occupy the lane directly above the reaction arrow, matching Java CDK depiction behavior.")
+    }
+
     func testThreeReactantReactionWrapsParticipantsWithoutFlatPlusRow() throws {
         let reaction = try brominationStyleReaction()
         let style = RenderStyle(showCarbons: true,
