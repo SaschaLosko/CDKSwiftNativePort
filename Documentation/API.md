@@ -444,6 +444,35 @@ and extension-style host integrations.
 - `CDKTPSADescriptor`
 - `CDKVABCDescriptor`
 
+### 7.4 Fingerprints, Similarity, and Substructure Search
+
+- `CDKCircularFingerprinter`
+  - `calculate(_:)`
+  - `bitFingerprint(for:)`
+  - `countFingerprint(for:)`
+- `CDKCircularFingerprintClass`
+- `CDKCircularFingerprintFeature`
+- `CDKBitFingerprint`
+- `CDKCountFingerprint`
+- `CDKFingerprintSimilarity`
+  - `tanimoto(_:_:)`
+  - `countTanimotoMethod1(_:_:)`
+  - `countTanimotoMethod2(_:_:)`
+  - `dice(_:_:)`
+  - `cosine(_:_:)`
+- `CDKSubstructurePattern`
+  - `matches(_:)`
+  - `firstMatch(in:)`
+  - `matchAll(in:)`
+- `CDKSubstructureSearch`
+  - `contains(query:in:options:)`
+  - `firstMatch(query:in:options:)`
+  - `matches(query:target:options:)`
+- `CDKSubstructureSearchOptions`
+- `CDKSubstructureMatch`
+- `Molecule.containsSubstructure(_:options:)`
+- `Molecule.substructureMatches(of:options:)`
+
 ## 8. Recommended Entry Points
 
 For most host applications, the smallest useful public surface is:
@@ -455,6 +484,8 @@ For most host applications, the smallest useful public surface is:
 - `CDKMetalReactionDepictionSceneBuilder`
 - `CDKMoleculeIdentifierService`
 - `CDKMoleculePropertyService`
+- `CDKCircularFingerprinter`
+- `CDKSubstructurePattern`
 - `CDKFileExporter`
 
 That set covers the common parse, layout, inspect, depict, and export loop

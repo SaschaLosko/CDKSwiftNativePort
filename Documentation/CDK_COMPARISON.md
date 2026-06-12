@@ -71,6 +71,9 @@ That does not mean every CDK module is ported.
 - InChI integration
 - official-reference InChI parity harness for a curated upstream InChI CI corpus
 - CDK-derived 2D layout
+- circular ECFP/FCFP fingerprints, count/folded bit fingerprints, and
+  Tanimoto/Dice/Cosine similarity helpers
+- molecule-vs-molecule substructure matching over the Swift `Molecule` graph
 - depiction support for:
   - aromatic display modes
   - Markush legends
@@ -104,8 +107,9 @@ reproduce the original Java runtime model.
 
 The following CDK areas are still outside the package’s current parity target:
 
-- generalized SMARTS and broad substructure-search modules
-- fingerprint/similarity toolkits
+- generalized SMARTS query parsing and the broader SMARTS module family
+- non-circular fingerprint families such as MACCS, PubChem, shortest-path, and
+  atom-pairs fingerprints
 - force-field and 3D generation workflows
 - the broader long tail of CDK QSAR descriptors
 - every configurable reader/writer mode from upstream CDK
