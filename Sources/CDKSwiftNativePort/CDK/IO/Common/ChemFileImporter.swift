@@ -134,7 +134,7 @@ public enum CDKFileImporter {
             return [try CDKMDLReader.read(text: text)]
         case "rgf":
             return [try CDKRGFileReader.readFlattenedMolecule(text: text)]
-        case "smi", "smiles", "ism", "can":
+        case "smi", "smiles", "ism", "can", "cxsmiles":
             return try CDKSMILESReader.read(text: text)
         case "rsmi":
             return try molecules(from: parseReactionSmilesRecords(text))
@@ -175,7 +175,7 @@ public enum CDKFileImporter {
             return try CDKRXNReader.readReaction(text: text)
         case "rdf":
             return try CDKRDFReader.readReaction(text: text)
-        case "smi", "smiles", "ism", "can":
+        case "smi", "smiles", "ism", "can", "cxsmiles":
             return try firstReaction(from: parseReactionSmilesRecords(text))
         case "rsmi":
             return try firstReaction(from: parseReactionSmilesRecords(text))

@@ -11,6 +11,7 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertTrue(supported.contains("sdf"))
         XCTAssertTrue(supported.contains("smi"))
         XCTAssertTrue(supported.contains("ism"))
+        XCTAssertTrue(supported.contains("cxsmiles"))
         XCTAssertTrue(supported.contains("inchi"))
         XCTAssertTrue(supported.contains("rinchi"))
         XCTAssertTrue(supported.contains("mol2"))
@@ -130,6 +131,19 @@ final class ChemFileExporterTests: XCTestCase {
         let parsed = try CDKSMILESReader.read(text: text)
         XCTAssertEqual(parsed.count, 1)
         XCTAssertEqual(parsed[0].atomCount, molecule.atomCount)
+    }
+
+    func testWritesCxSmilesAndRoundTrips() throws {
+        let molecule = try smilesParser.parseSmiles("CC* |$;;R1$|")
+
+        let text = try CDKFileExporter.write(molecule: molecule, as: .cxsmiles)
+        let parsed = try CDKFileImporter.readMolecules(text: text, fileExtension: "cxsmiles")
+
+        XCTAssertTrue(text.contains("|"))
+        XCTAssertTrue(text.contains("R1"))
+        XCTAssertEqual(parsed.count, 1)
+        XCTAssertEqual(parsed[0].atomCount, molecule.atomCount)
+        XCTAssertEqual(parsed[0].cxState?.atomLabels[2], "R1")
     }
 
     func testWritesInChIAndRoundTrips() throws {

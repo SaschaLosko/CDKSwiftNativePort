@@ -10,6 +10,7 @@ public enum CDKFileExportFormat: String, CaseIterable, Identifiable, Sendable {
     case sdf
     case smiles
     case isomericSmiles
+    case cxsmiles
     case inchi
     case rinchi
     case mol2
@@ -49,6 +50,7 @@ public struct CDKFileExporterFormat: Hashable, Identifiable, Sendable {
 public struct CDKFileExportOptions {
     public var smilesFlavor: CDKSmiFlavor
     public var isomericSmilesFlavor: CDKSmiFlavor
+    public var cxSmilesFlavor: CDKSmiFlavor
     public var sdfOptions: CDKSDFWriterOptions
     public var rxnOptions: CDKRXNWriter.Options
     public var rdfOptions: CDKRDFWriter.Options
@@ -58,6 +60,7 @@ public struct CDKFileExportOptions {
 
     public init(smilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .strict],
                 isomericSmilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .isomeric, .strict],
+                cxSmilesFlavor: CDKSmiFlavor = [.useAromaticSymbols, .isomeric, .strict, .cxsmiles, .cxAll],
                 sdfOptions: CDKSDFWriterOptions = CDKSDFWriterOptions(),
                 rxnOptions: CDKRXNWriter.Options = CDKRXNWriter.Options(),
                 rdfOptions: CDKRDFWriter.Options = CDKRDFWriter.Options(),
@@ -66,6 +69,7 @@ public struct CDKFileExportOptions {
                 svgIncludeBackground: Bool = true) {
         self.smilesFlavor = smilesFlavor
         self.isomericSmilesFlavor = isomericSmilesFlavor
+        self.cxSmilesFlavor = cxSmilesFlavor
         self.sdfOptions = sdfOptions
         self.rxnOptions = rxnOptions
         self.rdfOptions = rdfOptions
@@ -105,6 +109,10 @@ public enum CDKFileExporter {
                               displayName: "SMILES (Isomeric)",
                               fileExtensions: ["ism"],
                               utiIdentifiers: ["chemical/x-daylight-smiles", "chemical/x-smiles"]),
+        CDKFileExporterFormat(format: .cxsmiles,
+                              displayName: "CXSMILES",
+                              fileExtensions: ["cxsmiles"],
+                              utiIdentifiers: []),
         CDKFileExporterFormat(format: .inchi,
                               displayName: "InChI",
                               fileExtensions: ["inchi", "ich"],
@@ -200,6 +208,8 @@ public enum CDKFileExporter {
             return try CDKSMILESWriter.write(molecules, flavor: options.smilesFlavor)
         case .isomericSmiles:
             return try CDKSMILESWriter.write(molecules, flavor: options.isomericSmilesFlavor)
+        case .cxsmiles:
+            return try CDKSMILESWriter.write(molecules, flavor: options.cxSmilesFlavor)
         case .inchi:
             return try CDKInChIWriter.write(molecules)
         case .rinchi:
@@ -280,8 +290,19 @@ public enum CDKFileExporter {
             return try CDKRXNWriter.write(reactions: reactions, options: options.rxnOptions)
         case .rdf:
             return try CDKRDFWriter.write(reactions: reactions, options: options.rdfOptions)
-        case .smiles, .isomericSmiles:
-            let generator = CDKSmilesGenerator(flavor: format == .smiles ? options.smilesFlavor : options.isomericSmilesFlavor)
+        case .smiles, .isomericSmiles, .cxsmiles:
+            let flavor: CDKSmiFlavor =
+                switch format {
+                case .smiles:
+                    options.smilesFlavor
+                case .isomericSmiles:
+                    options.isomericSmilesFlavor
+                case .cxsmiles:
+                    options.cxSmilesFlavor
+                default:
+                    options.smilesFlavor
+                }
+            let generator = CDKSmilesGenerator(flavor: flavor)
             return reactions.map(generator.create).joined(separator: "\n") + "\n"
         case .rinchi:
             return try CDKRInChIWriter.write(reactions)
