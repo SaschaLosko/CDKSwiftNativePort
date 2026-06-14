@@ -139,14 +139,18 @@ public enum CDKMetal3DSceneBuilder {
         molecule: Molecule,
         rendererModel: CDKRenderer3DModel = CDKRenderer3DModel()
     ) -> CDKMetal3DScene {
+        let hasExplicit3DCoordinates = CDKModelBuilder3D.hasMeaningful3DCoordinates(molecule)
+        let sceneMolecule = hasExplicit3DCoordinates
+            ? molecule
+            : CDKModelBuilder3D.generate3DCoordinates(molecule: molecule)
         let style = RenderStyle(
             atomColoringMode: rendererModel.atomColoringMode,
             colorBondsByAtom: rendererModel.colorBondsByAtom)
-        let atomPoints = Dictionary(uniqueKeysWithValues: molecule.atoms.map { atom in
+        let atomPoints = Dictionary(uniqueKeysWithValues: sceneMolecule.atoms.map { atom in
             (atom.id, point3D(for: atom))
         })
 
-        let atoms = molecule.atoms.map { atom in
+        let atoms = sceneMolecule.atoms.map { atom in
             CDKMetal3DScene.AtomSphere(
                 id: atom.id,
                 element: atom.element,
@@ -155,7 +159,7 @@ public enum CDKMetal3DSceneBuilder {
                 color: CDKRenderingStyleResolver.atomColor(for: atom, style: style))
         }
 
-        let bonds = molecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
+        let bonds = sceneMolecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
             guard let from = atomPoints[bond.a1],
                   let to = atomPoints[bond.a2] else {
                 return nil
@@ -168,14 +172,14 @@ public enum CDKMetal3DSceneBuilder {
                 to: to,
                 radius: max(0.025, rendererModel.bondRadius),
                 order: bond.order,
-                color: CDKRenderingStyleResolver.bondColor(for: bond, molecule: molecule, style: style))
+                color: CDKRenderingStyleResolver.bondColor(for: bond, molecule: sceneMolecule, style: style))
         }
 
         return CDKMetal3DScene(
             atoms: atoms,
             bonds: bonds,
             boundingBox: boundingBox(points: Array(atomPoints.values)),
-            hasExplicit3DCoordinates: molecule.atoms.contains { $0.zPosition != nil })
+            hasExplicit3DCoordinates: hasExplicit3DCoordinates)
     }
 
     private static func point3D(for atom: Atom) -> CDKPoint3D {
