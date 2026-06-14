@@ -61,6 +61,11 @@ public struct CDKBitFingerprint: Hashable, Codable, Sendable {
     public func contains(_ bit: Int) -> Bool {
         bits.contains(bit)
     }
+
+    public func isSuperset(of other: CDKBitFingerprint) -> Bool {
+        precondition(size == other.size, "Fingerprint sizes must match.")
+        return bits.isSuperset(of: other.bits)
+    }
 }
 
 public struct CDKCountFingerprint: Hashable, Codable, Sendable {
