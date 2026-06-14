@@ -6,6 +6,13 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.12] - 2026-06-14
+
+### Added
+
+- Added a CDK-style 3D renderer model and Metal-ready 3D scene extraction for
+  molecule atom spheres and bond cylinders.
+
 ## [1.4.7] - 2026-06-09
 
 ### Fixed
