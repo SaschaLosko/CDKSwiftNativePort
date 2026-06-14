@@ -78,6 +78,37 @@ final class SmilesGeneratorPortTests: XCTestCase {
         XCTAssertEqual(reparsed.bonds(forAtom: carbon.id).filter { $0.order == .single }.count, 2)
     }
 
+    func testGeneratesLongLinearMoleculeWithoutRecursiveStackGrowth() throws {
+        let atomCount = 5_000
+        let molecule = makeLinearCarbonChain(atomCount: atomCount)
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])
+
+        let smiles = generator.create(molecule)
+
+        XCTAssertEqual(smiles.count, atomCount)
+        XCTAssertTrue(smiles.allSatisfy { $0 == "C" })
+    }
+
+    func testGeneratesLongLinearMoleculesConcurrently() async throws {
+        let molecule = makeLinearCarbonChain(atomCount: 2_000)
+
+        try await withThrowingTaskGroup(of: String.self) { group in
+            for _ in 0..<16 {
+                group.addTask {
+                    let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(
+                        flavor: [.useAromaticSymbols, .strict]
+                    )
+                    return generator.create(molecule)
+                }
+            }
+
+            for try await smiles in group {
+                XCTAssertEqual(smiles.count, molecule.atomCount)
+                XCTAssertTrue(smiles.allSatisfy { $0 == "C" })
+            }
+        }
+    }
+
     func testNonIsomericSmilesOmitsChiralityMarker() throws {
         let molecule = try parser.parseSmiles("C[C@H](N)O")
         let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])
@@ -293,5 +324,23 @@ final class SmilesGeneratorPortTests: XCTestCase {
         )
 
         XCTAssertTrue(generator.create(molecule).hasSuffix(" |a:1,&1:3|"))
+    }
+
+    private func makeLinearCarbonChain(atomCount: Int) -> Molecule {
+        var molecule = Molecule(name: "Linear C\(atomCount)")
+        molecule.atoms = (0..<atomCount).map { index in
+            Atom(
+                id: index + 1,
+                element: "C",
+                position: CGPoint(x: Double(index), y: 0))
+        }
+        molecule.bonds = (1..<atomCount).map { index in
+            Bond(
+                id: index,
+                a1: index,
+                a2: index + 1,
+                order: .single)
+        }
+        return molecule
     }
 }

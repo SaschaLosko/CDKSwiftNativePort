@@ -4,6 +4,11 @@ import Foundation
 public final class CDKSmilesGenerator {
     public let flavor: CDKSmiFlavor
 
+    private enum RenderEvent {
+        case atom(id: Int, parent: Int?)
+        case text(String)
+    }
+
     public init(flavor: CDKSmiFlavor = .cdkDefault) {
         self.flavor = flavor
     }
@@ -419,6 +424,12 @@ public final class CDKSmilesGenerator {
         let partner: Int
     }
 
+    private struct TreeBuildFrame {
+        let atomID: Int
+        let neighbors: [Int]
+        var nextIndex: Int
+    }
+
     private func buildAdjacency(_ molecule: Molecule) -> [Int: [Int]] {
         var map: [Int: Set<Int>] = [:]
         for atom in molecule.atoms {
@@ -477,21 +488,42 @@ public final class CDKSmilesGenerator {
         var treeEdges: Set<EdgeKey> = []
         var visited: Set<Int> = []
 
-        func dfs(_ atomID: Int) {
-            visited.insert(atomID)
-            let neighbors = adjacency[atomID, default: []]
+        func componentNeighbors(of atomID: Int) -> [Int] {
+            adjacency[atomID, default: []]
                 .filter { component.contains($0) }
                 .sorted()
-
-            for neighbor in neighbors where !visited.contains(neighbor) {
-                treeAdjacency[atomID, default: []].append(neighbor)
-                treeAdjacency[neighbor, default: []].append(atomID)
-                treeEdges.insert(EdgeKey(atomID, neighbor))
-                dfs(neighbor)
-            }
         }
 
-        dfs(root)
+        visited.insert(root)
+        var stack: [TreeBuildFrame] = [
+            TreeBuildFrame(atomID: root, neighbors: componentNeighbors(of: root), nextIndex: 0)
+        ]
+
+        while var frame = stack.popLast() {
+            guard frame.nextIndex < frame.neighbors.count else {
+                continue
+            }
+
+            let neighbor = frame.neighbors[frame.nextIndex]
+            frame.nextIndex += 1
+            if frame.nextIndex < frame.neighbors.count {
+                stack.append(frame)
+            }
+
+            guard !visited.contains(neighbor) else {
+                continue
+            }
+
+            visited.insert(neighbor)
+            treeAdjacency[frame.atomID, default: []].append(neighbor)
+            treeAdjacency[neighbor, default: []].append(frame.atomID)
+            treeEdges.insert(EdgeKey(frame.atomID, neighbor))
+            stack.append(
+                TreeBuildFrame(
+                    atomID: neighbor,
+                    neighbors: componentNeighbors(of: neighbor),
+                    nextIndex: 0))
+        }
 
         for atomID in component {
             treeAdjacency[atomID, default: []].sort()
@@ -522,56 +554,56 @@ public final class CDKSmilesGenerator {
                                 aromaticBondIDs: Set<Int>,
                                 atomOutputOrder: inout [Int],
                                 visited: inout Set<Int>) -> String {
-        visited.insert(atomID)
-        atomOutputOrder.append(atomID)
+        var out = ""
+        var stack: [RenderEvent] = [.atom(id: atomID, parent: parent)]
 
-        guard let atom = atomByID[atomID] else { return "" }
+        while let event = stack.popLast() {
+            switch event {
+            case .text(let text):
+                out += text
 
-        var out = atomToken(atom)
+            case .atom(let atomID, let parent):
+                visited.insert(atomID)
+                atomOutputOrder.append(atomID)
 
-        for closure in ringClosuresByAtom[atomID] ?? [] {
-            out += closure.bondSymbol + ringToken(closure.number)
+                guard let atom = atomByID[atomID] else { continue }
+
+                out += atomToken(atom)
+
+                for closure in ringClosuresByAtom[atomID] ?? [] {
+                    out += closure.bondSymbol + ringToken(closure.number)
+                }
+
+                let children = treeAdjacency[atomID, default: []]
+                    .filter { $0 != parent }
+                    .sorted()
+
+                guard let mainChild = children.last else {
+                    continue
+                }
+
+                var pending: [RenderEvent] = []
+                for childID in children.dropLast() {
+                    let edge = EdgeKey(atomID, childID)
+                    guard let bond = bondByEdge[edge] else { continue }
+
+                    pending.append(.text("("))
+                    pending.append(.text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
+                    pending.append(.atom(id: childID, parent: atomID))
+                    pending.append(.text(")"))
+                }
+
+                let edge = EdgeKey(atomID, mainChild)
+                if let bond = bondByEdge[edge] {
+                    pending.append(.text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
+                    pending.append(.atom(id: mainChild, parent: atomID))
+                }
+
+                stack.append(contentsOf: pending.reversed())
+            }
         }
 
-        let children = treeAdjacency[atomID, default: []]
-            .filter { $0 != parent }
-            .sorted()
-
-        guard let mainChild = children.last else {
-            return out
-        }
-
-        for childID in children.dropLast() {
-            let edge = EdgeKey(atomID, childID)
-            guard let bond = bondByEdge[edge] else { continue }
-
-            let branchBond = bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)
-            let branchText = branchBond + renderTreeAtom(childID,
-                                                         parent: atomID,
-                                                         treeAdjacency: treeAdjacency,
-                                                         ringClosuresByAtom: ringClosuresByAtom,
-                                                         bondByEdge: bondByEdge,
-                                                         atomByID: atomByID,
-                                                         aromaticBondIDs: aromaticBondIDs,
-                                                         atomOutputOrder: &atomOutputOrder,
-                                                         visited: &visited)
-
-            out += "(\(branchText))"
-        }
-
-        let edge = EdgeKey(atomID, mainChild)
-        guard let bond = bondByEdge[edge] else { return out }
-
-        let mainBond = bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)
-        return out + mainBond + renderTreeAtom(mainChild,
-                                               parent: atomID,
-                                               treeAdjacency: treeAdjacency,
-                                               ringClosuresByAtom: ringClosuresByAtom,
-                                               bondByEdge: bondByEdge,
-                                               atomByID: atomByID,
-                                               aromaticBondIDs: aromaticBondIDs,
-                                               atomOutputOrder: &atomOutputOrder,
-                                               visited: &visited)
+        return out
     }
 
     private func ringToken(_ number: Int) -> String {
