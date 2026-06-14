@@ -33,7 +33,7 @@ public enum CDKPDBWriter {
                 let symbol = paddedElement(atom.element)
                 let x = Double(atom.position.x)
                 let y = Double(atom.position.y)
-                let z = 0.0
+                let z = atom.zPosition ?? 0.0
                 let line = String(format: "ATOM  %5d %-4@ MOL A%4d    %8.3f%8.3f%8.3f  1.00  0.00          %-2@",
                                   serial,
                                   atomName as NSString,

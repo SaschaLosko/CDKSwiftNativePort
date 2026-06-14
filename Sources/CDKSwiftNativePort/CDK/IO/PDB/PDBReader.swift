@@ -58,7 +58,8 @@ public enum CDKPDBReader {
             if recordName == "ATOM" || recordName == "HETATM" {
                 guard let serial = Int(field(in: line, start: 6, length: 5).trimmingCharacters(in: .whitespacesAndNewlines)),
                       let x = Double(field(in: line, start: 30, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)),
-                      let y = Double(field(in: line, start: 38, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)) else {
+                      let y = Double(field(in: line, start: 38, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)),
+                      let z = Double(field(in: line, start: 46, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)) else {
                     continue
                 }
 
@@ -68,7 +69,8 @@ public enum CDKPDBReader {
 
                 let atom = Atom(id: nextAtomID,
                                 element: symbol,
-                                position: CGPoint(x: x, y: y))
+                                position: CGPoint(x: x, y: y),
+                                zPosition: z)
                 atomRecords.append((serial: serial, atom: atom))
                 serialToAtomID[serial] = nextAtomID
                 nextAtomID += 1
