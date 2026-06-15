@@ -65,6 +65,8 @@ Use this to generate or normalize 2D coordinates before depiction or export.
 - `CDKAromaticDisplayMode`
 - `CDKRenderColor`
 - `CDKRenderingStyleResolver`
+- `CDKRenderer3DModel`
+- `CDK3DAtomColorPalette`
 
 Important `RenderStyle` controls include:
 
@@ -97,12 +99,22 @@ The SVG path includes:
 These scene builders do not require `MetalKit`. They return geometry and label
 data for host-owned rendering pipelines.
 
+3D host renderers can use `CDKMetal3DSceneBuilder.build(molecule:rendererModel:)`
+to obtain atom-sphere and bond-cylinder scene data. `CDKRenderer3DModel` exposes
+ball-and-stick radii, atom coloring, bond coloring, and `CDK3DAtomColorPalette`.
+The built-in 3D atom palettes include Jmol, CPK, Okabe-Ito, Viridis, Cividis,
+Magma, Inferno, Plasma, ColorBrewer Set2/Dark2, CARTO Safe/Vivid, and
+Matplotlib Tab10/Tab20.
+
 ### 2.5 Scene data types
 
 - `CDKMetalDepictionScene`
   - `BackgroundBox`
   - `LineSegment`
   - `AtomLabel`
+- `CDKMetal3DScene`
+  - `AtomSphere`
+  - `BondCylinder`
 - `CDKReactionParticipantSelection`
 
 ### 2.6 Historical compatibility symbol

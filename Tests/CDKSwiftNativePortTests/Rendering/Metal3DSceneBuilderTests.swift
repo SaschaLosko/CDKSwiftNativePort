@@ -189,6 +189,57 @@ final class Metal3DSceneBuilderTests: XCTestCase {
         XCTAssertNotEqual(jmolBond.color, cpkBond.color)
     }
 
+    func testRendererModelUsesAdditional3DAtomColorPalettes() throws {
+        let molecule = Molecule(
+            name: "Carbon monoxide",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0), zPosition: 0.0),
+                Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+            ])
+
+        XCTAssertEqual(CDK3DAtomColorPalette.allCases.count, 14)
+        XCTAssertEqual(CDK3DAtomColorPalette.okabeIto.displayName, "Okabe-Ito")
+        XCTAssertEqual(CDK3DAtomColorPalette.colorBrewerSet2.displayName, "ColorBrewer Set2")
+
+        for palette in CDK3DAtomColorPalette.allCases {
+            let scene = CDKMetal3DSceneBuilder.build(
+                molecule: molecule,
+                rendererModel: CDKRenderer3DModel(
+                    atomColoringMode: .cdk2D,
+                    atomColorPalette: palette,
+                    colorBondsByAtom: true))
+            XCTAssertEqual(scene.atoms.count, 2)
+            XCTAssertEqual(scene.bonds.count, 1)
+            XCTAssertFalse(palette.displayName.isEmpty)
+        }
+
+        assertCarbonColor(for: molecule, palette: .okabeIto, hex: 0xD55E00)
+        assertCarbonColor(for: molecule, palette: .viridis, hex: 0x1F9E89)
+        assertCarbonColor(for: molecule, palette: .cividis, hex: 0x8A8678)
+        assertCarbonColor(for: molecule, palette: .cartoVivid, hex: 0x24796C)
+        assertCarbonColor(for: molecule, palette: .matplotlibTab20, hex: 0x98DF8A)
+    }
+
+    private func assertCarbonColor(
+        for molecule: Molecule,
+        palette: CDK3DAtomColorPalette,
+        hex: UInt32,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let scene = CDKMetal3DSceneBuilder.build(
+            molecule: molecule,
+            rendererModel: CDKRenderer3DModel(atomColoringMode: .cdk2D, atomColorPalette: palette))
+        guard let carbon = scene.atoms.first(where: { $0.element == "C" }) else {
+            XCTFail("Missing carbon atom", file: file, line: line)
+            return
+        }
+        assertColor(carbon.color, hex: hex, file: file, line: line)
+    }
+
     private func assertColor(
         _ color: CDKRenderColor,
         hex: UInt32,

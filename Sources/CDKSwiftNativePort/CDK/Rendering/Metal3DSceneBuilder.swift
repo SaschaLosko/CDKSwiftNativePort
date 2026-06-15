@@ -46,6 +46,51 @@ public struct CDK3DBoundingBox: Hashable, Sendable {
 public enum CDK3DAtomColorPalette: String, CaseIterable, Hashable, Sendable {
     case jmol
     case cpk
+    case okabeIto
+    case viridis
+    case cividis
+    case magma
+    case inferno
+    case plasma
+    case colorBrewerSet2
+    case colorBrewerDark2
+    case cartoSafe
+    case cartoVivid
+    case matplotlibTab10
+    case matplotlibTab20
+
+    public var displayName: String {
+        switch self {
+        case .jmol:
+            "Jmol"
+        case .cpk:
+            "CPK"
+        case .okabeIto:
+            "Okabe-Ito"
+        case .viridis:
+            "Viridis"
+        case .cividis:
+            "Cividis"
+        case .magma:
+            "Magma"
+        case .inferno:
+            "Inferno"
+        case .plasma:
+            "Plasma"
+        case .colorBrewerSet2:
+            "ColorBrewer Set2"
+        case .colorBrewerDark2:
+            "ColorBrewer Dark2"
+        case .cartoSafe:
+            "CARTO Safe"
+        case .cartoVivid:
+            "CARTO Vivid"
+        case .matplotlibTab10:
+            "Matplotlib Tab10"
+        case .matplotlibTab20:
+            "Matplotlib Tab20"
+        }
+    }
 }
 
 public struct CDKRenderer3DModel: Hashable, Sendable {
@@ -277,7 +322,39 @@ public enum CDKMetal3DSceneBuilder {
             return color(hex: jmolPalette[symbol] ?? 0xB31FBA)
         case .cpk:
             return color(hex: cpkPalette[symbol] ?? 0xFF1493)
+        case .okabeIto:
+            return categoricalPaletteColor(for: symbol, palette: okabeItoPalette, fallback: 0x000000)
+        case .viridis:
+            return categoricalPaletteColor(for: symbol, palette: viridisPalette, fallback: 0x440154)
+        case .cividis:
+            return categoricalPaletteColor(for: symbol, palette: cividisPalette, fallback: 0x00224E)
+        case .magma:
+            return categoricalPaletteColor(for: symbol, palette: magmaPalette, fallback: 0x000004)
+        case .inferno:
+            return categoricalPaletteColor(for: symbol, palette: infernoPalette, fallback: 0x000004)
+        case .plasma:
+            return categoricalPaletteColor(for: symbol, palette: plasmaPalette, fallback: 0x0D0887)
+        case .colorBrewerSet2:
+            return categoricalPaletteColor(for: symbol, palette: colorBrewerSet2Palette, fallback: 0xB3B3B3)
+        case .colorBrewerDark2:
+            return categoricalPaletteColor(for: symbol, palette: colorBrewerDark2Palette, fallback: 0x666666)
+        case .cartoSafe:
+            return categoricalPaletteColor(for: symbol, palette: cartoSafePalette, fallback: 0x888888)
+        case .cartoVivid:
+            return categoricalPaletteColor(for: symbol, palette: cartoVividPalette, fallback: 0xA5AA99)
+        case .matplotlibTab10:
+            return categoricalPaletteColor(for: symbol, palette: matplotlibTab10Palette, fallback: 0x7F7F7F)
+        case .matplotlibTab20:
+            return categoricalPaletteColor(for: symbol, palette: matplotlibTab20Palette, fallback: 0x7F7F7F)
         }
+    }
+
+    private static func categoricalPaletteColor(for symbol: String, palette: [UInt32], fallback: UInt32) -> CDKRenderColor {
+        guard !palette.isEmpty,
+              let elementIndex = elementOrder.firstIndex(of: symbol) else {
+            return color(hex: fallback)
+        }
+        return color(hex: palette[elementIndex % palette.count])
     }
 
     private static func color(hex: UInt32) -> CDKRenderColor {
@@ -428,5 +505,82 @@ public enum CDKMetal3DSceneBuilder {
         "BH": 0xE00038,
         "HS": 0xE6002E,
         "MT": 0xEB0026,
+    ]
+
+    private static let elementOrder = [
+        "H", "HE", "LI", "BE", "B", "C", "N", "O", "F", "NE",
+        "NA", "MG", "AL", "SI", "P", "S", "CL", "AR", "K", "CA",
+        "SC", "TI", "V", "CR", "MN", "FE", "CO", "NI", "CU", "ZN",
+        "GA", "GE", "AS", "SE", "BR", "KR", "RB", "SR", "Y", "ZR",
+        "NB", "MO", "TC", "RU", "RH", "PD", "AG", "CD", "IN", "SN",
+        "SB", "TE", "I", "XE", "CS", "BA", "LA", "CE", "PR", "ND",
+        "PM", "SM", "EU", "GD", "TB", "DY", "HO", "ER", "TM", "YB",
+        "LU", "HF", "TA", "W", "RE", "OS", "IR", "PT", "AU", "HG",
+        "TL", "PB", "BI", "PO", "AT", "RN", "FR", "RA", "AC", "TH",
+        "PA", "U", "NP", "PU", "AM", "CM", "BK", "CF", "ES", "FM",
+        "MD", "NO", "LR", "RF", "DB", "SG", "BH", "HS", "MT", "DS",
+        "RG", "CN", "NH", "FL", "MC", "LV", "TS", "OG",
+    ]
+
+    private static let okabeItoPalette: [UInt32] = [
+        0xE69F00, 0x56B4E9, 0x009E73, 0xF0E442,
+        0x0072B2, 0xD55E00, 0xCC79A7, 0x000000,
+    ]
+
+    private static let viridisPalette: [UInt32] = [
+        0x440154, 0x482878, 0x3E4A89, 0x31688E, 0x26828E,
+        0x1F9E89, 0x35B779, 0x6CCD5A, 0xB5DE2B, 0xFDE725,
+    ]
+
+    private static let cividisPalette: [UInt32] = [
+        0x00224E, 0x123570, 0x3C4A6C, 0x575D6D, 0x707173,
+        0x8A8678, 0xA59C74, 0xC2B369, 0xE1CC55, 0xFEE838,
+    ]
+
+    private static let magmaPalette: [UInt32] = [
+        0x000004, 0x180F3D, 0x451077, 0x721F81, 0x9E2F7F,
+        0xCD4071, 0xF1605D, 0xFD9467, 0xFECA8D, 0xFCFDBF,
+    ]
+
+    private static let infernoPalette: [UInt32] = [
+        0x000004, 0x1B0C41, 0x4C0C6B, 0x781C6D, 0xA52C60,
+        0xCF4446, 0xED6925, 0xFB9906, 0xF7D13D, 0xFCFFA4,
+    ]
+
+    private static let plasmaPalette: [UInt32] = [
+        0x0D0887, 0x46039F, 0x7401A8, 0x9C179E, 0xBD3786,
+        0xD8576B, 0xED7953, 0xFA9E3B, 0xFDCA26, 0xF0F921,
+    ]
+
+    private static let colorBrewerSet2Palette: [UInt32] = [
+        0x66C2A5, 0xFC8D62, 0x8DA0CB, 0xE78AC3,
+        0xA6D854, 0xFFD92F, 0xE5C494, 0xB3B3B3,
+    ]
+
+    private static let colorBrewerDark2Palette: [UInt32] = [
+        0x1B9E77, 0xD95F02, 0x7570B3, 0xE7298A,
+        0x66A61E, 0xE6AB02, 0xA6761D, 0x666666,
+    ]
+
+    private static let cartoSafePalette: [UInt32] = [
+        0x88CCEE, 0xCC6677, 0xDDCC77, 0x117733, 0x332288,
+        0xAA4499, 0x44AA99, 0x999933, 0x882255, 0x661100,
+    ]
+
+    private static let cartoVividPalette: [UInt32] = [
+        0xE58606, 0x5D69B1, 0x52BCA3, 0x99C945, 0xCC61B0,
+        0x24796C, 0xDAA51B, 0x2F8AC4, 0x764E9F, 0xED645A,
+    ]
+
+    private static let matplotlibTab10Palette: [UInt32] = [
+        0x1F77B4, 0xFF7F0E, 0x2CA02C, 0xD62728, 0x9467BD,
+        0x8C564B, 0xE377C2, 0x7F7F7F, 0xBCBD22, 0x17BECF,
+    ]
+
+    private static let matplotlibTab20Palette: [UInt32] = [
+        0x1F77B4, 0xAEC7E8, 0xFF7F0E, 0xFFBB78, 0x2CA02C,
+        0x98DF8A, 0xD62728, 0xFF9896, 0x9467BD, 0xC5B0D5,
+        0x8C564B, 0xC49C94, 0xE377C2, 0xF7B6D2, 0x7F7F7F,
+        0xC7C7C7, 0xBCBD22, 0xDBDB8D, 0x17BECF, 0x9EDAE5,
     ]
 }
