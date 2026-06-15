@@ -11,6 +11,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added additional 3D atom color palettes for host renderers: Okabe-Ito,
   Viridis, Cividis, Magma, Inferno, Plasma, ColorBrewer Set2/Dark2,
   CARTO Safe/Vivid, and Matplotlib Tab10/Tab20.
+- Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
+  uses van der Waals atom radii and omits bond cylinders.
 
 ## [1.4.12] - 2026-06-14
 

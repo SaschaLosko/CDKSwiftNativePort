@@ -93,6 +93,20 @@ public enum CDK3DAtomColorPalette: String, CaseIterable, Hashable, Sendable {
     }
 }
 
+public enum CDK3DRepresentationMode: String, CaseIterable, Hashable, Sendable {
+    case ballAndStick
+    case spaceFilling
+
+    public var displayName: String {
+        switch self {
+        case .ballAndStick:
+            "Ball and Stick"
+        case .spaceFilling:
+            "Space Filling"
+        }
+    }
+}
+
 public struct CDKRenderer3DModel: Hashable, Sendable {
     public var atomRadiusScale: Double
     public var bondRadius: Double
@@ -101,6 +115,7 @@ public struct CDKRenderer3DModel: Hashable, Sendable {
     public var atomColoringMode: CDKAtomColoringMode
     public var atomColorPalette: CDK3DAtomColorPalette
     public var colorBondsByAtom: Bool
+    public var representationMode: CDK3DRepresentationMode
 
     public init(
         atomRadiusScale: Double = 0.34,
@@ -109,7 +124,8 @@ public struct CDKRenderer3DModel: Hashable, Sendable {
         maximumAtomRadius: Double = 0.58,
         atomColoringMode: CDKAtomColoringMode = .cdk2D,
         atomColorPalette: CDK3DAtomColorPalette = .jmol,
-        colorBondsByAtom: Bool = true
+        colorBondsByAtom: Bool = true,
+        representationMode: CDK3DRepresentationMode = .ballAndStick
     ) {
         self.atomRadiusScale = atomRadiusScale
         self.bondRadius = bondRadius
@@ -118,6 +134,7 @@ public struct CDKRenderer3DModel: Hashable, Sendable {
         self.atomColoringMode = atomColoringMode
         self.atomColorPalette = atomColorPalette
         self.colorBondsByAtom = colorBondsByAtom
+        self.representationMode = representationMode
     }
 }
 
@@ -212,20 +229,26 @@ public enum CDKMetal3DSceneBuilder {
                 color: atomColor(for: atom, rendererModel: rendererModel, style: style))
         }
 
-        let bonds = sceneMolecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
-            guard let from = atomPoints[bond.a1],
-                  let to = atomPoints[bond.a2] else {
-                return nil
+        let bonds: [CDKMetal3DScene.BondCylinder]
+        switch rendererModel.representationMode {
+        case .ballAndStick:
+            bonds = sceneMolecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
+                guard let from = atomPoints[bond.a1],
+                      let to = atomPoints[bond.a2] else {
+                    return nil
+                }
+                return CDKMetal3DScene.BondCylinder(
+                    id: bond.id,
+                    fromAtomID: bond.a1,
+                    toAtomID: bond.a2,
+                    from: from,
+                    to: to,
+                    radius: max(0.025, rendererModel.bondRadius),
+                    order: bond.order,
+                    color: bondColor(for: bond, molecule: sceneMolecule, rendererModel: rendererModel, style: style))
             }
-            return CDKMetal3DScene.BondCylinder(
-                id: bond.id,
-                fromAtomID: bond.a1,
-                toAtomID: bond.a2,
-                from: from,
-                to: to,
-                radius: max(0.025, rendererModel.bondRadius),
-                order: bond.order,
-                color: bondColor(for: bond, molecule: sceneMolecule, rendererModel: rendererModel, style: style))
+        case .spaceFilling:
+            bonds = []
         }
 
         return CDKMetal3DScene(
@@ -244,6 +267,9 @@ public enum CDKMetal3DSceneBuilder {
 
     private static func radius(for atom: Atom, rendererModel: CDKRenderer3DModel) -> Double {
         let normalized = atom.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if rendererModel.representationMode == .spaceFilling {
+            return vanDerWaalsRadii[normalized] ?? 1.70
+        }
         let covalentRadius: Double =
             switch normalized {
             case "H": 0.31
@@ -582,5 +608,87 @@ public enum CDKMetal3DSceneBuilder {
         0x98DF8A, 0xD62728, 0xFF9896, 0x9467BD, 0xC5B0D5,
         0x8C564B, 0xC49C94, 0xE377C2, 0xF7B6D2, 0x7F7F7F,
         0xC7C7C7, 0xBCBD22, 0xDBDB8D, 0x17BECF, 0x9EDAE5,
+    ]
+
+    private static let vanDerWaalsRadii: [String: Double] = [
+        "H": 1.20,
+        "HE": 1.40,
+        "LI": 2.20,
+        "BE": 1.90,
+        "B": 1.80,
+        "C": 1.70,
+        "N": 1.60,
+        "O": 1.55,
+        "F": 1.50,
+        "NE": 1.54,
+        "NA": 2.40,
+        "MG": 2.20,
+        "AL": 2.10,
+        "SI": 2.10,
+        "P": 1.95,
+        "S": 1.80,
+        "CL": 1.80,
+        "AR": 1.88,
+        "K": 2.80,
+        "CA": 2.40,
+        "SC": 2.30,
+        "TI": 2.15,
+        "V": 2.05,
+        "CR": 2.05,
+        "MN": 2.05,
+        "FE": 2.05,
+        "ZN": 2.10,
+        "GA": 2.10,
+        "GE": 2.10,
+        "AS": 2.05,
+        "SE": 1.90,
+        "BR": 1.90,
+        "KR": 2.02,
+        "RB": 2.90,
+        "SR": 2.55,
+        "Y": 2.40,
+        "ZR": 2.30,
+        "NB": 2.15,
+        "MO": 2.10,
+        "TC": 2.05,
+        "RU": 2.05,
+        "PD": 2.05,
+        "AG": 2.10,
+        "CD": 2.20,
+        "IN": 2.20,
+        "SN": 2.25,
+        "SB": 2.20,
+        "TE": 2.10,
+        "I": 2.10,
+        "XE": 2.16,
+        "CS": 3.00,
+        "BA": 2.70,
+        "LA": 2.50,
+        "CE": 2.48,
+        "PR": 2.47,
+        "ND": 2.45,
+        "PM": 2.43,
+        "SM": 2.42,
+        "EU": 2.40,
+        "GD": 2.38,
+        "TB": 2.37,
+        "DY": 2.35,
+        "HO": 2.33,
+        "ER": 2.32,
+        "TM": 2.30,
+        "YB": 2.28,
+        "LU": 2.27,
+        "HF": 2.25,
+        "TA": 2.20,
+        "W": 2.10,
+        "RE": 2.05,
+        "PT": 2.05,
+        "AU": 2.10,
+        "HG": 2.05,
+        "TL": 2.20,
+        "PB": 2.30,
+        "BI": 2.30,
+        "TH": 2.40,
+        "U": 2.30,
     ]
 }

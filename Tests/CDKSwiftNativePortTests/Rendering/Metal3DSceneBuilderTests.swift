@@ -149,6 +149,42 @@ final class Metal3DSceneBuilderTests: XCTestCase {
         XCTAssertLessThan(scene.atoms[1].color.green, 0.30)
     }
 
+    func testRendererModelCanBuildSpaceFillingScene() throws {
+        let molecule = Molecule(
+            name: "Carbon monoxide",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0), zPosition: 0.0),
+                Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+            ])
+        let rendererModel = CDKRenderer3DModel(
+            atomRadiusScale: 0.01,
+            bondRadius: 0.20,
+            minimumAtomRadius: 0.01,
+            maximumAtomRadius: 0.02,
+            atomColoringMode: .cdk2D,
+            atomColorPalette: .cpk,
+            representationMode: .spaceFilling)
+
+        let scene = CDKMetal3DSceneBuilder.build(molecule: molecule, rendererModel: rendererModel)
+        let carbon = try XCTUnwrap(scene.atoms.first { $0.id == 1 })
+        let oxygen = try XCTUnwrap(scene.atoms.first { $0.id == 2 })
+
+        XCTAssertEqual(CDK3DRepresentationMode.allCases, [.ballAndStick, .spaceFilling])
+        XCTAssertEqual(CDK3DRepresentationMode.spaceFilling.displayName, "Space Filling")
+        XCTAssertEqual(scene.bonds.count, 0)
+        XCTAssertEqual(carbon.radius, 1.70, accuracy: 0.0001)
+        XCTAssertEqual(oxygen.radius, 1.55, accuracy: 0.0001)
+        assertColor(carbon.color, hex: 0xC8C8C8)
+        assertColor(oxygen.color, hex: 0xF00000)
+    }
+
+    func testDefaultRendererModelUsesBallAndStickRepresentation() {
+        XCTAssertEqual(CDKRenderer3DModel().representationMode, .ballAndStick)
+    }
+
     func testRendererModelUsesSelected3DAtomColorPalette() throws {
         let molecule = Molecule(
             name: "Chloromethane",

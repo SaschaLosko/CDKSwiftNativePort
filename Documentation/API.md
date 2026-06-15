@@ -101,9 +101,12 @@ data for host-owned rendering pipelines.
 
 3D host renderers can use `CDKMetal3DSceneBuilder.build(molecule:rendererModel:)`
 to obtain atom-sphere and bond-cylinder scene data. `CDKRenderer3DModel` exposes
-ball-and-stick radii, atom coloring, bond coloring, and `CDK3DAtomColorPalette`.
-The built-in 3D atom palettes include Jmol, CPK, Okabe-Ito, Viridis, Cividis,
-Magma, Inferno, Plasma, ColorBrewer Set2/Dark2, CARTO Safe/Vivid, and
+`CDK3DRepresentationMode`, ball-and-stick radii, atom coloring, bond coloring,
+and `CDK3DAtomColorPalette`. The default `.ballAndStick` representation emits
+covalent-radius atom spheres plus bond cylinders. The `.spaceFilling`
+representation emits atom spheres at van der Waals radii and omits bond
+cylinders. The built-in 3D atom palettes include Jmol, CPK, Okabe-Ito, Viridis,
+Cividis, Magma, Inferno, Plasma, ColorBrewer Set2/Dark2, CARTO Safe/Vivid, and
 Matplotlib Tab10/Tab20.
 
 ### 2.5 Scene data types
