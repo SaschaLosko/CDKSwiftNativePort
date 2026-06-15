@@ -43,12 +43,18 @@ public struct CDK3DBoundingBox: Hashable, Sendable {
     }
 }
 
+public enum CDK3DAtomColorPalette: String, CaseIterable, Hashable, Sendable {
+    case jmol
+    case cpk
+}
+
 public struct CDKRenderer3DModel: Hashable, Sendable {
     public var atomRadiusScale: Double
     public var bondRadius: Double
     public var minimumAtomRadius: Double
     public var maximumAtomRadius: Double
     public var atomColoringMode: CDKAtomColoringMode
+    public var atomColorPalette: CDK3DAtomColorPalette
     public var colorBondsByAtom: Bool
 
     public init(
@@ -57,6 +63,7 @@ public struct CDKRenderer3DModel: Hashable, Sendable {
         minimumAtomRadius: Double = 0.22,
         maximumAtomRadius: Double = 0.58,
         atomColoringMode: CDKAtomColoringMode = .cdk2D,
+        atomColorPalette: CDK3DAtomColorPalette = .jmol,
         colorBondsByAtom: Bool = true
     ) {
         self.atomRadiusScale = atomRadiusScale
@@ -64,6 +71,7 @@ public struct CDKRenderer3DModel: Hashable, Sendable {
         self.minimumAtomRadius = minimumAtomRadius
         self.maximumAtomRadius = maximumAtomRadius
         self.atomColoringMode = atomColoringMode
+        self.atomColorPalette = atomColorPalette
         self.colorBondsByAtom = colorBondsByAtom
     }
 }
@@ -156,7 +164,7 @@ public enum CDKMetal3DSceneBuilder {
                 element: atom.element,
                 center: atomPoints[atom.id] ?? point3D(for: atom),
                 radius: radius(for: atom, rendererModel: rendererModel),
-                color: CDKRenderingStyleResolver.atomColor(for: atom, style: style))
+                color: atomColor(for: atom, rendererModel: rendererModel, style: style))
         }
 
         let bonds = sceneMolecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
@@ -172,7 +180,7 @@ public enum CDKMetal3DSceneBuilder {
                 to: to,
                 radius: max(0.025, rendererModel.bondRadius),
                 order: bond.order,
-                color: CDKRenderingStyleResolver.bondColor(for: bond, molecule: sceneMolecule, style: style))
+                color: bondColor(for: bond, molecule: sceneMolecule, rendererModel: rendererModel, style: style))
         }
 
         return CDKMetal3DScene(
@@ -231,4 +239,194 @@ public enum CDKMetal3DSceneBuilder {
             min: CDKPoint3D(x: minX, y: minY, z: minZ),
             max: CDKPoint3D(x: maxX, y: maxY, z: maxZ))
     }
+
+    private static func atomColor(
+        for atom: Atom,
+        rendererModel: CDKRenderer3DModel,
+        style: RenderStyle
+    ) -> CDKRenderColor {
+        switch rendererModel.atomColoringMode {
+        case .monochrome, .atomMapHighlight:
+            return CDKRenderingStyleResolver.atomColor(for: atom, style: style)
+        case .cdk2D:
+            return paletteColor(for: atom.element, palette: rendererModel.atomColorPalette)
+        }
+    }
+
+    private static func bondColor(
+        for bond: Bond,
+        molecule: Molecule,
+        rendererModel: CDKRenderer3DModel,
+        style: RenderStyle
+    ) -> CDKRenderColor {
+        guard rendererModel.colorBondsByAtom,
+              rendererModel.atomColoringMode != .monochrome,
+              let a1 = molecule.atoms.first(where: { $0.id == bond.a1 }),
+              let a2 = molecule.atoms.first(where: { $0.id == bond.a2 }) else {
+            return bond.order == .aromatic ? .aromaticInk : .ink
+        }
+        let c1 = atomColor(for: a1, rendererModel: rendererModel, style: style)
+        let c2 = atomColor(for: a2, rendererModel: rendererModel, style: style)
+        return c1.mixed(with: c2, ratio: 0.5)
+    }
+
+    private static func paletteColor(for element: String, palette: CDK3DAtomColorPalette) -> CDKRenderColor {
+        let symbol = element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        switch palette {
+        case .jmol:
+            return color(hex: jmolPalette[symbol] ?? 0xB31FBA)
+        case .cpk:
+            return color(hex: cpkPalette[symbol] ?? 0xFF1493)
+        }
+    }
+
+    private static func color(hex: UInt32) -> CDKRenderColor {
+        CDKRenderColor(
+            red: CGFloat((hex >> 16) & 0xFF) / 255.0,
+            green: CGFloat((hex >> 8) & 0xFF) / 255.0,
+            blue: CGFloat(hex & 0xFF) / 255.0)
+    }
+
+    private static let cpkPalette: [String: UInt32] = [
+        "H": 0xFFFFFF,
+        "HE": 0xFFC0CB,
+        "LI": 0xB22222,
+        "B": 0x00FF00,
+        "C": 0xC8C8C8,
+        "N": 0x8F8FFF,
+        "O": 0xF00000,
+        "F": 0xDAA520,
+        "NA": 0x0000FF,
+        "MG": 0x228B22,
+        "AL": 0x808090,
+        "SI": 0xDAA520,
+        "P": 0xFFA500,
+        "S": 0xFFC832,
+        "CL": 0x00FF00,
+        "CA": 0x808090,
+        "TI": 0x808090,
+        "CR": 0x808090,
+        "MN": 0x808090,
+        "FE": 0xFFA500,
+        "NI": 0xA52A2A,
+        "CU": 0xA52A2A,
+        "ZN": 0xA52A2A,
+        "BR": 0xA52A2A,
+        "AG": 0x808090,
+        "I": 0xA020F0,
+        "BA": 0xFFA500,
+        "AU": 0xDAA520,
+    ]
+
+    private static let jmolPalette: [String: UInt32] = [
+        "H": 0xFFFFFF,
+        "HE": 0xD9FFFF,
+        "LI": 0xCC80FF,
+        "BE": 0xC2FF00,
+        "B": 0xFFB5B5,
+        "C": 0x909090,
+        "N": 0x3050F8,
+        "O": 0xFF0D0D,
+        "F": 0x90E050,
+        "NE": 0xB3E3F5,
+        "NA": 0xAB5CF2,
+        "MG": 0x8AFF00,
+        "AL": 0xBFA6A6,
+        "SI": 0xF0C8A0,
+        "P": 0xFF8000,
+        "S": 0xFFFF30,
+        "CL": 0x1FF01F,
+        "AR": 0x80D1E3,
+        "K": 0x8F40D4,
+        "CA": 0x3DFF00,
+        "SC": 0xE6E6E6,
+        "TI": 0xBFC2C7,
+        "V": 0xA6A6AB,
+        "CR": 0x8A99C7,
+        "MN": 0x9C7AC7,
+        "FE": 0xE06633,
+        "CO": 0xF090A0,
+        "NI": 0x50D050,
+        "CU": 0xC88033,
+        "ZN": 0x7D80B0,
+        "GA": 0xC28F8F,
+        "GE": 0x668F8F,
+        "AS": 0xBD80E3,
+        "SE": 0xFFA100,
+        "BR": 0xA62929,
+        "KR": 0x5CB8D1,
+        "RB": 0x702EB0,
+        "SR": 0x00FF00,
+        "Y": 0x94FFFF,
+        "ZR": 0x94E0E0,
+        "NB": 0x73C2C9,
+        "MO": 0x54B5B5,
+        "TC": 0x3B9E9E,
+        "RU": 0x248F8F,
+        "RH": 0x0A7D8C,
+        "PD": 0x006985,
+        "AG": 0xC0C0C0,
+        "CD": 0xFFD98F,
+        "IN": 0xA67573,
+        "SN": 0x668080,
+        "SB": 0x9E63B5,
+        "TE": 0xD47A00,
+        "I": 0x940094,
+        "XE": 0x429EB0,
+        "CS": 0x57178F,
+        "BA": 0x00C900,
+        "LA": 0x70D4FF,
+        "CE": 0xFFFFC7,
+        "PR": 0xD9FFC7,
+        "ND": 0xC7FFC7,
+        "PM": 0xA3FFC7,
+        "SM": 0x8FFFC7,
+        "EU": 0x61FFC7,
+        "GD": 0x45FFC7,
+        "TB": 0x30FFC7,
+        "DY": 0x1FFFC7,
+        "HO": 0x00FF9C,
+        "ER": 0x00E675,
+        "TM": 0x00D452,
+        "YB": 0x00BF38,
+        "LU": 0x00AB24,
+        "HF": 0x4DC2FF,
+        "TA": 0x4DA6FF,
+        "W": 0x2194D6,
+        "RE": 0x267DAB,
+        "OS": 0x266696,
+        "IR": 0x175487,
+        "PT": 0xD0D0E0,
+        "AU": 0xFFD123,
+        "HG": 0xB8B8D0,
+        "TL": 0xA6544D,
+        "PB": 0x575961,
+        "BI": 0x9E4FB5,
+        "PO": 0xAB5C00,
+        "AT": 0x754F45,
+        "RN": 0x428296,
+        "FR": 0x420066,
+        "RA": 0x007D00,
+        "AC": 0x70ABFA,
+        "TH": 0x00BAFF,
+        "PA": 0x00A1FF,
+        "U": 0x008FFF,
+        "NP": 0x0080FF,
+        "PU": 0x006BFF,
+        "AM": 0x545CF2,
+        "CM": 0x785CE3,
+        "BK": 0x8A4FE3,
+        "CF": 0xA136D4,
+        "ES": 0xB31FD4,
+        "FM": 0xB31FBA,
+        "MD": 0xB30DA6,
+        "NO": 0xBD0D87,
+        "LR": 0xC70066,
+        "RF": 0xCC0059,
+        "DB": 0xD1004F,
+        "SG": 0xD90045,
+        "BH": 0xE00038,
+        "HS": 0xE6002E,
+        "MT": 0xEB0026,
+    ]
 }

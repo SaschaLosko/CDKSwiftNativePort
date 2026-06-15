@@ -148,4 +148,71 @@ final class Metal3DSceneBuilderTests: XCTestCase {
         XCTAssertGreaterThan(scene.atoms[1].color.red, 0.80)
         XCTAssertLessThan(scene.atoms[1].color.green, 0.30)
     }
+
+    func testRendererModelUsesSelected3DAtomColorPalette() throws {
+        let molecule = Molecule(
+            name: "Chloromethane",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0), zPosition: 0.0),
+                Atom(id: 2, element: "Cl", position: CGPoint(x: 1.5, y: 0.0), zPosition: 0.0),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single),
+            ])
+
+        let jmolScene = CDKMetal3DSceneBuilder.build(
+            molecule: molecule,
+            rendererModel: CDKRenderer3DModel(
+                atomColoringMode: .cdk2D,
+                atomColorPalette: .jmol,
+                colorBondsByAtom: true))
+        let cpkScene = CDKMetal3DSceneBuilder.build(
+            molecule: molecule,
+            rendererModel: CDKRenderer3DModel(
+                atomColoringMode: .cdk2D,
+                atomColorPalette: .cpk,
+                colorBondsByAtom: true))
+
+        let jmolCarbon = try XCTUnwrap(jmolScene.atoms.first { $0.id == 1 })
+        let jmolChlorine = try XCTUnwrap(jmolScene.atoms.first { $0.id == 2 })
+        let cpkCarbon = try XCTUnwrap(cpkScene.atoms.first { $0.id == 1 })
+        let cpkChlorine = try XCTUnwrap(cpkScene.atoms.first { $0.id == 2 })
+        let jmolBond = try XCTUnwrap(jmolScene.bonds.first)
+        let cpkBond = try XCTUnwrap(cpkScene.bonds.first)
+
+        assertColor(jmolCarbon.color, hex: 0x909090)
+        assertColor(jmolChlorine.color, hex: 0x1FF01F)
+        assertColor(cpkCarbon.color, hex: 0xC8C8C8)
+        assertColor(cpkChlorine.color, hex: 0x00FF00)
+        XCTAssertNotEqual(jmolCarbon.color, cpkCarbon.color)
+        XCTAssertNotEqual(jmolChlorine.color, cpkChlorine.color)
+        XCTAssertNotEqual(jmolBond.color, cpkBond.color)
+    }
+
+    private func assertColor(
+        _ color: CDKRenderColor,
+        hex: UInt32,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(
+            color.red,
+            CGFloat((hex >> 16) & 0xFF) / 255.0,
+            accuracy: 0.0001,
+            file: file,
+            line: line)
+        XCTAssertEqual(
+            color.green,
+            CGFloat((hex >> 8) & 0xFF) / 255.0,
+            accuracy: 0.0001,
+            file: file,
+            line: line)
+        XCTAssertEqual(
+            color.blue,
+            CGFloat(hex & 0xFF) / 255.0,
+            accuracy: 0.0001,
+            file: file,
+            line: line)
+        XCTAssertEqual(color.alpha, 1.0, accuracy: 0.0001, file: file, line: line)
+    }
 }
