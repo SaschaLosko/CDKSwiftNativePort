@@ -40,14 +40,14 @@ enum CDKBondPerception {
                 let symbolB = CDKDescriptorSupport.canonicalElementSymbol(b.element).uppercased()
                 if symbolA == "H" && symbolB == "H" { continue }
 
-                let distance = hypot(a.position.x - b.position.x, a.position.y - b.position.y)
+                let distance = distanceBetween(a, b)
                 if distance < 0.20 || distance > 2.60 { continue }
 
                 let threshold = bondThreshold(symbolA: symbolA, symbolB: symbolB)
                 if distance <= threshold {
                     candidates.append(Candidate(a1: a.id,
                                                 a2: b.id,
-                                                distance: Double(distance),
+                                                distance: distance,
                                                 threshold: threshold))
                 }
             }
@@ -109,6 +109,16 @@ enum CDKBondPerception {
         case .triple:
             return 3
         }
+    }
+
+    private static func distanceBetween(_ a: Atom, _ b: Atom) -> Double {
+        let dx = Double(a.position.x - b.position.x)
+        let dy = Double(a.position.y - b.position.y)
+        guard a.zPosition != nil || b.zPosition != nil else {
+            return hypot(dx, dy)
+        }
+        let dz = (a.zPosition ?? 0) - (b.zPosition ?? 0)
+        return sqrt(dx * dx + dy * dy + dz * dz)
     }
 
     private static func bondThreshold(symbolA: String, symbolB: String) -> Double {

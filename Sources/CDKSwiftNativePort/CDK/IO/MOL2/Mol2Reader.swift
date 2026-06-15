@@ -71,7 +71,8 @@ public enum CDKMol2Reader {
                 guard parts.count >= 6,
                       let sourceID = Int(parts[0]),
                       let x = Double(parts[2]),
-                      let y = Double(parts[3]) else {
+                      let y = Double(parts[3]),
+                      let z = Double(parts[4]) else {
                     continue
                 }
 
@@ -90,6 +91,7 @@ public enum CDKMol2Reader {
                 let atom = Atom(id: nextAtomID,
                                 element: symbol,
                                 position: CGPoint(x: x, y: y),
+                                zPosition: z,
                                 charge: charge,
                                 aromatic: aromatic)
                 pendingAtoms.append(PendingAtom(sourceID: sourceID, atom: atom))

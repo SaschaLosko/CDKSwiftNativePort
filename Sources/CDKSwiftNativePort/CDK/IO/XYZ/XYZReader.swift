@@ -96,26 +96,30 @@ public enum CDKXYZReader {
         let symbolToken: String
         let xToken: String
         let yToken: String
+        let zToken: String
 
         if firstIsNumeric {
             guard parts.count >= 4 else { return nil }
             xToken = parts[0]
             yToken = parts[1]
+            zToken = parts[2]
             symbolToken = parts[3]
         } else {
             symbolToken = parts[0]
             xToken = parts[1]
             yToken = parts[2]
+            zToken = parts[3]
         }
 
-        guard let x = Double(xToken), let y = Double(yToken) else {
+        guard let x = Double(xToken), let y = Double(yToken), let z = Double(zToken) else {
             return nil
         }
 
         let symbol = normalizeElementSymbol(from: symbolToken)
         return Atom(id: atomID,
                     element: symbol,
-                    position: CGPoint(x: x, y: y))
+                    position: CGPoint(x: x, y: y),
+                    zPosition: z)
     }
 
     private static func normalizeElementSymbol(from raw: String) -> String {

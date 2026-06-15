@@ -168,6 +168,15 @@ final class ChemFileExporterTests: XCTestCase {
         XCTAssertEqual(parsed[0].atomCount, molecule.atomCount)
     }
 
+    func testWritesXYZAndPreservesZCoordinates() throws {
+        let molecule = moleculeWithZCoordinates()
+        let text = try CDKFileExporter.write(molecule: molecule, as: .xyz)
+        let parsed = try XCTUnwrap(CDKFileImporter.readMolecules(text: text, fileExtension: "xyz").first)
+
+        XCTAssertEqual(try XCTUnwrap(parsed.atoms[0].zPosition), 2.75, accuracy: 0.00001)
+        XCTAssertEqual(try XCTUnwrap(parsed.atoms[1].zPosition), -1.50, accuracy: 0.00001)
+    }
+
     func testWritesPDBAndRoundTrips() throws {
         let molecule = try referenceMolecule(name: "Aspirin")
         let text = try CDKFileExporter.write(molecule: molecule, as: .pdb)
@@ -182,6 +191,15 @@ final class ChemFileExporterTests: XCTestCase {
         let parsed = try CDKMol2Reader.read(text: text)
         XCTAssertEqual(parsed.count, 1)
         XCTAssertEqual(parsed[0].atomCount, molecule.atomCount)
+    }
+
+    func testWritesMol2AndPreservesZCoordinates() throws {
+        let molecule = moleculeWithZCoordinates()
+        let text = try CDKFileExporter.write(molecule: molecule, as: .mol2)
+        let parsed = try XCTUnwrap(CDKFileImporter.readMolecules(text: text, fileExtension: "mol2").first)
+
+        XCTAssertEqual(try XCTUnwrap(parsed.atoms[0].zPosition), 2.75, accuracy: 0.00001)
+        XCTAssertEqual(try XCTUnwrap(parsed.atoms[1].zPosition), -1.50, accuracy: 0.00001)
     }
 
     func testWritesCMLAndRoundTrips() throws {
@@ -355,5 +373,18 @@ final class ChemFileExporterTests: XCTestCase {
         first = Depiction2DGenerator.generate(for: first)
         second = Depiction2DGenerator.generate(for: second)
         return [first, second]
+    }
+
+    private func moleculeWithZCoordinates() -> Molecule {
+        Molecule(
+            name: "3D",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: -1.25, y: 0.50), zPosition: 2.75),
+                Atom(id: 2, element: "O", position: CGPoint(x: 0.10, y: -0.25), zPosition: -1.50)
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ]
+        )
     }
 }

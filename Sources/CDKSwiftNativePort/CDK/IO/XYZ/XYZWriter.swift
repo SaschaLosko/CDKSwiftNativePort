@@ -24,7 +24,8 @@ public enum CDKXYZWriter {
             let symbol = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
             let x = fmt(atom.position.x)
             let y = fmt(atom.position.y)
-            lines.append("\(symbol) \(x) \(y) 0.00000")
+            let z = fmt(atom.zPosition ?? 0)
+            lines.append("\(symbol) \(x) \(y) \(z)")
         }
 
         return lines.joined(separator: "\n") + "\n"
@@ -38,6 +39,10 @@ public enum CDKXYZWriter {
     }
 
     private static func fmt(_ value: CGFloat) -> String {
-        String(format: "%.5f", Double(value))
+        fmt(Double(value))
+    }
+
+    private static func fmt(_ value: Double) -> String {
+        String(format: "%.5f", value)
     }
 }

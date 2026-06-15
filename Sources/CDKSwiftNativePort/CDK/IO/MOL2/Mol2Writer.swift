@@ -46,7 +46,7 @@ public enum CDKMol2Writer {
                                 atomName as NSString,
                                 Double(atom.position.x),
                                 Double(atom.position.y),
-                                0.0,
+                                atom.zPosition ?? 0.0,
                                 type as NSString,
                                 1,
                                 Double(atom.charge)))

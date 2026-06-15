@@ -25,6 +25,34 @@ final class Mol2ReaderPortTests: XCTestCase {
         XCTAssertEqual(molecule.bondCount, 1)
         XCTAssertEqual(molecule.bonds[0].order, .aromatic)
         XCTAssertTrue(molecule.atoms.allSatisfy { $0.aromatic })
+        XCTAssertEqual(try XCTUnwrap(molecule.atoms[0].zPosition), 0.0, accuracy: 0.00001)
+    }
+
+    func testReadsAndWritesZCoordinatesWithoutFlattening() throws {
+        let text = """
+        @<TRIPOS>MOLECULE
+        zed
+         2 1 0 0 0
+        SMALL
+        USER_CHARGES
+
+        @<TRIPOS>ATOM
+              1 C1         -1.2500    0.5000    2.7500 C.3        1 MOL        0.0000
+              2 O2          0.1000   -0.2500   -1.5000 O.3        1 MOL        0.0000
+        @<TRIPOS>BOND
+             1    1    2 1
+        """
+
+        let molecule = try XCTUnwrap(CDKMol2Reader.read(text: text).first)
+
+        XCTAssertEqual(try XCTUnwrap(molecule.atoms[0].zPosition), 2.75, accuracy: 0.00001)
+        XCTAssertEqual(try XCTUnwrap(molecule.atoms[1].zPosition), -1.50, accuracy: 0.00001)
+
+        let roundTripText = try CDKMol2Writer.write([molecule])
+        let roundTripped = try XCTUnwrap(CDKMol2Reader.read(text: roundTripText).first)
+
+        XCTAssertEqual(try XCTUnwrap(roundTripped.atoms[0].zPosition), 2.75, accuracy: 0.00001)
+        XCTAssertEqual(try XCTUnwrap(roundTripped.atoms[1].zPosition), -1.50, accuracy: 0.00001)
     }
 
     func testReadsMultipleMoleculeBlocks() throws {
