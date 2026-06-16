@@ -95,12 +95,15 @@ public enum CDK3DAtomColorPalette: String, CaseIterable, Hashable, Sendable {
 
 public enum CDK3DRepresentationMode: String, CaseIterable, Hashable, Sendable {
     case ballAndStick
+    case stick
     case spaceFilling
 
     public var displayName: String {
         switch self {
         case .ballAndStick:
             "Ball and Stick"
+        case .stick:
+            "Stick"
         case .spaceFilling:
             "Space Filling"
         }
@@ -220,30 +223,37 @@ public enum CDKMetal3DSceneBuilder {
             (atom.id, point3D(for: atom))
         })
 
-        let atoms = sceneMolecule.atoms.map { atom in
-            CDKMetal3DScene.AtomSphere(
-                id: atom.id,
-                element: atom.element,
-                center: atomPoints[atom.id] ?? point3D(for: atom),
-                radius: radius(for: atom, rendererModel: rendererModel),
-                color: atomColor(for: atom, rendererModel: rendererModel, style: style))
-        }
+        let atoms: [CDKMetal3DScene.AtomSphere] =
+            rendererModel.representationMode == .stick
+            ? []
+            : sceneMolecule.atoms.map { atom in
+                CDKMetal3DScene.AtomSphere(
+                    id: atom.id,
+                    element: atom.element,
+                    center: atomPoints[atom.id] ?? point3D(for: atom),
+                    radius: radius(for: atom, rendererModel: rendererModel),
+                    color: atomColor(for: atom, rendererModel: rendererModel, style: style))
+            }
 
         let bonds: [CDKMetal3DScene.BondCylinder]
         switch rendererModel.representationMode {
-        case .ballAndStick:
+        case .ballAndStick, .stick:
             bonds = sceneMolecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
                 guard let from = atomPoints[bond.a1],
                       let to = atomPoints[bond.a2] else {
                     return nil
                 }
+                let bondRadius =
+                    rendererModel.representationMode == .stick
+                    ? rendererModel.bondRadius * 1.35
+                    : rendererModel.bondRadius
                 return CDKMetal3DScene.BondCylinder(
                     id: bond.id,
                     fromAtomID: bond.a1,
                     toAtomID: bond.a2,
                     from: from,
                     to: to,
-                    radius: max(0.025, rendererModel.bondRadius),
+                    radius: max(0.025, bondRadius),
                     order: bond.order,
                     color: bondColor(for: bond, molecule: sceneMolecule, rendererModel: rendererModel, style: style))
             }

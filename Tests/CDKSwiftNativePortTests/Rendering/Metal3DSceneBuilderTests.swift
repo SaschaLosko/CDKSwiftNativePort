@@ -172,13 +172,40 @@ final class Metal3DSceneBuilderTests: XCTestCase {
         let carbon = try XCTUnwrap(scene.atoms.first { $0.id == 1 })
         let oxygen = try XCTUnwrap(scene.atoms.first { $0.id == 2 })
 
-        XCTAssertEqual(CDK3DRepresentationMode.allCases, [.ballAndStick, .spaceFilling])
+        XCTAssertEqual(CDK3DRepresentationMode.allCases, [.ballAndStick, .stick, .spaceFilling])
         XCTAssertEqual(CDK3DRepresentationMode.spaceFilling.displayName, "Space Filling")
         XCTAssertEqual(scene.bonds.count, 0)
         XCTAssertEqual(carbon.radius, 1.70, accuracy: 0.0001)
         XCTAssertEqual(oxygen.radius, 1.55, accuracy: 0.0001)
         assertColor(carbon.color, hex: 0xC8C8C8)
         assertColor(oxygen.color, hex: 0xF00000)
+    }
+
+    func testRendererModelCanBuildStickScene() throws {
+        let molecule = Molecule(
+            name: "Carbon monoxide",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0.0, y: 0.0), zPosition: 0.0),
+                Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+            ])
+        let rendererModel = CDKRenderer3DModel(
+            bondRadius: 0.20,
+            atomColoringMode: .cdk2D,
+            atomColorPalette: .cpk,
+            representationMode: .stick)
+
+        let scene = CDKMetal3DSceneBuilder.build(molecule: molecule, rendererModel: rendererModel)
+        let bond = try XCTUnwrap(scene.bonds.first)
+
+        XCTAssertEqual(CDK3DRepresentationMode.allCases, [.ballAndStick, .stick, .spaceFilling])
+        XCTAssertEqual(CDK3DRepresentationMode.stick.displayName, "Stick")
+        XCTAssertEqual(scene.atoms.count, 0)
+        XCTAssertEqual(scene.bonds.count, 1)
+        XCTAssertEqual(bond.radius, 0.27, accuracy: 0.0001)
+        XCTAssertNotNil(scene.boundingBox)
     }
 
     func testDefaultRendererModelUsesBallAndStickRepresentation() {
