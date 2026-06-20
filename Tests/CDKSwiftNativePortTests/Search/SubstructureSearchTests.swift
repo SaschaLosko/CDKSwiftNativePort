@@ -47,4 +47,30 @@ final class SubstructureSearchTests: XCTestCase {
         XCTAssertEqual(uniqueTargetAtomSets, Set([Set([1, 2]), Set([2, 3])]))
         XCTAssertGreaterThanOrEqual(matches.count, 2)
     }
+
+    func testUniversalIsomorphismTesterReportsMaximumCommonInducedSubgraph() throws {
+        let benzene = try parser.parseSmiles("c1ccccc1")
+        let naphthalene = try parser.parseSmiles("c1ccc2ccccc2c1")
+
+        let overlap = UniversalIsomorphismTester.maximumCommonInducedSubgraph(
+            query: benzene,
+            target: naphthalene)
+
+        XCTAssertEqual(overlap.atomCount, 6)
+        XCTAssertEqual(overlap.bondCount, 6)
+    }
+
+    func testUniversalIsomorphismTesterRequiresInducedOverlap() throws {
+        let chain = try parser.parseSmiles("CCC")
+        let triangle = try parser.parseSmiles("C1CC1")
+
+        XCTAssertTrue(triangle.containsSubstructure(chain))
+
+        let overlap = UniversalIsomorphismTester.maximumCommonInducedSubgraph(
+            query: chain,
+            target: triangle)
+
+        XCTAssertEqual(overlap.atomCount, 2)
+        XCTAssertEqual(overlap.bondCount, 1)
+    }
 }
