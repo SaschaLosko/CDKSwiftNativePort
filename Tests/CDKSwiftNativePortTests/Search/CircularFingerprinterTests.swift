@@ -41,6 +41,19 @@ final class CircularFingerprinterTests: XCTestCase {
         XCTAssertEqual(fingerprint.populatedBinCount, expected.count)
     }
 
+    func testAromaticBenzeneMatchesKekuleBenzeneFingerprint() throws {
+        let aromaticBenzene = try parser.parseSmiles("c1ccccc1")
+        let kekuleBenzene = try parser.parseSmiles("C1=CC=CC=C1")
+        let fingerprinter = CDKCircularFingerprinter()
+
+        XCTAssertEqual(
+            fingerprinter.bitFingerprint(for: aromaticBenzene),
+            fingerprinter.bitFingerprint(for: kekuleBenzene))
+        XCTAssertEqual(
+            fingerprinter.countFingerprint(for: aromaticBenzene),
+            fingerprinter.countFingerprint(for: kekuleBenzene))
+    }
+
     func testCircularFingerprintKeepsAtomEnvironmentGroups() throws {
         let molecule = try parser.parseSmiles("CC")
         let features = CDKCircularFingerprinter().calculate(molecule)

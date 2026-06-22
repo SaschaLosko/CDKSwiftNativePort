@@ -370,11 +370,11 @@ private struct CircularFingerprintCalculator {
             if element == "C" {
                 charge = -abs(charge)
             }
-            var implicit = valence + charge
+            var implicit = Double(valence + charge)
             for bond in molecule.bonds(forAtom: atom.id) {
-                implicit -= numericBondOrder(bond.order)
+                implicit -= bond.order.valenceContribution
             }
-            hydrogenCounts[atomIndex] += max(0, implicit)
+            hydrogenCounts[atomIndex] += max(0, Int(implicit.rounded()))
         }
 
         detectRings()
