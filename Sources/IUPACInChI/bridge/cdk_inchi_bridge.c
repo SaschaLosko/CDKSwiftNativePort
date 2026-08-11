@@ -40,7 +40,10 @@ static void cdk_inchi_reset_result(CDKInChIResult *result)
     result->key_return_code = 0;
 }
 
-static int cdk_inchi_finish_output(int return_code, inchi_Output *output, CDKInChIResult *result)
+static int cdk_inchi_finish_output(int return_code,
+                                   inchi_Output *output,
+                                   int is_standard,
+                                   CDKInChIResult *result)
 {
     result->return_code = return_code;
     result->inchi = cdk_inchi_strdup(output->szInChI);
@@ -52,7 +55,9 @@ static int cdk_inchi_finish_output(int return_code, inchi_Output *output, CDKInC
     {
         char key[28];
         memset(key, 0, sizeof(key));
-        result->key_return_code = GetStdINCHIKeyFromStdINCHI(output->szInChI, key);
+        result->key_return_code = is_standard
+            ? GetStdINCHIKeyFromStdINCHI(output->szInChI, key)
+            : GetINCHIKeyFromINCHI(output->szInChI, 0, 0, key, NULL, NULL);
         if (result->key_return_code == INCHIKEY_OK)
         {
             result->inchi_key = cdk_inchi_strdup(key);
@@ -84,7 +89,27 @@ int cdk_inchi_generate_standard_molfile(const char *molfile_text, CDKInChIResult
     memset(&output, 0, sizeof(output));
 
     int return_code = MakeINCHIFromMolfileText(molfile_text, options, &output);
-    int bridge_code = cdk_inchi_finish_output(return_code, &output, result);
+    int bridge_code = cdk_inchi_finish_output(return_code, &output, 1, result);
+
+    FreeINCHI(&output);
+    return bridge_code;
+}
+
+int cdk_inchi_generate_fixed_h_molfile(const char *molfile_text, CDKInChIResult *result)
+{
+    inchi_Output output;
+    char options[] = "-FixedH";
+
+    if (!molfile_text || !result)
+    {
+        return 2;
+    }
+
+    cdk_inchi_reset_result(result);
+    memset(&output, 0, sizeof(output));
+
+    int return_code = MakeINCHIFromMolfileText(molfile_text, options, &output);
+    int bridge_code = cdk_inchi_finish_output(return_code, &output, 0, result);
 
     FreeINCHI(&output);
     return bridge_code;
@@ -129,25 +154,27 @@ static int cdk_inchi_add_bond(inchi_Atom *atoms, int atom_count, int from, int t
     return 0;
 }
 
-int cdk_inchi_generate_standard_atoms(int atom_count,
-                                      const char *atom_symbols,
-                                      int atom_symbol_stride,
-                                      const int *atom_charges,
-                                      const int *atom_isotopes,
-                                      const int *atom_implicit_hydrogens,
-                                      int bond_count,
-                                      const int *bond_from,
-                                      const int *bond_to,
-                                      const int *bond_order,
-                                      int stereo_count,
-                                      const int *stereo_centers,
-                                      const int *stereo_neighbors,
-                                      const int *stereo_parities,
-                                      CDKInChIResult *result)
+static int cdk_inchi_generate_atoms(int atom_count,
+                                    const char *atom_symbols,
+                                    int atom_symbol_stride,
+                                    const int *atom_charges,
+                                    const int *atom_isotopes,
+                                    const int *atom_implicit_hydrogens,
+                                    int bond_count,
+                                    const int *bond_from,
+                                    const int *bond_to,
+                                    const int *bond_order,
+                                    int stereo_count,
+                                    const int *stereo_centers,
+                                    const int *stereo_neighbors,
+                                    const int *stereo_parities,
+                                    int fixed_h,
+                                    CDKInChIResult *result)
 {
     inchi_Output output;
     inchi_Input input;
-    char options[] = "";
+    char standard_options[] = "";
+    char fixed_h_options[] = "-FixedH";
 
     if (!result || atom_count <= 0 || !atom_symbols || atom_symbol_stride <= 0 ||
         (bond_count > 0 && (!bond_from || !bond_to || !bond_order)) ||
@@ -230,17 +257,92 @@ int cdk_inchi_generate_standard_atoms(int atom_count,
 
     input.atom = atoms;
     input.stereo0D = stereo0D;
-    input.szOptions = options;
+    input.szOptions = fixed_h ? fixed_h_options : standard_options;
     input.num_atoms = (AT_NUM) atom_count;
     input.num_stereo0D = (AT_NUM) stereo_count;
 
-    int return_code = GetStdINCHI(&input, &output);
-    int bridge_code = cdk_inchi_finish_output(return_code, &output, result);
+    int return_code = fixed_h ? GetINCHI(&input, &output) : GetStdINCHI(&input, &output);
+    int bridge_code = cdk_inchi_finish_output(return_code, &output, fixed_h ? 0 : 1, result);
 
-    FreeStdINCHI(&output);
+    if (fixed_h)
+    {
+        FreeINCHI(&output);
+    }
+    else
+    {
+        FreeStdINCHI(&output);
+    }
     free(stereo0D);
     free(atoms);
     return bridge_code;
+}
+
+int cdk_inchi_generate_standard_atoms(int atom_count,
+                                      const char *atom_symbols,
+                                      int atom_symbol_stride,
+                                      const int *atom_charges,
+                                      const int *atom_isotopes,
+                                      const int *atom_implicit_hydrogens,
+                                      int bond_count,
+                                      const int *bond_from,
+                                      const int *bond_to,
+                                      const int *bond_order,
+                                      int stereo_count,
+                                      const int *stereo_centers,
+                                      const int *stereo_neighbors,
+                                      const int *stereo_parities,
+                                      CDKInChIResult *result)
+{
+    return cdk_inchi_generate_atoms(atom_count,
+                                    atom_symbols,
+                                    atom_symbol_stride,
+                                    atom_charges,
+                                    atom_isotopes,
+                                    atom_implicit_hydrogens,
+                                    bond_count,
+                                    bond_from,
+                                    bond_to,
+                                    bond_order,
+                                    stereo_count,
+                                    stereo_centers,
+                                    stereo_neighbors,
+                                    stereo_parities,
+                                    0,
+                                    result);
+}
+
+int cdk_inchi_generate_fixed_h_atoms(int atom_count,
+                                     const char *atom_symbols,
+                                     int atom_symbol_stride,
+                                     const int *atom_charges,
+                                     const int *atom_isotopes,
+                                     const int *atom_implicit_hydrogens,
+                                     int bond_count,
+                                     const int *bond_from,
+                                     const int *bond_to,
+                                     const int *bond_order,
+                                     int stereo_count,
+                                     const int *stereo_centers,
+                                     const int *stereo_neighbors,
+                                     const int *stereo_parities,
+                                     CDKInChIResult *result)
+{
+    return cdk_inchi_generate_atoms(atom_count,
+                                    atom_symbols,
+                                    atom_symbol_stride,
+                                    atom_charges,
+                                    atom_isotopes,
+                                    atom_implicit_hydrogens,
+                                    bond_count,
+                                    bond_from,
+                                    bond_to,
+                                    bond_order,
+                                    stereo_count,
+                                    stereo_centers,
+                                    stereo_neighbors,
+                                    stereo_parities,
+                                    1,
+                                    result);
 }
 
 int cdk_inchi_key_from_standard_inchi(const char *inchi, char *key_buffer, int key_buffer_length)

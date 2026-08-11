@@ -2,12 +2,20 @@ import Foundation
 import IUPACInChI
 
 enum CDKInChIOfficialLibraryGenerator {
+    enum Mode {
+        case standard
+        case fixedH
+    }
+
     private static let lock = NSLock()
 
-    static func generate(for molecule: Molecule) throws -> CDKInChINativeGenerationResult {
+    static func generate(
+        for molecule: Molecule,
+        mode: Mode = .standard
+    ) throws -> CDKInChINativeGenerationResult {
         let normalized = normalizeInput(molecule)
         if normalized.atoms.contains(where: { $0.ligandOrderingAtomIDs?.count == 4 }) {
-            return try generateFromAtoms(normalized)
+            return try generateFromAtoms(normalized, mode: mode)
         }
 
         let molfile = try CDKMDLV2000Writer.write(
@@ -20,7 +28,12 @@ enum CDKInChIOfficialLibraryGenerator {
 
         var result = CDKInChIResult()
         let bridgeStatus = molfile.withCString { cMolfile in
-            cdk_inchi_generate_standard_molfile(cMolfile, &result)
+            switch mode {
+            case .standard:
+                cdk_inchi_generate_standard_molfile(cMolfile, &result)
+            case .fixedH:
+                cdk_inchi_generate_fixed_h_molfile(cMolfile, &result)
+            }
         }
         defer {
             cdk_inchi_free_result(&result)
@@ -29,9 +42,11 @@ enum CDKInChIOfficialLibraryGenerator {
         let message = string(from: result.message)
         let log = string(from: result.log)
         guard bridgeStatus == 0,
-              let inchiPointer = result.inchi,
-              let keyPointer = result.inchi_key else {
-            let detail = [message, log]
+            let inchiPointer = result.inchi,
+            let keyPointer = result.inchi_key
+        else {
+            let detail =
+                [message, log]
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first { !$0.isEmpty }
                 ?? "Official InChI generation failed."
@@ -47,7 +62,10 @@ enum CDKInChIOfficialLibraryGenerator {
         )
     }
 
-    private static func generateFromAtoms(_ molecule: Molecule) throws -> CDKInChINativeGenerationResult {
+    private static func generateFromAtoms(
+        _ molecule: Molecule,
+        mode: Mode
+    ) throws -> CDKInChINativeGenerationResult {
         let atoms = molecule.atoms.sorted { $0.id < $1.id }
         let atomIndexByID = Dictionary(uniqueKeysWithValues: atoms.enumerated().map { ($1.id, Int32($0)) })
         let bonds = molecule.bonds.sorted { $0.id < $1.id }
@@ -70,7 +88,8 @@ enum CDKInChIOfficialLibraryGenerator {
             charges.append(Int32(atom.charge))
             isotopes.append(Int32(atom.isotopeMassNumber ?? 0))
 
-            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" || hasExplicitHydrogenAtoms {
+            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" || hasExplicitHydrogenAtoms
+            {
                 implicitHydrogens.append(0)
             } else if let explicitHydrogenCount = atom.explicitHydrogenCount {
                 implicitHydrogens.append(Int32(max(0, explicitHydrogenCount)))
@@ -88,7 +107,8 @@ enum CDKInChIOfficialLibraryGenerator {
 
         for bond in bonds {
             guard let from = atomIndexByID[bond.a1],
-                  let to = atomIndexByID[bond.a2] else {
+                let to = atomIndexByID[bond.a2]
+            else {
                 throw ChemError.parseFailed("Bond references unknown atom while generating InChI.")
             }
             bondFrom.append(from)
@@ -111,8 +131,9 @@ enum CDKInChIOfficialLibraryGenerator {
 
         for atom in atoms where atom.chirality != .none {
             guard let ligandOrdering = atom.ligandOrderingAtomIDs,
-                  ligandOrdering.count == 4,
-                  let center = atomIndexByID[atom.id] else {
+                ligandOrdering.count == 4,
+                let center = atomIndexByID[atom.id]
+            else {
                 continue
             }
 
@@ -138,23 +159,44 @@ enum CDKInChIOfficialLibraryGenerator {
                                     stereoCenters.withUnsafeBufferPointer { stereoCenterPointer in
                                         stereoNeighbors.withUnsafeBufferPointer { stereoNeighborPointer in
                                             stereoParities.withUnsafeBufferPointer { stereoParityPointer in
-                                                cdk_inchi_generate_standard_atoms(
-                                                    Int32(atoms.count),
-                                                    symbolPointer.baseAddress,
-                                                    Int32(symbolStride),
-                                                    chargePointer.baseAddress,
-                                                    isotopePointer.baseAddress,
-                                                    hydrogenPointer.baseAddress,
-                                                    Int32(bonds.count),
-                                                    bondFromPointer.baseAddress,
-                                                    bondToPointer.baseAddress,
-                                                    bondOrderPointer.baseAddress,
-                                                    Int32(stereoCenters.count),
-                                                    stereoCenterPointer.baseAddress,
-                                                    stereoNeighborPointer.baseAddress,
-                                                    stereoParityPointer.baseAddress,
-                                                    &result
-                                                )
+                                                switch mode {
+                                                case .standard:
+                                                    cdk_inchi_generate_standard_atoms(
+                                                        Int32(atoms.count),
+                                                        symbolPointer.baseAddress,
+                                                        Int32(symbolStride),
+                                                        chargePointer.baseAddress,
+                                                        isotopePointer.baseAddress,
+                                                        hydrogenPointer.baseAddress,
+                                                        Int32(bonds.count),
+                                                        bondFromPointer.baseAddress,
+                                                        bondToPointer.baseAddress,
+                                                        bondOrderPointer.baseAddress,
+                                                        Int32(stereoCenters.count),
+                                                        stereoCenterPointer.baseAddress,
+                                                        stereoNeighborPointer.baseAddress,
+                                                        stereoParityPointer.baseAddress,
+                                                        &result
+                                                    )
+                                                case .fixedH:
+                                                    cdk_inchi_generate_fixed_h_atoms(
+                                                        Int32(atoms.count),
+                                                        symbolPointer.baseAddress,
+                                                        Int32(symbolStride),
+                                                        chargePointer.baseAddress,
+                                                        isotopePointer.baseAddress,
+                                                        hydrogenPointer.baseAddress,
+                                                        Int32(bonds.count),
+                                                        bondFromPointer.baseAddress,
+                                                        bondToPointer.baseAddress,
+                                                        bondOrderPointer.baseAddress,
+                                                        Int32(stereoCenters.count),
+                                                        stereoCenterPointer.baseAddress,
+                                                        stereoNeighborPointer.baseAddress,
+                                                        stereoParityPointer.baseAddress,
+                                                        &result
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -172,9 +214,11 @@ enum CDKInChIOfficialLibraryGenerator {
         let message = string(from: result.message)
         let log = string(from: result.log)
         guard bridgeStatus == 0,
-              let inchiPointer = result.inchi,
-              let keyPointer = result.inchi_key else {
-            let detail = [message, log]
+            let inchiPointer = result.inchi,
+            let keyPointer = result.inchi_key
+        else {
+            let detail =
+                [message, log]
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first { !$0.isEmpty }
                 ?? "Official InChI generation failed."
