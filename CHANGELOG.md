@@ -14,6 +14,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.23] - 2026-08-11
+
 ### Changed
 
 - Declared `CDKSwiftNativePort` as an explicitly dynamic SwiftPM library product
