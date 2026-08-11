@@ -183,6 +183,11 @@ Add the package dependency:
 https://github.com/SaschaLosko/CDKSwiftNativePort.git
 ```
 
+`CDKSwiftNativePort` is deliberately published as a dynamic SwiftPM library.
+Applications must embed and sign the resulting library for every supported
+platform and preserve the package license and corresponding-source information
+in their distribution notices.
+
 ### Swift Package Manager
 
 Add the dependency in `Package.swift`:

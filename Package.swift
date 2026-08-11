@@ -10,6 +10,7 @@ let package = Package(
     products: [
         .library(
             name: "CDKSwiftNativePort",
+            type: .dynamic,
             targets: ["CDKSwiftNativePort"]
         )
     ],

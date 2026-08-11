@@ -69,6 +69,17 @@ final class PackageBoundaryTests: XCTestCase {
                       "Expected CDKSwiftNativePort Package.swift to declare iOS platform support.")
     }
 
+    func testPackageManifestDeclaresDynamicLibraryProduct() throws {
+        let root = try packageRoot()
+        let manifestURL = root.appendingPathComponent("Package.swift")
+        let manifest = try String(contentsOf: manifestURL, encoding: .utf8)
+
+        XCTAssertTrue(
+            manifest.contains("type: .dynamic"),
+            "Expected CDKSwiftNativePort to remain an explicitly dynamic library product."
+        )
+    }
+
     func testPackageManifestDoesNotCarryAtomLensCrossPlatformCouplingGuidance() throws {
         let root = try packageRoot()
         let manifestURL = root.appendingPathComponent("Package.swift")
@@ -116,8 +127,12 @@ final class PackageBoundaryTests: XCTestCase {
 
         let project = try String(contentsOf: projectURL, encoding: .utf8)
 
-        XCTAssertTrue(project.contains("XCLocalSwiftPackageReference \"CDKSwiftNativePort\""),
-                      "Expected AtomLens to consume CDKSwiftNativePort as a local Swift package product.")
+        let packageReferenceMarkers = [
+            "XCLocalSwiftPackageReference \"CDKSwiftNativePort\"",
+            "XCRemoteSwiftPackageReference \"CDKSwiftNativePort\""
+        ]
+        XCTAssertTrue(packageReferenceMarkers.contains(where: project.contains),
+                      "Expected AtomLens to consume the CDKSwiftNativePort Swift package product.")
 
         let forbiddenMarkers = [
             "CDKSwiftNativePort/Sources/",
