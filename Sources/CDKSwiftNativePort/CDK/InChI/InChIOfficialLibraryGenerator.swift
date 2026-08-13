@@ -14,7 +14,9 @@ enum CDKInChIOfficialLibraryGenerator {
         mode: Mode = .standard
     ) throws -> CDKInChINativeGenerationResult {
         let normalized = normalizeInput(molecule)
-        if normalized.atoms.contains(where: { $0.ligandOrderingAtomIDs?.count == 4 }) {
+        if normalized.atoms.contains(where: { $0.ligandOrderingAtomIDs?.count == 4 })
+            || normalized.bonds.contains(where: { $0.doubleBondStereo != nil })
+        {
             return try generateFromAtoms(normalized, mode: mode)
         }
 
@@ -126,6 +128,7 @@ enum CDKInChIOfficialLibraryGenerator {
         }
 
         var stereoCenters: [Int32] = []
+        var stereoTypes: [Int32] = []
         var stereoNeighbors: [Int32] = []
         var stereoParities: [Int32] = []
 
@@ -141,8 +144,29 @@ enum CDKInChIOfficialLibraryGenerator {
             guard mappedNeighbors.count == 4 else { continue }
 
             stereoCenters.append(center)
+            stereoTypes.append(2)
             stereoNeighbors.append(contentsOf: mappedNeighbors)
             stereoParities.append(atom.chirality == .clockwise ? 1 : 2)
+        }
+
+        for bond in bonds where bond.doubleBondStereo != nil {
+            guard bond.order == .double,
+                let doubleBondStereo = bond.doubleBondStereo,
+                let referenceAtomIDs = bond.stereoReferenceAtomIDs,
+                referenceAtomIDs.count == 4,
+                Set(referenceAtomIDs[1...2]) == Set([bond.a1, bond.a2])
+            else {
+                throw ChemError.parseFailed("Double-bond stereochemistry did not define four valid atom references.")
+            }
+            let mappedNeighbors = referenceAtomIDs.compactMap { atomIndexByID[$0] }
+            guard mappedNeighbors.count == 4 else {
+                throw ChemError.parseFailed("Double-bond stereochemistry references an unknown atom.")
+            }
+
+            stereoCenters.append(-1)
+            stereoTypes.append(1)
+            stereoNeighbors.append(contentsOf: mappedNeighbors)
+            stereoParities.append(doubleBondStereo == .cis ? 1 : 2)
         }
 
         lock.lock()
@@ -156,46 +180,50 @@ enum CDKInChIOfficialLibraryGenerator {
                         bondFrom.withUnsafeBufferPointer { bondFromPointer in
                             bondTo.withUnsafeBufferPointer { bondToPointer in
                                 bondOrder.withUnsafeBufferPointer { bondOrderPointer in
-                                    stereoCenters.withUnsafeBufferPointer { stereoCenterPointer in
-                                        stereoNeighbors.withUnsafeBufferPointer { stereoNeighborPointer in
-                                            stereoParities.withUnsafeBufferPointer { stereoParityPointer in
-                                                switch mode {
-                                                case .standard:
-                                                    cdk_inchi_generate_standard_atoms(
-                                                        Int32(atoms.count),
-                                                        symbolPointer.baseAddress,
-                                                        Int32(symbolStride),
-                                                        chargePointer.baseAddress,
-                                                        isotopePointer.baseAddress,
-                                                        hydrogenPointer.baseAddress,
-                                                        Int32(bonds.count),
-                                                        bondFromPointer.baseAddress,
-                                                        bondToPointer.baseAddress,
-                                                        bondOrderPointer.baseAddress,
-                                                        Int32(stereoCenters.count),
-                                                        stereoCenterPointer.baseAddress,
-                                                        stereoNeighborPointer.baseAddress,
-                                                        stereoParityPointer.baseAddress,
-                                                        &result
-                                                    )
-                                                case .fixedH:
-                                                    cdk_inchi_generate_fixed_h_atoms(
-                                                        Int32(atoms.count),
-                                                        symbolPointer.baseAddress,
-                                                        Int32(symbolStride),
-                                                        chargePointer.baseAddress,
-                                                        isotopePointer.baseAddress,
-                                                        hydrogenPointer.baseAddress,
-                                                        Int32(bonds.count),
-                                                        bondFromPointer.baseAddress,
-                                                        bondToPointer.baseAddress,
-                                                        bondOrderPointer.baseAddress,
-                                                        Int32(stereoCenters.count),
-                                                        stereoCenterPointer.baseAddress,
-                                                        stereoNeighborPointer.baseAddress,
-                                                        stereoParityPointer.baseAddress,
-                                                        &result
-                                                    )
+                                    stereoTypes.withUnsafeBufferPointer { stereoTypePointer in
+                                        stereoCenters.withUnsafeBufferPointer { stereoCenterPointer in
+                                            stereoNeighbors.withUnsafeBufferPointer { stereoNeighborPointer in
+                                                stereoParities.withUnsafeBufferPointer { stereoParityPointer in
+                                                    switch mode {
+                                                    case .standard:
+                                                        cdk_inchi_generate_standard_atoms_with_stereo_types(
+                                                            Int32(atoms.count),
+                                                            symbolPointer.baseAddress,
+                                                            Int32(symbolStride),
+                                                            chargePointer.baseAddress,
+                                                            isotopePointer.baseAddress,
+                                                            hydrogenPointer.baseAddress,
+                                                            Int32(bonds.count),
+                                                            bondFromPointer.baseAddress,
+                                                            bondToPointer.baseAddress,
+                                                            bondOrderPointer.baseAddress,
+                                                            Int32(stereoCenters.count),
+                                                            stereoTypePointer.baseAddress,
+                                                            stereoCenterPointer.baseAddress,
+                                                            stereoNeighborPointer.baseAddress,
+                                                            stereoParityPointer.baseAddress,
+                                                            &result
+                                                        )
+                                                    case .fixedH:
+                                                        cdk_inchi_generate_fixed_h_atoms_with_stereo_types(
+                                                            Int32(atoms.count),
+                                                            symbolPointer.baseAddress,
+                                                            Int32(symbolStride),
+                                                            chargePointer.baseAddress,
+                                                            isotopePointer.baseAddress,
+                                                            hydrogenPointer.baseAddress,
+                                                            Int32(bonds.count),
+                                                            bondFromPointer.baseAddress,
+                                                            bondToPointer.baseAddress,
+                                                            bondOrderPointer.baseAddress,
+                                                            Int32(stereoCenters.count),
+                                                            stereoTypePointer.baseAddress,
+                                                            stereoCenterPointer.baseAddress,
+                                                            stereoNeighborPointer.baseAddress,
+                                                            stereoParityPointer.baseAddress,
+                                                            &result
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

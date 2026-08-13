@@ -109,6 +109,31 @@ final class CMLReaderPortTests: XCTestCase {
         XCTAssertEqual(molecule.bonds.map(\.stereo), [.down, .up, .up, .up])
     }
 
+    func testParsesDoubleBondStereoAndReferenceOrder() throws {
+        let text = """
+        <molecule id="trans-2-butene">
+          <atomArray>
+            <atom id="a1" elementType="C" />
+            <atom id="a2" elementType="C" />
+            <atom id="a3" elementType="C" />
+            <atom id="a4" elementType="C" />
+          </atomArray>
+          <bondArray>
+            <bond atomRefs2="a1 a2" order="S" />
+            <bond atomRefs2="a2 a3" order="D">
+              <bondStereo atomRefs4="a1 a2 a3 a4">T</bondStereo>
+            </bond>
+            <bond atomRefs2="a3 a4" order="S" />
+          </bondArray>
+        </molecule>
+        """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: text).first)
+        let doubleBond = try XCTUnwrap(molecule.bond(between: 2, and: 3))
+        XCTAssertEqual(doubleBond.doubleBondStereo, .trans)
+        XCTAssertEqual(doubleBond.stereoReferenceAtomIDs, [1, 2, 3, 4])
+    }
+
     func testParsesAtomParityAndInfersDisplayStereoAfterLayout() throws {
         let text = """
         <cml>

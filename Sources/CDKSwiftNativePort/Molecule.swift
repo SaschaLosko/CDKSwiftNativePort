@@ -58,6 +58,11 @@ public enum BondStereo: Codable, Hashable, Sendable {
     }
 }
 
+public enum DoubleBondStereo: String, Codable, Hashable, Sendable {
+    case cis
+    case trans
+}
+
 public enum AtomChirality: Codable, Hashable, Sendable {
     case none
     case clockwise
@@ -392,6 +397,8 @@ public struct Bond: Identifiable, Hashable, Codable, Sendable {
     public let a2: Int
     public var order: BondOrder
     public var stereo: BondStereo = .none
+    public var doubleBondStereo: DoubleBondStereo? = nil
+    public var stereoReferenceAtomIDs: [Int]? = nil
     public var queryType: BondQueryType? = nil
     public var topology: BondTopology? = nil
 
@@ -401,6 +408,8 @@ public struct Bond: Identifiable, Hashable, Codable, Sendable {
                 a2: Int,
                 order: BondOrder,
                 stereo: BondStereo = .none,
+                doubleBondStereo: DoubleBondStereo? = nil,
+                stereoReferenceAtomIDs: [Int]? = nil,
                 queryType: BondQueryType? = nil,
                 topology: BondTopology? = nil) {
         self.id = id
@@ -409,6 +418,8 @@ public struct Bond: Identifiable, Hashable, Codable, Sendable {
         self.a2 = a2
         self.order = order
         self.stereo = stereo
+        self.doubleBondStereo = doubleBondStereo
+        self.stereoReferenceAtomIDs = stereoReferenceAtomIDs
         self.queryType = queryType
         self.topology = topology
     }

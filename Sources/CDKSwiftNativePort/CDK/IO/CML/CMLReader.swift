@@ -59,6 +59,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         let refB: String
         var order: BondOrder
         var stereo: BondStereo
+        var doubleBondStereo: DoubleBondStereo?
+        var stereoReferenceAtomRefs: [String]?
         var aromatic: Bool
         var hadExplicitOrder: Bool
     }
@@ -214,7 +216,11 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                                   a1: a1,
                                   a2: a2,
                                   order: bondSource.order,
-                                  stereo: bondSource.stereo))
+                                  stereo: bondSource.stereo,
+                                  doubleBondStereo: bondSource.doubleBondStereo,
+                                  stereoReferenceAtomIDs: bondSource.stereoReferenceAtomRefs?.compactMap {
+                                      atomIDByXMLID[$0]
+                                  }))
                 if bondSource.aromatic || bondSource.order == .aromatic {
                     aromaticIDs.insert(a1)
                     aromaticIDs.insert(a2)
@@ -306,6 +312,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                            refB: refs[1],
                            order: order,
                            stereo: .none,
+                           doubleBondStereo: nil,
+                           stereoReferenceAtomRefs: nil,
                            aromatic: order == .aromatic || isTruthy(attributes["aromatic"]),
                            hadExplicitOrder: rawOrder?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
     }
@@ -375,6 +383,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                                                   refB: refs2[idx],
                                                   order: order,
                                                   stereo: .none,
+                                                  doubleBondStereo: nil,
+                                                  stereoReferenceAtomRefs: nil,
                                                   aromatic: order == .aromatic,
                                                   hadExplicitOrder: rawOrder?.isEmpty == false))
             }
@@ -394,6 +404,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                                                   refB: tokens[idx + 1],
                                                   order: order,
                                                   stereo: .none,
+                                                  doubleBondStereo: nil,
+                                                  stereoReferenceAtomRefs: nil,
                                                   aromatic: order == .aromatic,
                                                   hadExplicitOrder: rawOrder?.isEmpty == false))
                 pairIndex += 1
@@ -406,6 +418,13 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         switch capture.elementName {
         case "bondstereo":
             guard currentBond != nil else { return }
+            if let doubleBondStereo = parseDoubleBondStereo(attributes: capture.attributes, text: capture.text) {
+                currentBond?.doubleBondStereo = doubleBondStereo
+                let refs = capture.attributes["atomRefs4"]?
+                    .split(whereSeparator: \.isWhitespace)
+                    .map(String.init)
+                currentBond?.stereoReferenceAtomRefs = refs?.count == 4 ? refs : nil
+            }
             if let stereo = parseBondStereo(attributes: capture.attributes, text: capture.text) {
                 currentBond?.stereo = stereo
             }
@@ -650,6 +669,18 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             return stereo
         }
         return bondStereoTokenToValue(text)
+    }
+
+    private func parseDoubleBondStereo(attributes: [String: String], text: String) -> DoubleBondStereo? {
+        let raw = attributes["dictRef"].map { String($0.split(separator: ":").last ?? "") } ?? text
+        switch raw.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+        case "C", "CIS":
+            return .cis
+        case "T", "TRANS":
+            return .trans
+        default:
+            return nil
+        }
     }
 
     private func bondStereoTokenToValue(_ raw: String) -> BondStereo? {

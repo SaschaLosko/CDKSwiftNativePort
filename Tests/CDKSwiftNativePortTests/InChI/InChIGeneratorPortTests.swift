@@ -94,6 +94,41 @@ final class InChIGeneratorPortTests: XCTestCase {
         }
     }
 
+    func testGeneratesDeterministicNativeInchiForCMLDoubleBondStereo() throws {
+        let cases = [
+            ("cis-2-butene", "C", "InChI=1S/C4H8/c1-3-4-2/h3-4H,1-2H3/b4-3-", "IAQRGUVFOMOMEM-ARJAWSKDSA-N"),
+            ("trans-2-butene", "T", "InChI=1S/C4H8/c1-3-4-2/h3-4H,1-2H3/b4-3+", "IAQRGUVFOMOMEM-ONEGZZNKSA-N"),
+        ]
+
+        for (name, stereo, expectedInChI, expectedKey) in cases {
+            let cml = """
+            <molecule id="\(name)">
+              <atomArray>
+                <atom id="a1" elementType="C" />
+                <atom id="a2" elementType="C" />
+                <atom id="a3" elementType="C" />
+                <atom id="a4" elementType="C" />
+              </atomArray>
+              <bondArray>
+                <bond atomRefs2="a1 a2" order="S" />
+                <bond atomRefs2="a2 a3" order="D">
+                  <bondStereo atomRefs4="a1 a2 a3 a4">\(stereo)</bondStereo>
+                </bond>
+                <bond atomRefs2="a3 a4" order="S" />
+              </bondArray>
+            </molecule>
+            """
+
+            let molecule = try XCTUnwrap(CDKCMLReader.read(text: cml).first)
+            for _ in 0..<10 {
+                let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+                XCTAssertEqual(generator.getStatus(), .success, name)
+                XCTAssertEqual(try generator.getInchi(), expectedInChI, name)
+                XCTAssertEqual(try generator.getInchiKey(), expectedKey, name)
+            }
+        }
+    }
+
     func testNativeInchiPreservesZeroDimensionalStereoForBridgedRings() throws {
         let cases = [
             (

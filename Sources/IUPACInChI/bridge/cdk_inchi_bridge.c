@@ -165,6 +165,7 @@ static int cdk_inchi_generate_atoms(int atom_count,
                                     const int *bond_to,
                                     const int *bond_order,
                                     int stereo_count,
+                                    const int *stereo_types,
                                     const int *stereo_centers,
                                     const int *stereo_neighbors,
                                     const int *stereo_parities,
@@ -232,15 +233,19 @@ static int cdk_inchi_generate_atoms(int atom_count,
 
     for (int i = 0; i < stereo_count; i++)
     {
+        int stereo_type = stereo_types ? stereo_types[i] : INCHI_StereoType_Tetrahedral;
         int center = stereo_centers[i];
-        if (center < 0 || center >= atom_count)
+        if ((stereo_type == INCHI_StereoType_Tetrahedral && (center < 0 || center >= atom_count)) ||
+            (stereo_type == INCHI_StereoType_DoubleBond && center != NO_ATOM) ||
+            (stereo_type != INCHI_StereoType_Tetrahedral &&
+             stereo_type != INCHI_StereoType_DoubleBond))
         {
             free(stereo0D);
             free(atoms);
             return 2;
         }
         stereo0D[i].central_atom = (AT_NUM) center;
-        stereo0D[i].type = INCHI_StereoType_Tetrahedral;
+        stereo0D[i].type = (S_CHAR) stereo_type;
         stereo0D[i].parity = (S_CHAR) stereo_parities[i];
         for (int j = 0; j < 4; j++)
         {
@@ -304,6 +309,7 @@ int cdk_inchi_generate_standard_atoms(int atom_count,
                                     bond_to,
                                     bond_order,
                                     stereo_count,
+                                    NULL,
                                     stereo_centers,
                                     stereo_neighbors,
                                     stereo_parities,
@@ -338,6 +344,79 @@ int cdk_inchi_generate_fixed_h_atoms(int atom_count,
                                     bond_to,
                                     bond_order,
                                     stereo_count,
+                                    NULL,
+                                    stereo_centers,
+                                    stereo_neighbors,
+                                    stereo_parities,
+                                    1,
+                                    result);
+}
+
+int cdk_inchi_generate_standard_atoms_with_stereo_types(int atom_count,
+                                                        const char *atom_symbols,
+                                                        int atom_symbol_stride,
+                                                        const int *atom_charges,
+                                                        const int *atom_isotopes,
+                                                        const int *atom_implicit_hydrogens,
+                                                        int bond_count,
+                                                        const int *bond_from,
+                                                        const int *bond_to,
+                                                        const int *bond_order,
+                                                        int stereo_count,
+                                                        const int *stereo_types,
+                                                        const int *stereo_centers,
+                                                        const int *stereo_neighbors,
+                                                        const int *stereo_parities,
+                                                        CDKInChIResult *result)
+{
+    return cdk_inchi_generate_atoms(atom_count,
+                                    atom_symbols,
+                                    atom_symbol_stride,
+                                    atom_charges,
+                                    atom_isotopes,
+                                    atom_implicit_hydrogens,
+                                    bond_count,
+                                    bond_from,
+                                    bond_to,
+                                    bond_order,
+                                    stereo_count,
+                                    stereo_types,
+                                    stereo_centers,
+                                    stereo_neighbors,
+                                    stereo_parities,
+                                    0,
+                                    result);
+}
+
+int cdk_inchi_generate_fixed_h_atoms_with_stereo_types(int atom_count,
+                                                       const char *atom_symbols,
+                                                       int atom_symbol_stride,
+                                                       const int *atom_charges,
+                                                       const int *atom_isotopes,
+                                                       const int *atom_implicit_hydrogens,
+                                                       int bond_count,
+                                                       const int *bond_from,
+                                                       const int *bond_to,
+                                                       const int *bond_order,
+                                                       int stereo_count,
+                                                       const int *stereo_types,
+                                                       const int *stereo_centers,
+                                                       const int *stereo_neighbors,
+                                                       const int *stereo_parities,
+                                                       CDKInChIResult *result)
+{
+    return cdk_inchi_generate_atoms(atom_count,
+                                    atom_symbols,
+                                    atom_symbol_stride,
+                                    atom_charges,
+                                    atom_isotopes,
+                                    atom_implicit_hydrogens,
+                                    bond_count,
+                                    bond_from,
+                                    bond_to,
+                                    bond_order,
+                                    stereo_count,
+                                    stereo_types,
                                     stereo_centers,
                                     stereo_neighbors,
                                     stereo_parities,
