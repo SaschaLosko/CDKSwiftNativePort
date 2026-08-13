@@ -129,6 +129,34 @@ final class InChIGeneratorPortTests: XCTestCase {
         }
     }
 
+    func testGeneratedCMLCoordinatesDoNotInventDoubleBondStereo() throws {
+        let cml = """
+            <molecule id="unspecified-2-butene">
+              <atomArray>
+                <atom id="a1" elementType="C" />
+                <atom id="a2" elementType="C" />
+                <atom id="a3" elementType="C" />
+                <atom id="a4" elementType="C" />
+              </atomArray>
+              <bondArray>
+                <bond atomRefs2="a1 a2" order="S" />
+                <bond atomRefs2="a2 a3" order="D" />
+                <bond atomRefs2="a3 a4" order="S" />
+              </bondArray>
+            </molecule>
+            """
+
+        let molecule = try XCTUnwrap(CDKCMLReader.read(text: cml).first)
+        XCTAssertEqual(molecule.coordinatesAreGenerated, true)
+
+        for _ in 0..<10 {
+            let generator = CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule)
+            XCTAssertEqual(generator.getStatus(), .success)
+            XCTAssertEqual(try generator.getInchi(), "InChI=1S/C4H8/c1-3-4-2/h3-4H,1-2H3")
+            XCTAssertEqual(try generator.getInchiKey(), "IAQRGUVFOMOMEM-UHFFFAOYSA-N")
+        }
+    }
+
     func testNativeInchiPreservesZeroDimensionalStereoForBridgedRings() throws {
         let cases = [
             (

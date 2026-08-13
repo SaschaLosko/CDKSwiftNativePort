@@ -437,6 +437,9 @@ public struct Molecule: Hashable, Codable, Sendable {
     public var dataFields: [String: [String]] = [:]
     public var dataFieldOrder: [String] = []
     public var rGroupLogicDefinitions: [Int: MoleculeRGroupLogic] = [:]
+    /// `true` when coordinates were synthesized for depiction rather than supplied by the source.
+    /// Identity generators must not infer otherwise unspecified stereochemistry from these coordinates.
+    public var coordinatesAreGenerated: Bool? = nil
 
     public var atomCount: Int { atoms.count }
     public var bondCount: Int { bonds.count }
@@ -456,6 +459,7 @@ public struct Molecule: Hashable, Codable, Sendable {
         case dataFields
         case dataFieldOrder
         case rGroupLogicDefinitions
+        case coordinatesAreGenerated
     }
 
     public func indexOfAtom(id: Int) -> Int? {

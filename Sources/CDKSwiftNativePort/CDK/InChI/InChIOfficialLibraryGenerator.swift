@@ -14,8 +14,10 @@ enum CDKInChIOfficialLibraryGenerator {
         mode: Mode = .standard
     ) throws -> CDKInChINativeGenerationResult {
         let normalized = normalizeInput(molecule)
+        let hasExplicitWedgeStereo = normalized.bonds.contains { $0.stereo != .none }
         if normalized.atoms.contains(where: { $0.ligandOrderingAtomIDs?.count == 4 })
             || normalized.bonds.contains(where: { $0.doubleBondStereo != nil })
+            || (normalized.coordinatesAreGenerated == true && !hasExplicitWedgeStereo)
         {
             return try generateFromAtoms(normalized, mode: mode)
         }

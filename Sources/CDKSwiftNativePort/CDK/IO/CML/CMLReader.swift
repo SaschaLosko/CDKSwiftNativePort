@@ -239,6 +239,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             var molecule = Molecule(name: moleculeName, atoms: atoms, bonds: bonds)
             if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
                 molecule = Depiction2DGenerator.generate(for: molecule)
+                molecule.coordinatesAreGenerated = true
             }
             molecule.assignWedgeHashFromChiralCenters()
             output.append(molecule)
