@@ -14,6 +14,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.26] - 2026-08-15
+
+### Fixed
+
+- Preserved explicit MDL V2000 atom valence fields even when they equal the
+  element's default valence, preventing hydrogen changes after metal
+  disconnection during Standard and Fixed-H InChI generation.
+
 ## [1.4.23] - 2026-08-11
 
 ### Changed

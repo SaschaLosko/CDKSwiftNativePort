@@ -96,6 +96,50 @@ final class MDLV2000WriterTests: XCTestCase {
         XCTAssertTrue(text.contains("C   0  0  1  0  0 15  0  0  0  7"))
     }
 
+    func testPreservesExplicitDefaultValenceForChEBIIronSulfurCluster() throws {
+        let source = """
+        CHEBI:33740
+          Marvin  03051214042D
+
+          7  9  0  0  0  0            999 V2000
+            0.4125    0.4125    0.0000 S   0  5  0  0  0  2  0  0  0  0  0  0
+           -0.4125   -0.4125    0.0000 S   0  0  0  0  0  3  0  0  0  0  0  0
+            0.4125   -0.4125    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+           -0.4125    0.4125    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+           -0.8690   -0.8690    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+           -0.8690   -0.0440    0.0000 S   0  5  0  0  0  2  0  0  0  0  0  0
+           -0.0440   -0.8690    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+          3  2  1  0  0  0  0
+          3  1  1  0  0  0  0
+          2  4  1  0  0  0  0
+          1  4  1  0  0  0  0
+          2  5  1  0  0  0  0
+          3  7  1  0  0  0  0
+          4  6  1  0  0  0  0
+          6  5  1  0  0  0  0
+          5  7  1  0  0  0  0
+        M  CHG  2   1  -1   6  -1
+        M  END
+        """
+        let molecule = try CDKMDLV2000Reader.read(text: source)
+
+        XCTAssertEqual(molecule.atoms[0].valenceOverride, 2)
+        XCTAssertEqual(molecule.atoms[5].valenceOverride, 2)
+
+        let serialized = try CDKMDLV2000Writer.write(molecule)
+        let reparsed = try CDKMDLV2000Reader.read(text: serialized)
+        XCTAssertEqual(reparsed.atoms[0].valenceOverride, 2)
+        XCTAssertEqual(reparsed.atoms[5].valenceOverride, 2)
+
+        let identifiers = CDKMoleculeIdentifierService.compute(
+            for: molecule,
+            recalculateInChI: true)
+        XCTAssertEqual(identifiers.inchi, "InChI=1S/3Fe.4S/q;;;;;2*-1")
+        XCTAssertEqual(identifiers.inchiKey, "ZCPXJLJVCGFYTC-UHFFFAOYSA-N")
+        XCTAssertEqual(identifiers.fixedHInchi, "InChI=1/3Fe.4S/q;;;;;2*-1")
+        XCTAssertEqual(identifiers.fixedHInchiKey, "ZCPXJLJVCGFYTC-UHFFFAOYNA-N")
+    }
+
     func testWritesSgroupsAndDataSgroups() throws {
         var molecule = Molecule(
             name: "Sgroups",

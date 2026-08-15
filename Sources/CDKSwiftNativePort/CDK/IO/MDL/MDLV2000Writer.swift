@@ -406,19 +406,18 @@ public enum CDKMDLV2000Writer {
     }
 
     private static func atomValenceField(for atom: Atom, in molecule: Molecule) -> Int {
-        let actualValence: Int?
         if let override = atom.valenceOverride {
-            actualValence = override
-        } else if let explicitHydrogenCount = atom.explicitHydrogenCount {
-            let explicitValence = molecule.bonds(forAtom: atom.id).reduce(0) { partial, bond in
-                partial + bondOrderContribution(for: bond.order)
+            if override == 0 {
+                return 15
             }
-            actualValence = explicitValence + max(0, explicitHydrogenCount)
-        } else {
-            actualValence = nil
+            return (1...14).contains(override) ? override : 0
         }
 
-        guard let actualValence else { return 0 }
+        guard let explicitHydrogenCount = atom.explicitHydrogenCount else { return 0 }
+        let explicitValence = molecule.bonds(forAtom: atom.id).reduce(0) { partial, bond in
+            partial + bondOrderContribution(for: bond.order)
+        }
+        let actualValence = explicitValence + max(0, explicitHydrogenCount)
 
         if actualValence == 0 {
             return 15
