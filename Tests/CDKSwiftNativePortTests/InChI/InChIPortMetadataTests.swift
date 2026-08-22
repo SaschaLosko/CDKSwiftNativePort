@@ -26,11 +26,14 @@ final class InChIPortMetadataTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(metadata.schemaVersion, 1)
         XCTAssertFalse(metadata.suite.isEmpty)
-        XCTAssertEqual(metadata.cdkReferenceVersion, "2.11")
-        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.11")
+        XCTAssertEqual(metadata.cdkReferenceVersion, "2.13")
+        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.13")
 
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("InChIGeneratorTest.java") }))
-        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("InChIToStructureTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("InChIToStructureTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("InChINumbersToolsTest.java") }))
         XCTAssertGreaterThanOrEqual(metadata.portedCases.count, 8)
         XCTAssertTrue(metadata.portedCases.allSatisfy { !$0.id.isEmpty && !$0.source.isEmpty })
 

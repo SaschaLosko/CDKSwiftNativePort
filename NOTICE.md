@@ -7,7 +7,7 @@ Upstream project:
 - https://github.com/cdk/cdk
 
 Reference target used for parity work in this port:
-- CDK 2.12
+- CDK 2.13 (`cdk-2.13`, commit `3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`)
 
 `CDKSwiftNativePort` also vendors the official IUPAC InChI source distribution
 as the `IUPACInChI` SwiftPM C target.

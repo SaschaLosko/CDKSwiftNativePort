@@ -148,6 +148,6 @@ The package test layout is organized by capability rather than by app feature:
 Coverage focuses on:
 
 - reader/writer round trips
-- parity-oriented cases ported from upstream CDK 2.12
+- parity-oriented cases ported from upstream CDK 2.13
 - depiction behavior in both SVG and scene-generation paths
 - boundary enforcement between the package and the host app

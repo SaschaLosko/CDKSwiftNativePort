@@ -1,25 +1,28 @@
+import Foundation
+
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 #if canImport(CoreText)
-import CoreText
+    import CoreText
 #endif
-import Foundation
 
 enum CDKLabelText {
     private static let superscriptDigits: [Character: Character] = [
         "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
-        "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹"
+        "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
     ]
 
-    static func shouldDrawLabel(atom: Atom,
-                                degree: Int,
-                                style: RenderStyle,
-                                includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = false,
-                                includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = false,
-                                molecule: Molecule? = nil,
-                                highlightedAtomIDs: Set<Int> = [],
-                                highlightedBondIDs: Set<Int> = []) -> Bool {
+    static func shouldDrawLabel(
+        atom: Atom,
+        degree: Int,
+        style: RenderStyle,
+        includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = false,
+        includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = false,
+        molecule: Molecule? = nil,
+        highlightedAtomIDs: Set<Int> = [],
+        highlightedBondIDs: Set<Int> = []
+    ) -> Bool {
         let trimmedElement = atom.element.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedElement.isEmpty {
             return false
@@ -36,10 +39,12 @@ enum CDKLabelText {
                 return false
             }
             if let molecule,
-               CDKSelectionVisibility.shouldForceVisible(atom: atom,
-                                                        in: molecule,
-                                                        highlightedAtomIDs: highlightedAtomIDs,
-                                                        highlightedBondIDs: highlightedBondIDs) {
+                CDKSelectionVisibility.shouldForceVisible(
+                    atom: atom,
+                    in: molecule,
+                    highlightedAtomIDs: highlightedAtomIDs,
+                    highlightedBondIDs: highlightedBondIDs)
+            {
                 return true
             }
             if atom.aromatic && includeAromaticCarbonLabelsWhenCarbonsHidden {
@@ -56,8 +61,8 @@ enum CDKLabelText {
     static func chargeText(for atom: Atom) -> String {
         guard atom.charge != 0 else { return "" }
         if atom.charge == 1 { return "+" }
-        if atom.charge == -1 { return "−" }
-        return atom.charge > 0 ? "+\(atom.charge)" : "−\(-atom.charge)"
+        if atom.charge == -1 { return "-" }
+        return atom.charge > 0 ? "+\(atom.charge)" : "-\(-atom.charge)"
     }
 
     static func hydrogenText(atom: Atom, style: RenderStyle, implicitHydrogenCount: Int) -> String {
@@ -139,10 +144,12 @@ enum CDKLabelText {
         return label
     }
 
-    static func centerOffset(atom: Atom,
-                             style: RenderStyle,
-                             implicitHydrogenCount: Int,
-                             fontSize: CGFloat) -> CGVector {
+    static func centerOffset(
+        atom: Atom,
+        style: RenderStyle,
+        implicitHydrogenCount: Int,
+        fontSize: CGFloat
+    ) -> CGVector {
         // Keep the atom symbol centered on the atomic anchor even when
         // suffix text (e.g. "H" in "OH") is displayed.
         guard !style.showAtomIDs, !style.showAtomMapNumbers else { return .zero }
@@ -193,54 +200,67 @@ enum CDKLabelClipping {
     static func makeLabelRect(center: CGPoint, estimatedTextSize: CGSize) -> CGRect {
         let width = estimatedTextSize.width + 8
         let height = estimatedTextSize.height + 6
-        return CGRect(x: center.x - width * 0.5,
-                      y: center.y - height * 0.5,
-                      width: width,
-                      height: height)
+        return CGRect(
+            x: center.x - width * 0.5,
+            y: center.y - height * 0.5,
+            width: width,
+            height: height)
     }
 
-    static func makeGlyphObstacle(text: String,
-                                  center: CGPoint,
-                                  fontSize: CGFloat,
-                                  padding: CGFloat) -> CDKLabelObstacle {
+    static func makeGlyphObstacle(
+        text: String,
+        center: CGPoint,
+        fontSize: CGFloat,
+        padding: CGFloat
+    ) -> CDKLabelObstacle {
         guard let glyphPath = makeGlyphPath(text: text, center: center, fontSize: fontSize) else {
             let estimate = estimateLabelSize(text: text, fontSize: fontSize)
-            let rect = CGRect(x: center.x - estimate.width * 0.5,
-                              y: center.y - estimate.height * 0.5,
-                              width: estimate.width,
-                              height: estimate.height)
-                .insetBy(dx: -padding, dy: -padding)
+            let rect = CGRect(
+                x: center.x - estimate.width * 0.5,
+                y: center.y - estimate.height * 0.5,
+                width: estimate.width,
+                height: estimate.height
+            )
+            .insetBy(dx: -padding, dy: -padding)
             return CDKLabelObstacle(rect: rect)
         }
 
         let carrierInset = max(1.0, padding * 0.35)
         let carrierRect = glyphPath.boundingBoxOfPath.insetBy(dx: -carrierInset, dy: -carrierInset)
         let corner = max(2.0, fontSize * 0.16)
-        let carrierPath = CGPath(roundedRect: carrierRect,
-                                 cornerWidth: corner,
-                                 cornerHeight: corner,
-                                 transform: nil)
+        let carrierPath = CGPath(
+            roundedRect: carrierRect,
+            cornerWidth: corner,
+            cornerHeight: corner,
+            transform: nil)
 
         if padding <= 0.0001 {
             return CDKLabelObstacle(fillPath: carrierPath, clipPath: glyphPath)
         }
 
-        let expanded = glyphPath.copy(strokingWithWidth: max(0.2, padding * 2),
-                                      lineCap: .round,
-                                      lineJoin: .round,
-                                      miterLimit: 2.0)
+        let expanded = glyphPath.copy(
+            strokingWithWidth: max(0.2, padding * 2),
+            lineCap: .round,
+            lineJoin: .round,
+            miterLimit: 2.0)
         return CDKLabelObstacle(fillPath: carrierPath, clipPath: expanded)
     }
 
-    static func makeGlyphObstacles(_ labels: [(text: String, center: CGPoint, fontSize: CGFloat)],
-                                   padding: CGFloat) -> [CDKLabelObstacle] {
-        labels.map { makeGlyphObstacle(text: $0.text, center: $0.center, fontSize: $0.fontSize, padding: padding) }
+    static func makeGlyphObstacles(
+        _ labels: [(text: String, center: CGPoint, fontSize: CGFloat)],
+        padding: CGFloat
+    ) -> [CDKLabelObstacle] {
+        labels.map {
+            makeGlyphObstacle(text: $0.text, center: $0.center, fontSize: $0.fontSize, padding: padding)
+        }
     }
 
-    static func clipSegmentEndpoints(_ start: CGPoint,
-                                     _ end: CGPoint,
-                                     labelObstacles: [CDKLabelObstacle],
-                                     padding: CGFloat) -> (CGPoint, CGPoint)? {
+    static func clipSegmentEndpoints(
+        _ start: CGPoint,
+        _ end: CGPoint,
+        labelObstacles: [CDKLabelObstacle],
+        padding: CGFloat
+    ) -> (CGPoint, CGPoint)? {
         let dx = end.x - start.x
         let dy = end.y - start.y
         let len = hypot(dx, dy)
@@ -258,10 +278,11 @@ enum CDKLabelClipping {
         for obstacle in labelObstacles {
             let currentStart = point(at: t0)
             let currentEnd = point(at: t1)
-            let currentBounds = CGRect(x: min(currentStart.x, currentEnd.x),
-                                       y: min(currentStart.y, currentEnd.y),
-                                       width: abs(currentEnd.x - currentStart.x),
-                                       height: abs(currentEnd.y - currentStart.y))
+            let currentBounds = CGRect(
+                x: min(currentStart.x, currentEnd.x),
+                y: min(currentStart.y, currentEnd.y),
+                width: abs(currentEnd.x - currentStart.x),
+                height: abs(currentEnd.y - currentStart.y))
             if !currentBounds.intersects(obstacle.bounds.insetBy(dx: -0.5, dy: -0.5)) {
                 continue
             }
@@ -273,22 +294,28 @@ enum CDKLabelClipping {
             }
 
             if startInside {
-                guard let exitT = findBoundaryT(from: t0,
-                                                to: t1,
-                                                startInside: true,
-                                                pointAt: point,
-                                                contains: obstacle.contains) else {
+                guard
+                    let exitT = findBoundaryT(
+                        from: t0,
+                        to: t1,
+                        startInside: true,
+                        pointAt: point,
+                        contains: obstacle.contains)
+                else {
                     return nil
                 }
                 t0 = min(t1, exitT + tPadding)
             }
 
             if endInside {
-                guard let enterT = findBoundaryT(from: t1,
-                                                 to: t0,
-                                                 startInside: true,
-                                                 pointAt: point,
-                                                 contains: obstacle.contains) else {
+                guard
+                    let enterT = findBoundaryT(
+                        from: t1,
+                        to: t0,
+                        startInside: true,
+                        pointAt: point,
+                        contains: obstacle.contains)
+                else {
                     return nil
                 }
                 t1 = max(t0, enterT - tPadding)
@@ -303,21 +330,25 @@ enum CDKLabelClipping {
     }
 
     // Backward-compatible rect clipping entry used by tests and fallback callers.
-    static func clipSegmentEndpoints(_ start: CGPoint,
-                                     _ end: CGPoint,
-                                     labelRects: [CGRect],
-                                     padding: CGFloat) -> (CGPoint, CGPoint)? {
+    static func clipSegmentEndpoints(
+        _ start: CGPoint,
+        _ end: CGPoint,
+        labelRects: [CGRect],
+        padding: CGFloat
+    ) -> (CGPoint, CGPoint)? {
         let obstacles = labelRects.map { rect in
             CDKLabelObstacle(rect: rect.insetBy(dx: -padding * 0.35, dy: -padding * 0.35))
         }
         return clipSegmentEndpoints(start, end, labelObstacles: obstacles, padding: padding)
     }
 
-    private static func findBoundaryT(from startT: CGFloat,
-                                      to endT: CGFloat,
-                                      startInside: Bool,
-                                      pointAt: (CGFloat) -> CGPoint,
-                                      contains: (CGPoint) -> Bool) -> CGFloat? {
+    private static func findBoundaryT(
+        from startT: CGFloat,
+        to endT: CGFloat,
+        startInside: Bool,
+        pointAt: (CGFloat) -> CGPoint,
+        contains: (CGPoint) -> Bool
+    ) -> CGFloat? {
         let samples = 84
         let step = (endT - startT) / CGFloat(samples)
         var prevT = startT
@@ -349,50 +380,52 @@ enum CDKLabelClipping {
 
     private static func makeGlyphPath(text: String, center: CGPoint, fontSize: CGFloat) -> CGPath? {
         #if canImport(CoreText)
-        guard !text.isEmpty else { return nil }
+            guard !text.isEmpty else { return nil }
 
-        let fontName = "Helvetica-Bold" as CFString
-        let ctFont = CTFontCreateWithName(fontName, max(6, fontSize), nil)
-        let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key(rawValue: kCTFontAttributeName as String): ctFont
-        ]
-        let attributed = NSAttributedString(string: text, attributes: attributes)
-        let line = CTLineCreateWithAttributedString(attributed)
-        let lineBounds = CTLineGetBoundsWithOptions(line, [.useGlyphPathBounds, .useOpticalBounds])
-        if lineBounds.isNull || lineBounds.isEmpty || !lineBounds.width.isFinite || !lineBounds.height.isFinite {
-            return nil
-        }
-
-        let lineOrigin = CGPoint(x: center.x - lineBounds.midX, y: center.y - lineBounds.midY)
-        let runs = CTLineGetGlyphRuns(line)
-        let runCount = CFArrayGetCount(runs)
-        let path = CGMutablePath()
-
-        for runIndex in 0..<runCount {
-            let runValue = CFArrayGetValueAtIndex(runs, runIndex)
-            let run = unsafeBitCast(runValue, to: CTRun.self)
-            let runAttributes = CTRunGetAttributes(run) as NSDictionary
-            let runFont = (runAttributes[kCTFontAttributeName] as! CTFont?) ?? ctFont
-            let glyphCount = CTRunGetGlyphCount(run)
-            if glyphCount <= 0 { continue }
-
-            var glyphs = Array(repeating: CGGlyph(), count: glyphCount)
-            var positions = Array(repeating: CGPoint.zero, count: glyphCount)
-            CTRunGetGlyphs(run, CFRangeMake(0, 0), &glyphs)
-            CTRunGetPositions(run, CFRangeMake(0, 0), &positions)
-
-            for i in 0..<glyphCount {
-                guard let glyphPath = CTFontCreatePathForGlyph(runFont, glyphs[i], nil) else { continue }
-                let p = positions[i]
-                let transform = CGAffineTransform(translationX: lineOrigin.x + p.x, y: lineOrigin.y + p.y)
-                path.addPath(glyphPath, transform: transform)
+            let fontName = "Helvetica-Bold" as CFString
+            let ctFont = CTFontCreateWithName(fontName, max(6, fontSize), nil)
+            let attributes: [NSAttributedString.Key: Any] = [
+                NSAttributedString.Key(rawValue: kCTFontAttributeName as String): ctFont
+            ]
+            let attributed = NSAttributedString(string: text, attributes: attributes)
+            let line = CTLineCreateWithAttributedString(attributed)
+            let lineBounds = CTLineGetBoundsWithOptions(line, [.useGlyphPathBounds, .useOpticalBounds])
+            if lineBounds.isNull || lineBounds.isEmpty || !lineBounds.width.isFinite
+                || !lineBounds.height.isFinite
+            {
+                return nil
             }
-        }
 
-        guard !path.isEmpty else { return nil }
-        return path.copy()
+            let lineOrigin = CGPoint(x: center.x - lineBounds.midX, y: center.y - lineBounds.midY)
+            let runs = CTLineGetGlyphRuns(line)
+            let runCount = CFArrayGetCount(runs)
+            let path = CGMutablePath()
+
+            for runIndex in 0..<runCount {
+                let runValue = CFArrayGetValueAtIndex(runs, runIndex)
+                let run = unsafeBitCast(runValue, to: CTRun.self)
+                let runAttributes = CTRunGetAttributes(run) as NSDictionary
+                let runFont = (runAttributes[kCTFontAttributeName] as! CTFont?) ?? ctFont
+                let glyphCount = CTRunGetGlyphCount(run)
+                if glyphCount <= 0 { continue }
+
+                var glyphs = Array(repeating: CGGlyph(), count: glyphCount)
+                var positions = Array(repeating: CGPoint.zero, count: glyphCount)
+                CTRunGetGlyphs(run, CFRangeMake(0, 0), &glyphs)
+                CTRunGetPositions(run, CFRangeMake(0, 0), &positions)
+
+                for i in 0..<glyphCount {
+                    guard let glyphPath = CTFontCreatePathForGlyph(runFont, glyphs[i], nil) else { continue }
+                    let p = positions[i]
+                    let transform = CGAffineTransform(translationX: lineOrigin.x + p.x, y: lineOrigin.y + p.y)
+                    path.addPath(glyphPath, transform: transform)
+                }
+            }
+
+            guard !path.isEmpty else { return nil }
+            return path.copy()
         #else
-        return nil
+            return nil
         #endif
     }
 }

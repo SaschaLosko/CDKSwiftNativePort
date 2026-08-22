@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "suite": "CDK MDL/SDF Port",
-  "cdkReferenceVersion": "2.12",
-  "cdkReferenceTag": "cdk-2.12",
+  "cdkReferenceVersion": "2.13",
+  "cdkReferenceTag": "cdk-2.13",
   "sourceTests": [
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000ReaderTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000WriterTest.java",
@@ -95,6 +95,9 @@
     { "id": "sdf_writer_truncate_long_properties", "source": "SDFWriterTest" },
     { "id": "sdf_writer_program_name_header", "source": "SDFWriterTest" },
     { "id": "sdf_writer_single_racemic_group_stays_v2000", "source": "SDFWriterTest" },
-    { "id": "sdf_writer_relative_group_promotes_v3000", "source": "SDFWriterTest" }
+    { "id": "sdf_writer_relative_group_promotes_v3000", "source": "SDFWriterTest" },
+    { "id": "mdl_v2000_reacting_center_status", "source": "MDLV2000ReaderTest and MDLV2000WriterTest CDK 2.13 reacting-center status cases" },
+    { "id": "mdl_v3000_reacting_center_status", "source": "MDLV3000ReaderTest and MDLV3000WriterTest CDK 2.13 RXCTR cases" },
+    { "id": "rgfile_r0_partial_enumeration", "source": "RGroupQueryManipulatorTest and RGroupQueryWriterTest CDK 2.13 R0 and partial-definition cases" }
   ]
 }

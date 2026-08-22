@@ -1,6 +1,7 @@
 import Foundation
+
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 public struct CDKMDLV3000Scaffold: Hashable, Codable {
@@ -47,7 +48,8 @@ public enum CDKMDLV3000Reader {
     }
 
     public static func read(text: String) throws -> Molecule {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         return try read(lines: normalized.components(separatedBy: "\n"))
@@ -109,7 +111,8 @@ public enum CDKMDLV3000Reader {
         )
 
         molecule.sgroups.append(contentsOf: positionalVariationGroups)
-        applyCollectionSemantics(scaffold.collectionLines, chiralFlag: scaffold.chiralFlag, to: &molecule)
+        applyCollectionSemantics(
+            scaffold.collectionLines, chiralFlag: scaffold.chiralFlag, to: &molecule)
         applySGroupSemantics(scaffold.sgroupLines, to: &molecule)
         try applyRGroupBlocks(rgroupBlocks, to: &molecule)
         CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
@@ -122,7 +125,8 @@ public enum CDKMDLV3000Reader {
     }
 
     public static func parseScaffold(text: String) throws -> CDKMDLV3000Scaffold {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         return try parseScaffold(lines: normalized.components(separatedBy: "\n"))
@@ -144,9 +148,15 @@ public enum CDKMDLV3000Reader {
 
         let unfolded = unfoldV30Continuations(trimmed)
 
-        guard let beginCTAB = unfolded.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  V30 BEGIN CTAB" }),
-              let endCTAB = unfolded.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB" }),
-              beginCTAB < endCTAB else {
+        guard
+            let beginCTAB = unfolded.firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == "M  V30 BEGIN CTAB"
+            }),
+            let endCTAB = unfolded.firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB"
+            }),
+            beginCTAB < endCTAB
+        else {
             throw ChemError.parseFailed("V3000 CTAB block missing.")
         }
 
@@ -260,9 +270,15 @@ public enum CDKMDLV3000Reader {
 
     private static func parseRGroupBlocks(lines: [String]) throws -> [RGroupBlock] {
         let unfolded = unfoldV30Continuations(lines)
-        guard let beginCTAB = unfolded.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  V30 BEGIN CTAB" }),
-              let endCTAB = unfolded.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB" }),
-              beginCTAB < endCTAB else {
+        guard
+            let beginCTAB = unfolded.firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == "M  V30 BEGIN CTAB"
+            }),
+            let endCTAB = unfolded.firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == "M  V30 END CTAB"
+            }),
+            beginCTAB < endCTAB
+        else {
             return []
         }
 
@@ -313,7 +329,8 @@ public enum CDKMDLV3000Reader {
             }
 
             guard index < unfolded.count,
-                  unfolded[index].trimmingCharacters(in: .whitespaces) == "M  V30 END RGROUP" else {
+                unfolded[index].trimmingCharacters(in: .whitespaces) == "M  V30 END RGROUP"
+            else {
                 throw ChemError.parseFailed("Unterminated V3000 RGROUP block.")
             }
 
@@ -327,9 +344,10 @@ public enum CDKMDLV3000Reader {
     private static func parseAtom(rawLine: String) throws -> Atom {
         let fields = tokenizeV30(rawLine)
         guard fields.count >= 6,
-              let id = Int(fields[0]),
-              let x = Double(fields[2]),
-              let y = Double(fields[3]) else {
+            let id = Int(fields[0]),
+            let x = Double(fields[2]),
+            let y = Double(fields[3])
+        else {
             throw ChemError.parseFailed("Invalid V3000 atom line: \(rawLine)")
         }
 
@@ -363,9 +381,11 @@ public enum CDKMDLV3000Reader {
         }
 
         if let attrListValue = attributes["ATOMLIST"],
-           let parsed = parseAtomListValue(attrListValue) {
+            let parsed = parseAtomListValue(attrListValue)
+        {
             atomList = parsed.entries
-            atomListNegated = parsed.negated || parseBoolAttribute("NOT", attributes: attributes, bare: bareAttributes)
+            atomListNegated =
+                parsed.negated || parseBoolAttribute("NOT", attributes: attributes, bare: bareAttributes)
             queryType = .anyAtom
             element = "L"
             aromatic = false
@@ -392,10 +412,14 @@ public enum CDKMDLV3000Reader {
             atomListIsNegated: atomListNegated,
             radical: parseIntAttribute("RAD", in: attributes),
             rGroupLabel: parseRGroup(attributes),
-            substitutionCount: parseIntAttribute("SUBST", in: attributes) ?? parseIntAttribute("SUB", in: attributes),
-            unsaturated: parseIntAttribute("UNSAT", in: attributes) ?? parseIntAttribute("UNS", in: attributes),
-            ringBondCount: parseIntAttribute("RBCNT", in: attributes) ?? parseIntAttribute("RBC", in: attributes),
-            attachmentPoint: parseIntAttribute("ATTCHPT", in: attributes) ?? parseIntAttribute("APO", in: attributes),
+            substitutionCount: parseIntAttribute("SUBST", in: attributes)
+                ?? parseIntAttribute("SUB", in: attributes),
+            unsaturated: parseIntAttribute("UNSAT", in: attributes)
+                ?? parseIntAttribute("UNS", in: attributes),
+            ringBondCount: parseIntAttribute("RBCNT", in: attributes)
+                ?? parseIntAttribute("RBC", in: attributes),
+            attachmentPoint: parseIntAttribute("ATTCHPT", in: attributes)
+                ?? parseIntAttribute("APO", in: attributes),
             valenceOverride: parseIntAttribute("VAL", in: attributes),
             atomClass: atomAtomMapping,
             atomMapNumber: atomAtomMapping
@@ -415,9 +439,10 @@ public enum CDKMDLV3000Reader {
     private static func parseBond(rawLine: String, validAtomIDs: Set<Int>) throws -> BondParseResult {
         let fields = tokenizeV30(rawLine)
         guard fields.count >= 4,
-              let id = Int(fields[0]),
-              let a1 = Int(fields[2]),
-              let a2 = Int(fields[3]) else {
+            let id = Int(fields[0]),
+            let a1 = Int(fields[2]),
+            let a2 = Int(fields[3])
+        else {
             throw ChemError.parseFailed("Invalid V3000 bond line: \(rawLine)")
         }
 
@@ -430,7 +455,11 @@ public enum CDKMDLV3000Reader {
 
         let stereo = stereoFromCFG(attributes["CFG"])
         let topology = topologyFromToken(attributes["TOPO"])
-        let positionalVariation = positionalVariationSgroup(bondID: id, beginAtomID: a1, attributes: attributes)
+        let reactingCenterStatus = attributes["RXCTR"]
+            .flatMap(Int.init)
+            .flatMap(CDKMDLReactingCenterStatus.init(rawValue:))
+        let positionalVariation = positionalVariationSgroup(
+            bondID: id, beginAtomID: a1, attributes: attributes)
 
         return BondParseResult(
             bond: Bond(
@@ -440,7 +469,8 @@ public enum CDKMDLV3000Reader {
                 order: order,
                 stereo: stereo,
                 queryType: queryType,
-                topology: topology
+                topology: topology,
+                reactingCenterStatus: reactingCenterStatus
             ),
             positionalVariationSgroup: positionalVariation
         )
@@ -449,7 +479,8 @@ public enum CDKMDLV3000Reader {
     private static func parseAtomRecord(_ rawLine: String) throws -> CDKMDLV3000Scaffold.AtomRecord {
         let fields = tokenizeV30(rawLine)
         guard fields.count >= 5,
-              let index = Int(fields[0]) else {
+            let index = Int(fields[0])
+        else {
             throw ChemError.parseFailed("Invalid V3000 atom record: \(rawLine)")
         }
 
@@ -471,9 +502,10 @@ public enum CDKMDLV3000Reader {
     private static func parseBondRecord(_ rawLine: String) throws -> CDKMDLV3000Scaffold.BondRecord {
         let fields = tokenizeV30(rawLine)
         guard fields.count >= 4,
-              let index = Int(fields[0]),
-              let a1 = Int(fields[2]),
-              let a2 = Int(fields[3]) else {
+            let index = Int(fields[0]),
+            let a1 = Int(fields[2]),
+            let a2 = Int(fields[3])
+        else {
             throw ChemError.parseFailed("Invalid V3000 bond record: \(rawLine)")
         }
 
@@ -486,7 +518,9 @@ public enum CDKMDLV3000Reader {
         )
     }
 
-    private static func parseAttributes(_ tokens: ArraySlice<String>) -> ([String: String], Set<String>) {
+    private static func parseAttributes(_ tokens: ArraySlice<String>) -> (
+        [String: String], Set<String>
+    ) {
         var attributes: [String: String] = [:]
         var bare: Set<String> = []
 
@@ -504,21 +538,26 @@ public enum CDKMDLV3000Reader {
     }
 
     private static func parseIntAttribute(_ key: String, in attributes: [String: String]) -> Int? {
-        guard let raw = attributes[key.uppercased()]?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+        guard let raw = attributes[key.uppercased()]?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !raw.isEmpty
+        else {
             return nil
         }
         return Int(raw)
     }
 
-    private static func parseBoolAttribute(_ key: String,
-                                           attributes: [String: String],
-                                           bare: Set<String>) -> Bool {
+    private static func parseBoolAttribute(
+        _ key: String,
+        attributes: [String: String],
+        bare: Set<String>
+    ) -> Bool {
         let upper = key.uppercased()
         if bare.contains(upper) {
             return true
         }
 
-        guard let raw = attributes[upper]?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() else {
+        guard let raw = attributes[upper]?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        else {
             return false
         }
         return raw == "1" || raw == "T" || raw == "TRUE" || raw == "YES"
@@ -608,7 +647,9 @@ public enum CDKMDLV3000Reader {
         return (entries: entries, negated: negated)
     }
 
-    private static func parseSymbolAtomList(_ symbolToken: String) -> (entries: [String], negated: Bool)? {
+    private static func parseSymbolAtomList(_ symbolToken: String) -> (
+        entries: [String], negated: Bool
+    )? {
         var token = symbolToken.trimmingCharacters(in: .whitespacesAndNewlines)
         var negated = false
 
@@ -625,7 +666,8 @@ public enum CDKMDLV3000Reader {
         token.removeLast()
         token = token.replacingOccurrences(of: ",", with: " ")
 
-        let entries = token
+        let entries =
+            token
             .split(whereSeparator: \.isWhitespace)
             .map(String.init)
             .map(normalizeElementToken)
@@ -676,7 +718,9 @@ public enum CDKMDLV3000Reader {
         return trimmed
     }
 
-    private static func bondFromTypeToken(_ token: String, rawLine: String) throws -> (BondOrder, BondQueryType?) {
+    private static func bondFromTypeToken(_ token: String, rawLine: String) throws -> (
+        BondOrder, BondQueryType?
+    ) {
         switch token.uppercased() {
         case "1", "S":
             return (.single, nil)
@@ -695,7 +739,8 @@ public enum CDKMDLV3000Reader {
         case "8", "ANY", "Q":
             return (.single, .any)
         case "9", "10":
-            throw ChemError.parseFailed("Error while parsing bond type: Unsupported bond type: \(token), line='\(rawLine)'")
+            throw ChemError.parseFailed(
+                "Error while parsing bond type: Unsupported bond type: \(token), line='\(rawLine)'")
         default:
             if let numeric = Int(token) {
                 switch numeric {
@@ -708,18 +753,22 @@ public enum CDKMDLV3000Reader {
                 case 7: return (.double, .doubleOrAromatic)
                 case 8: return (.single, .any)
                 case 9, 10:
-                    throw ChemError.parseFailed("Error while parsing bond type: Unsupported bond type: \(token), line='\(rawLine)'")
+                    throw ChemError.parseFailed(
+                        "Error while parsing bond type: Unsupported bond type: \(token), line='\(rawLine)'")
                 default:
-                    throw ChemError.parseFailed("Error while parsing bond type: Invalid bond type: \(token), line='\(rawLine)'")
+                    throw ChemError.parseFailed(
+                        "Error while parsing bond type: Invalid bond type: \(token), line='\(rawLine)'")
                 }
             }
-            throw ChemError.parseFailed("Error while parsing bond type: Invalid bond type: \(token), line='\(rawLine)'")
+            throw ChemError.parseFailed(
+                "Error while parsing bond type: Invalid bond type: \(token), line='\(rawLine)'")
         }
     }
 
     private static func topologyFromToken(_ raw: String?) -> BondTopology? {
         guard let raw = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let value = Int(raw) else {
+            let value = Int(raw)
+        else {
             return nil
         }
         switch value {
@@ -732,24 +781,29 @@ public enum CDKMDLV3000Reader {
         }
     }
 
-    private static func positionalVariationSgroup(bondID: Int,
-                                                  beginAtomID: Int,
-                                                  attributes: [String: String]) -> MoleculeSgroup? {
+    private static func positionalVariationSgroup(
+        bondID: Int,
+        beginAtomID: Int,
+        attributes: [String: String]
+    ) -> MoleculeSgroup? {
         guard let attach = attributes["ATTACH"]?.uppercased(),
-              attach == "ANY" else {
+            attach == "ANY"
+        else {
             return nil
         }
         let endpointIDs = parseIntegerListValue(attributes["ENDPTS"] ?? "")
         guard !endpointIDs.isEmpty else { return nil }
-        return MoleculeSgroup(kind: .extMulticenter,
-                              keyword: "m",
-                              atomIDs: [beginAtomID] + endpointIDs,
-                              crossingBondIDs: [bondID])
+        return MoleculeSgroup(
+            kind: .extMulticenter,
+            keyword: "m",
+            atomIDs: [beginAtomID] + endpointIDs,
+            crossingBondIDs: [bondID])
     }
 
     private static func stereoFromCFG(_ rawCFG: String?) -> BondStereo {
         guard let raw = rawCFG?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let cfg = Int(raw) else {
+            let cfg = Int(raw)
+        else {
             return .none
         }
 
@@ -761,16 +815,20 @@ public enum CDKMDLV3000Reader {
         }
     }
 
-    private static func applyCollectionSemantics(_ lines: [String],
-                                                 chiralFlag: Int,
-                                                 to molecule: inout Molecule) {
+    private static func applyCollectionSemantics(
+        _ lines: [String],
+        chiralFlag: Int,
+        to molecule: inout Molecule
+    ) {
         if chiralFlag == 1 {
             for idx in molecule.atoms.indices where molecule.atoms[idx].chirality != .none {
-                molecule.atoms[idx].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0)
+                molecule.atoms[idx].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(
+                    kind: "abs", number: 0)
             }
         } else {
             for idx in molecule.atoms.indices where molecule.atoms[idx].chirality != .none {
-                molecule.atoms[idx].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1)
+                molecule.atoms[idx].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(
+                    kind: "or", number: 1)
             }
         }
 
@@ -802,16 +860,22 @@ public enum CDKMDLV3000Reader {
 
             if collectionType.contains("STE") {
                 for bondID in bondIDs {
-                    guard let idx = bondIndexByID[bondID], molecule.bonds[idx].order == .double else { continue }
+                    guard let idx = bondIndexByID[bondID], molecule.bonds[idx].order == .double else {
+                        continue
+                    }
                     molecule.bonds[idx].stereo = .either
                 }
 
                 let stereoGroup: Int?
                 if collectionType.contains("ABS") {
                     stereoGroup = CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0)
-                } else if collectionType.contains("RAC"), let number = trailingCollectionNumber(in: collectionType) {
+                } else if collectionType.contains("RAC"),
+                    let number = trailingCollectionNumber(in: collectionType)
+                {
                     stereoGroup = CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: number)
-                } else if collectionType.contains("REL"), let number = trailingCollectionNumber(in: collectionType) {
+                } else if collectionType.contains("REL"),
+                    let number = trailingCollectionNumber(in: collectionType)
+                {
                     stereoGroup = CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: number)
                 } else {
                     stereoGroup = nil
@@ -892,10 +956,12 @@ public enum CDKMDLV3000Reader {
             }
 
             if sgroupType == "SUP",
-               subtype == markushDefinitionSubtype,
-               let rawLabel = attributes["LABEL"],
-               let label = parseQuotedOrBareString(rawLabel), !label.isEmpty {
-                let componentGroupID = parseIntAttribute("COMPNO", in: attributes) ?? nextMarkushComponentGroupID
+                subtype == markushDefinitionSubtype,
+                let rawLabel = attributes["LABEL"],
+                let label = parseQuotedOrBareString(rawLabel), !label.isEmpty
+            {
+                let componentGroupID =
+                    parseIntAttribute("COMPNO", in: attributes) ?? nextMarkushComponentGroupID
                 if parseIntAttribute("COMPNO", in: attributes) == nil {
                     nextMarkushComponentGroupID += 1
                 }
@@ -908,14 +974,16 @@ public enum CDKMDLV3000Reader {
             }
 
             if sgroupType == "SUP",
-               atomIDs.count == 1,
-               let rawLabel = attributes["LABEL"],
-               let label = parseQuotedOrBareString(rawLabel), !label.isEmpty,
-               let anchorAtomID = atomIDs.first, let anchorIndex = atomIndexByID[anchorAtomID] {
+                atomIDs.count == 1,
+                let rawLabel = attributes["LABEL"],
+                let label = parseQuotedOrBareString(rawLabel), !label.isEmpty,
+                let anchorAtomID = atomIDs.first, let anchorIndex = atomIndexByID[anchorAtomID]
+            {
                 molecule.atoms[anchorIndex].element = label
                 molecule.atoms[anchorIndex].aromatic = false
                 if label.uppercased().hasPrefix("R"),
-                   let rValue = Int(label.dropFirst()) {
+                    let rValue = Int(label.dropFirst())
+                {
                     molecule.atoms[anchorIndex].rGroupLabel = rValue
                 }
             }
@@ -936,31 +1004,32 @@ public enum CDKMDLV3000Reader {
                 subscriptText = parseQuotedOrBareString(attributes["LABEL"] ?? "")
             }
 
-            parsedSgroups.append((
-                sourceIndex: sourceIndex,
-                parentIndex: parentIndex,
-                sgroup: MoleculeSgroup(
-                    kind: sgroupKind(for: sgroupType),
-                    keyword: sgroupType,
-                    atomIDs: atomIDs,
-                    crossingBondIDs: crossingBondIDs.filter { bondIndexByID[$0] != nil },
-                    subscriptText: subscriptText,
-                    superscriptText: nil,
-                    roundBrackets: attributes["BRKTYP"]?.uppercased() == "PAREN",
-                    connectivity: parseQuotedOrBareString(attributes["CONNECT"] ?? ""),
-                    dataFieldName: parseQuotedOrBareString(attributes["FIELDNAME"] ?? ""),
-                    dataValue: parseQuotedOrBareString(attributes["FIELDDATA"] ?? attributes["DATA"] ?? ""),
-                    dataOperator: nil,
-                    dataUnit: nil,
-                    dataTag: nil,
-                    subtype: parseQuotedOrBareString(attributes["SUBTYPE"] ?? ""),
-                    parentAtomIDs: parentAtomIDs,
-                    componentNumber: parseIntAttribute("COMPNO", in: attributes),
-                    expanded: attributes["ESTATE"]?.uppercased() == "E",
-                    brackets: parseBrackets(attributeArrays["BRKXYZ"] ?? []),
-                    childGroupIndices: []
-                )
-            ))
+            parsedSgroups.append(
+                (
+                    sourceIndex: sourceIndex,
+                    parentIndex: parentIndex,
+                    sgroup: MoleculeSgroup(
+                        kind: sgroupKind(for: sgroupType),
+                        keyword: sgroupType,
+                        atomIDs: atomIDs,
+                        crossingBondIDs: crossingBondIDs.filter { bondIndexByID[$0] != nil },
+                        subscriptText: subscriptText,
+                        superscriptText: nil,
+                        roundBrackets: attributes["BRKTYP"]?.uppercased() == "PAREN",
+                        connectivity: parseQuotedOrBareString(attributes["CONNECT"] ?? ""),
+                        dataFieldName: parseQuotedOrBareString(attributes["FIELDNAME"] ?? ""),
+                        dataValue: parseQuotedOrBareString(attributes["FIELDDATA"] ?? attributes["DATA"] ?? ""),
+                        dataOperator: nil,
+                        dataUnit: nil,
+                        dataTag: nil,
+                        subtype: parseQuotedOrBareString(attributes["SUBTYPE"] ?? ""),
+                        parentAtomIDs: parentAtomIDs,
+                        componentNumber: parseIntAttribute("COMPNO", in: attributes),
+                        expanded: attributes["ESTATE"]?.uppercased() == "E",
+                        brackets: parseBrackets(attributeArrays["BRKXYZ"] ?? []),
+                        childGroupIndices: []
+                    )
+                ))
         }
 
         var sourceToMoleculeIndex: [Int: Int] = [:]
@@ -971,9 +1040,10 @@ public enum CDKMDLV3000Reader {
 
         for parsed in parsedSgroups {
             guard let parentSourceIndex = parsed.parentIndex,
-                  let parentMoleculeIndex = sourceToMoleculeIndex[parentSourceIndex],
-                  let childMoleculeIndex = sourceToMoleculeIndex[parsed.sourceIndex],
-                  molecule.sgroups.indices.contains(parentMoleculeIndex) else {
+                let parentMoleculeIndex = sourceToMoleculeIndex[parentSourceIndex],
+                let childMoleculeIndex = sourceToMoleculeIndex[parsed.sourceIndex],
+                molecule.sgroups.indices.contains(parentMoleculeIndex)
+            else {
                 continue
             }
             molecule.sgroups[parentMoleculeIndex].childGroupIndices.append(childMoleculeIndex)
@@ -1023,7 +1093,9 @@ public enum CDKMDLV3000Reader {
         return Int(String(digits))
     }
 
-    private static func parseRepeatedAttributes(_ tokens: ArraySlice<String>) -> ([String: [String]], Set<String>) {
+    private static func parseRepeatedAttributes(_ tokens: ArraySlice<String>) -> (
+        [String: [String]], Set<String>
+    ) {
         var attributes: [String: [String]] = [:]
         var bare: Set<String> = []
 
@@ -1067,34 +1139,35 @@ public enum CDKMDLV3000Reader {
             nextAtomID += 1
             atomMap[atom.id] = nextAtomID
             destination.atoms.append(
-                Atom(id: nextAtomID,
-                     element: atom.element,
-                     position: atom.position,
-                     zPosition: atom.zPosition,
-                     charge: atom.charge,
-                     isotopeMassNumber: atom.isotopeMassNumber,
-                     aromatic: atom.aromatic,
-                     chirality: atom.chirality,
-                     explicitHydrogenCount: atom.explicitHydrogenCount,
-                     queryType: atom.queryType,
-                     atomList: atom.atomList,
-                     atomListIsNegated: atom.atomListIsNegated,
-                     radical: atom.radical,
-                     radicalType: atom.radicalType,
-                     atomValue: atom.atomValue,
-                     rGroupLabel: atom.rGroupLabel,
-                     rGroupMembership: atom.rGroupMembership,
-                     componentGroupID: atom.componentGroupID,
-                     substitutionCount: atom.substitutionCount,
-                     unsaturated: atom.unsaturated,
-                     ringBondCount: atom.ringBondCount,
-                     attachmentPoint: atom.attachmentPoint,
-                     valenceOverride: atom.valenceOverride,
-                     cxStereoGroup: atom.cxStereoGroup,
-                     ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
-                     atomClass: atom.atomClass,
-                     atomMapNumber: atom.atomMapNumber,
-                     aliasLabel: atom.aliasLabel)
+                Atom(
+                    id: nextAtomID,
+                    element: atom.element,
+                    position: atom.position,
+                    zPosition: atom.zPosition,
+                    charge: atom.charge,
+                    isotopeMassNumber: atom.isotopeMassNumber,
+                    aromatic: atom.aromatic,
+                    chirality: atom.chirality,
+                    explicitHydrogenCount: atom.explicitHydrogenCount,
+                    queryType: atom.queryType,
+                    atomList: atom.atomList,
+                    atomListIsNegated: atom.atomListIsNegated,
+                    radical: atom.radical,
+                    radicalType: atom.radicalType,
+                    atomValue: atom.atomValue,
+                    rGroupLabel: atom.rGroupLabel,
+                    rGroupMembership: atom.rGroupMembership,
+                    componentGroupID: atom.componentGroupID,
+                    substitutionCount: atom.substitutionCount,
+                    unsaturated: atom.unsaturated,
+                    ringBondCount: atom.ringBondCount,
+                    attachmentPoint: atom.attachmentPoint,
+                    valenceOverride: atom.valenceOverride,
+                    cxStereoGroup: atom.cxStereoGroup,
+                    ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
+                    atomClass: atom.atomClass,
+                    atomMapNumber: atom.atomMapNumber,
+                    aliasLabel: atom.aliasLabel)
             )
         }
 
@@ -1102,13 +1175,19 @@ public enum CDKMDLV3000Reader {
             guard let a1 = atomMap[bond.a1], let a2 = atomMap[bond.a2] else { continue }
             nextBondID += 1
             bondMap[bond.id] = nextBondID
-            destination.bonds.append(Bond(id: nextBondID,
-                                          a1: a1,
-                                          a2: a2,
-                                          order: bond.order,
-                                          stereo: bond.stereo,
-                                          queryType: bond.queryType,
-                                          topology: bond.topology))
+            destination.bonds.append(
+                Bond(
+                    id: nextBondID,
+                    a1: a1,
+                    a2: a2,
+                    order: bond.order,
+                    stereo: bond.stereo,
+                    doubleBondStereo: bond.doubleBondStereo,
+                    stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap { atomMap[$0] },
+                    queryType: bond.queryType,
+                    topology: bond.topology,
+                    coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap { atomMap[$0] },
+                    reactingCenterStatus: bond.reactingCenterStatus))
         }
 
         for sgroup in source.sgroups {
@@ -1116,25 +1195,26 @@ public enum CDKMDLV3000Reader {
             guard !atomIDs.isEmpty else { continue }
             let crossingBondIDs = sgroup.crossingBondIDs.compactMap { bondMap[$0] }
             destination.sgroups.append(
-                MoleculeSgroup(kind: sgroup.kind,
-                               keyword: sgroup.keyword,
-                               atomIDs: atomIDs,
-                               crossingBondIDs: crossingBondIDs,
-                               subscriptText: sgroup.subscriptText,
-                               superscriptText: sgroup.superscriptText,
-                               roundBrackets: sgroup.roundBrackets,
-                               connectivity: sgroup.connectivity,
-                               dataFieldName: sgroup.dataFieldName,
-                               dataValue: sgroup.dataValue,
-                               dataOperator: sgroup.dataOperator,
-                               dataUnit: sgroup.dataUnit,
-                               dataTag: sgroup.dataTag,
-                               subtype: sgroup.subtype,
-                               parentAtomIDs: sgroup.parentAtomIDs.compactMap { atomMap[$0] },
-                               componentNumber: sgroup.componentNumber,
-                               expanded: sgroup.expanded,
-                               brackets: sgroup.brackets,
-                               childGroupIndices: sgroup.childGroupIndices)
+                MoleculeSgroup(
+                    kind: sgroup.kind,
+                    keyword: sgroup.keyword,
+                    atomIDs: atomIDs,
+                    crossingBondIDs: crossingBondIDs,
+                    subscriptText: sgroup.subscriptText,
+                    superscriptText: sgroup.superscriptText,
+                    roundBrackets: sgroup.roundBrackets,
+                    connectivity: sgroup.connectivity,
+                    dataFieldName: sgroup.dataFieldName,
+                    dataValue: sgroup.dataValue,
+                    dataOperator: sgroup.dataOperator,
+                    dataUnit: sgroup.dataUnit,
+                    dataTag: sgroup.dataTag,
+                    subtype: sgroup.subtype,
+                    parentAtomIDs: sgroup.parentAtomIDs.compactMap { atomMap[$0] },
+                    componentNumber: sgroup.componentNumber,
+                    expanded: sgroup.expanded,
+                    brackets: sgroup.brackets,
+                    childGroupIndices: sgroup.childGroupIndices)
             )
         }
     }
@@ -1246,5 +1326,7 @@ public enum CDKMDLV3000Reader {
         return out
     }
 
-    private static let aromaticElementTokens: Set<String> = ["b", "c", "n", "o", "p", "s", "se", "as"]
+    private static let aromaticElementTokens: Set<String> = [
+        "b", "c", "n", "o", "p", "s", "se", "as",
+    ]
 }

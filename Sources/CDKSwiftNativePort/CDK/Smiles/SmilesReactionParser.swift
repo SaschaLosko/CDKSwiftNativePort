@@ -3,8 +3,10 @@ import Foundation
 extension CDKSmilesParser {
     /// Swift counterpart of CDK's `parseReactionSmiles`.
     public func parseReactionSmiles(_ reactionSmiles: String) throws -> CDKReaction {
-        let split = try CDKCxSmilesParser.split(reactionSmiles, enabled: flavor.contains(.cxsmiles))
-        let parts = split.coreSmiles.split(separator: ">", omittingEmptySubsequences: false).map(String.init)
+        let cxEnabled = flavor.contains(.cxsmiles) || !flavor.intersection(.cxAll).isEmpty
+        let split = try CDKCxSmilesParser.split(reactionSmiles, enabled: cxEnabled)
+        let parts = split.coreSmiles.split(separator: ">", omittingEmptySubsequences: false).map(
+            String.init)
         guard parts.count == 3 else {
             throw ChemError.parseFailed("Reaction SMILES must contain exactly two '>' separators.")
         }
@@ -15,10 +17,12 @@ extension CDKSmilesParser {
 
         var components = reactantComponents + agentComponents + productComponents
         applyCxAtomLabels(to: &components, state: split.state)
+        applyCxCoordinateBonds(to: &components, state: split.state)
         let grouped = try applyFragmentGrouping(to: components, state: split.state)
 
         let reactants = grouped.filter { $0.side == .reactant }.map {
-            CDKReactionParticipant(molecule: $0.molecule, role: .reactant, stoichiometry: $0.stoichiometry)
+            CDKReactionParticipant(
+                molecule: $0.molecule, role: .reactant, stoichiometry: $0.stoichiometry)
         }
         let agents = grouped.filter { $0.side == .agent }.map {
             CDKReactionParticipant(molecule: $0.molecule, role: .agent, stoichiometry: $0.stoichiometry)
@@ -27,11 +31,12 @@ extension CDKSmilesParser {
             CDKReactionParticipant(molecule: $0.molecule, role: .product, stoichiometry: $0.stoichiometry)
         }
 
-        return CDKReaction(reactantParticipants: reactants,
-                           agentParticipants: agents,
-                           productParticipants: products,
-                           name: split.title,
-                           cxState: split.state)
+        return CDKReaction(
+            reactantParticipants: reactants,
+            agentParticipants: agents,
+            productParticipants: products,
+            name: split.title,
+            cxState: split.state)
     }
 }
 
@@ -48,8 +53,10 @@ private struct CDKIndexedReactionComponent {
     let stoichiometry: Double?
 }
 
-private extension CDKSmilesParser {
-    func parseReactionSide(_ raw: String, side: CDKReactionSide) throws -> [CDKIndexedReactionComponent] {
+extension CDKSmilesParser {
+    fileprivate func parseReactionSide(_ raw: String, side: CDKReactionSide) throws
+        -> [CDKIndexedReactionComponent]
+    {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
 
@@ -66,7 +73,8 @@ private extension CDKSmilesParser {
                 fragmentEnd = trimmed.index(after: fragmentEnd)
             }
 
-            let fragment = String(trimmed[index..<fragmentEnd]).trimmingCharacters(in: .whitespacesAndNewlines)
+            let fragment = String(trimmed[index..<fragmentEnd]).trimmingCharacters(
+                in: .whitespacesAndNewlines)
             guard !fragment.isEmpty else {
                 throw ChemError.parseFailed("Invalid empty fragment in reaction side.")
             }
@@ -91,7 +99,9 @@ private extension CDKSmilesParser {
         return out
     }
 
-    func applyCxAtomLabels(to components: inout [CDKIndexedReactionComponent], state: CDKCxSmilesState) {
+    fileprivate func applyCxAtomLabels(
+        to components: inout [CDKIndexedReactionComponent], state: CDKCxSmilesState
+    ) {
         guard !state.atomLabels.isEmpty else { return }
 
         var componentRanges: [Range<Int>] = []
@@ -103,59 +113,107 @@ private extension CDKSmilesParser {
         }
 
         for (globalAtomIndex, label) in state.atomLabels {
-            guard let compIndex = componentRanges.firstIndex(where: { $0.contains(globalAtomIndex) }) else { continue }
+            guard let compIndex = componentRanges.firstIndex(where: { $0.contains(globalAtomIndex) })
+            else { continue }
             let localAtomIndex = globalAtomIndex - componentRanges[compIndex].lowerBound
-            guard localAtomIndex >= 0, localAtomIndex < components[compIndex].molecule.atoms.count else { continue }
+            guard localAtomIndex >= 0, localAtomIndex < components[compIndex].molecule.atoms.count else {
+                continue
+            }
 
             let atomID = components[compIndex].molecule.atoms[localAtomIndex].id
-            guard let idx = components[compIndex].molecule.atoms.firstIndex(where: { $0.id == atomID }) else { continue }
+            guard let idx = components[compIndex].molecule.atoms.firstIndex(where: { $0.id == atomID })
+            else { continue }
             let old = components[compIndex].molecule.atoms[idx]
-            components[compIndex].molecule.atoms[idx] = Atom(id: old.id,
-                                                              element: label,
-                                                              position: old.position,
-                                                              zPosition: old.zPosition,
-                                                              charge: old.charge,
-                                                              isotopeMassNumber: old.isotopeMassNumber,
-                                                              aromatic: false,
-                                                              chirality: old.chirality,
-                                                              explicitHydrogenCount: old.explicitHydrogenCount,
-                                                              queryType: old.queryType,
-                                                              atomList: old.atomList,
-                                                              atomListIsNegated: old.atomListIsNegated,
-                                                              radical: old.radical,
-                                                              radicalType: old.radicalType,
-                                                              atomValue: old.atomValue,
-                                                              rGroupLabel: old.rGroupLabel,
-                                                              rGroupMembership: old.rGroupMembership,
-                                                              componentGroupID: old.componentGroupID,
-                                                              substitutionCount: old.substitutionCount,
-                                                              unsaturated: old.unsaturated,
-                                                              ringBondCount: old.ringBondCount,
-                                                              attachmentPoint: old.attachmentPoint,
-                                                              valenceOverride: old.valenceOverride,
-                                                              cxStereoGroup: old.cxStereoGroup,
-                                                              ligandOrderingAtomIDs: old.ligandOrderingAtomIDs,
-                                                              atomClass: old.atomClass,
-                                                              atomMapNumber: old.atomMapNumber)
+            components[compIndex].molecule.atoms[idx] = Atom(
+                id: old.id,
+                element: label,
+                position: old.position,
+                zPosition: old.zPosition,
+                charge: old.charge,
+                isotopeMassNumber: old.isotopeMassNumber,
+                aromatic: false,
+                chirality: old.chirality,
+                explicitHydrogenCount: old.explicitHydrogenCount,
+                queryType: old.queryType,
+                atomList: old.atomList,
+                atomListIsNegated: old.atomListIsNegated,
+                radical: old.radical,
+                radicalType: old.radicalType,
+                atomValue: old.atomValue,
+                rGroupLabel: old.rGroupLabel,
+                rGroupMembership: old.rGroupMembership,
+                componentGroupID: old.componentGroupID,
+                substitutionCount: old.substitutionCount,
+                unsaturated: old.unsaturated,
+                ringBondCount: old.ringBondCount,
+                attachmentPoint: old.attachmentPoint,
+                valenceOverride: old.valenceOverride,
+                cxStereoGroup: old.cxStereoGroup,
+                ligandOrderingAtomIDs: old.ligandOrderingAtomIDs,
+                atomClass: old.atomClass,
+                atomMapNumber: old.atomMapNumber)
         }
     }
 
-    func applyFragmentGrouping(to components: [CDKIndexedReactionComponent],
-                               state: CDKCxSmilesState) throws -> [CDKIndexedReactionComponent] {
+    fileprivate func applyCxCoordinateBonds(
+        to components: inout [CDKIndexedReactionComponent], state: CDKCxSmilesState
+    ) {
+        guard let coordinateBonds = state.coordinateBonds, !coordinateBonds.isEmpty else { return }
+
+        var atomRanges: [Range<Int>] = []
+        var bondRanges: [Range<Int>] = []
+        var atomOffset = 0
+        var bondOffset = 0
+        for component in components {
+            atomRanges.append(atomOffset..<(atomOffset + component.molecule.atomCount))
+            bondRanges.append(bondOffset..<(bondOffset + component.molecule.bondCount))
+            atomOffset += component.molecule.atomCount
+            bondOffset += component.molecule.bondCount
+        }
+
+        for (globalAtomIndex, globalBondIndices) in coordinateBonds {
+            guard let componentIndex = atomRanges.firstIndex(where: { $0.contains(globalAtomIndex) })
+            else { continue }
+            let localAtomIndex = globalAtomIndex - atomRanges[componentIndex].lowerBound
+            guard components[componentIndex].molecule.atoms.indices.contains(localAtomIndex) else {
+                continue
+            }
+            let atomID = components[componentIndex].molecule.atoms[localAtomIndex].id
+
+            for globalBondIndex in globalBondIndices
+            where bondRanges[componentIndex].contains(globalBondIndex) {
+                let localBondIndex = globalBondIndex - bondRanges[componentIndex].lowerBound
+                guard components[componentIndex].molecule.bonds.indices.contains(localBondIndex) else {
+                    continue
+                }
+                let bond = components[componentIndex].molecule.bonds[localBondIndex]
+                guard bond.a1 == atomID || bond.a2 == atomID else { continue }
+                components[componentIndex].molecule.bonds[localBondIndex].coordinateBondReferenceAtomID =
+                    atomID
+            }
+        }
+    }
+
+    fileprivate func applyFragmentGrouping(
+        to components: [CDKIndexedReactionComponent],
+        state: CDKCxSmilesState
+    ) throws -> [CDKIndexedReactionComponent] {
         guard !state.fragmentGroups.isEmpty else {
             return components.enumerated().map {
-                CDKIndexedReactionComponent(molecule: $0.element.molecule,
-                                            side: $0.element.side,
-                                            globalIndex: $0.offset,
-                                            stoichiometry: $0.element.stoichiometry)
+                CDKIndexedReactionComponent(
+                    molecule: $0.element.molecule,
+                    side: $0.element.side,
+                    globalIndex: $0.offset,
+                    stoichiometry: $0.element.stoichiometry)
             }
         }
 
         let normalized = components.enumerated().map {
-            CDKIndexedReactionComponent(molecule: $0.element.molecule,
-                                        side: $0.element.side,
-                                        globalIndex: $0.offset,
-                                        stoichiometry: $0.element.stoichiometry)
+            CDKIndexedReactionComponent(
+                molecule: $0.element.molecule,
+                side: $0.element.side,
+                globalIndex: $0.offset,
+                stoichiometry: $0.element.stoichiometry)
         }
         let byIndex = Dictionary(uniqueKeysWithValues: normalized.map { ($0.globalIndex, $0) })
 
@@ -199,10 +257,12 @@ private extension CDKSmilesParser {
                 let side = byIndex[first]?.side ?? component.side
                 let groupedStoichiometry = try mergedStoichiometry(for: group, byIndex: byIndex)
                 let merged = mergeDisconnectedMolecules(molecules)
-                out.append(CDKIndexedReactionComponent(molecule: merged,
-                                                       side: side,
-                                                       globalIndex: first,
-                                                       stoichiometry: groupedStoichiometry))
+                out.append(
+                    CDKIndexedReactionComponent(
+                        molecule: merged,
+                        side: side,
+                        globalIndex: first,
+                        stoichiometry: groupedStoichiometry))
             } else {
                 out.append(component)
             }
@@ -211,7 +271,7 @@ private extension CDKSmilesParser {
         return out
     }
 
-    func mergeDisconnectedMolecules(_ molecules: [Molecule]) -> Molecule {
+    fileprivate func mergeDisconnectedMolecules(_ molecules: [Molecule]) -> Molecule {
         var out = Molecule(name: "SMILES")
         var nextAtomID = 0
         var nextBondID = 0
@@ -224,33 +284,34 @@ private extension CDKSmilesParser {
                 nextAtomID += 1
                 idMap[atom.id] = nextAtomID
                 out.atoms.append(
-                    Atom(id: nextAtomID,
-                         element: atom.element,
-                         position: atom.position,
-                         zPosition: atom.zPosition,
-                         charge: atom.charge,
-                         isotopeMassNumber: atom.isotopeMassNumber,
-                         aromatic: atom.aromatic,
-                         chirality: atom.chirality,
-                         explicitHydrogenCount: atom.explicitHydrogenCount,
-                         queryType: atom.queryType,
-                         atomList: atom.atomList,
-                         atomListIsNegated: atom.atomListIsNegated,
-                         radical: atom.radical,
-                         radicalType: atom.radicalType,
-                         atomValue: atom.atomValue,
-                         rGroupLabel: atom.rGroupLabel,
-                         rGroupMembership: atom.rGroupMembership,
-                         componentGroupID: atom.componentGroupID,
-                         substitutionCount: atom.substitutionCount,
-                         unsaturated: atom.unsaturated,
-                         ringBondCount: atom.ringBondCount,
-                         attachmentPoint: atom.attachmentPoint,
-                         valenceOverride: atom.valenceOverride,
-                         cxStereoGroup: atom.cxStereoGroup,
-                         ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
-                         atomClass: atom.atomClass,
-                         atomMapNumber: atom.atomMapNumber)
+                    Atom(
+                        id: nextAtomID,
+                        element: atom.element,
+                        position: atom.position,
+                        zPosition: atom.zPosition,
+                        charge: atom.charge,
+                        isotopeMassNumber: atom.isotopeMassNumber,
+                        aromatic: atom.aromatic,
+                        chirality: atom.chirality,
+                        explicitHydrogenCount: atom.explicitHydrogenCount,
+                        queryType: atom.queryType,
+                        atomList: atom.atomList,
+                        atomListIsNegated: atom.atomListIsNegated,
+                        radical: atom.radical,
+                        radicalType: atom.radicalType,
+                        atomValue: atom.atomValue,
+                        rGroupLabel: atom.rGroupLabel,
+                        rGroupMembership: atom.rGroupMembership,
+                        componentGroupID: atom.componentGroupID,
+                        substitutionCount: atom.substitutionCount,
+                        unsaturated: atom.unsaturated,
+                        ringBondCount: atom.ringBondCount,
+                        attachmentPoint: atom.attachmentPoint,
+                        valenceOverride: atom.valenceOverride,
+                        cxStereoGroup: atom.cxStereoGroup,
+                        ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
+                        atomClass: atom.atomClass,
+                        atomMapNumber: atom.atomMapNumber)
                 )
             }
 
@@ -258,13 +319,19 @@ private extension CDKSmilesParser {
                 guard let a1 = idMap[bond.a1], let a2 = idMap[bond.a2] else { continue }
                 nextBondID += 1
                 bondIDMap[bond.id] = nextBondID
-                out.bonds.append(Bond(id: nextBondID,
-                                      a1: a1,
-                                      a2: a2,
-                                      order: bond.order,
-                                      stereo: bond.stereo,
-                                      queryType: bond.queryType,
-                                      topology: bond.topology))
+                out.bonds.append(
+                    Bond(
+                        id: nextBondID,
+                        a1: a1,
+                        a2: a2,
+                        order: bond.order,
+                        stereo: bond.stereo,
+                        doubleBondStereo: bond.doubleBondStereo,
+                        stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap { idMap[$0] },
+                        queryType: bond.queryType,
+                        topology: bond.topology,
+                        coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap { idMap[$0] },
+                        reactingCenterStatus: bond.reactingCenterStatus))
             }
 
             for sgroup in molecule.sgroups {
@@ -272,25 +339,26 @@ private extension CDKSmilesParser {
                 guard !atomIDs.isEmpty else { continue }
                 let crossingBondIDs = sgroup.crossingBondIDs.compactMap { bondIDMap[$0] }
                 out.sgroups.append(
-                    MoleculeSgroup(kind: sgroup.kind,
-                                   keyword: sgroup.keyword,
-                                   atomIDs: atomIDs,
-                                   crossingBondIDs: crossingBondIDs,
-                                   subscriptText: sgroup.subscriptText,
-                                   superscriptText: sgroup.superscriptText,
-                                   roundBrackets: sgroup.roundBrackets,
-                                   connectivity: sgroup.connectivity,
-                                   dataFieldName: sgroup.dataFieldName,
-                                   dataValue: sgroup.dataValue,
-                                   dataOperator: sgroup.dataOperator,
-                                   dataUnit: sgroup.dataUnit,
-                                   dataTag: sgroup.dataTag,
-                                   subtype: sgroup.subtype,
-                                   parentAtomIDs: sgroup.parentAtomIDs.compactMap { idMap[$0] },
-                                   componentNumber: sgroup.componentNumber,
-                                   expanded: sgroup.expanded,
-                                   brackets: sgroup.brackets,
-                                   childGroupIndices: sgroup.childGroupIndices)
+                    MoleculeSgroup(
+                        kind: sgroup.kind,
+                        keyword: sgroup.keyword,
+                        atomIDs: atomIDs,
+                        crossingBondIDs: crossingBondIDs,
+                        subscriptText: sgroup.subscriptText,
+                        superscriptText: sgroup.superscriptText,
+                        roundBrackets: sgroup.roundBrackets,
+                        connectivity: sgroup.connectivity,
+                        dataFieldName: sgroup.dataFieldName,
+                        dataValue: sgroup.dataValue,
+                        dataOperator: sgroup.dataOperator,
+                        dataUnit: sgroup.dataUnit,
+                        dataTag: sgroup.dataTag,
+                        subtype: sgroup.subtype,
+                        parentAtomIDs: sgroup.parentAtomIDs.compactMap { idMap[$0] },
+                        componentNumber: sgroup.componentNumber,
+                        expanded: sgroup.expanded,
+                        brackets: sgroup.brackets,
+                        childGroupIndices: sgroup.childGroupIndices)
                 )
             }
         }
@@ -298,8 +366,10 @@ private extension CDKSmilesParser {
         return out
     }
 
-    func mergedStoichiometry(for group: [Int],
-                             byIndex: [Int: CDKIndexedReactionComponent]) throws -> Double? {
+    fileprivate func mergedStoichiometry(
+        for group: [Int],
+        byIndex: [Int: CDKIndexedReactionComponent]
+    ) throws -> Double? {
         let specified = group.compactMap { byIndex[$0]?.stoichiometry }
         guard let first = specified.first else { return nil }
         if specified.contains(where: { $0 != first }) {

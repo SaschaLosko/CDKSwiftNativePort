@@ -1,26 +1,32 @@
 import XCTest
+
 @testable import CDKSwiftNativePort
 
 final class ReactionManipulatorTests: XCTestCase {
     func testReverseSwapsSidesAndDirection() throws {
-        let reactant = CDKReactionParticipant(molecule: makeDiatomic(name: "water",
-                                                                     moleculeID: "water",
-                                                                     leftElement: "H",
-                                                                     rightElement: "O"),
-                                              role: .reactant,
-                                              stoichiometry: 3.0)
-        let product = CDKReactionParticipant(molecule: makeDiatomic(name: "hydroxide",
-                                                                    moleculeID: "hydroxide",
-                                                                    leftElement: "O",
-                                                                    rightElement: "H"),
-                                             role: .product,
-                                             stoichiometry: 1.0)
-        let reaction = CDKReaction(reactantParticipants: [reactant],
-                                   agentParticipants: [],
-                                   productParticipants: [product],
-                                   id: "rxn-1",
-                                   direction: .backward,
-                                   name: "Hydrolysis")
+        let reactant = CDKReactionParticipant(
+            molecule: makeDiatomic(
+                name: "water",
+                moleculeID: "water",
+                leftElement: "H",
+                rightElement: "O"),
+            role: .reactant,
+            stoichiometry: 3.0)
+        let product = CDKReactionParticipant(
+            molecule: makeDiatomic(
+                name: "hydroxide",
+                moleculeID: "hydroxide",
+                leftElement: "O",
+                rightElement: "H"),
+            role: .product,
+            stoichiometry: 1.0)
+        let reaction = CDKReaction(
+            reactantParticipants: [reactant],
+            agentParticipants: [],
+            productParticipants: [product],
+            id: "rxn-1",
+            direction: .backward,
+            name: "Hydrolysis")
 
         let reversed = CDKReactionManipulator.reverse(reaction)
 
@@ -34,19 +40,29 @@ final class ReactionManipulatorTests: XCTestCase {
     }
 
     func testCollectsIDsAndRelevantMoleculeLookups() {
-        let reaction = CDKReaction(reactants: [makeDiatomic(name: "reactant",
-                                                            moleculeID: "react",
-                                                            leftElement: "C",
-                                                            rightElement: "O")],
-                                   agents: [makeDiatomic(name: "agent",
-                                                         moleculeID: "agent",
-                                                         leftElement: "N",
-                                                         rightElement: "H")],
-                                   products: [makeDiatomic(name: "product",
-                                                           moleculeID: "prod",
-                                                           leftElement: "C",
-                                                           rightElement: "N")],
-                                   id: "rxn-ids")
+        let reaction = CDKReaction(
+            reactants: [
+                makeDiatomic(
+                    name: "reactant",
+                    moleculeID: "react",
+                    leftElement: "C",
+                    rightElement: "O")
+            ],
+            agents: [
+                makeDiatomic(
+                    name: "agent",
+                    moleculeID: "agent",
+                    leftElement: "N",
+                    rightElement: "H")
+            ],
+            products: [
+                makeDiatomic(
+                    name: "product",
+                    moleculeID: "prod",
+                    leftElement: "C",
+                    rightElement: "N")
+            ],
+            id: "rxn-ids")
 
         let ids = CDKReactionManipulator.getAllIDs(reaction)
         XCTAssertEqual(ids.prefix(4), ["rxn-ids", "react", "react-a1", "react-a2"])
@@ -55,23 +71,32 @@ final class ReactionManipulatorTests: XCTestCase {
         XCTAssertTrue(ids.contains("prod"))
 
         let atom = try? XCTUnwrap(reaction.reactants[0].atoms.first)
-        XCTAssertEqual(CDKReactionManipulator.getRelevantAtomContainer(reaction, atom: atom!), reaction.reactants[0])
+        XCTAssertEqual(
+            CDKReactionManipulator.getRelevantAtomContainer(reaction, atom: atom!), reaction.reactants[0])
         let bond = try? XCTUnwrap(reaction.products[0].bonds.first)
-        XCTAssertEqual(CDKReactionManipulator.getRelevantAtomContainer(reaction, bond: bond!), reaction.products[0])
+        XCTAssertEqual(
+            CDKReactionManipulator.getRelevantAtomContainer(reaction, bond: bond!), reaction.products[0])
         XCTAssertEqual(CDKReactionManipulator.getAllAtomContainers(reaction).count, 3)
     }
 
     func testSetsAtomPropertiesAndCollectsChemObjects() {
-        var reaction = CDKReaction(reactants: [makeDiatomic(name: "reactant",
-                                                            moleculeID: "react",
-                                                            leftElement: "C",
-                                                            rightElement: "O")],
-                                   agents: [],
-                                   products: [makeDiatomic(name: "product",
-                                                           moleculeID: "prod",
-                                                           leftElement: "C",
-                                                           rightElement: "N")],
-                                   id: "rxn-props")
+        var reaction = CDKReaction(
+            reactants: [
+                makeDiatomic(
+                    name: "reactant",
+                    moleculeID: "react",
+                    leftElement: "C",
+                    rightElement: "O")
+            ],
+            agents: [],
+            products: [
+                makeDiatomic(
+                    name: "product",
+                    moleculeID: "prod",
+                    leftElement: "C",
+                    rightElement: "N")
+            ],
+            id: "rxn-props")
 
         CDKReactionManipulator.setAtomProperties(&reaction, key: "test", value: "ok")
 
@@ -90,14 +115,22 @@ final class ReactionManipulatorTests: XCTestCase {
         let product = makeMappedEthene(name: "product", moleculeID: "product", startMap: 1)
         let reaction = CDKReaction(reactants: [reactant], agents: [], products: [product])
 
-        let mappedAtom = try XCTUnwrap(CDKReactionManipulator.getMappedChemObject(reaction,
-                                                                                   reactant.atoms[0]))
+        let mappedAtom = try XCTUnwrap(
+            CDKReactionManipulator.getMappedChemObject(
+                reaction,
+                reactant.atoms[0]))
         XCTAssertEqual(mappedAtom.atomMapNumber, 1)
-        let mappedBond = try XCTUnwrap(CDKReactionManipulator.getMappedChemObject(reaction,
-                                                                                   reactant.bonds[0]))
-        XCTAssertEqual(Set([product.atom(id: mappedBond.a1)?.atomMapNumber,
-                            product.atom(id: mappedBond.a2)?.atomMapNumber].compactMap { $0 }),
-                       [1, 2])
+        let mappedBond = try XCTUnwrap(
+            CDKReactionManipulator.getMappedChemObject(
+                reaction,
+                reactant.bonds[0]))
+        XCTAssertEqual(
+            Set(
+                [
+                    product.atom(id: mappedBond.a1)?.atomMapNumber,
+                    product.atom(id: mappedBond.a2)?.atomMapNumber,
+                ].compactMap { $0 }),
+            [1, 2])
 
         let mappedRefs = CDKReactionManipulator.findMappedBonds(reaction)
         XCTAssertEqual(mappedRefs.count, 2)
@@ -115,37 +148,130 @@ final class ReactionManipulatorTests: XCTestCase {
 
         molecule = makeMappedEthene(name: "reactant", moleculeID: "reactant", startMap: 1)
         reaction = CDKReaction(reactants: [molecule], agents: [], products: [])
-        XCTAssertTrue(CDKReactionManipulator.removeAtomAndConnectedElectronContainers(&reaction, removableAtom))
+        XCTAssertTrue(
+            CDKReactionManipulator.removeAtomAndConnectedElectronContainers(&reaction, removableAtom))
         XCTAssertEqual(reaction.reactants[0].atomCount, 1)
         XCTAssertEqual(reaction.reactants[0].bondCount, 0)
+    }
+
+    func testRemovingTetrahedralCarrierPreservesStereoWithImplicitFocusCarrier() throws {
+        let atoms = (1...5).map { id in
+            Atom(id: id, element: "C", position: CGPoint(x: Double(id), y: 0))
+        }
+        var center = atoms[1]
+        center.chirality = .clockwise
+        center.ligandOrderingAtomIDs = [1, 3, 4, 5]
+        var molecule = Molecule(
+            name: "tetrahedral removal",
+            atoms: [atoms[0], center, atoms[2], atoms[3], atoms[4]],
+            bonds: [
+                Bond(id: 1, a1: 2, a2: 1, order: .single),
+                Bond(id: 2, a1: 2, a2: 3, order: .single),
+                Bond(id: 3, a1: 2, a2: 4, order: .single),
+                Bond(id: 4, a1: 2, a2: 5, order: .single),
+            ])
+        var reaction = CDKReaction(reactants: [molecule], agents: [], products: [])
+
+        XCTAssertTrue(
+            CDKReactionManipulator.removeAtomAndConnectedElectronContainers(&reaction, atoms[0]))
+
+        molecule = try XCTUnwrap(reaction.reactants.first)
+        let updatedCenter = try XCTUnwrap(molecule.atom(id: 2))
+        XCTAssertEqual(updatedCenter.chirality, .clockwise)
+        XCTAssertEqual(updatedCenter.ligandOrderingAtomIDs, [2, 3, 4, 5])
+    }
+
+    func testRemovingDoubleBondCarrierUsesAlternativeAndInvertsStereo() throws {
+        let atoms = (1...5).map { id in
+            Atom(id: id, element: "C", position: CGPoint(x: Double(id), y: 0))
+        }
+        let molecule = Molecule(
+            name: "double bond carrier removal",
+            atoms: atoms,
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(
+                    id: 2,
+                    a1: 2,
+                    a2: 3,
+                    order: .double,
+                    doubleBondStereo: .trans,
+                    stereoReferenceAtomIDs: [1, 2, 3, 4]),
+                Bond(id: 3, a1: 3, a2: 4, order: .single),
+                Bond(id: 4, a1: 2, a2: 5, order: .single),
+            ])
+        var reaction = CDKReaction(reactants: [molecule], agents: [], products: [])
+
+        XCTAssertTrue(
+            CDKReactionManipulator.removeAtomAndConnectedElectronContainers(&reaction, atoms[0]))
+
+        let doubleBond = try XCTUnwrap(reaction.reactants.first?.bonds.first { $0.id == 2 })
+        XCTAssertEqual(doubleBond.doubleBondStereo, .cis)
+        XCTAssertEqual(doubleBond.stereoReferenceAtomIDs, [5, 2, 3, 4])
+    }
+
+    func testRemovingDoubleBondCarrierClearsStereoWithoutAlternative() throws {
+        let atoms = (1...4).map { id in
+            Atom(id: id, element: "C", position: CGPoint(x: Double(id), y: 0))
+        }
+        let molecule = Molecule(
+            name: "invalidated double bond stereo",
+            atoms: atoms,
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(
+                    id: 2,
+                    a1: 2,
+                    a2: 3,
+                    order: .double,
+                    doubleBondStereo: .trans,
+                    stereoReferenceAtomIDs: [1, 2, 3, 4]),
+                Bond(id: 3, a1: 3, a2: 4, order: .single),
+            ])
+        var reaction = CDKReaction(reactants: [molecule], agents: [], products: [])
+
+        XCTAssertTrue(
+            CDKReactionManipulator.removeAtomAndConnectedElectronContainers(&reaction, atoms[0]))
+
+        let doubleBond = try XCTUnwrap(reaction.reactants.first?.bonds.first { $0.id == 2 })
+        XCTAssertNil(doubleBond.doubleBondStereo)
+        XCTAssertNil(doubleBond.stereoReferenceAtomIDs)
     }
 
     func testInlinesReactionToMoleculeAndReconstructsIt() throws {
         let reaction = CDKReaction(
             reactantParticipants: [
-                CDKReactionParticipant(molecule: makeMappedEthene(name: "reactant-a",
-                                                                  moleculeID: "react-a",
-                                                                  startMap: 1),
-                                       role: .reactant,
-                                       stoichiometry: 2.0),
-                CDKReactionParticipant(molecule: makeDiatomic(name: "reactant-b",
-                                                              moleculeID: "react-b",
-                                                              leftElement: "N",
-                                                              rightElement: "N"),
-                                       role: .reactant)
+                CDKReactionParticipant(
+                    molecule: makeMappedEthene(
+                        name: "reactant-a",
+                        moleculeID: "react-a",
+                        startMap: 1),
+                    role: .reactant,
+                    stoichiometry: 2.0),
+                CDKReactionParticipant(
+                    molecule: makeDiatomic(
+                        name: "reactant-b",
+                        moleculeID: "react-b",
+                        leftElement: "N",
+                        rightElement: "N"),
+                    role: .reactant),
             ],
             agentParticipants: [
-                CDKReactionParticipant(molecule: makeDiatomic(name: "agent",
-                                                              moleculeID: "agent",
-                                                              leftElement: "Cl",
-                                                              rightElement: "Cl"),
-                                       role: .agent)
+                CDKReactionParticipant(
+                    molecule: makeDiatomic(
+                        name: "agent",
+                        moleculeID: "agent",
+                        leftElement: "Cl",
+                        rightElement: "Cl"),
+                    role: .agent)
             ],
             productParticipants: [
-                CDKReactionParticipant(molecule: makeMappedEthene(name: "product",
-                                                                  moleculeID: "product",
-                                                                  startMap: 1),
-                                       role: .product)
+                CDKReactionParticipant(
+                    molecule: makeMappedEthene(
+                        name: "product",
+                        moleculeID: "product",
+                        startMap: 1),
+                    role: .product)
             ],
             id: "inline-rxn",
             direction: .retroSynthetic,
@@ -170,11 +296,15 @@ final class ReactionManipulatorTests: XCTestCase {
     }
 
     func testPerceivesAndClearsAtomConfigurations() {
-        var reaction = CDKReaction(reactants: [makeMappedEthene(name: "reactant",
-                                                                moleculeID: "reactant",
-                                                                startMap: 1)],
-                                   agents: [],
-                                   products: [])
+        var reaction = CDKReaction(
+            reactants: [
+                makeMappedEthene(
+                    name: "reactant",
+                    moleculeID: "reactant",
+                    startMap: 1)
+            ],
+            agents: [],
+            products: [])
 
         CDKReactionManipulator.perceiveAtomTypesAndConfigureAtoms(&reaction)
         let configuredAtom = reaction.reactants[0].atoms[0]
@@ -203,20 +333,25 @@ final class ReactionManipulatorTests: XCTestCase {
     }
 
     func testReactionSetManipulatorFindsRelevantReactionsAndIDs() throws {
-        let shared = makeDiatomic(name: "shared", moleculeID: "shared", leftElement: "C", rightElement: "O")
-        let other = makeDiatomic(name: "other", moleculeID: "other", leftElement: "O", rightElement: "H")
-        let product = makeDiatomic(name: "product", moleculeID: "product", leftElement: "C", rightElement: "N")
+        let shared = makeDiatomic(
+            name: "shared", moleculeID: "shared", leftElement: "C", rightElement: "O")
+        let other = makeDiatomic(
+            name: "other", moleculeID: "other", leftElement: "O", rightElement: "H")
+        let product = makeDiatomic(
+            name: "product", moleculeID: "product", leftElement: "C", rightElement: "N")
 
         let first = CDKReaction(reactants: [shared], agents: [], products: [product], id: "r1")
         let second = CDKReaction(reactants: [other], agents: [], products: [shared], id: "r2")
-        let set = CDKReactionSet(id: "set-1",
-                                 members: [.reaction(first), .reaction(second)])
+        let set = CDKReactionSet(
+            id: "set-1",
+            members: [.reaction(first), .reaction(second)])
 
         XCTAssertEqual(CDKReactionSetManipulator.getAtomCount(set), 8)
         XCTAssertEqual(CDKReactionSetManipulator.getBondCount(set), 4)
         XCTAssertEqual(CDKReactionSetManipulator.getAllMolecules(set).count, 3)
         XCTAssertEqual(CDKReactionSetManipulator.getReactionByReactionID(set, id: "r2")?.id, "r2")
-        XCTAssertEqual(CDKReactionSetManipulator.getReactionByAtomContainerID(set, id: "shared")?.id, "r2")
+        XCTAssertEqual(
+            CDKReactionSetManipulator.getReactionByAtomContainerID(set, id: "shared")?.id, "r2")
 
         let relevant = CDKReactionSetManipulator.getRelevantReactions(set, molecule: shared)
         XCTAssertEqual(relevant.flattenedReactions.map(\.id), ["r1", "r2"])
@@ -230,8 +365,10 @@ final class ReactionManipulatorTests: XCTestCase {
     }
 
     func testReactionSetManipulatorSetsAtomPropertiesAndCollectsChemObjects() {
-        let shared = makeDiatomic(name: "shared", moleculeID: "shared", leftElement: "C", rightElement: "O")
-        let product = makeDiatomic(name: "product", moleculeID: "product", leftElement: "C", rightElement: "N")
+        let shared = makeDiatomic(
+            name: "shared", moleculeID: "shared", leftElement: "C", rightElement: "O")
+        let product = makeDiatomic(
+            name: "product", moleculeID: "product", leftElement: "C", rightElement: "N")
 
         let first = CDKReaction(reactants: [shared], agents: [], products: [product], id: "r1")
         var set = CDKReactionSet(id: "set-1", members: [.reaction(first)])
@@ -249,51 +386,61 @@ final class ReactionManipulatorTests: XCTestCase {
     }
 
     private func makeMappedEthene(name: String, moleculeID: String, startMap: Int) -> Molecule {
-        Molecule(name: name,
-                 externalID: moleculeID,
-                 atoms: [
-                    Atom(id: 1,
-                         externalID: "\(moleculeID)-a1",
-                         element: "C",
-                         position: .zero,
-                         atomMapNumber: startMap),
-                    Atom(id: 2,
-                         externalID: "\(moleculeID)-a2",
-                         element: "C",
-                         position: CGPoint(x: 1, y: 0),
-                         atomMapNumber: startMap + 1)
-                 ],
-                 bonds: [
-                    Bond(id: 1,
-                         externalID: "\(moleculeID)-b1",
-                         a1: 1,
-                         a2: 2,
-                         order: .double)
-                 ])
+        Molecule(
+            name: name,
+            externalID: moleculeID,
+            atoms: [
+                Atom(
+                    id: 1,
+                    externalID: "\(moleculeID)-a1",
+                    element: "C",
+                    position: .zero,
+                    atomMapNumber: startMap),
+                Atom(
+                    id: 2,
+                    externalID: "\(moleculeID)-a2",
+                    element: "C",
+                    position: CGPoint(x: 1, y: 0),
+                    atomMapNumber: startMap + 1),
+            ],
+            bonds: [
+                Bond(
+                    id: 1,
+                    externalID: "\(moleculeID)-b1",
+                    a1: 1,
+                    a2: 2,
+                    order: .double)
+            ])
     }
 
-    private func makeDiatomic(name: String,
-                              moleculeID: String,
-                              leftElement: String,
-                              rightElement: String) -> Molecule {
-        Molecule(name: name,
-                 externalID: moleculeID,
-                 atoms: [
-                    Atom(id: 1,
-                         externalID: "\(moleculeID)-a1",
-                         element: leftElement,
-                         position: .zero),
-                    Atom(id: 2,
-                         externalID: "\(moleculeID)-a2",
-                         element: rightElement,
-                         position: CGPoint(x: 1, y: 0))
-                 ],
-                 bonds: [
-                    Bond(id: 1,
-                         externalID: "\(moleculeID)-b1",
-                         a1: 1,
-                         a2: 2,
-                         order: .single)
-                 ])
+    private func makeDiatomic(
+        name: String,
+        moleculeID: String,
+        leftElement: String,
+        rightElement: String
+    ) -> Molecule {
+        Molecule(
+            name: name,
+            externalID: moleculeID,
+            atoms: [
+                Atom(
+                    id: 1,
+                    externalID: "\(moleculeID)-a1",
+                    element: leftElement,
+                    position: .zero),
+                Atom(
+                    id: 2,
+                    externalID: "\(moleculeID)-a2",
+                    element: rightElement,
+                    position: CGPoint(x: 1, y: 0)),
+            ],
+            bonds: [
+                Bond(
+                    id: 1,
+                    externalID: "\(moleculeID)-b1",
+                    a1: 1,
+                    a2: 2,
+                    order: .single)
+            ])
     }
 }

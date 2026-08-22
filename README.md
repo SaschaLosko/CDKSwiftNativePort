@@ -439,7 +439,8 @@ xcodebuild -project /path/to/AtomLens.xcodeproj -scheme AtomLens -configuration 
 
 `CDKSwiftNativePort` includes code derived from and inspired by the Chemistry
 Development Kit (CDK). The current parity target for the supported workflows in
-this package is CDK `2.12`.
+this package is CDK `2.13` (`cdk-2.13`, commit
+`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`).
 
 Upstream project:
 

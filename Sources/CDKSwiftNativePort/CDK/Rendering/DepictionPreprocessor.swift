@@ -1,7 +1,8 @@
-#if canImport(CoreGraphics)
-import CoreGraphics
-#endif
 import Foundation
+
+#if canImport(CoreGraphics)
+    import CoreGraphics
+#endif
 
 enum CDKDepictionPreprocessor {
     static func prepareForRendering(molecule: Molecule, style: RenderStyle) -> Molecule {
@@ -27,13 +28,15 @@ enum CDKDepictionPreprocessor {
         var state = ShortcutState()
 
         for sgroup in molecule.sgroups {
-            let keyword = sgroup.keyword?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? ""
+            let keyword =
+                sgroup.keyword?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? ""
             switch keyword {
             case "SUP":
                 guard !sgroup.expanded,
-                      let label = sgroup.subscriptText?.trimmingCharacters(in: .whitespacesAndNewlines),
-                      !label.isEmpty,
-                      canContractAbbreviation(sgroup: sgroup, in: molecule) else {
+                    let label = sgroup.subscriptText?.trimmingCharacters(in: .whitespacesAndNewlines),
+                    !label.isEmpty,
+                    canContractAbbreviation(sgroup: sgroup, in: molecule)
+                else {
                     continue
                 }
                 contractAbbreviation(sgroup: sgroup, label: label, molecule: molecule, state: &state)
@@ -46,17 +49,20 @@ enum CDKDepictionPreprocessor {
             }
         }
 
-        guard !state.hiddenAtomIDs.isEmpty
+        guard
+            !state.hiddenAtomIDs.isEmpty
                 || !state.hiddenBondIDs.isEmpty
                 || !state.aliasLabels.isEmpty
-                || !state.positionOverrides.isEmpty else {
+                || !state.positionOverrides.isEmpty
+        else {
             return prepared
         }
 
         prepared.bonds = prepared.bonds.filter { !state.hiddenBondIDs.contains($0.id) }
         let bondedAtomIDs = Set(prepared.bonds.flatMap { [$0.a1, $0.a2] })
         let keptHiddenAtomIDs = state.hiddenAtomIDs.intersection(bondedAtomIDs)
-        let keepAtomIDs = bondedAtomIDs
+        let keepAtomIDs =
+            bondedAtomIDs
             .union(state.forcedVisibleAtomIDs)
             .union(prepared.highlightedAtomIDs)
             .union(keptHiddenAtomIDs)
@@ -92,9 +98,10 @@ enum CDKDepictionPreprocessor {
         let internalAtomIDs = Set(sgroup.atomIDs)
         guard !internalAtomIDs.isEmpty else { return false }
 
-        let internalBondIDs = Set(molecule.bonds.compactMap { bond in
-            internalAtomIDs.contains(bond.a1) && internalAtomIDs.contains(bond.a2) ? bond.id : nil
-        })
+        let internalBondIDs = Set(
+            molecule.bonds.compactMap { bond in
+                internalAtomIDs.contains(bond.a1) && internalAtomIDs.contains(bond.a2) ? bond.id : nil
+            })
         let highlightedAtomIDs = Set(molecule.highlightedAtomIDs)
         let highlightedBondIDs = Set(molecule.highlightedBondIDs)
 
@@ -107,10 +114,12 @@ enum CDKDepictionPreprocessor {
             && highlightedInternalBonds.count == internalBondIDs.count
     }
 
-    private static func contractAbbreviation(sgroup: MoleculeSgroup,
-                                             label: String,
-                                             molecule: Molecule,
-                                             state: inout ShortcutState) {
+    private static func contractAbbreviation(
+        sgroup: MoleculeSgroup,
+        label: String,
+        molecule: Molecule,
+        state: inout ShortcutState
+    ) {
         let internalAtomIDs = Set(sgroup.atomIDs)
         guard !internalAtomIDs.isEmpty else { return }
 
@@ -141,7 +150,8 @@ enum CDKDepictionPreprocessor {
         for atomID in internalAtomIDs {
             state.hiddenAtomIDs.insert(atomID)
         }
-        for bond in molecule.bonds where internalAtomIDs.contains(bond.a1) || internalAtomIDs.contains(bond.a2) {
+        for bond in molecule.bonds
+        where internalAtomIDs.contains(bond.a1) || internalAtomIDs.contains(bond.a2) {
             state.hiddenBondIDs.insert(bond.id)
         }
 
@@ -171,9 +181,11 @@ enum CDKDepictionPreprocessor {
         }
     }
 
-    private static func hideMultipleGroupParts(sgroup: MoleculeSgroup,
-                                               molecule: Molecule,
-                                               state: inout ShortcutState) {
+    private static func hideMultipleGroupParts(
+        sgroup: MoleculeSgroup,
+        molecule: Molecule,
+        state: inout ShortcutState
+    ) {
         let atomIDs = Set(sgroup.atomIDs)
         let parentAtomIDs = Set(sgroup.parentAtomIDs)
         let crossingBondIDs = Set(sgroup.crossingBondIDs)
@@ -195,9 +207,11 @@ enum CDKDepictionPreprocessor {
         }
     }
 
-    private static func hideExtMulticenterAtoms(sgroup: MoleculeSgroup,
-                                                molecule: Molecule,
-                                                state: inout ShortcutState) {
+    private static func hideExtMulticenterAtoms(
+        sgroup: MoleculeSgroup,
+        molecule: Molecule,
+        state: inout ShortcutState
+    ) {
         let atomIDs = Set(sgroup.atomIDs)
         for crossingBondID in sgroup.crossingBondIDs {
             guard let bond = molecule.bonds.first(where: { $0.id == crossingBondID }) else { continue }
@@ -228,9 +242,11 @@ enum CDKDepictionPreprocessor {
 
         for atom in molecule.atoms where isHydrogen(atom) {
             guard !highlightedAtomIDs.contains(atom.id),
-                  isSuppressibleHydrogen(atomID: atom.id,
-                                         in: molecule,
-                                         highlightedBondIDs: highlightedBondIDs) else {
+                isSuppressibleHydrogen(
+                    atomID: atom.id,
+                    in: molecule,
+                    highlightedBondIDs: highlightedBondIDs)
+            else {
                 continue
             }
             suppressedHydrogenIDs.insert(atom.id)
@@ -258,26 +274,51 @@ enum CDKDepictionPreprocessor {
         return prepared
     }
 
-    private static func isSuppressibleHydrogen(atomID: Int,
-                                               in molecule: Molecule,
-                                               highlightedBondIDs: Set<Int>) -> Bool {
+    private static func isSuppressibleHydrogen(
+        atomID: Int,
+        in molecule: Molecule,
+        highlightedBondIDs: Set<Int>
+    ) -> Bool {
         guard let atom = molecule.atom(id: atomID), isHydrogen(atom) else { return false }
         guard atom.charge == 0,
-              atom.isotopeMassNumber == nil,
-              atom.radical == nil,
-              atom.queryType == nil,
-              atom.atomList == nil else {
+            atom.isotopeMassNumber == nil,
+            atom.radical == nil,
+            atom.queryType == nil,
+            atom.atomList == nil
+        else {
             return false
         }
 
         let attachedBonds = molecule.bonds(forAtom: atom.id)
         guard attachedBonds.count == 1, let bond = attachedBonds.first else { return false }
         guard !highlightedBondIDs.contains(bond.id) else { return false }
-        guard bond.order == .single, bond.stereo == .none, bond.queryType == nil else { return false }
-
         let neighborID = (bond.a1 == atom.id) ? bond.a2 : bond.a1
+        guard bond.order == .single,
+            bond.queryType == nil,
+            bond.stereo == .none
+                || isDirectionalDoubleBondHydrogen(
+                    atomID: atomID,
+                    neighborID: neighborID,
+                    in: molecule)
+        else {
+            return false
+        }
         guard let neighbor = molecule.atom(id: neighborID), !isHydrogen(neighbor) else { return false }
         return true
+    }
+
+    private static func isDirectionalDoubleBondHydrogen(
+        atomID: Int,
+        neighborID: Int,
+        in molecule: Molecule
+    ) -> Bool {
+        let hydrogenNeighborCount = molecule.neighbors(of: neighborID).filter { candidateID in
+            molecule.atom(id: candidateID).map(isHydrogen) == true
+        }.count
+        guard hydrogenNeighborCount >= 2 else { return false }
+        return molecule.bonds(forAtom: neighborID).contains { bond in
+            bond.order == .double && bond.a1 != atomID && bond.a2 != atomID
+        }
     }
 
     private static func isHydrogen(_ atom: Atom) -> Bool {

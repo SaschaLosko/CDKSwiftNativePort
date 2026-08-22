@@ -65,14 +65,15 @@ public enum CDKReactionManipulator {
     }
 
     public static func reverse(_ reaction: CDKReaction) -> CDKReaction {
-        CDKReaction(reactantParticipants: reaction.productParticipants,
-                    agentParticipants: reaction.agentParticipants,
-                    productParticipants: reaction.reactantParticipants,
-                    id: reaction.id,
-                    direction: reaction.direction.reversed,
-                    name: reaction.name,
-                    properties: reaction.properties,
-                    cxState: reaction.cxState)
+        CDKReaction(
+            reactantParticipants: reaction.productParticipants,
+            agentParticipants: reaction.agentParticipants,
+            productParticipants: reaction.reactantParticipants,
+            id: reaction.id,
+            direction: reaction.direction.reversed,
+            name: reaction.name,
+            properties: reaction.properties,
+            cxState: reaction.cxState)
     }
 
     public static func getAllIDs(_ reaction: CDKReaction) -> [String] {
@@ -98,9 +99,11 @@ public enum CDKReactionManipulator {
         }
     }
 
-    public static func setAtomProperties(_ reaction: inout CDKReaction,
-                                         key: String,
-                                         value: String) {
+    public static func setAtomProperties(
+        _ reaction: inout CDKReaction,
+        key: String,
+        value: String
+    ) {
         mutateAllParticipants(in: &reaction) { molecule in
             var updated = molecule
             updated.atoms = updated.atoms.map { atom in
@@ -117,8 +120,10 @@ public enum CDKReactionManipulator {
     }
 
     @discardableResult
-    public static func removeAtomAndConnectedElectronContainers(_ reaction: inout CDKReaction,
-                                                                _ atom: Atom) -> Bool {
+    public static func removeAtomAndConnectedElectronContainers(
+        _ reaction: inout CDKReaction,
+        _ atom: Atom
+    ) -> Bool {
         removeMatchingObject(from: &reaction) { molecule in
             molecule.atoms.contains(atom)
         } mutation: { molecule in
@@ -126,31 +131,42 @@ public enum CDKReactionManipulator {
             var updated = molecule
             updated.atoms.removeAll { $0 == atom }
             updated.bonds.removeAll { $0.a1 == atom.id || $0.a2 == atom.id }
+            repairStereochemistry(
+                afterRemoving: atom.id,
+                from: molecule,
+                in: &updated)
+            updated.bonds = updated.bonds.map { bond in
+                guard bond.coordinateBondReferenceAtomID == atom.id else { return bond }
+                var bond = bond
+                bond.coordinateBondReferenceAtomID = nil
+                return bond
+            }
             updated.sgroups = updated.sgroups.compactMap { sgroup in
                 let atomIDs = sgroup.atomIDs.filter { $0 != atom.id }
                 let crossingBondIDs = sgroup.crossingBondIDs.filter { bondID in
                     updated.bonds.contains(where: { $0.id == bondID })
                 }
                 guard !atomIDs.isEmpty else { return nil }
-                return MoleculeSgroup(kind: sgroup.kind,
-                                      keyword: sgroup.keyword,
-                                      atomIDs: atomIDs,
-                                      crossingBondIDs: crossingBondIDs,
-                                      subscriptText: sgroup.subscriptText,
-                                      superscriptText: sgroup.superscriptText,
-                                      roundBrackets: sgroup.roundBrackets,
-                                      connectivity: sgroup.connectivity,
-                                      dataFieldName: sgroup.dataFieldName,
-                                      dataValue: sgroup.dataValue,
-                                      dataOperator: sgroup.dataOperator,
-                                      dataUnit: sgroup.dataUnit,
-                                      dataTag: sgroup.dataTag,
-                                      subtype: sgroup.subtype,
-                                      parentAtomIDs: sgroup.parentAtomIDs.filter { $0 != atom.id },
-                                      componentNumber: sgroup.componentNumber,
-                                      expanded: sgroup.expanded,
-                                      brackets: sgroup.brackets,
-                                      childGroupIndices: sgroup.childGroupIndices)
+                return MoleculeSgroup(
+                    kind: sgroup.kind,
+                    keyword: sgroup.keyword,
+                    atomIDs: atomIDs,
+                    crossingBondIDs: crossingBondIDs,
+                    subscriptText: sgroup.subscriptText,
+                    superscriptText: sgroup.superscriptText,
+                    roundBrackets: sgroup.roundBrackets,
+                    connectivity: sgroup.connectivity,
+                    dataFieldName: sgroup.dataFieldName,
+                    dataValue: sgroup.dataValue,
+                    dataOperator: sgroup.dataOperator,
+                    dataUnit: sgroup.dataUnit,
+                    dataTag: sgroup.dataTag,
+                    subtype: sgroup.subtype,
+                    parentAtomIDs: sgroup.parentAtomIDs.filter { $0 != atom.id },
+                    componentNumber: sgroup.componentNumber,
+                    expanded: sgroup.expanded,
+                    brackets: sgroup.brackets,
+                    childGroupIndices: sgroup.childGroupIndices)
             }
             updated.highlightedAtomIDs.removeAll { $0 == atom.id }
             updated.highlightedBondIDs.removeAll { bondID in
@@ -160,9 +176,116 @@ public enum CDKReactionManipulator {
         }
     }
 
+    private static func repairStereochemistry(
+        afterRemoving removedAtomID: Int,
+        from original: Molecule,
+        in molecule: inout Molecule
+    ) {
+        let remainingAtomIDs = Set(molecule.atoms.map(\.id))
+        molecule.atoms = molecule.atoms.map { atom in
+            var atom = atom
+            guard var ordering = atom.ligandOrderingAtomIDs else { return atom }
+
+            ordering = ordering.filter { $0 == removedAtomID || remainingAtomIDs.contains($0) }
+            guard ordering.contains(removedAtomID) else {
+                atom.ligandOrderingAtomIDs = ordering.isEmpty ? nil : ordering
+                return atom
+            }
+
+            if atom.chirality != .none,
+                ordering.count == 4,
+                !ordering.contains(atom.id)
+            {
+                ordering = ordering.map { $0 == removedAtomID ? atom.id : $0 }
+                atom.ligandOrderingAtomIDs = ordering
+            } else {
+                atom.chirality = .none
+                atom.ligandOrderingAtomIDs = nil
+            }
+            return atom
+        }
+
+        molecule.bonds = molecule.bonds.map { bond in
+            guard bond.doubleBondStereo != nil,
+                var references = bond.stereoReferenceAtomIDs,
+                references.count == 4,
+                references[1] == bond.a1,
+                references[2] == bond.a2,
+                references.contains(removedAtomID)
+            else {
+                return bond
+            }
+
+            var bond = bond
+            var replacementWasMade = false
+            if references[0] == removedAtomID,
+                let replacement = stereoCarrierNeighbor(
+                    of: bond.a1,
+                    excluding: bond.a2,
+                    removedAtomID: removedAtomID,
+                    in: original,
+                    remainingAtomIDs: remainingAtomIDs)
+            {
+                references[0] = replacement
+                replacementWasMade = true
+            } else if references[3] == removedAtomID,
+                let replacement = stereoCarrierNeighbor(
+                    of: bond.a2,
+                    excluding: bond.a1,
+                    removedAtomID: removedAtomID,
+                    in: original,
+                    remainingAtomIDs: remainingAtomIDs)
+            {
+                references[3] = replacement
+                replacementWasMade = true
+            } else {
+                bond.doubleBondStereo = nil
+                bond.stereoReferenceAtomIDs = nil
+                return bond
+            }
+
+            guard replacementWasMade, references.allSatisfy(remainingAtomIDs.contains) else {
+                bond.doubleBondStereo = nil
+                bond.stereoReferenceAtomIDs = nil
+                return bond
+            }
+            bond.stereoReferenceAtomIDs = references
+            bond.doubleBondStereo = bond.doubleBondStereo == .cis ? .trans : .cis
+            return bond
+        }
+    }
+
+    private static func stereoCarrierNeighbor(
+        of focusAtomID: Int,
+        excluding otherFocusAtomID: Int,
+        removedAtomID: Int,
+        in molecule: Molecule,
+        remainingAtomIDs: Set<Int>
+    ) -> Int? {
+        molecule.bonds
+            .filter { bond in
+                bond.order == .single
+                    && (bond.a1 == focusAtomID || bond.a2 == focusAtomID)
+            }
+            .compactMap { bond -> Int? in
+                let neighborID = bond.a1 == focusAtomID ? bond.a2 : bond.a1
+                guard neighborID != otherFocusAtomID,
+                    neighborID != removedAtomID,
+                    remainingAtomIDs.contains(neighborID)
+                else {
+                    return nil
+                }
+                return neighborID
+            }
+            .sorted()
+            .first
+    }
+
     @discardableResult
-    public static func removeElectronContainer(_ reaction: inout CDKReaction,
-                                               _ bond: Bond) -> Bool {
+    public static func removeElectronContainer(
+        _ reaction: inout CDKReaction,
+        _ bond: Bond
+    ) -> Bool {
         removeMatchingObject(from: &reaction) { molecule in
             molecule.bonds.contains(bond)
         } mutation: { molecule in
@@ -170,25 +293,26 @@ public enum CDKReactionManipulator {
             var updated = molecule
             updated.bonds.removeAll { $0 == bond }
             updated.sgroups = updated.sgroups.map { sgroup in
-                MoleculeSgroup(kind: sgroup.kind,
-                               keyword: sgroup.keyword,
-                               atomIDs: sgroup.atomIDs,
-                               crossingBondIDs: sgroup.crossingBondIDs.filter { $0 != bond.id },
-                               subscriptText: sgroup.subscriptText,
-                               superscriptText: sgroup.superscriptText,
-                               roundBrackets: sgroup.roundBrackets,
-                               connectivity: sgroup.connectivity,
-                               dataFieldName: sgroup.dataFieldName,
-                               dataValue: sgroup.dataValue,
-                               dataOperator: sgroup.dataOperator,
-                               dataUnit: sgroup.dataUnit,
-                               dataTag: sgroup.dataTag,
-                               subtype: sgroup.subtype,
-                               parentAtomIDs: sgroup.parentAtomIDs,
-                               componentNumber: sgroup.componentNumber,
-                               expanded: sgroup.expanded,
-                               brackets: sgroup.brackets,
-                               childGroupIndices: sgroup.childGroupIndices)
+                MoleculeSgroup(
+                    kind: sgroup.kind,
+                    keyword: sgroup.keyword,
+                    atomIDs: sgroup.atomIDs,
+                    crossingBondIDs: sgroup.crossingBondIDs.filter { $0 != bond.id },
+                    subscriptText: sgroup.subscriptText,
+                    superscriptText: sgroup.superscriptText,
+                    roundBrackets: sgroup.roundBrackets,
+                    connectivity: sgroup.connectivity,
+                    dataFieldName: sgroup.dataFieldName,
+                    dataValue: sgroup.dataValue,
+                    dataOperator: sgroup.dataOperator,
+                    dataUnit: sgroup.dataUnit,
+                    dataTag: sgroup.dataTag,
+                    subtype: sgroup.subtype,
+                    parentAtomIDs: sgroup.parentAtomIDs,
+                    componentNumber: sgroup.componentNumber,
+                    expanded: sgroup.expanded,
+                    brackets: sgroup.brackets,
+                    childGroupIndices: sgroup.childGroupIndices)
             }
             updated.highlightedBondIDs.removeAll { $0 == bond.id }
             return updated
@@ -206,7 +330,8 @@ public enum CDKReactionManipulator {
 
     public static func getMappedChemObject(_ reaction: CDKReaction, _ bond: Bond) -> Bond? {
         guard let source = participantReference(in: reaction, bond: bond),
-              let sourceMap = mappedBondKey(for: source.bond, in: source.molecule) else {
+            let sourceMap = mappedBondKey(for: source.bond, in: source.molecule)
+        else {
             return nil
         }
 
@@ -223,16 +348,19 @@ public enum CDKReactionManipulator {
     }
 
     public static func findMappedBonds(_ reaction: CDKReaction) -> Set<CDKReactionBondReference> {
-        let leftParticipants = indexedParticipants(for: reaction.reactantParticipants, role: .reactant)
+        let leftParticipants =
+            indexedParticipants(for: reaction.reactantParticipants, role: .reactant)
             + indexedParticipants(for: reaction.agentParticipants, role: .agent)
         let rightParticipants = indexedParticipants(for: reaction.productParticipants, role: .product)
 
-        let leftKeys = Set(leftParticipants.flatMap { participant in
-            participant.molecule.bonds.compactMap { mappedBondKey(for: $0, in: participant.molecule) }
-        })
-        let rightKeys = Set(rightParticipants.flatMap { participant in
-            participant.molecule.bonds.compactMap { mappedBondKey(for: $0, in: participant.molecule) }
-        })
+        let leftKeys = Set(
+            leftParticipants.flatMap { participant in
+                participant.molecule.bonds.compactMap { mappedBondKey(for: $0, in: participant.molecule) }
+            })
+        let rightKeys = Set(
+            rightParticipants.flatMap { participant in
+                participant.molecule.bonds.compactMap { mappedBondKey(for: $0, in: participant.molecule) }
+            })
         let shared = leftKeys.intersection(rightKeys)
         guard !shared.isEmpty else { return [] }
 
@@ -240,20 +368,24 @@ public enum CDKReactionManipulator {
         for participant in leftParticipants + rightParticipants {
             for bond in participant.molecule.bonds {
                 guard let key = mappedBondKey(for: bond, in: participant.molecule),
-                      shared.contains(key) else {
+                    shared.contains(key)
+                else {
                     continue
                 }
-                references.insert(CDKReactionBondReference(role: participant.role,
-                                                           participantIndex: participant.index,
-                                                           bond: bond))
+                references.insert(
+                    CDKReactionBondReference(
+                        role: participant.role,
+                        participantIndex: participant.index,
+                        bond: bond))
             }
         }
         return references
     }
 
     public static func toMolecule(_ reaction: CDKReaction) -> Molecule {
-        var merged = Molecule(name: normalizedReactionName(reaction.name, fallback: "Reaction"),
-                              externalID: reaction.id)
+        var merged = Molecule(
+            name: normalizedReactionName(reaction.name, fallback: "Reaction"),
+            externalID: reaction.id)
         merged.cxState = reaction.cxState
 
         if !reaction.properties.isEmpty {
@@ -267,17 +399,19 @@ public enum CDKReactionManipulator {
         var nextAtomID = 0
         var nextBondID = 0
         var nextComponentGroupID = 1
-        let orderedParticipants = indexedParticipants(for: reaction.reactantParticipants, role: .reactant)
+        let orderedParticipants =
+            indexedParticipants(for: reaction.reactantParticipants, role: .reactant)
             + indexedParticipants(for: reaction.agentParticipants, role: .agent)
             + indexedParticipants(for: reaction.productParticipants, role: .product)
 
         for participant in orderedParticipants {
-            appendParticipant(participant.participant,
-                              to: &merged,
-                              role: participant.role,
-                              componentGroupID: nextComponentGroupID,
-                              nextAtomID: &nextAtomID,
-                              nextBondID: &nextBondID)
+            appendParticipant(
+                participant.participant,
+                to: &merged,
+                role: participant.role,
+                componentGroupID: nextComponentGroupID,
+                nextAtomID: &nextAtomID,
+                nextBondID: &nextBondID)
             nextComponentGroupID += 1
         }
 
@@ -286,21 +420,29 @@ public enum CDKReactionManipulator {
 
     public static func toReaction(_ molecule: Molecule) throws -> CDKReaction {
         let groupedAtoms = Dictionary(grouping: molecule.atoms) { $0.componentGroupID ?? -1 }
-        var groups: [(groupID: Int, role: CDKReactionRole, atoms: [Atom], bonds: [Bond], sgroups: [MoleculeSgroup])] = []
+        var groups:
+            [(
+                groupID: Int, role: CDKReactionRole, atoms: [Atom], bonds: [Bond], sgroups: [MoleculeSgroup]
+            )] = []
 
         for groupID in groupedAtoms.keys.sorted() {
             guard groupID > 0, let groupAtoms = groupedAtoms[groupID], !groupAtoms.isEmpty else {
-                throw ChemError.parseFailed("Inlined reaction molecule contains atoms without a reaction group.")
+                throw ChemError.parseFailed(
+                    "Inlined reaction molecule contains atoms without a reaction group.")
             }
             let roles = Set(groupAtoms.compactMap(\.reactionRole))
             guard roles.count == 1, let role = roles.first else {
-                throw ChemError.parseFailed("Inlined reaction molecule contains a group without a unique reaction role.")
+                throw ChemError.parseFailed(
+                    "Inlined reaction molecule contains a group without a unique reaction role.")
             }
 
             let atomIDSet = Set(groupAtoms.map(\.id))
-            let groupBonds = molecule.bonds.filter { atomIDSet.contains($0.a1) || atomIDSet.contains($0.a2) }
+            let groupBonds = molecule.bonds.filter {
+                atomIDSet.contains($0.a1) || atomIDSet.contains($0.a2)
+            }
             if groupBonds.contains(where: { !atomIDSet.contains($0.a1) || !atomIDSet.contains($0.a2) }) {
-                throw ChemError.parseFailed("Inlined reaction molecule contains a bond crossing reaction groups.")
+                throw ChemError.parseFailed(
+                    "Inlined reaction molecule contains a bond crossing reaction groups.")
             }
             let groupBondIDs = Set(groupBonds.map(\.id))
             let groupSgroups = molecule.sgroups.compactMap { sgroup -> MoleculeSgroup? in
@@ -309,25 +451,26 @@ public enum CDKReactionManipulator {
                 guard sgroupAtomIDs.isSubset(of: atomIDSet) else {
                     return nil
                 }
-                return MoleculeSgroup(kind: sgroup.kind,
-                                      keyword: sgroup.keyword,
-                                      atomIDs: sgroup.atomIDs,
-                                      crossingBondIDs: sgroup.crossingBondIDs.filter { groupBondIDs.contains($0) },
-                                      subscriptText: sgroup.subscriptText,
-                                      superscriptText: sgroup.superscriptText,
-                                      roundBrackets: sgroup.roundBrackets,
-                                      connectivity: sgroup.connectivity,
-                                      dataFieldName: sgroup.dataFieldName,
-                                      dataValue: sgroup.dataValue,
-                                      dataOperator: sgroup.dataOperator,
-                                      dataUnit: sgroup.dataUnit,
-                                      dataTag: sgroup.dataTag,
-                                      subtype: sgroup.subtype,
-                                      parentAtomIDs: sgroup.parentAtomIDs.filter { atomIDSet.contains($0) },
-                                      componentNumber: sgroup.componentNumber,
-                                      expanded: sgroup.expanded,
-                                      brackets: sgroup.brackets,
-                                      childGroupIndices: sgroup.childGroupIndices)
+                return MoleculeSgroup(
+                    kind: sgroup.kind,
+                    keyword: sgroup.keyword,
+                    atomIDs: sgroup.atomIDs,
+                    crossingBondIDs: sgroup.crossingBondIDs.filter { groupBondIDs.contains($0) },
+                    subscriptText: sgroup.subscriptText,
+                    superscriptText: sgroup.superscriptText,
+                    roundBrackets: sgroup.roundBrackets,
+                    connectivity: sgroup.connectivity,
+                    dataFieldName: sgroup.dataFieldName,
+                    dataValue: sgroup.dataValue,
+                    dataOperator: sgroup.dataOperator,
+                    dataUnit: sgroup.dataUnit,
+                    dataTag: sgroup.dataTag,
+                    subtype: sgroup.subtype,
+                    parentAtomIDs: sgroup.parentAtomIDs.filter { atomIDSet.contains($0) },
+                    componentNumber: sgroup.componentNumber,
+                    expanded: sgroup.expanded,
+                    brackets: sgroup.brackets,
+                    childGroupIndices: sgroup.childGroupIndices)
             }
 
             groups.append((groupID, role, groupAtoms, groupBonds, groupSgroups))
@@ -356,18 +499,20 @@ public enum CDKReactionManipulator {
             return (String(key.dropFirst(propertyPrefix.count)), values.joined(separator: "\n"))
         }
         let properties = Dictionary(uniqueKeysWithValues: propertyPairs)
-        let direction = molecule.dataFieldValues(named: directionFieldName).first
+        let direction =
+            molecule.dataFieldValues(named: directionFieldName).first
             .flatMap(CDKReactionDirection.init(rawValue:)) ?? .forward
         let reactionName = molecule.name.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return CDKReaction(reactantParticipants: reactants,
-                           agentParticipants: agents,
-                           productParticipants: products,
-                           id: molecule.externalID,
-                           direction: direction,
-                           name: reactionName.isEmpty ? nil : reactionName,
-                           properties: properties,
-                           cxState: molecule.cxState)
+        return CDKReaction(
+            reactantParticipants: reactants,
+            agentParticipants: agents,
+            productParticipants: products,
+            id: molecule.externalID,
+            direction: direction,
+            name: reactionName.isEmpty ? nil : reactionName,
+            properties: properties,
+            cxState: molecule.cxState)
     }
 
     public static func perceiveAtomTypesAndConfigureAtoms(_ reaction: inout CDKReaction) {
@@ -412,17 +557,23 @@ public enum CDKReactionManipulator {
         ids.append(contentsOf: molecule.bonds.compactMap(\.externalID))
     }
 
-    private static func indexedParticipants(for participants: [CDKReactionParticipant],
-                                            role: CDKReactionRole)
-        -> [(index: Int, role: CDKReactionRole, participant: CDKReactionParticipant, molecule: Molecule)]
+    private static func indexedParticipants(
+        for participants: [CDKReactionParticipant],
+        role: CDKReactionRole
+    )
+        -> [(
+            index: Int, role: CDKReactionRole, participant: CDKReactionParticipant, molecule: Molecule
+        )]
     {
         participants.enumerated().map { index, participant in
             (index, role, participant, participant.molecule)
         }
     }
 
-    private static func participantReference(in reaction: CDKReaction,
-                                             atom: Atom)
+    private static func participantReference(
+        in reaction: CDKReaction,
+        atom: Atom
+    )
         -> (role: CDKReactionRole, index: Int, molecule: Molecule)?
     {
         for participant in indexedParticipants(for: reaction.reactantParticipants, role: .reactant) {
@@ -443,8 +594,10 @@ public enum CDKReactionManipulator {
         return nil
     }
 
-    private static func participantReference(in reaction: CDKReaction,
-                                             bond: Bond)
+    private static func participantReference(
+        in reaction: CDKReaction,
+        bond: Bond
+    )
         -> (role: CDKReactionRole, index: Int, molecule: Molecule, bond: Bond)?
     {
         for participant in indexedParticipants(for: reaction.reactantParticipants, role: .reactant) {
@@ -465,15 +618,22 @@ public enum CDKReactionManipulator {
         return nil
     }
 
-    private static func participantGroups(forSearchFrom sourceRole: CDKReactionRole?,
-                                          in reaction: CDKReaction)
-        -> [(role: CDKReactionRole, participants: [(index: Int, role: CDKReactionRole, participant: CDKReactionParticipant, molecule: Molecule)])]
+    private static func participantGroups(
+        forSearchFrom sourceRole: CDKReactionRole?,
+        in reaction: CDKReaction
+    )
+        -> [(
+            role: CDKReactionRole,
+            participants: [(
+                index: Int, role: CDKReactionRole, participant: CDKReactionParticipant, molecule: Molecule
+            )]
+        )]
     {
         switch sourceRole {
         case .product:
             return [
                 (.reactant, indexedParticipants(for: reaction.reactantParticipants, role: .reactant)),
-                (.agent, indexedParticipants(for: reaction.agentParticipants, role: .agent))
+                (.agent, indexedParticipants(for: reaction.agentParticipants, role: .agent)),
             ]
         default:
             return [
@@ -484,25 +644,33 @@ public enum CDKReactionManipulator {
 
     private static func mappedBondKey(for bond: Bond, in molecule: Molecule) -> [Int]? {
         guard let a1 = molecule.atom(id: bond.a1)?.atomMapNumber,
-              let a2 = molecule.atom(id: bond.a2)?.atomMapNumber,
-              a1 > 0, a2 > 0 else {
+            let a2 = molecule.atom(id: bond.a2)?.atomMapNumber,
+            a1 > 0, a2 > 0
+        else {
             return nil
         }
         return [a1, a2].sorted()
     }
 
-    private static func removeMatchingObject(from reaction: inout CDKReaction,
-                                             contains: (Molecule) -> Bool,
-                                             mutation: (Molecule) -> Molecule) -> Bool {
-        let reactantRemoved = mutateParticipants(&reaction.reactantParticipants, contains: contains, mutation: mutation)
-        let agentRemoved = mutateParticipants(&reaction.agentParticipants, contains: contains, mutation: mutation)
-        let productRemoved = mutateParticipants(&reaction.productParticipants, contains: contains, mutation: mutation)
+    private static func removeMatchingObject(
+        from reaction: inout CDKReaction,
+        contains: (Molecule) -> Bool,
+        mutation: (Molecule) -> Molecule
+    ) -> Bool {
+        let reactantRemoved = mutateParticipants(
+            &reaction.reactantParticipants, contains: contains, mutation: mutation)
+        let agentRemoved = mutateParticipants(
+            &reaction.agentParticipants, contains: contains, mutation: mutation)
+        let productRemoved = mutateParticipants(
+            &reaction.productParticipants, contains: contains, mutation: mutation)
         return reactantRemoved || agentRemoved || productRemoved
     }
 
-    private static func mutateParticipants(_ participants: inout [CDKReactionParticipant],
-                                           contains: (Molecule) -> Bool,
-                                           mutation: (Molecule) -> Molecule) -> Bool {
+    private static func mutateParticipants(
+        _ participants: inout [CDKReactionParticipant],
+        contains: (Molecule) -> Bool,
+        mutation: (Molecule) -> Molecule
+    ) -> Bool {
         var changed = false
         for index in participants.indices where contains(participants[index].molecule) {
             participants[index].molecule = mutation(participants[index].molecule)
@@ -511,12 +679,14 @@ public enum CDKReactionManipulator {
         return changed
     }
 
-    private static func appendParticipant(_ participant: CDKReactionParticipant,
-                                          to molecule: inout Molecule,
-                                          role: CDKReactionRole,
-                                          componentGroupID: Int,
-                                          nextAtomID: inout Int,
-                                          nextBondID: inout Int) {
+    private static func appendParticipant(
+        _ participant: CDKReactionParticipant,
+        to molecule: inout Molecule,
+        role: CDKReactionRole,
+        componentGroupID: Int,
+        nextAtomID: inout Int,
+        nextBondID: inout Int
+    ) {
         var atomIDMap: [Int: Int] = [:]
         var bondIDMap: [Int: Int] = [:]
 
@@ -524,43 +694,44 @@ public enum CDKReactionManipulator {
             nextAtomID += 1
             atomIDMap[atom.id] = nextAtomID
             molecule.atoms.append(
-                Atom(id: nextAtomID,
-                     externalID: atom.externalID,
-                     element: atom.element,
-                     position: atom.position,
-                     zPosition: atom.zPosition,
-                     charge: atom.charge,
-                     isotopeMassNumber: atom.isotopeMassNumber,
-                     aromatic: atom.aromatic,
-                     chirality: atom.chirality,
-                     explicitHydrogenCount: atom.explicitHydrogenCount,
-                     queryType: atom.queryType,
-                     atomList: atom.atomList,
-                     atomListIsNegated: atom.atomListIsNegated,
-                     radical: atom.radical,
-                     radicalType: atom.radicalType,
-                     atomValue: atom.atomValue,
-                     rGroupLabel: atom.rGroupLabel,
-                     rGroupMembership: atom.rGroupMembership,
-                     componentGroupID: componentGroupID,
-                     reactionRole: role,
-                     substitutionCount: atom.substitutionCount,
-                     unsaturated: atom.unsaturated,
-                     ringBondCount: atom.ringBondCount,
-                     attachmentPoint: atom.attachmentPoint,
-                     valenceOverride: atom.valenceOverride,
-                     cxStereoGroup: atom.cxStereoGroup,
-                     ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
-                     atomClass: atom.atomClass,
-                     atomMapNumber: atom.atomMapNumber,
-                     aliasLabel: atom.aliasLabel,
-                     properties: atom.properties,
-                     atomTypeName: atom.atomTypeName,
-                     maximumBondOrder: atom.maximumBondOrder,
-                     bondOrderSum: atom.bondOrderSum,
-                     valency: atom.valency,
-                     formalNeighbourCount: atom.formalNeighbourCount,
-                     hybridization: atom.hybridization)
+                Atom(
+                    id: nextAtomID,
+                    externalID: atom.externalID,
+                    element: atom.element,
+                    position: atom.position,
+                    zPosition: atom.zPosition,
+                    charge: atom.charge,
+                    isotopeMassNumber: atom.isotopeMassNumber,
+                    aromatic: atom.aromatic,
+                    chirality: atom.chirality,
+                    explicitHydrogenCount: atom.explicitHydrogenCount,
+                    queryType: atom.queryType,
+                    atomList: atom.atomList,
+                    atomListIsNegated: atom.atomListIsNegated,
+                    radical: atom.radical,
+                    radicalType: atom.radicalType,
+                    atomValue: atom.atomValue,
+                    rGroupLabel: atom.rGroupLabel,
+                    rGroupMembership: atom.rGroupMembership,
+                    componentGroupID: componentGroupID,
+                    reactionRole: role,
+                    substitutionCount: atom.substitutionCount,
+                    unsaturated: atom.unsaturated,
+                    ringBondCount: atom.ringBondCount,
+                    attachmentPoint: atom.attachmentPoint,
+                    valenceOverride: atom.valenceOverride,
+                    cxStereoGroup: atom.cxStereoGroup,
+                    ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
+                    atomClass: atom.atomClass,
+                    atomMapNumber: atom.atomMapNumber,
+                    aliasLabel: atom.aliasLabel,
+                    properties: atom.properties,
+                    atomTypeName: atom.atomTypeName,
+                    maximumBondOrder: atom.maximumBondOrder,
+                    bondOrderSum: atom.bondOrderSum,
+                    valency: atom.valency,
+                    formalNeighbourCount: atom.formalNeighbourCount,
+                    hybridization: atom.hybridization)
             )
         }
 
@@ -568,14 +739,22 @@ public enum CDKReactionManipulator {
             guard let a1 = atomIDMap[bond.a1], let a2 = atomIDMap[bond.a2] else { continue }
             nextBondID += 1
             bondIDMap[bond.id] = nextBondID
-            molecule.bonds.append(Bond(id: nextBondID,
-                                       externalID: bond.externalID,
-                                       a1: a1,
-                                       a2: a2,
-                                       order: bond.order,
-                                       stereo: bond.stereo,
-                                       queryType: bond.queryType,
-                                       topology: bond.topology))
+            molecule.bonds.append(
+                Bond(
+                    id: nextBondID,
+                    externalID: bond.externalID,
+                    a1: a1,
+                    a2: a2,
+                    order: bond.order,
+                    stereo: bond.stereo,
+                    doubleBondStereo: bond.doubleBondStereo,
+                    stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap { atomIDMap[$0] },
+                    queryType: bond.queryType,
+                    topology: bond.topology,
+                    coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap {
+                        atomIDMap[$0]
+                    },
+                    reactingCenterStatus: bond.reactingCenterStatus))
         }
 
         for sgroup in participant.molecule.sgroups {
@@ -583,81 +762,89 @@ public enum CDKReactionManipulator {
             guard !atomIDs.isEmpty else { continue }
             let crossingBondIDs = sgroup.crossingBondIDs.compactMap { bondIDMap[$0] }
             molecule.sgroups.append(
-                MoleculeSgroup(kind: sgroup.kind,
-                               keyword: sgroup.keyword,
-                               atomIDs: atomIDs,
-                               crossingBondIDs: crossingBondIDs,
-                               subscriptText: sgroup.subscriptText,
-                               superscriptText: sgroup.superscriptText,
-                               roundBrackets: sgroup.roundBrackets,
-                               connectivity: sgroup.connectivity,
-                               dataFieldName: sgroup.dataFieldName,
-                               dataValue: sgroup.dataValue,
-                               dataOperator: sgroup.dataOperator,
-                               dataUnit: sgroup.dataUnit,
-                               dataTag: sgroup.dataTag,
-                               subtype: sgroup.subtype,
-                               parentAtomIDs: sgroup.parentAtomIDs.compactMap { atomIDMap[$0] },
-                               componentNumber: sgroup.componentNumber,
-                               expanded: sgroup.expanded,
-                               brackets: sgroup.brackets,
-                               childGroupIndices: sgroup.childGroupIndices)
+                MoleculeSgroup(
+                    kind: sgroup.kind,
+                    keyword: sgroup.keyword,
+                    atomIDs: atomIDs,
+                    crossingBondIDs: crossingBondIDs,
+                    subscriptText: sgroup.subscriptText,
+                    superscriptText: sgroup.superscriptText,
+                    roundBrackets: sgroup.roundBrackets,
+                    connectivity: sgroup.connectivity,
+                    dataFieldName: sgroup.dataFieldName,
+                    dataValue: sgroup.dataValue,
+                    dataOperator: sgroup.dataOperator,
+                    dataUnit: sgroup.dataUnit,
+                    dataTag: sgroup.dataTag,
+                    subtype: sgroup.subtype,
+                    parentAtomIDs: sgroup.parentAtomIDs.compactMap { atomIDMap[$0] },
+                    componentNumber: sgroup.componentNumber,
+                    expanded: sgroup.expanded,
+                    brackets: sgroup.brackets,
+                    childGroupIndices: sgroup.childGroupIndices)
             )
         }
     }
 
-    private static func moleculeFromInlineGroup(_ group: (groupID: Int,
-                                                         role: CDKReactionRole,
-                                                         atoms: [Atom],
-                                                         bonds: [Bond],
-                                                         sgroups: [MoleculeSgroup])) -> Molecule {
+    private static func moleculeFromInlineGroup(
+        _ group: (
+            groupID: Int,
+            role: CDKReactionRole,
+            atoms: [Atom],
+            bonds: [Bond],
+            sgroups: [MoleculeSgroup]
+        )
+    ) -> Molecule {
         var participant = Molecule(name: "Participant")
         participant.atoms = group.atoms.map { atom in
-            Atom(id: atom.id,
-                 externalID: atom.externalID,
-                 element: atom.element,
-                 position: atom.position,
-                 zPosition: atom.zPosition,
-                 charge: atom.charge,
-                 isotopeMassNumber: atom.isotopeMassNumber,
-                 aromatic: atom.aromatic,
-                 chirality: atom.chirality,
-                 explicitHydrogenCount: atom.explicitHydrogenCount,
-                 queryType: atom.queryType,
-                 atomList: atom.atomList,
-                 atomListIsNegated: atom.atomListIsNegated,
-                 radical: atom.radical,
-                 radicalType: atom.radicalType,
-                 atomValue: atom.atomValue,
-                 rGroupLabel: atom.rGroupLabel,
-                 rGroupMembership: atom.rGroupMembership,
-                 componentGroupID: nil,
-                 reactionRole: nil,
-                 substitutionCount: atom.substitutionCount,
-                 unsaturated: atom.unsaturated,
-                 ringBondCount: atom.ringBondCount,
-                 attachmentPoint: atom.attachmentPoint,
-                 valenceOverride: atom.valenceOverride,
-                 cxStereoGroup: atom.cxStereoGroup,
-                 ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
-                 atomClass: atom.atomClass,
-                 atomMapNumber: atom.atomMapNumber,
-                 aliasLabel: atom.aliasLabel,
-                 properties: atom.properties,
-                 atomTypeName: atom.atomTypeName,
-                 maximumBondOrder: atom.maximumBondOrder,
-                 bondOrderSum: atom.bondOrderSum,
-                 valency: atom.valency,
-                 formalNeighbourCount: atom.formalNeighbourCount,
-                 hybridization: atom.hybridization)
+            Atom(
+                id: atom.id,
+                externalID: atom.externalID,
+                element: atom.element,
+                position: atom.position,
+                zPosition: atom.zPosition,
+                charge: atom.charge,
+                isotopeMassNumber: atom.isotopeMassNumber,
+                aromatic: atom.aromatic,
+                chirality: atom.chirality,
+                explicitHydrogenCount: atom.explicitHydrogenCount,
+                queryType: atom.queryType,
+                atomList: atom.atomList,
+                atomListIsNegated: atom.atomListIsNegated,
+                radical: atom.radical,
+                radicalType: atom.radicalType,
+                atomValue: atom.atomValue,
+                rGroupLabel: atom.rGroupLabel,
+                rGroupMembership: atom.rGroupMembership,
+                componentGroupID: nil,
+                reactionRole: nil,
+                substitutionCount: atom.substitutionCount,
+                unsaturated: atom.unsaturated,
+                ringBondCount: atom.ringBondCount,
+                attachmentPoint: atom.attachmentPoint,
+                valenceOverride: atom.valenceOverride,
+                cxStereoGroup: atom.cxStereoGroup,
+                ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
+                atomClass: atom.atomClass,
+                atomMapNumber: atom.atomMapNumber,
+                aliasLabel: atom.aliasLabel,
+                properties: atom.properties,
+                atomTypeName: atom.atomTypeName,
+                maximumBondOrder: atom.maximumBondOrder,
+                bondOrderSum: atom.bondOrderSum,
+                valency: atom.valency,
+                formalNeighbourCount: atom.formalNeighbourCount,
+                hybridization: atom.hybridization)
         }
         participant.bonds = group.bonds
         participant.sgroups = group.sgroups
         return participant
     }
 
-    private static func mutateAllParticipants(in reaction: inout CDKReaction,
-                                              transform: (Molecule) -> Molecule) {
+    private static func mutateAllParticipants(
+        in reaction: inout CDKReaction,
+        transform: (Molecule) -> Molecule
+    ) {
         reaction.reactantParticipants = reaction.reactantParticipants.map { participant in
             var participant = participant
             participant.molecule = transform(participant.molecule)
@@ -683,18 +870,21 @@ public enum CDKReactionManipulator {
         return updated
     }
 
-    private static func configure(atom: Atom,
-                                  in molecule: Molecule,
-                                  onlyUnset: Bool) -> Atom {
+    private static func configure(
+        atom: Atom,
+        in molecule: Molecule,
+        onlyUnset: Bool
+    ) -> Atom {
         var atom = atom
         let bonds = molecule.bonds(forAtom: atom.id)
         let neighbourCount = molecule.neighbors(of: atom.id).count
         let maxOrder = bonds.max(by: { $0.order.rawValue < $1.order.rawValue })?.order
         let orderSum = bonds.reduce(0.0) { $0 + $1.order.valenceContribution }
-        let hybridization = inferredHybridization(for: atom,
-                                                  neighbourCount: neighbourCount,
-                                                  maxBondOrder: maxOrder,
-                                                  bondOrderSum: orderSum)
+        let hybridization = inferredHybridization(
+            for: atom,
+            neighbourCount: neighbourCount,
+            maxBondOrder: maxOrder,
+            bondOrderSum: orderSum)
         let typeName = inferredAtomTypeName(for: atom, hybridization: hybridization)
         let valency = inferredValency(for: atom, bondOrderSum: orderSum)
 
@@ -719,10 +909,12 @@ public enum CDKReactionManipulator {
         return atom
     }
 
-    private static func inferredHybridization(for atom: Atom,
-                                              neighbourCount: Int,
-                                              maxBondOrder: BondOrder?,
-                                              bondOrderSum: Double) -> AtomHybridization {
+    private static func inferredHybridization(
+        for atom: Atom,
+        neighbourCount: Int,
+        maxBondOrder: BondOrder?,
+        bondOrderSum: Double
+    ) -> AtomHybridization {
         if atom.element.uppercased() == "H" {
             return .s
         }
@@ -735,13 +927,17 @@ public enum CDKReactionManipulator {
         return .sp3
     }
 
-    private static func inferredAtomTypeName(for atom: Atom,
-                                             hybridization: AtomHybridization) -> String {
+    private static func inferredAtomTypeName(
+        for atom: Atom,
+        hybridization: AtomHybridization
+    ) -> String {
         "\(atom.element.uppercased()).\(hybridization.rawValue.uppercased())"
     }
 
-    private static func inferredValency(for atom: Atom,
-                                        bondOrderSum: Double) -> Int {
+    private static func inferredValency(
+        for atom: Atom,
+        bondOrderSum: Double
+    ) -> Int {
         if let override = atom.valenceOverride {
             return override
         }
@@ -806,9 +1002,11 @@ public enum CDKReactionSetManipulator {
         return ids
     }
 
-    public static func setAtomProperties(_ set: inout CDKReactionSet,
-                                         key: String,
-                                         value: String) {
+    public static func setAtomProperties(
+        _ set: inout CDKReactionSet,
+        key: String,
+        value: String
+    ) {
         _ = mutateReactions(in: &set) { reaction in
             var updated = reaction
             CDKReactionManipulator.setAtomProperties(&updated, key: key, value: value)
@@ -849,8 +1047,10 @@ public enum CDKReactionSetManipulator {
     }
 
     @discardableResult
-    public static func removeAtomAndConnectedElectronContainers(_ set: inout CDKReactionSet,
-                                                                _ atom: Atom) -> Bool {
+    public static func removeAtomAndConnectedElectronContainers(
+        _ set: inout CDKReactionSet,
+        _ atom: Atom
+    ) -> Bool {
         mutateReactions(in: &set) { reaction in
             var updated = reaction
             let changed = CDKReactionManipulator.removeAtomAndConnectedElectronContainers(&updated, atom)
@@ -859,8 +1059,10 @@ public enum CDKReactionSetManipulator {
     }
 
     @discardableResult
-    public static func removeElectronContainer(_ set: inout CDKReactionSet,
-                                               _ bond: Bond) -> Bool {
+    public static func removeElectronContainer(
+        _ set: inout CDKReactionSet,
+        _ bond: Bond
+    ) -> Bool {
         mutateReactions(in: &set) { reaction in
             var updated = reaction
             let changed = CDKReactionManipulator.removeElectronContainer(&updated, bond)
@@ -868,21 +1070,33 @@ public enum CDKReactionSetManipulator {
         }
     }
 
-    public static func getRelevantReactions(_ set: CDKReactionSet, molecule: Molecule) -> CDKReactionSet {
+    public static func getRelevantReactions(_ set: CDKReactionSet, molecule: Molecule)
+        -> CDKReactionSet
+    {
         let matches = set.flattenedReactions.filter { reaction in
             reaction.reactants.contains(molecule) || reaction.products.contains(molecule)
         }
-        return CDKReactionSet(id: set.id, name: set.name, members: matches.map(CDKReactionSetMember.reaction), properties: set.properties)
+        return CDKReactionSet(
+            id: set.id, name: set.name, members: matches.map(CDKReactionSetMember.reaction),
+            properties: set.properties)
     }
 
-    public static func getRelevantReactionsAsReactant(_ set: CDKReactionSet, molecule: Molecule) -> CDKReactionSet {
+    public static func getRelevantReactionsAsReactant(_ set: CDKReactionSet, molecule: Molecule)
+        -> CDKReactionSet
+    {
         let matches = set.flattenedReactions.filter { $0.reactants.contains(molecule) }
-        return CDKReactionSet(id: set.id, name: set.name, members: matches.map(CDKReactionSetMember.reaction), properties: set.properties)
+        return CDKReactionSet(
+            id: set.id, name: set.name, members: matches.map(CDKReactionSetMember.reaction),
+            properties: set.properties)
     }
 
-    public static func getRelevantReactionsAsProduct(_ set: CDKReactionSet, molecule: Molecule) -> CDKReactionSet {
+    public static func getRelevantReactionsAsProduct(_ set: CDKReactionSet, molecule: Molecule)
+        -> CDKReactionSet
+    {
         let matches = set.flattenedReactions.filter { $0.products.contains(molecule) }
-        return CDKReactionSet(id: set.id, name: set.name, members: matches.map(CDKReactionSetMember.reaction), properties: set.properties)
+        return CDKReactionSet(
+            id: set.id, name: set.name, members: matches.map(CDKReactionSetMember.reaction),
+            properties: set.properties)
     }
 
     public static func getReactionByAtomContainerID(_ set: CDKReactionSet, id: String) -> CDKReaction? {
@@ -901,8 +1115,10 @@ public enum CDKReactionSetManipulator {
     }
 
     @discardableResult
-    private static func mutateReactions(in set: inout CDKReactionSet,
-                                        update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool)) -> Bool {
+    private static func mutateReactions(
+        in set: inout CDKReactionSet,
+        update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool)
+    ) -> Bool {
         var changed = false
         set.members = set.members.map { member in
             mutate(member: member, update: update, changed: &changed)
@@ -910,9 +1126,11 @@ public enum CDKReactionSetManipulator {
         return changed
     }
 
-    private static func mutate(member: CDKReactionSetMember,
-                               update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool),
-                               changed: inout Bool) -> CDKReactionSetMember {
+    private static func mutate(
+        member: CDKReactionSetMember,
+        update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool),
+        changed: inout Bool
+    ) -> CDKReactionSetMember {
         switch member {
         case .reaction(let reaction):
             let result = update(reaction)
@@ -925,9 +1143,11 @@ public enum CDKReactionSetManipulator {
         }
     }
 
-    private static func mutate(list: CDKReactionList,
-                               update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool),
-                               changed: inout Bool) -> CDKReactionList {
+    private static func mutate(
+        list: CDKReactionList,
+        update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool),
+        changed: inout Bool
+    ) -> CDKReactionList {
         var updated = list
         updated.entries = list.entries.map { entry in
             switch entry {
@@ -944,9 +1164,11 @@ public enum CDKReactionSetManipulator {
         return updated
     }
 
-    private static func mutate(scheme: CDKReactionScheme,
-                               update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool),
-                               changed: inout Bool) -> CDKReactionScheme {
+    private static func mutate(
+        scheme: CDKReactionScheme,
+        update: (CDKReaction) -> (reaction: CDKReaction, changed: Bool),
+        changed: inout Bool
+    ) -> CDKReactionScheme {
         var updated = scheme
         updated.entries = scheme.entries.map { entry in
             switch entry {

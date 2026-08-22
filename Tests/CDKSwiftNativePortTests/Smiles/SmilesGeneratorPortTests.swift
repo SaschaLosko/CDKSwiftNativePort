@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import CDKSwiftNativePort
 
 final class SmilesGeneratorPortTests: XCTestCase {
@@ -6,7 +7,9 @@ final class SmilesGeneratorPortTests: XCTestCase {
 
     func testGeneratesSmilesForEthanol() throws {
         let molecule = try parser.parseSmiles("CCO")
-        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [
+            .useAromaticSymbols, .strict,
+        ])
 
         let smiles = generator.create(molecule)
         XCTAssertEqual(smiles, "CCO")
@@ -22,6 +25,23 @@ final class SmilesGeneratorPortTests: XCTestCase {
         XCTAssertTrue(isomeric.contains("@"))
 
         let reparsed = try parser.parseSmiles(isomeric)
+        XCTAssertEqual(reparsed.atomCount, molecule.atomCount)
+        XCTAssertEqual(reparsed.bondCount, molecule.bondCount)
+    }
+
+    func testCDK213AdjacentStereoCentersSurviveIsomericRoundTrip() throws {
+        let source = "O[C@@H]1[C@@H](N)C[C@@H](N)[C@@H]([C@H]1O)O[C@H]2OCCC[C@H]2O"
+        let molecule = try parser.parseSmiles(source)
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(
+            flavor: [.useAromaticSymbols, .isomeric, .strict]
+        )
+
+        let generated = generator.create(molecule)
+        let reparsed = try parser.parseSmiles(generated)
+
+        XCTAssertEqual(
+            reparsed.atoms.filter { $0.chirality != .none }.count,
+            molecule.atoms.filter { $0.chirality != .none }.count)
         XCTAssertEqual(reparsed.atomCount, molecule.atomCount)
         XCTAssertEqual(reparsed.bondCount, molecule.bondCount)
     }
@@ -68,12 +88,14 @@ final class SmilesGeneratorPortTests: XCTestCase {
         let carbonNeighbors = reparsed.neighbors(of: carbon.id)
 
         XCTAssertEqual(carbonNeighbors.count, 3)
-        XCTAssertTrue(carbonNeighbors.allSatisfy { neighborID in
-            reparsed.atom(id: neighborID)?.element.uppercased() == "O"
-        })
-        XCTAssertTrue(carbonNeighbors.allSatisfy { neighborID in
-            reparsed.neighbors(of: neighborID).count == 1
-        })
+        XCTAssertTrue(
+            carbonNeighbors.allSatisfy { neighborID in
+                reparsed.atom(id: neighborID)?.element.uppercased() == "O"
+            })
+        XCTAssertTrue(
+            carbonNeighbors.allSatisfy { neighborID in
+                reparsed.neighbors(of: neighborID).count == 1
+            })
         XCTAssertEqual(reparsed.bonds(forAtom: carbon.id).filter { $0.order == .double }.count, 1)
         XCTAssertEqual(reparsed.bonds(forAtom: carbon.id).filter { $0.order == .single }.count, 2)
     }
@@ -81,7 +103,9 @@ final class SmilesGeneratorPortTests: XCTestCase {
     func testGeneratesLongLinearMoleculeWithoutRecursiveStackGrowth() throws {
         let atomCount = 5_000
         let molecule = makeLinearCarbonChain(atomCount: atomCount)
-        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [
+            .useAromaticSymbols, .strict,
+        ])
 
         let smiles = generator.create(molecule)
 
@@ -111,7 +135,9 @@ final class SmilesGeneratorPortTests: XCTestCase {
 
     func testNonIsomericSmilesOmitsChiralityMarker() throws {
         let molecule = try parser.parseSmiles("C[C@H](N)O")
-        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [
+            .useAromaticSymbols, .strict,
+        ])
 
         let smiles = generator.create(molecule)
         XCTAssertFalse(smiles.contains("@"))
@@ -124,6 +150,19 @@ final class SmilesGeneratorPortTests: XCTestCase {
         )
 
         XCTAssertEqual(generator.create(molecule), "CC* |$;;R1$|")
+    }
+
+    func testRoundTripsCDK213CoordinateBondLayer() throws {
+        let molecule = try parser.parseSmiles("N[Pt]P |C:1.0,1.1|")
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(
+            flavor: [.useAromaticSymbols, .strict, .cxCoordinateBonds]
+        )
+
+        let smiles = generator.create(molecule)
+        XCTAssertTrue(smiles.contains("|C:1.0,1.1|"))
+
+        let reparsed = try parser.parseSmiles(smiles)
+        XCTAssertEqual(reparsed.bonds.compactMap(\.coordinateBondReferenceAtomID).count, 2)
     }
 
     func testGeneratesCxAtomValues() throws {
@@ -186,19 +225,25 @@ final class SmilesGeneratorPortTests: XCTestCase {
         XCTAssertTrue(smiles.contains("LO:1:0.2.3"))
 
         let reparsed = try parser.parseSmiles(smiles)
-        XCTAssertEqual(reparsed.atoms[1].ligandOrderingAtomIDs, [reparsed.atoms[0].id, reparsed.atoms[2].id, reparsed.atoms[3].id])
+        XCTAssertEqual(
+            reparsed.atoms[1].ligandOrderingAtomIDs,
+            [reparsed.atoms[0].id, reparsed.atoms[2].id, reparsed.atoms[3].id])
     }
 
     func testOmitsCoordinatesWhenFlavorDoesNotRequestCx() throws {
         let molecule = try parser.parseSmiles("CCO |(,,;1,1,;2,2,)|")
-        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict])
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [
+            .useAromaticSymbols, .strict,
+        ])
 
         XCTAssertEqual(generator.create(molecule), "CCO")
     }
 
     func testOmitsCoordinatesWhenNoneArePresent() throws {
         let molecule = try parser.parseSmiles("CCO")
-        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.useAromaticSymbols, .strict, .cxCoordinates])
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [
+            .useAromaticSymbols, .strict, .cxCoordinates,
+        ])
 
         XCTAssertEqual(generator.create(molecule), "CCO")
     }
@@ -218,8 +263,12 @@ final class SmilesGeneratorPortTests: XCTestCase {
     }
 
     func testGeneratesReactionDataSgroupsWithoutPolymerFlag() throws {
-        let reaction = try parser.parseReactionSmiles("C1=CC=CC=C1C(Br)C(=O)Cl>O=C(O)c1ccccc1O>C=1C=CC=C(C1)C(C(=O)OC=2C(=CC=CC2)C(O)=O)Br |SgD::solvent:DIPEA|")
-        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [.strict, .cxDataSgroups])
+        let reaction = try parser.parseReactionSmiles(
+            "C1=CC=CC=C1C(Br)C(=O)Cl>O=C(O)c1ccccc1O>C=1C=CC=C(C1)C(C(=O)OC=2C(=CC=CC2)C(O)=O)Br |SgD::solvent:DIPEA|"
+        )
+        let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: [
+            .strict, .cxDataSgroups,
+        ])
 
         let smiles = generator.create(reaction)
         XCTAssertTrue(smiles.contains("|SgD::solvent:DIPEA::|"))
@@ -266,10 +315,15 @@ final class SmilesGeneratorPortTests: XCTestCase {
     }
 
     func testGeneratesSgroupHierarchy() throws {
-        let molecule = try parser.parseSmiles("CN1CCCCC1.CO.O |Sg:c:0,1,2,3,4,5,6::,Sg:c:7,8::,Sg:c:9::,Sg:mix:0,1,2,3,4,5,6,7,8,9::,Sg:mix:7,8,9::,SgH:3:4.0,4:2.1|")
+        let molecule = try parser.parseSmiles(
+            "CN1CCCCC1.CO.O |Sg:c:0,1,2,3,4,5,6::,Sg:c:7,8::,Sg:c:9::,Sg:mix:0,1,2,3,4,5,6,7,8,9::,Sg:mix:7,8,9::,SgH:3:4.0,4:2.1|"
+        )
         let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: .cdkDefault)
 
-        XCTAssertEqual(generator.create(molecule), "CN1CCCCC1.CO.O |Sg:c:0,1,2,3,4,5,6:c:,Sg:c:7,8:c:,Sg:c:9:c:,Sg:mix:0,1,2,3,4,5,6,7,8,9:mix:,Sg:mix:7,8,9:mix:,SgH:3:0.4,4:1.2|")
+        XCTAssertEqual(
+            generator.create(molecule),
+            "CN1CCCCC1.CO.O |Sg:c:0,1,2,3,4,5,6:c:,Sg:c:7,8:c:,Sg:c:9:c:,Sg:mix:0,1,2,3,4,5,6,7,8,9:mix:,Sg:mix:7,8,9:mix:,SgH:3:0.4,4:1.2|"
+        )
     }
 
     func testCollapsesSingleRacemicStereoGroupToRFlag() throws {

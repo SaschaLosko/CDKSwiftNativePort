@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import CDKSwiftNativePort
 
 final class MolecularPropertyServiceTests: XCTestCase {
@@ -35,6 +36,17 @@ final class MolecularPropertyServiceTests: XCTestCase {
         XCTAssertEqual(properties.hBondAcceptorCount, 1)
     }
 
+    func testHeavyAtomCountExcludesHydrogenAndPseudoAtoms() throws {
+        let molecule = try parser.parseSmiles("*CCO[H]")
+        XCTAssertEqual(CDKHeavyAtomCountDescriptor.calculate(for: molecule), 3)
+
+        let rGroupMolecule = Molecule(atoms: [
+            Atom(id: 1, element: "R#", position: .zero, rGroupLabel: 1),
+            Atom(id: 2, element: "C", position: .zero),
+        ])
+        XCTAssertEqual(CDKHeavyAtomCountDescriptor.calculate(for: rGroupMolecule), 1)
+    }
+
     func testAromaticFormulaCountsImplicitHydrogenCorrectly() throws {
         let benzene = try parser.parseSmiles("c1ccccc1")
         let benzeneProperties = CDKMoleculePropertyService.compute(for: benzene)
@@ -56,19 +68,21 @@ final class MolecularPropertyServiceTests: XCTestCase {
     }
 
     func testRuleOfFiveDescriptorWithExplicitXlogP() {
-        let pass = CDKRuleOfFiveDescriptor.evaluate(molecularWeight: 320.5,
-                                                    hBondDonorCount: 2,
-                                                    hBondAcceptorCount: 6,
-                                                    xlogP: 3.8)
+        let pass = CDKRuleOfFiveDescriptor.evaluate(
+            molecularWeight: 320.5,
+            hBondDonorCount: 2,
+            hBondAcceptorCount: 6,
+            xlogP: 3.8)
         XCTAssertEqual(pass.violations, 0)
         XCTAssertEqual(pass.evaluatedCriteriaCount, 4)
         XCTAssertEqual(pass.isCompliant, true)
         XCTAssertEqual(pass.statusText, "Pass (0 violations)")
 
-        let fail = CDKRuleOfFiveDescriptor.evaluate(molecularWeight: 710.2,
-                                                    hBondDonorCount: 7,
-                                                    hBondAcceptorCount: 14,
-                                                    xlogP: 7.1)
+        let fail = CDKRuleOfFiveDescriptor.evaluate(
+            molecularWeight: 710.2,
+            hBondDonorCount: 7,
+            hBondAcceptorCount: 14,
+            xlogP: 7.1)
         XCTAssertEqual(fail.violations, 4)
         XCTAssertEqual(fail.evaluatedCriteriaCount, 4)
         XCTAssertEqual(fail.isCompliant, false)

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "suite": "CDK CML Port",
-  "cdkReferenceVersion": "2.12",
-  "cdkReferenceTag": "cdk-2.12",
+  "cdkReferenceVersion": "2.13",
+  "cdkReferenceTag": "cdk-2.13",
   "sourceTests": [
     "storage/io/src/test/java/org/openscience/cdk/io/CMLReaderTest.java",
     "storage/io/src/test/java/org/openscience/cdk/io/cml/CML23FragmentsTest.java",

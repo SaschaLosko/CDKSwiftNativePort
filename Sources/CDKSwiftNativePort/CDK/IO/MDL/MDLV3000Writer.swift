@@ -8,10 +8,12 @@ public enum CDKMDLV3000Writer {
         public var acceptedDataFieldNames: Set<String>?
         public var truncateLongDataFields: Bool
 
-        public init(programName: String? = nil,
-                    includeDataFields: Bool = true,
-                    acceptedDataFieldNames: Set<String>? = nil,
-                    truncateLongDataFields: Bool = false) {
+        public init(
+            programName: String? = nil,
+            includeDataFields: Bool = true,
+            acceptedDataFieldNames: Set<String>? = nil,
+            truncateLongDataFields: Bool = false
+        ) {
             self.programName = programName
             self.includeDataFields = includeDataFields
             self.acceptedDataFieldNames = acceptedDataFieldNames
@@ -37,8 +39,10 @@ public enum CDKMDLV3000Writer {
         let atomIDs: [Int]
     }
 
-    public static func write(_ molecule: Molecule,
-                             options: Options = Options()) throws -> String {
+    public static func write(
+        _ molecule: Molecule,
+        options: Options = Options()
+    ) throws -> String {
         guard !molecule.atoms.isEmpty else {
             throw ChemError.parseFailed("Cannot write Molfile for empty molecule.")
         }
@@ -62,9 +66,10 @@ public enum CDKMDLV3000Writer {
         lines.append("M  END")
 
         if options.includeDataFields {
-            let dataFields = CDKSDFDataFieldSupport.serializeDataFields(for: molecule,
-                                                                        acceptedFieldNames: options.acceptedDataFieldNames,
-                                                                        truncateLongValues: options.truncateLongDataFields)
+            let dataFields = CDKSDFDataFieldSupport.serializeDataFields(
+                for: molecule,
+                acceptedFieldNames: options.acceptedDataFieldNames,
+                truncateLongValues: options.truncateLongDataFields)
             if !dataFields.isEmpty {
                 lines.append(contentsOf: dataFields.components(separatedBy: "\n"))
             }
@@ -81,23 +86,31 @@ public enum CDKMDLV3000Writer {
 
         var lines: [String] = []
         lines.append("M  V30 BEGIN CTAB")
-        lines.append("M  V30 COUNTS \(order.atoms.count) \(order.bonds.count) \(sgroupPayloads.count) 0 \(chiralStatus == 1 ? 1 : 0)")
+        lines.append(
+            "M  V30 COUNTS \(order.atoms.count) \(order.bonds.count) \(sgroupPayloads.count) 0 \(chiralStatus == 1 ? 1 : 0)"
+        )
 
         lines.append("M  V30 BEGIN ATOM")
         for (index, atom) in order.atoms.enumerated() {
-            lines.append(contentsOf: v30WrappedLines(for: atomLine(atom,
-                                                                  outputIndex: index + 1,
-                                                                  in: molecule)))
+            lines.append(
+                contentsOf: v30WrappedLines(
+                    for: atomLine(
+                        atom,
+                        outputIndex: index + 1,
+                        in: molecule)))
         }
         lines.append("M  V30 END ATOM")
 
         if !order.bonds.isEmpty {
             lines.append("M  V30 BEGIN BOND")
             for (index, bond) in order.bonds.enumerated() {
-                lines.append(contentsOf: v30WrappedLines(for: bondLine(bond,
-                                                                      outputIndex: index + 1,
-                                                                      in: molecule,
-                                                                      order: order)))
+                lines.append(
+                    contentsOf: v30WrappedLines(
+                        for: bondLine(
+                            bond,
+                            outputIndex: index + 1,
+                            in: molecule,
+                            order: order)))
             }
             lines.append("M  V30 END BOND")
         }
@@ -110,7 +123,8 @@ public enum CDKMDLV3000Writer {
             lines.append("M  V30 END SGROUP")
         }
 
-        let collectionPayloads = collectionPayloads(for: molecule, order: order, chiralStatus: chiralStatus)
+        let collectionPayloads = collectionPayloads(
+            for: molecule, order: order, chiralStatus: chiralStatus)
         if !collectionPayloads.isEmpty {
             lines.append("M  V30 BEGIN COLLECTION")
             for payload in collectionPayloads {
@@ -125,8 +139,10 @@ public enum CDKMDLV3000Writer {
 
     private static func outputOrder(for molecule: Molecule) throws -> OutputOrder {
         let sortedAtoms = molecule.atoms.sorted { lhs, rhs in
-            let lhsIsHydrogen = lhs.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "H"
-            let rhsIsHydrogen = rhs.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "H"
+            let lhsIsHydrogen =
+                lhs.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "H"
+            let rhsIsHydrogen =
+                rhs.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "H"
             if lhsIsHydrogen != rhsIsHydrogen { return rhsIsHydrogen }
             return lhs.id < rhs.id
         }
@@ -148,14 +164,17 @@ public enum CDKMDLV3000Writer {
             bondIndexByID[bond.id] = index + 1
         }
 
-        return OutputOrder(atoms: sortedAtoms,
-                           bonds: sortedBonds,
-                           atomIndexByID: atomIndexByID,
-                           bondIndexByID: bondIndexByID)
+        return OutputOrder(
+            atoms: sortedAtoms,
+            bonds: sortedBonds,
+            atomIndexByID: atomIndexByID,
+            bondIndexByID: bondIndexByID)
     }
 
-    private static func headerProgramLine(for molecule: Molecule,
-                                          options: Options) -> String {
+    private static func headerProgramLine(
+        for molecule: Molecule,
+        options: Options
+    ) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "MMddyyHHmm"
@@ -245,7 +264,9 @@ public enum CDKMDLV3000Writer {
             return normalizeValence(override)
         }
         guard let hydrogenCount = atom.explicitHydrogenCount else { return nil }
-        guard !molecule.bonds(forAtom: atom.id).contains(where: { $0.queryType != nil }) else { return nil }
+        guard !molecule.bonds(forAtom: atom.id).contains(where: { $0.queryType != nil }) else {
+            return nil
+        }
 
         let explicitValence = molecule.bonds(forAtom: atom.id).reduce(0) { partial, bond in
             switch bond.order {
@@ -299,10 +320,12 @@ public enum CDKMDLV3000Writer {
         }
     }
 
-    private static func bondLine(_ bond: Bond,
-                                 outputIndex: Int,
-                                 in molecule: Molecule,
-                                 order: OutputOrder) -> String {
+    private static func bondLine(
+        _ bond: Bond,
+        outputIndex: Int,
+        in molecule: Molecule,
+        order: OutputOrder
+    ) -> String {
         let typeToken = serializedBondType(for: bond)
         let (beginID, endID) = serializedBondEndpoints(for: bond, order: order)
         var payload = "\(outputIndex) \(typeToken) \(beginID) \(endID)"
@@ -322,7 +345,13 @@ public enum CDKMDLV3000Writer {
             payload += " TOPO=\(topology == .ring ? 1 : 2)"
         }
 
-        if let multicenter = molecule.sgroups.first(where: { $0.kind == .extMulticenter && $0.crossingBondIDs.contains(bond.id) }) {
+        if let reactingCenterStatus = bond.reactingCenterStatus {
+            payload += " RXCTR=\(reactingCenterStatus.rawValue)"
+        }
+
+        if let multicenter = molecule.sgroups.first(where: {
+            $0.kind == .extMulticenter && $0.crossingBondIDs.contains(bond.id)
+        }) {
             let endpoints = multicenter.atomIDs
                 .dropFirst()
                 .compactMap { order.atomIndexByID[$0] }
@@ -351,8 +380,10 @@ public enum CDKMDLV3000Writer {
             endAtomID = bond.a2
         }
 
-        return (order.atomIndexByID[beginAtomID] ?? beginAtomID,
-                order.atomIndexByID[endAtomID] ?? endAtomID)
+        return (
+            order.atomIndexByID[beginAtomID] ?? beginAtomID,
+            order.atomIndexByID[endAtomID] ?? endAtomID
+        )
     }
 
     private static func serializedBondType(for bond: Bond) -> Int {
@@ -397,7 +428,8 @@ public enum CDKMDLV3000Writer {
 
         func visit(_ index: Int) {
             guard !visited.contains(index),
-                  let sgroup = molecule.sgroups.indices.contains(index) ? molecule.sgroups[index] : nil else {
+                let sgroup = molecule.sgroups.indices.contains(index) ? molecule.sgroups[index] : nil
+            else {
                 return
             }
             visited.insert(index)
@@ -420,8 +452,10 @@ public enum CDKMDLV3000Writer {
         }
     }
 
-    private static func sgroupPayloads(forOrderedSgroups orderedSgroups: [(Int, MoleculeSgroup)],
-                                       order: OutputOrder) -> [String] {
+    private static func sgroupPayloads(
+        forOrderedSgroups orderedSgroups: [(Int, MoleculeSgroup)],
+        order: OutputOrder
+    ) -> [String] {
         guard !orderedSgroups.isEmpty else { return [] }
 
         var payloads: [String] = []
@@ -463,7 +497,8 @@ public enum CDKMDLV3000Writer {
             }
 
             if let parentOriginalIndex = parentByChild[originalIndex],
-               let parentWrittenIndex = writtenIndexByOriginal[parentOriginalIndex] {
+                let parentWrittenIndex = writtenIndexByOriginal[parentOriginalIndex]
+            {
                 payload += " PARENT=\(parentWrittenIndex)"
             }
 
@@ -500,8 +535,10 @@ public enum CDKMDLV3000Writer {
                 payload += " ESTATE=E"
             }
             for bracket in sgroup.brackets {
-                payload += " BRKXYZ=(9 \(formatCoordinate(Double(bracket.firstPoint.x))) \(formatCoordinate(Double(bracket.firstPoint.y))) 0"
-                payload += " \(formatCoordinate(Double(bracket.secondPoint.x))) \(formatCoordinate(Double(bracket.secondPoint.y))) 0 0 0 0)"
+                payload +=
+                    " BRKXYZ=(9 \(formatCoordinate(Double(bracket.firstPoint.x))) \(formatCoordinate(Double(bracket.firstPoint.y))) 0"
+                payload +=
+                    " \(formatCoordinate(Double(bracket.secondPoint.x))) \(formatCoordinate(Double(bracket.secondPoint.y))) 0 0 0 0)"
             }
             if sgroup.kind == .data {
                 if let fieldName = sgroup.dataFieldName, !fieldName.isEmpty {
@@ -530,10 +567,11 @@ public enum CDKMDLV3000Writer {
             lines.append("M  V30 BEGIN RGROUP \(number)")
 
             for member in members.sorted(by: { $0.componentGroupID < $1.componentGroupID }) {
-                let memberMolecule = extractSubmolecule(from: molecule,
-                                                       atomIDs: Set(member.atomIDs),
-                                                       name: member.label,
-                                                       preserveDataFields: false)
+                let memberMolecule = extractSubmolecule(
+                    from: molecule,
+                    atomIDs: Set(member.atomIDs),
+                    name: member.label,
+                    preserveDataFields: false)
                 let memberCTAB = try serializedCTAB(for: memberMolecule)
                 lines.append(contentsOf: memberCTAB.lines)
             }
@@ -544,7 +582,9 @@ public enum CDKMDLV3000Writer {
         return lines
     }
 
-    private static func markushDefinitionGroups(for molecule: Molecule) throws -> [RGroupMemberDefinition] {
+    private static func markushDefinitionGroups(for molecule: Molecule) throws
+        -> [RGroupMemberDefinition]
+    {
         let maxComponentGroupID = molecule.atoms.compactMap(\.componentGroupID).max() ?? 0
         var nextSyntheticComponentGroupID = maxComponentGroupID + 1
         var grouped: [RGroupMemberDefinition] = []
@@ -559,19 +599,24 @@ public enum CDKMDLV3000Writer {
 
             for componentGroupID in explicitGroups.keys.compactMap({ $0 }).sorted() {
                 guard let atoms = explicitGroups[componentGroupID], !atoms.isEmpty else { continue }
-                grouped.append(RGroupMemberDefinition(label: label,
-                                                      number: number,
-                                                      componentGroupID: componentGroupID,
-                                                      atomIDs: atoms.map(\.id).sorted()))
+                grouped.append(
+                    RGroupMemberDefinition(
+                        label: label,
+                        number: number,
+                        componentGroupID: componentGroupID,
+                        atomIDs: atoms.map(\.id).sorted()))
             }
 
             if let ungroupedAtoms = explicitGroups[nil], !ungroupedAtoms.isEmpty {
-                let components = connectedComponents(atomIDs: Set(ungroupedAtoms.map(\.id)), molecule: molecule)
+                let components = connectedComponents(
+                    atomIDs: Set(ungroupedAtoms.map(\.id)), molecule: molecule)
                 for component in components {
-                    grouped.append(RGroupMemberDefinition(label: label,
-                                                          number: number,
-                                                          componentGroupID: nextSyntheticComponentGroupID,
-                                                          atomIDs: component.sorted()))
+                    grouped.append(
+                        RGroupMemberDefinition(
+                            label: label,
+                            number: number,
+                            componentGroupID: nextSyntheticComponentGroupID,
+                            atomIDs: component.sorted()))
                     nextSyntheticComponentGroupID += 1
                 }
             }
@@ -627,32 +672,39 @@ public enum CDKMDLV3000Writer {
     }
 
     private static func rootMolecule(for molecule: Molecule) -> Molecule {
-        let rootAtomIDs = Set(molecule.atoms.compactMap { atom in
-            atom.rGroupMembership == nil ? atom.id : nil
-        })
-        return extractSubmolecule(from: molecule,
-                                  atomIDs: rootAtomIDs,
-                                  name: molecule.name,
-                                  preserveDataFields: true)
+        let rootAtomIDs = Set(
+            molecule.atoms.compactMap { atom in
+                atom.rGroupMembership == nil ? atom.id : nil
+            })
+        return extractSubmolecule(
+            from: molecule,
+            atomIDs: rootAtomIDs,
+            name: molecule.name,
+            preserveDataFields: true)
     }
 
-    private static func extractSubmolecule(from source: Molecule,
-                                           atomIDs: Set<Int>,
-                                           name: String,
-                                           preserveDataFields: Bool) -> Molecule {
+    private static func extractSubmolecule(
+        from source: Molecule,
+        atomIDs: Set<Int>,
+        name: String,
+        preserveDataFields: Bool
+    ) -> Molecule {
         let atoms = source.atoms.filter { atomIDs.contains($0.id) }
-        let bondIDs = Set(source.bonds.compactMap { bond in
-            atomIDs.contains(bond.a1) && atomIDs.contains(bond.a2) ? bond.id : nil
-        })
+        let bondIDs = Set(
+            source.bonds.compactMap { bond in
+                atomIDs.contains(bond.a1) && atomIDs.contains(bond.a2) ? bond.id : nil
+            })
         let bonds = source.bonds.filter { bondIDs.contains($0.id) }
 
-        var result = Molecule(name: name,
-                              atoms: atoms,
-                              bonds: bonds)
+        var result = Molecule(
+            name: name,
+            atoms: atoms,
+            bonds: bonds)
         result.externalID = source.externalID
-        result.sgroups = filteredSgroups(from: source.sgroups,
-                                         atomIDs: atomIDs,
-                                         bondIDs: bondIDs)
+        result.sgroups = filteredSgroups(
+            from: source.sgroups,
+            atomIDs: atomIDs,
+            bondIDs: bondIDs)
         result.highlightedAtomIDs = source.highlightedAtomIDs.filter { atomIDs.contains($0) }
         result.highlightedBondIDs = source.highlightedBondIDs.filter { bondIDs.contains($0) }
         result.cxState = nil
@@ -663,9 +715,11 @@ public enum CDKMDLV3000Writer {
         return result
     }
 
-    private static func filteredSgroups(from sgroups: [MoleculeSgroup],
-                                        atomIDs: Set<Int>,
-                                        bondIDs: Set<Int>) -> [MoleculeSgroup] {
+    private static func filteredSgroups(
+        from sgroups: [MoleculeSgroup],
+        atomIDs: Set<Int>,
+        bondIDs: Set<Int>
+    ) -> [MoleculeSgroup] {
         let includedIndices = sgroups.indices.filter { index in
             let sgroup = sgroups[index]
             return Set(sgroup.atomIDs).isSubset(of: atomIDs)
@@ -687,7 +741,8 @@ public enum CDKMDLV3000Writer {
 
     private static func sgroupTypeKey(for sgroup: MoleculeSgroup) -> String {
         if let keyword = sgroup.keyword?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !keyword.isEmpty {
+            !keyword.isEmpty
+        {
             return keyword.uppercased()
         }
         switch sgroup.kind {
@@ -710,7 +765,8 @@ public enum CDKMDLV3000Writer {
 
         let groups = stereoAtoms.compactMap { atom -> String? in
             guard let encoded = atom.cxStereoGroup,
-                  let decoded = CDKCxSmilesParser.decodeStereoGroup(encoded) else {
+                let decoded = CDKCxSmilesParser.decodeStereoGroup(encoded)
+            else {
                 return "abs"
             }
             return decoded.kind
@@ -722,9 +778,11 @@ public enum CDKMDLV3000Writer {
         return 2
     }
 
-    private static func collectionPayloads(for molecule: Molecule,
-                                           order: OutputOrder,
-                                           chiralStatus: Int) -> [String] {
+    private static func collectionPayloads(
+        for molecule: Molecule,
+        order: OutputOrder,
+        chiralStatus: Int
+    ) -> [String] {
         var payloads: [String] = []
 
         let stereoAtoms = molecule.atoms.filter { $0.chirality != .none }
@@ -737,7 +795,8 @@ public enum CDKMDLV3000Writer {
             var racemicGroupCount = 0
             for key in grouped.keys.sorted() {
                 guard let decoded = CDKCxSmilesParser.decodeStereoGroup(key),
-                      let atoms = grouped[key], !atoms.isEmpty else {
+                    let atoms = grouped[key], !atoms.isEmpty
+                else {
                     continue
                 }
                 var payload = "MDLV30/STE"
@@ -824,7 +883,8 @@ public enum CDKMDLV3000Writer {
         }
 
         let trimmed = atom.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard trimmed.hasPrefix("R"), trimmed.count > 1 else { return nil }
+        guard trimmed.hasPrefix("R") else { return nil }
+        if trimmed == "R" { return 0 }
         return Int(trimmed.dropFirst())
     }
 

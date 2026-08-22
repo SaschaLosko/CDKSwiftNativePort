@@ -16,8 +16,10 @@ public enum CDKMDLV2000Writer {
         let bondIndexByID: [Int: Int]
     }
 
-    public static func write(_ molecule: Molecule,
-                             options: Options = Options()) throws -> String {
+    public static func write(
+        _ molecule: Molecule,
+        options: Options = Options()
+    ) throws -> String {
         let order = try outputOrder(for: molecule)
         let atomListCount = order.atoms.reduce(0) { partial, atom in
             partial + ((atom.atomList?.isEmpty == false) ? 1 : 0)
@@ -29,10 +31,12 @@ public enum CDKMDLV2000Writer {
         lines.append(title.isEmpty ? "Molecule" : title)
         lines.append(headerProgramLine(for: molecule, options: options))
         lines.append("")
-        lines.append(countsLine(atomCount: order.atoms.count,
-                                bondCount: order.bonds.count,
-                                atomListCount: atomListCount,
-                                chiralFlag: chiralFlag))
+        lines.append(
+            countsLine(
+                atomCount: order.atoms.count,
+                bondCount: order.bonds.count,
+                atomListCount: atomListCount,
+                chiralFlag: chiralFlag))
 
         var aliasLines: [String] = []
         var legacyAtomListLines: [String] = []
@@ -57,7 +61,9 @@ public enum CDKMDLV2000Writer {
             if let alsLine = encoding.alsLine {
                 alsLines.append(alsLine)
             }
-            if let atomValue = atom.atomValue?.trimmingCharacters(in: .newlines), !atomValue.trimmingCharacters(in: .whitespaces).isEmpty {
+            if let atomValue = atom.atomValue?.trimmingCharacters(in: .newlines),
+                !atomValue.trimmingCharacters(in: .whitespaces).isEmpty
+            {
                 atomValues.append((atomIndex, atomValue))
             }
             if atom.charge != 0 {
@@ -116,15 +122,18 @@ public enum CDKMDLV2000Writer {
 
         let atomIndexByID = Dictionary(uniqueKeysWithValues: atoms.enumerated().map { ($1.id, $0 + 1) })
         let bondIndexByID = Dictionary(uniqueKeysWithValues: bonds.enumerated().map { ($1.id, $0 + 1) })
-        return OutputOrder(atoms: atoms,
-                           bonds: bonds,
-                           atomIndexByID: atomIndexByID,
-                           bondIndexByID: bondIndexByID)
+        return OutputOrder(
+            atoms: atoms,
+            bonds: bonds,
+            atomIndexByID: atomIndexByID,
+            bondIndexByID: bondIndexByID)
     }
 
-    private static func atomEncoding(for atom: Atom,
-                                     outputIndex: Int,
-                                     in molecule: Molecule) -> AtomEncoding {
+    private static func atomEncoding(
+        for atom: Atom,
+        outputIndex: Int,
+        in molecule: Molecule
+    ) -> AtomEncoding {
         let symbolDecision = atomBlockSymbol(for: atom)
         var fields: [Int] = Array(repeating: 0, count: 12)
         fields[0] = inlineMassDifference(for: atom, symbolToken: symbolDecision.symbol)
@@ -154,10 +163,11 @@ public enum CDKMDLV2000Writer {
         let legacyAtomListLine = legacyAtomListLine(for: atom, outputIndex: outputIndex)
         let alsLine = malsLine(for: atom, outputIndex: outputIndex)
 
-        return AtomEncoding(line: line,
-                            aliasLine: aliasLine,
-                            legacyAtomListLine: legacyAtomListLine,
-                            alsLine: alsLine)
+        return AtomEncoding(
+            line: line,
+            aliasLine: aliasLine,
+            legacyAtomListLine: legacyAtomListLine,
+            alsLine: alsLine)
     }
 
     private static func atomBlockSymbol(for atom: Atom) -> (symbol: String, alias: String?) {
@@ -207,7 +217,8 @@ public enum CDKMDLV2000Writer {
 
     private static func effectiveAliasLabel(for atom: Atom) -> String? {
         if let aliasLabel = atom.aliasLabel?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !aliasLabel.isEmpty {
+            !aliasLabel.isEmpty
+        {
             return aliasLabel
         }
 
@@ -274,7 +285,8 @@ public enum CDKMDLV2000Writer {
         }
 
         guard let beginIndex = order.atomIndexByID[beginAtomID],
-              let endIndex = order.atomIndexByID[endAtomID] else {
+            let endIndex = order.atomIndexByID[endAtomID]
+        else {
             throw ChemError.parseFailed("Bond references unknown atom while writing Molfile.")
         }
 
@@ -285,7 +297,7 @@ public enum CDKMDLV2000Writer {
         line += formatMDLInt(serializedBondStereo(for: bond), 3)
         line += formatMDLInt(0, 3)
         line += formatMDLInt(serializedBondTopology(for: bond), 3)
-        line += formatMDLInt(0, 3)
+        line += formatMDLInt(bond.reactingCenterStatus?.rawValue ?? 0, 3)
         return line
     }
 
@@ -379,7 +391,8 @@ public enum CDKMDLV2000Writer {
         if symbolToken.uppercased() == "D" || symbolToken.uppercased() == "T" {
             return 0
         }
-        let baseMass = Int(CDKDescriptorSupport.monoisotopicAtomicMass(forElementSymbol: atom.element).rounded())
+        let baseMass = Int(
+            CDKDescriptorSupport.monoisotopicAtomicMass(forElementSymbol: atom.element).rounded())
         guard baseMass > 0 else { return 0 }
         let diff = isotope - baseMass
         return (-3...4).contains(diff) ? diff : 0
@@ -432,9 +445,11 @@ public enum CDKMDLV2000Writer {
         return actualValence
     }
 
-    private static func appendPropertyLines(prefix: String,
-                                            pairs: [(Int, Int)],
-                                            to lines: inout [String]) {
+    private static func appendPropertyLines(
+        prefix: String,
+        pairs: [(Int, Int)],
+        to lines: inout [String]
+    ) {
         guard !pairs.isEmpty else { return }
         let sorted = pairs.sorted { lhs, rhs in lhs.0 < rhs.0 }
 
@@ -452,10 +467,12 @@ public enum CDKMDLV2000Writer {
         }
     }
 
-    private static func countsLine(atomCount: Int,
-                                   bondCount: Int,
-                                   atomListCount: Int,
-                                   chiralFlag: Int) -> String {
+    private static func countsLine(
+        atomCount: Int,
+        bondCount: Int,
+        atomListCount: Int,
+        chiralFlag: Int
+    ) -> String {
         formatMDLInt(atomCount, 3)
             + formatMDLInt(bondCount, 3)
             + formatMDLInt(atomListCount, 3)
@@ -465,8 +482,10 @@ public enum CDKMDLV2000Writer {
             + "            999 V2000"
     }
 
-    private static func headerProgramLine(for molecule: Molecule,
-                                          options: Options) -> String {
+    private static func headerProgramLine(
+        for molecule: Molecule,
+        options: Options
+    ) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "MMddyyHHmm"
@@ -513,7 +532,8 @@ public enum CDKMDLV2000Writer {
 
         let groups = stereoAtoms.compactMap { atom -> String? in
             guard let encoded = atom.cxStereoGroup,
-                  let decoded = CDKCxSmilesParser.decodeStereoGroup(encoded) else {
+                let decoded = CDKCxSmilesParser.decodeStereoGroup(encoded)
+            else {
                 return "abs"
             }
             return decoded.kind
@@ -573,11 +593,15 @@ public enum CDKMDLV2000Writer {
             let id = idByOriginalIndex[originalIndex] ?? 0
             let sgroup = molecule.sgroups[originalIndex]
 
-            for atomChunk in wrap(sortedOutputIndices(for: sgroup.atomIDs, map: order.atomIndexByID), limit: 15) {
+            for atomChunk in wrap(
+                sortedOutputIndices(for: sgroup.atomIDs, map: order.atomIndexByID), limit: 15)
+            {
                 lines.append(indexListLine(prefix: "M  SAL ", groupID: id, values: atomChunk))
             }
 
-            for bondChunk in wrap(sortedOutputIndices(for: sgroup.crossingBondIDs, map: order.bondIndexByID), limit: 15) {
+            for bondChunk in wrap(
+                sortedOutputIndices(for: sgroup.crossingBondIDs, map: order.bondIndexByID), limit: 15)
+            {
                 lines.append(indexListLine(prefix: "M  SBL ", groupID: id, values: bondChunk))
             }
 
@@ -599,23 +623,31 @@ public enum CDKMDLV2000Writer {
             }
 
             if sgroup.roundBrackets {
-                lines.append("M  SBT" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " " + formatMDLInt(1, 3))
+                lines.append(
+                    "M  SBT" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " " + formatMDLInt(1, 3))
             }
 
             if let connectivity = sgroup.connectivity, !connectivity.isEmpty {
-                lines.append("M  SCN" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " " + connectivity.uppercased())
+                lines.append(
+                    "M  SCN" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " "
+                        + connectivity.uppercased())
             }
 
             if let subtype = sgroup.subtype, !subtype.isEmpty {
-                lines.append("M  SST" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " " + subtype.uppercased())
+                lines.append(
+                    "M  SST" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " " + subtype.uppercased())
             }
 
-            for atomChunk in wrap(sortedOutputIndices(for: sgroup.parentAtomIDs, map: order.atomIndexByID), limit: 15) {
+            for atomChunk in wrap(
+                sortedOutputIndices(for: sgroup.parentAtomIDs, map: order.atomIndexByID), limit: 15)
+            {
                 lines.append(indexListLine(prefix: "M  SPA ", groupID: id, values: atomChunk))
             }
 
             if let componentNumber = sgroup.componentNumber {
-                lines.append("M  SNC" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " " + formatMDLInt(componentNumber, 3))
+                lines.append(
+                    "M  SNC" + formatMDLInt(1, 3) + " " + formatMDLInt(id, 3) + " "
+                        + formatMDLInt(componentNumber, 3))
             }
 
             if sgroup.kind == .data {
@@ -677,7 +709,8 @@ public enum CDKMDLV2000Writer {
 
     private static func sgroupTypeKey(for sgroup: MoleculeSgroup) -> String {
         if let keyword = sgroup.keyword?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !keyword.isEmpty {
+            !keyword.isEmpty
+        {
             return keyword.uppercased()
         }
         switch sgroup.kind {
@@ -700,7 +733,8 @@ public enum CDKMDLV2000Writer {
         let unitField = padRight(truncate(sgroup.dataUnit ?? "", to: 20), to: 20)
         let tagField = padRight(truncate(sgroup.dataTag ?? "", to: 2), to: 2)
         let opField = sgroup.dataOperator ?? ""
-        return "M  SDT " + formatMDLInt(id, 3) + " " + fieldName + formatField + unitField + tagField + opField
+        return "M  SDT " + formatMDLInt(id, 3) + " " + fieldName + formatField + unitField + tagField
+            + opField
     }
 
     private static func indexListLine(prefix: String, groupID: Int, values: [Int]) -> String {
@@ -782,7 +816,8 @@ public enum CDKMDLV2000Writer {
             return rGroup
         }
         let trimmed = atom.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard trimmed.hasPrefix("R"), trimmed.count > 1 else { return nil }
+        guard trimmed.hasPrefix("R") else { return nil }
+        if trimmed == "R" { return 0 }
         return Int(trimmed.dropFirst())
     }
 
@@ -867,6 +902,6 @@ public enum CDKMDLV2000Writer {
         "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th",
         "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm",
         "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds",
-        "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
+        "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og",
     ]
 }

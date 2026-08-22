@@ -27,6 +27,7 @@ public struct CDKSmiFlavor: OptionSet, Sendable {
     public static let cxEnhancedStereo = CDKSmiFlavor(rawValue: 1 << 12)
     public static let cxDataSgroups = CDKSmiFlavor(rawValue: 1 << 13)
     public static let cxRGroups = CDKSmiFlavor(rawValue: 1 << 14)
+    public static let cxCoordinateBonds = CDKSmiFlavor(rawValue: 1 << 15)
 
     public static let cxAll: CDKSmiFlavor = [
         .cxAtomLabel,
@@ -39,7 +40,8 @@ public struct CDKSmiFlavor: OptionSet, Sendable {
         .cxLigandOrder,
         .cxEnhancedStereo,
         .cxDataSgroups,
-        .cxRGroups
+        .cxRGroups,
+        .cxCoordinateBonds,
     ]
 
     public static let cdkDefault: CDKSmiFlavor = [.useAromaticSymbols, .isomeric, .strict, .cxsmiles]

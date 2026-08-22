@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "suite": "CDK Smiles Port",
-  "cdkReferenceVersion": "2.12",
-  "cdkReferenceTag": "cdk-2.12",
+  "cdkReferenceVersion": "2.13",
+  "cdkReferenceTag": "cdk-2.13",
   "sourceTests": [
     "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesParserTest.java",
     "storage/smiles/src/test/java/org/openscience/cdk/smiles/SmilesGeneratorTest.java",
@@ -123,6 +123,14 @@
     {
       "id": "smiles_generator_disconnected_components",
       "source": "SmilesGeneratorTest.java disconnected component generation"
+    },
+    {
+      "id": "cx_coordinate_bonds",
+      "source": "CxSmilesParserTest.java coordinate bond parsing and CxSmilesGeneratorTest.java coordinate bond generation"
+    },
+    {
+      "id": "adjacent_stereo_hydrogen_normalization",
+      "source": "AtomContainerManipulatorTest.java CDK 2.13 adjacent stereocenter and double-bond hydrogen regressions"
     }
   ]
 }

@@ -5,9 +5,11 @@ public struct MoleculeRGroupLogic: Hashable, Codable, Sendable {
     public var requiredRGroupNumber: Int
     public var restH: Bool
 
-    public init(occurrence: String = CDKRGroupList.defaultOccurrence,
-                requiredRGroupNumber: Int = 0,
-                restH: Bool = false) {
+    public init(
+        occurrence: String = CDKRGroupList.defaultOccurrence,
+        requiredRGroupNumber: Int = 0,
+        restH: Bool = false
+    ) {
         self.occurrence = CDKRGroupList.normalizedOccurrence(occurrence)
         self.requiredRGroupNumber = requiredRGroupNumber
         self.restH = restH
@@ -19,9 +21,11 @@ public struct CDKRGroup: Hashable, Codable, Sendable {
     public var firstAttachmentPointAtomID: Int?
     public var secondAttachmentPointAtomID: Int?
 
-    public init(group: Molecule,
-                firstAttachmentPointAtomID: Int? = nil,
-                secondAttachmentPointAtomID: Int? = nil) {
+    public init(
+        group: Molecule,
+        firstAttachmentPointAtomID: Int? = nil,
+        secondAttachmentPointAtomID: Int? = nil
+    ) {
         self.group = group
         self.firstAttachmentPointAtomID = firstAttachmentPointAtomID
         self.secondAttachmentPointAtomID = secondAttachmentPointAtomID
@@ -37,13 +41,15 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
     public var requiredRGroupNumber: Int
     public var rGroups: [CDKRGroup]
 
-    public init(rGroupNumber: Int,
-                restH: Bool = false,
-                occurrence: String = defaultOccurrence,
-                requiredRGroupNumber: Int = 0,
-                rGroups: [CDKRGroup] = []) throws {
-        guard (1...32).contains(rGroupNumber) else {
-            throw ChemError.parseFailed("R-group number must be between 1 and 32.")
+    public init(
+        rGroupNumber: Int,
+        restH: Bool = false,
+        occurrence: String = defaultOccurrence,
+        requiredRGroupNumber: Int = 0,
+        rGroups: [CDKRGroup] = []
+    ) throws {
+        guard (0...32).contains(rGroupNumber) else {
+            throw ChemError.parseFailed("R-group number must be between 0 and 32.")
         }
         guard CDKRGroupList.isValidOccurrenceSyntax(occurrence) else {
             throw ChemError.parseFailed("Invalid occurrence line: \(occurrence)")
@@ -86,10 +92,11 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
 
             let parts = condition.split(separator: "-", maxSplits: 1).map(String.init)
             if parts.count == 2,
-               let lower = Int(parts[0]),
-               let upper = Int(parts[1]),
-               lower >= 0,
-               upper >= lower {
+                let lower = Int(parts[0]),
+                let upper = Int(parts[1]),
+                lower >= 0,
+                upper >= lower
+            {
                 continue
             }
 
@@ -103,7 +110,9 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
         guard maxAttachments >= 0 else { return [] }
 
         var matched = Set<Int>()
-        for condition in CDKRGroupList.normalizedOccurrence(occurrence).split(separator: ",").map(String.init) {
+        for condition in CDKRGroupList.normalizedOccurrence(occurrence).split(separator: ",").map(
+            String.init)
+        {
             if condition.allSatisfy(\.isNumber), let exact = Int(condition) {
                 if exact <= maxAttachments {
                     matched.insert(exact)
@@ -132,9 +141,10 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
 
             let parts = condition.split(separator: "-", maxSplits: 1).map(String.init)
             if parts.count == 2,
-               let lower = Int(parts[0]),
-               let upper = Int(parts[1]),
-               lower <= upper {
+                let lower = Int(parts[0]),
+                let upper = Int(parts[1]),
+                lower <= upper
+            {
                 for value in lower...min(upper, maxAttachments) {
                     matched.insert(value)
                 }
@@ -149,16 +159,20 @@ public struct CDKRGroupQuery: Hashable, Codable, Sendable {
     public var rootStructure: Molecule
     public var rGroupDefinitions: [Int: CDKRGroupList]
 
-    public init(rootStructure: Molecule = Molecule(name: "Root structure"),
-                rGroupDefinitions: [Int: CDKRGroupList] = [:]) {
+    public init(
+        rootStructure: Molecule = Molecule(name: "Root structure"),
+        rGroupDefinitions: [Int: CDKRGroupList] = [:]
+    ) {
         self.rootStructure = rootStructure
         self.rGroupDefinitions = rGroupDefinitions
     }
 
     public static func isValidRGroupQueryLabel(_ label: String) -> Bool {
         let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard trimmed.hasPrefix("R"), let value = Int(trimmed.dropFirst()) else { return false }
-        return (1...32).contains(value)
+        guard trimmed.hasPrefix("R") else { return false }
+        if trimmed == "R" { return true }
+        guard let value = Int(trimmed.dropFirst()) else { return false }
+        return (0...32).contains(value)
     }
 
     public func rGroupQueryAtoms(_ rGroupNumber: Int? = nil) -> [Atom] {
@@ -174,8 +188,9 @@ public struct CDKRGroupQuery: Hashable, Codable, Sendable {
     public func areSubstituentsDefined() -> Bool {
         for atom in rGroupQueryAtoms() {
             guard let rLabel = atom.rGroupLabel,
-                  let definition = rGroupDefinitions[rLabel],
-                  !definition.rGroups.isEmpty else {
+                let definition = rGroupDefinitions[rLabel],
+                !definition.rGroups.isEmpty
+            else {
                 return false
             }
         }
@@ -183,6 +198,8 @@ public struct CDKRGroupQuery: Hashable, Codable, Sendable {
     }
 
     public func areRootAtomsDefined() -> Bool {
+        let rootNumbers = Set(rGroupQueryAtoms().compactMap(\.rGroupLabel))
+        guard rootNumbers.isSubset(of: Set(rGroupDefinitions.keys)) else { return false }
         for number in rGroupDefinitions.keys {
             guard rGroupQueryAtoms(number).isEmpty == false else { return false }
         }
@@ -193,7 +210,8 @@ public struct CDKRGroupQuery: Hashable, Codable, Sendable {
 public enum CDKRGroupQueryManipulator {
     public static func canConvertToQuery(_ molecule: Molecule) -> Bool {
         guard let query = try? toRGroupQuery(molecule) else { return false }
-        return !query.rootStructure.atoms.isEmpty && query.areRootAtomsDefined() && query.areSubstituentsDefined()
+        return !query.rootStructure.atoms.isEmpty && query.areRootAtomsDefined()
+            && query.areSubstituentsDefined()
     }
 
     public static func setRGroupLabel(_ label: String, on molecule: inout Molecule) {
@@ -204,11 +222,16 @@ public enum CDKRGroupQueryManipulator {
 
     public static func toFlatMolecule(_ query: CDKRGroupQuery) -> Molecule {
         var molecule = query.rootStructure
-        molecule.rGroupLogicDefinitions = Dictionary(uniqueKeysWithValues: query.rGroupDefinitions.map { key, value in
-            (key, MoleculeRGroupLogic(occurrence: value.occurrence,
-                                      requiredRGroupNumber: value.requiredRGroupNumber,
-                                      restH: value.restH))
-        })
+        molecule.rGroupLogicDefinitions = Dictionary(
+            uniqueKeysWithValues: query.rGroupDefinitions.map { key, value in
+                (
+                    key,
+                    MoleculeRGroupLogic(
+                        occurrence: value.occurrence,
+                        requiredRGroupNumber: value.requiredRGroupNumber,
+                        restH: value.restH)
+                )
+            })
 
         var nextAtomID = molecule.atoms.map(\.id).max() ?? 0
         var nextBondID = molecule.bonds.map(\.id).max() ?? 0
@@ -227,57 +250,69 @@ public enum CDKRGroupQueryManipulator {
                     nextAtomID += 1
                     atomIDMap[atom.id] = nextAtomID
                     var copied = atom
-                    copied = Atom(id: nextAtomID,
-                                  externalID: copied.externalID,
-                                  element: copied.element,
-                                  position: copied.position,
-                                  zPosition: copied.zPosition,
-                                  charge: copied.charge,
-                                  isotopeMassNumber: copied.isotopeMassNumber,
-                                  aromatic: copied.aromatic,
-                                  chirality: copied.chirality,
-                                  explicitHydrogenCount: copied.explicitHydrogenCount,
-                                  queryType: copied.queryType,
-                                  atomList: copied.atomList,
-                                  atomListIsNegated: copied.atomListIsNegated,
-                                  radical: copied.radical,
-                                  radicalType: copied.radicalType,
-                                  atomValue: copied.atomValue,
-                                  rGroupLabel: copied.rGroupLabel,
-                                  rGroupMembership: copied.rGroupMembership ?? label,
-                                  componentGroupID: componentGroupID,
-                                  substitutionCount: copied.substitutionCount,
-                                  unsaturated: copied.unsaturated,
-                                  ringBondCount: copied.ringBondCount,
-                                  attachmentPoint: copied.attachmentPoint,
-                                  valenceOverride: copied.valenceOverride,
-                                  cxStereoGroup: copied.cxStereoGroup,
-                                  ligandOrderingAtomIDs: copied.ligandOrderingAtomIDs,
-                                  atomClass: copied.atomClass,
-                                  atomMapNumber: copied.atomMapNumber,
-                                  aliasLabel: copied.aliasLabel)
+                    copied = Atom(
+                        id: nextAtomID,
+                        externalID: copied.externalID,
+                        element: copied.element,
+                        position: copied.position,
+                        zPosition: copied.zPosition,
+                        charge: copied.charge,
+                        isotopeMassNumber: copied.isotopeMassNumber,
+                        aromatic: copied.aromatic,
+                        chirality: copied.chirality,
+                        explicitHydrogenCount: copied.explicitHydrogenCount,
+                        queryType: copied.queryType,
+                        atomList: copied.atomList,
+                        atomListIsNegated: copied.atomListIsNegated,
+                        radical: copied.radical,
+                        radicalType: copied.radicalType,
+                        atomValue: copied.atomValue,
+                        rGroupLabel: copied.rGroupLabel,
+                        rGroupMembership: copied.rGroupMembership ?? label,
+                        componentGroupID: componentGroupID,
+                        substitutionCount: copied.substitutionCount,
+                        unsaturated: copied.unsaturated,
+                        ringBondCount: copied.ringBondCount,
+                        attachmentPoint: copied.attachmentPoint,
+                        valenceOverride: copied.valenceOverride,
+                        cxStereoGroup: copied.cxStereoGroup,
+                        ligandOrderingAtomIDs: copied.ligandOrderingAtomIDs,
+                        atomClass: copied.atomClass,
+                        atomMapNumber: copied.atomMapNumber,
+                        aliasLabel: copied.aliasLabel)
                     molecule.atoms.append(copied)
                 }
 
                 for bond in rGroup.group.bonds {
                     guard let a1 = atomIDMap[bond.a1], let a2 = atomIDMap[bond.a2] else { continue }
                     nextBondID += 1
-                    molecule.bonds.append(Bond(id: nextBondID,
-                                               externalID: bond.externalID,
-                                               a1: a1,
-                                               a2: a2,
-                                               order: bond.order,
-                                               stereo: bond.stereo,
-                                               queryType: bond.queryType,
-                                               topology: bond.topology))
+                    molecule.bonds.append(
+                        Bond(
+                            id: nextBondID,
+                            externalID: bond.externalID,
+                            a1: a1,
+                            a2: a2,
+                            order: bond.order,
+                            stereo: bond.stereo,
+                            doubleBondStereo: bond.doubleBondStereo,
+                            stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap { atomIDMap[$0] },
+                            queryType: bond.queryType,
+                            topology: bond.topology,
+                            coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap {
+                                atomIDMap[$0]
+                            },
+                            reactingCenterStatus: bond.reactingCenterStatus))
                 }
 
-                let sourceToFlatIndex = Dictionary(uniqueKeysWithValues: molecule.atoms.enumerated().map { ($1.id, $0) })
+                let sourceToFlatIndex = Dictionary(
+                    uniqueKeysWithValues: molecule.atoms.enumerated().map { ($1.id, $0) })
                 for atom in rGroup.group.atoms {
                     guard let mappedID = atomIDMap[atom.id],
-                          let atomIndex = sourceToFlatIndex[mappedID] else { continue }
+                        let atomIndex = sourceToFlatIndex[mappedID]
+                    else { continue }
                     if atom.id == rGroup.firstAttachmentPointAtomID {
-                        molecule.atoms[atomIndex].attachmentPoint = (atom.id == rGroup.secondAttachmentPointAtomID) ? 3 : 1
+                        molecule.atoms[atomIndex].attachmentPoint =
+                            (atom.id == rGroup.secondAttachmentPointAtomID) ? 3 : 1
                     } else if atom.id == rGroup.secondAttachmentPointAtomID {
                         molecule.atoms[atomIndex].attachmentPoint = 2
                     }
@@ -289,20 +324,23 @@ public enum CDKRGroupQueryManipulator {
     }
 
     public static func toRGroupQuery(_ molecule: Molecule) throws -> CDKRGroupQuery {
-        let rootAtomIDs = Set(molecule.atoms.compactMap { atom in
-            atom.rGroupMembership == nil ? atom.id : nil
-        })
-        var rootStructure = extractSubmolecule(from: molecule,
-                                               atomIDs: rootAtomIDs,
-                                               name: molecule.name,
-                                               preserveDataFields: true)
+        let rootAtomIDs = Set(
+            molecule.atoms.compactMap { atom in
+                atom.rGroupMembership == nil ? atom.id : nil
+            })
+        var rootStructure = extractSubmolecule(
+            from: molecule,
+            atomIDs: rootAtomIDs,
+            name: molecule.name,
+            preserveDataFields: true)
         rootStructure.rGroupLogicDefinitions = [:]
 
         var definitions: [Int: CDKRGroupList] = [:]
-        let groupedByLabel = Dictionary(grouping: molecule.atoms.compactMap { atom -> (String, Atom)? in
-            guard let membership = atom.rGroupMembership else { return nil }
-            return (membership, atom)
-        }, by: { $0.0 })
+        let groupedByLabel = Dictionary(
+            grouping: molecule.atoms.compactMap { atom -> (String, Atom)? in
+                guard let membership = atom.rGroupMembership else { return nil }
+                return (membership, atom)
+            }, by: { $0.0 })
 
         for label in groupedByLabel.keys.sorted(by: compareRGroupLabels) {
             guard let rGroupNumber = parseRGroupNumber(label) else {
@@ -315,34 +353,53 @@ public enum CDKRGroupQueryManipulator {
             for componentGroupID in groupedByComponent.keys.compactMap({ $0 }).sorted() {
                 guard let atoms = groupedByComponent[componentGroupID], !atoms.isEmpty else { continue }
                 let atomIDs = Set(atoms.map(\.id))
-                let group = extractSubmolecule(from: molecule,
-                                               atomIDs: atomIDs,
-                                               name: label,
-                                               preserveDataFields: false)
-                rGroups.append(CDKRGroup(group: group,
-                                         firstAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [1, 3]),
-                                         secondAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [2, 3])))
+                let group = extractSubmolecule(
+                    from: molecule,
+                    atomIDs: atomIDs,
+                    name: label,
+                    preserveDataFields: false)
+                rGroups.append(
+                    CDKRGroup(
+                        group: group,
+                        firstAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [1, 3]),
+                        secondAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [2, 3])))
             }
 
             if let ungroupedAtoms = groupedByComponent[nil], !ungroupedAtoms.isEmpty {
-                let components = connectedComponents(atomIDs: Set(ungroupedAtoms.map(\.id)), molecule: molecule)
+                let components = connectedComponents(
+                    atomIDs: Set(ungroupedAtoms.map(\.id)), molecule: molecule)
                 for component in components {
-                    let group = extractSubmolecule(from: molecule,
-                                                   atomIDs: component,
-                                                   name: label,
-                                                   preserveDataFields: false)
-                    rGroups.append(CDKRGroup(group: group,
-                                             firstAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [1, 3]),
-                                             secondAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [2, 3])))
+                    let group = extractSubmolecule(
+                        from: molecule,
+                        atomIDs: component,
+                        name: label,
+                        preserveDataFields: false)
+                    rGroups.append(
+                        CDKRGroup(
+                            group: group,
+                            firstAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [1, 3]),
+                            secondAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [2, 3])))
                 }
             }
 
             let logic = molecule.rGroupLogicDefinitions[rGroupNumber] ?? MoleculeRGroupLogic()
-            definitions[rGroupNumber] = try CDKRGroupList(rGroupNumber: rGroupNumber,
-                                                          restH: logic.restH,
-                                                          occurrence: logic.occurrence,
-                                                          requiredRGroupNumber: logic.requiredRGroupNumber,
-                                                          rGroups: rGroups)
+            definitions[rGroupNumber] = try CDKRGroupList(
+                rGroupNumber: rGroupNumber,
+                restH: logic.restH,
+                occurrence: logic.occurrence,
+                requiredRGroupNumber: logic.requiredRGroupNumber,
+                rGroups: rGroups)
+        }
+
+        let rootRGroupNumbers = Set(rootStructure.atoms.compactMap(\.rGroupLabel))
+            .union(molecule.rGroupLogicDefinitions.keys)
+        for rGroupNumber in rootRGroupNumbers where definitions[rGroupNumber] == nil {
+            let logic = molecule.rGroupLogicDefinitions[rGroupNumber] ?? MoleculeRGroupLogic()
+            definitions[rGroupNumber] = try CDKRGroupList(
+                rGroupNumber: rGroupNumber,
+                restH: logic.restH,
+                occurrence: logic.occurrence,
+                requiredRGroupNumber: logic.requiredRGroupNumber)
         }
 
         return CDKRGroupQuery(rootStructure: rootStructure, rGroupDefinitions: definitions)
@@ -350,7 +407,8 @@ public enum CDKRGroupQueryManipulator {
 
     private static func parseRGroupNumber(_ label: String) -> Int? {
         let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard trimmed.hasPrefix("R"), trimmed.count > 1 else { return nil }
+        guard trimmed.hasPrefix("R") else { return nil }
+        if trimmed == "R" { return 0 }
         return Int(trimmed.dropFirst())
     }
 
@@ -361,7 +419,9 @@ public enum CDKRGroupQueryManipulator {
         return lhs < rhs
     }
 
-    private static func attachmentPointAtomID(in molecule: Molecule, matching values: Set<Int>) -> Int? {
+    private static func attachmentPointAtomID(in molecule: Molecule, matching values: Set<Int>)
+        -> Int?
+    {
         molecule.atoms.first(where: { atom in
             guard let attachmentPoint = atom.attachmentPoint else { return false }
             return values.contains(attachmentPoint)
@@ -402,23 +462,28 @@ public enum CDKRGroupQueryManipulator {
         return components
     }
 
-    private static func extractSubmolecule(from source: Molecule,
-                                           atomIDs: Set<Int>,
-                                           name: String,
-                                           preserveDataFields: Bool) -> Molecule {
+    private static func extractSubmolecule(
+        from source: Molecule,
+        atomIDs: Set<Int>,
+        name: String,
+        preserveDataFields: Bool
+    ) -> Molecule {
         let atoms = source.atoms.filter { atomIDs.contains($0.id) }
-        let bondIDs = Set(source.bonds.compactMap { bond in
-            atomIDs.contains(bond.a1) && atomIDs.contains(bond.a2) ? bond.id : nil
-        })
+        let bondIDs = Set(
+            source.bonds.compactMap { bond in
+                atomIDs.contains(bond.a1) && atomIDs.contains(bond.a2) ? bond.id : nil
+            })
         let bonds = source.bonds.filter { bondIDs.contains($0.id) }
 
-        var result = Molecule(name: name,
-                              externalID: source.externalID,
-                              atoms: atoms,
-                              bonds: bonds)
-        result.sgroups = filteredSgroups(from: source.sgroups,
-                                         atomIDs: atomIDs,
-                                         bondIDs: bondIDs)
+        var result = Molecule(
+            name: name,
+            externalID: source.externalID,
+            atoms: atoms,
+            bonds: bonds)
+        result.sgroups = filteredSgroups(
+            from: source.sgroups,
+            atomIDs: atomIDs,
+            bondIDs: bondIDs)
         result.highlightedAtomIDs = source.highlightedAtomIDs.filter { atomIDs.contains($0) }
         result.highlightedBondIDs = source.highlightedBondIDs.filter { bondIDs.contains($0) }
         result.cxState = nil
@@ -430,9 +495,11 @@ public enum CDKRGroupQueryManipulator {
         return result
     }
 
-    private static func filteredSgroups(from sgroups: [MoleculeSgroup],
-                                        atomIDs: Set<Int>,
-                                        bondIDs: Set<Int>) -> [MoleculeSgroup] {
+    private static func filteredSgroups(
+        from sgroups: [MoleculeSgroup],
+        atomIDs: Set<Int>,
+        bondIDs: Set<Int>
+    ) -> [MoleculeSgroup] {
         let includedIndices = sgroups.indices.filter { index in
             let sgroup = sgroups[index]
             return Set(sgroup.atomIDs).isSubset(of: atomIDs)

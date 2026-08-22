@@ -1,9 +1,11 @@
 import Foundation
 import XCTest
-#if canImport(CoreGraphics)
-import CoreGraphics
-#endif
+
 @testable import CDKSwiftNativePort
+
+#if canImport(CoreGraphics)
+    import CoreGraphics
+#endif
 
 final class MDLV2000WriterTests: XCTestCase {
 
@@ -21,7 +23,7 @@ final class MDLV2000WriterTests: XCTestCase {
             name: "AliasAndValue",
             atoms: [
                 Atom(id: 1, element: "C", position: .zero, aliasLabel: "Phenyl"),
-                Atom(id: 2, element: "C", position: CGPoint(x: 1.5, y: 0), atomValue: "Carbon note")
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.5, y: 0), atomValue: "Carbon note"),
             ],
             bonds: [Bond(id: 1, a1: 1, a2: 2, order: .single)]
         )
@@ -39,7 +41,7 @@ final class MDLV2000WriterTests: XCTestCase {
             atoms: [
                 Atom(id: 1, element: "H", position: .zero, isotopeMassNumber: 2),
                 Atom(id: 2, element: "H", position: CGPoint(x: 1.5, y: 0), isotopeMassNumber: 3),
-                Atom(id: 3, element: "*", position: CGPoint(x: 3.0, y: 0), rGroupLabel: 12)
+                Atom(id: 3, element: "*", position: CGPoint(x: 3.0, y: 0), rGroupLabel: 12),
             ],
             bonds: []
         )
@@ -56,13 +58,15 @@ final class MDLV2000WriterTests: XCTestCase {
         let molecule = Molecule(
             name: "Queries",
             atoms: [
-                Atom(id: 1, element: "L", position: .zero, queryType: .anyAtom, atomList: ["C", "N"], atomListIsNegated: true),
+                Atom(
+                    id: 1, element: "L", position: .zero, queryType: .anyAtom, atomList: ["C", "N"],
+                    atomListIsNegated: true),
                 Atom(id: 2, element: "C", position: CGPoint(x: 1.5, y: 0)),
-                Atom(id: 3, element: "C", position: CGPoint(x: 3.0, y: 0))
+                Atom(id: 3, element: "C", position: CGPoint(x: 3.0, y: 0)),
             ],
             bonds: [
                 Bond(id: 1, a1: 1, a2: 2, order: .single, queryType: .singleOrDouble, topology: .ring),
-                Bond(id: 2, a1: 2, a2: 3, order: .single, queryType: .any, topology: .chain)
+                Bond(id: 2, a1: 2, a2: 3, order: .single, queryType: .any, topology: .chain),
             ]
         )
 
@@ -74,18 +78,52 @@ final class MDLV2000WriterTests: XCTestCase {
         XCTAssertTrue(text.contains("  2  3  8  0  0  2  0"))
     }
 
+    func testRoundTripsCDK213ReactingCenterStatusesInV2000() throws {
+        let atoms = (1...11).map { index in
+            Atom(id: index, element: "C", position: CGPoint(x: Double(index), y: 0))
+        }
+        let statuses: [CDKMDLReactingCenterStatus] = [
+            .notReactingCenter,
+            .genericReactingCenter,
+            .noChange,
+            .bondMadeOrBroken,
+            .genericReactingCenterAndBondMadeOrBroken,
+            .bondOrderChanges,
+            .genericReactingCenterAndBondOrderChanges,
+            .bondMadeOrBrokenAndBondOrderChanges,
+            .genericReactingCenterAndBondMadeOrBrokenAndBondOrderChanges,
+        ]
+        let bonds = statuses.enumerated().map { offset, status in
+            Bond(
+                id: offset + 1,
+                a1: offset + 1,
+                a2: offset + 2,
+                order: .single,
+                reactingCenterStatus: status)
+        }
+
+        let text = try CDKMDLV2000Writer.write(
+            Molecule(name: "ReactingCenters", atoms: atoms, bonds: bonds))
+        let reparsed = try CDKMDLV2000Reader.read(text: text)
+
+        XCTAssertEqual(reparsed.bonds.compactMap(\.reactingCenterStatus), statuses)
+        XCTAssertTrue(text.contains("  1"))
+        XCTAssertTrue(text.contains(" 13"))
+    }
+
     func testWritesParityChiralFlagValenceAndAtomMap() throws {
         let molecule = Molecule(
             name: "Parity",
             atoms: [
-                Atom(id: 1,
-                     element: "C",
-                     position: .zero,
-                     chirality: .clockwise,
-                     explicitHydrogenCount: 0,
-                     valenceOverride: 0,
-                     cxStereoGroup: CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0),
-                     atomMapNumber: 7)
+                Atom(
+                    id: 1,
+                    element: "C",
+                    position: .zero,
+                    chirality: .clockwise,
+                    explicitHydrogenCount: 0,
+                    valenceOverride: 0,
+                    cxStereoGroup: CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0),
+                    atomMapNumber: 7)
             ],
             bonds: []
         )
@@ -98,29 +136,29 @@ final class MDLV2000WriterTests: XCTestCase {
 
     func testPreservesExplicitDefaultValenceForChEBIIronSulfurCluster() throws {
         let source = """
-        CHEBI:33740
-          Marvin  03051214042D
+            CHEBI:33740
+              Marvin  03051214042D
 
-          7  9  0  0  0  0            999 V2000
-            0.4125    0.4125    0.0000 S   0  5  0  0  0  2  0  0  0  0  0  0
-           -0.4125   -0.4125    0.0000 S   0  0  0  0  0  3  0  0  0  0  0  0
-            0.4125   -0.4125    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
-           -0.4125    0.4125    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
-           -0.8690   -0.8690    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
-           -0.8690   -0.0440    0.0000 S   0  5  0  0  0  2  0  0  0  0  0  0
-           -0.0440   -0.8690    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
-          3  2  1  0  0  0  0
-          3  1  1  0  0  0  0
-          2  4  1  0  0  0  0
-          1  4  1  0  0  0  0
-          2  5  1  0  0  0  0
-          3  7  1  0  0  0  0
-          4  6  1  0  0  0  0
-          6  5  1  0  0  0  0
-          5  7  1  0  0  0  0
-        M  CHG  2   1  -1   6  -1
-        M  END
-        """
+              7  9  0  0  0  0            999 V2000
+                0.4125    0.4125    0.0000 S   0  5  0  0  0  2  0  0  0  0  0  0
+               -0.4125   -0.4125    0.0000 S   0  0  0  0  0  3  0  0  0  0  0  0
+                0.4125   -0.4125    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+               -0.4125    0.4125    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+               -0.8690   -0.8690    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+               -0.8690   -0.0440    0.0000 S   0  5  0  0  0  2  0  0  0  0  0  0
+               -0.0440   -0.8690    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+              3  2  1  0  0  0  0
+              3  1  1  0  0  0  0
+              2  4  1  0  0  0  0
+              1  4  1  0  0  0  0
+              2  5  1  0  0  0  0
+              3  7  1  0  0  0  0
+              4  6  1  0  0  0  0
+              6  5  1  0  0  0  0
+              5  7  1  0  0  0  0
+            M  CHG  2   1  -1   6  -1
+            M  END
+            """
         let molecule = try CDKMDLV2000Reader.read(text: source)
 
         XCTAssertEqual(molecule.atoms[0].valenceOverride, 2)
@@ -146,34 +184,37 @@ final class MDLV2000WriterTests: XCTestCase {
             atoms: [
                 Atom(id: 1, element: "C", position: .zero),
                 Atom(id: 2, element: "O", position: CGPoint(x: 1.5, y: 0)),
-                Atom(id: 3, element: "C", position: CGPoint(x: 3.0, y: 0))
+                Atom(id: 3, element: "C", position: CGPoint(x: 3.0, y: 0)),
             ],
             bonds: [
                 Bond(id: 1, a1: 1, a2: 2, order: .single),
-                Bond(id: 2, a1: 2, a2: 3, order: .single)
+                Bond(id: 2, a1: 2, a2: 3, order: .single),
             ]
         )
         molecule.sgroups = [
-            MoleculeSgroup(kind: .structureRepeatUnit,
-                           keyword: "SRU",
-                           atomIDs: [1, 2],
-                           crossingBondIDs: [1],
-                           subscriptText: "n",
-                           roundBrackets: true,
-                           connectivity: "HT",
-                           brackets: [
-                            MoleculeSgroupBracket(firstPoint: CGPoint(x: -1.0, y: -1.0),
-                                                  secondPoint: CGPoint(x: -1.0, y: 1.0))
-                           ]),
-            MoleculeSgroup(kind: .data,
-                           keyword: "DAT",
-                           atomIDs: [2],
-                           crossingBondIDs: [2],
-                           dataFieldName: "FIELD",
-                           dataValue: "Atom data",
-                           dataOperator: ">=",
-                           dataUnit: "u",
-                           dataTag: "TG")
+            MoleculeSgroup(
+                kind: .structureRepeatUnit,
+                keyword: "SRU",
+                atomIDs: [1, 2],
+                crossingBondIDs: [1],
+                subscriptText: "n",
+                roundBrackets: true,
+                connectivity: "HT",
+                brackets: [
+                    MoleculeSgroupBracket(
+                        firstPoint: CGPoint(x: -1.0, y: -1.0),
+                        secondPoint: CGPoint(x: -1.0, y: 1.0))
+                ]),
+            MoleculeSgroup(
+                kind: .data,
+                keyword: "DAT",
+                atomIDs: [2],
+                crossingBondIDs: [2],
+                dataFieldName: "FIELD",
+                dataValue: "Atom data",
+                dataOperator: ">=",
+                dataUnit: "u",
+                dataTag: "TG"),
         ]
 
         let text = try CDKMDLV2000Writer.write(molecule)
@@ -236,20 +277,23 @@ final class MDLV2000WriterTests: XCTestCase {
             name: "RoundTrip",
             atoms: [
                 Atom(id: 1, element: "C", position: .zero, aliasLabel: "Phenyl"),
-                Atom(id: 2, element: "L", position: CGPoint(x: 1.5, y: 0), queryType: .anyAtom, atomList: ["C", "N"], atomListIsNegated: false, atomValue: "Center"),
-                Atom(id: 3, element: "*", position: CGPoint(x: 3.0, y: 0), rGroupLabel: 2)
+                Atom(
+                    id: 2, element: "L", position: CGPoint(x: 1.5, y: 0), queryType: .anyAtom,
+                    atomList: ["C", "N"], atomListIsNegated: false, atomValue: "Center"),
+                Atom(id: 3, element: "*", position: CGPoint(x: 3.0, y: 0), rGroupLabel: 2),
             ],
             bonds: [
                 Bond(id: 1, a1: 1, a2: 2, order: .single, queryType: .singleOrAromatic, topology: .ring),
-                Bond(id: 2, a1: 2, a2: 3, order: .single)
+                Bond(id: 2, a1: 2, a2: 3, order: .single),
             ]
         )
         molecule.sgroups = [
-            MoleculeSgroup(kind: .structureRepeatUnit,
-                           keyword: "SRU",
-                           atomIDs: [1, 2],
-                           crossingBondIDs: [1],
-                           subscriptText: "n")
+            MoleculeSgroup(
+                kind: .structureRepeatUnit,
+                keyword: "SRU",
+                atomIDs: [1, 2],
+                crossingBondIDs: [1],
+                subscriptText: "n")
         ]
 
         let text = try CDKMDLV2000Writer.write(molecule)

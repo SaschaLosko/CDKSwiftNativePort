@@ -6,7 +6,8 @@ Upstream reference: <https://github.com/cdk/cdk>
 
 `CDKSwiftNativePort` includes code derived from and inspired by the Chemistry
 Development Kit (CDK). The current parity target for the supported surface in
-this package is CDK `2.12`.
+this package is CDK `2.13` (`cdk-2.13`, commit
+`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`).
 
 ## CDK Reference Citations
 
@@ -53,7 +54,7 @@ That does not mean every CDK module is ported.
 
 - molecule and reaction model types
 - SMILES and reaction SMILES parsing/generation
-- CXSMILES layers used by CDK 2.12-backed host workflows:
+- CXSMILES layers used by CDK 2.13-backed host workflows:
   - atom labels and atom values
   - coordinates
   - radicals
@@ -61,16 +62,21 @@ That does not mean every CDK module is ported.
   - fragment grouping
   - `ha:` / `hb:` highlights
   - ligand ordering
+  - coordinate bonds (`C:`)
   - Markush `RG:` and link-node `LN:`
   - polymer/data/generic/positional-variation Sgroups
 - MDL Molfile V2000 import/export
 - MDL Molfile V3000 import/export, including `HILITE`
+- MDL V2000/V3000 reacting-center status round-trips
+- R0/bare-R Markush roots and partial R-group definitions
 - SDF import/export with SD data fields and mixed V2000/V3000 records
 - RXN and RDF support
 - CML molecule and reaction support
 - InChI integration
+- Universal-SMILES AuxInfo numbering with mixed fixed-H `/F:` components
 - official-reference InChI parity harness for a curated upstream InChI CI corpus
 - CDK-derived 2D layout
+- small-ring-size queries and coordinate-bonded sandwich-ring layout
 - circular ECFP/FCFP fingerprints, count/folded bit fingerprints, and
   Tanimoto/Dice/Cosine similarity helpers
 - molecule-vs-molecule substructure matching over the Swift `Molecule` graph
@@ -141,7 +147,7 @@ Parity-oriented metadata lives under:
 - `Tests/CDKSwiftNativePortTests/**/port_metadata.json`
 
 Those metadata files link the current Swift test surface back to the upstream
-CDK 2.12 tests that informed the port.
+CDK 2.13 tests that informed the port.
 
 For InChI specifically, reference-grade work is tracked separately in
 [`INCHI_REFERENCE_GRADE.md`](INCHI_REFERENCE_GRADE.md). The runtime remains

@@ -1,9 +1,11 @@
 import Foundation
 import XCTest
-#if canImport(CoreGraphics)
-import CoreGraphics
-#endif
+
 @testable import CDKSwiftNativePort
+
+#if canImport(CoreGraphics)
+    import CoreGraphics
+#endif
 
 final class StructureDiagramGeneratorTests: XCTestCase {
     private let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
@@ -12,13 +14,14 @@ final class StructureDiagramGeneratorTests: XCTestCase {
     func testAspirinEsterBridgeIsNotLinear() throws {
         let molecule = try parse("CC(=O)OC1=CC=CC=C1C(=O)O")
 
-        let oxygen = try XCTUnwrap(molecule.atoms.first { atom in
-            atom.element.uppercased() == "O"
-                && molecule.neighbors(of: atom.id).count == 2
-                && molecule.neighbors(of: atom.id).allSatisfy { neighbor in
-                    molecule.atom(id: neighbor)?.element.uppercased() == "C"
-                }
-        })
+        let oxygen = try XCTUnwrap(
+            molecule.atoms.first { atom in
+                atom.element.uppercased() == "O"
+                    && molecule.neighbors(of: atom.id).count == 2
+                    && molecule.neighbors(of: atom.id).allSatisfy { neighbor in
+                        molecule.atom(id: neighbor)?.element.uppercased() == "C"
+                    }
+            })
 
         let neighbors = molecule.neighbors(of: oxygen.id)
         XCTAssertEqual(neighbors.count, 2)
@@ -66,7 +69,8 @@ final class StructureDiagramGeneratorTests: XCTestCase {
 
         let nearVerticalBondCount = molecule.bonds.reduce(into: 0) { count, bond in
             guard let p1 = molecule.atom(id: bond.a1)?.position,
-                  let p2 = molecule.atom(id: bond.a2)?.position else {
+                let p2 = molecule.atom(id: bond.a2)?.position
+            else {
                 return
             }
             let dx = abs(p2.x - p1.x)
@@ -76,8 +80,9 @@ final class StructureDiagramGeneratorTests: XCTestCase {
             }
         }
 
-        XCTAssertGreaterThanOrEqual(nearVerticalBondCount, 2,
-                                    "Expected cyclohexane to seed with the conventional vertical-side hexagon orientation.")
+        XCTAssertGreaterThanOrEqual(
+            nearVerticalBondCount, 2,
+            "Expected cyclohexane to seed with the conventional vertical-side hexagon orientation.")
     }
 
     func testExplicitHydrogensDoNotDistortIbuprofenLikeSideChainAngles() throws {
@@ -88,7 +93,8 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         let ringAtomIDs = Set(skeletal.simpleCycles(maxSize: 8).flatMap { $0 })
         let candidateAtomIDs = skeletal.atoms.compactMap { atom -> Int? in
             guard atom.element.uppercased() != "H",
-                  !ringAtomIDs.contains(atom.id) else {
+                !ringAtomIDs.contains(atom.id)
+            else {
                 return nil
             }
             let expected = heavyNeighborAngles(in: skeletal, around: atom.id)
@@ -100,12 +106,15 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         for atomID in candidateAtomIDs {
             let expected = heavyNeighborAngles(in: skeletal, around: atomID)
             let actual = heavyNeighborAngles(in: laidOut, around: atomID)
-            XCTAssertEqual(actual.count, expected.count, "Expected the same heavy-neighbor angle count for atom \(atomID).")
+            XCTAssertEqual(
+                actual.count, expected.count,
+                "Expected the same heavy-neighbor angle count for atom \(atomID).")
             for (expectedAngle, actualAngle) in zip(expected, actual) {
-                XCTAssertEqual(actualAngle,
-                               expectedAngle,
-                               accuracy: 4.0,
-                               "Explicit-hydrogen layout distorted the heavy-atom zig-zag at atom \(atomID).")
+                XCTAssertEqual(
+                    actualAngle,
+                    expectedAngle,
+                    accuracy: 4.0,
+                    "Explicit-hydrogen layout distorted the heavy-atom zig-zag at atom \(atomID).")
             }
         }
     }
@@ -114,14 +123,16 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         let molecule = try parse("c1ccccc1NCC1OCOC1")
         let fiveMemberRing = try XCTUnwrap(molecule.simpleCycles(maxSize: 8).first { $0.count == 5 })
         let ringAtoms = Set(fiveMemberRing)
-        let anchorID = try XCTUnwrap(fiveMemberRing.first { atomID in
-            let neighbors = molecule.neighbors(of: atomID)
-            let ringNeighborCount = neighbors.filter { ringAtoms.contains($0) }.count
-            return ringNeighborCount == 2 && neighbors.contains { !ringAtoms.contains($0) }
-        })
+        let anchorID = try XCTUnwrap(
+            fiveMemberRing.first { atomID in
+                let neighbors = molecule.neighbors(of: atomID)
+                let ringNeighborCount = neighbors.filter { ringAtoms.contains($0) }.count
+                return ringNeighborCount == 2 && neighbors.contains { !ringAtoms.contains($0) }
+            })
 
         let ringNeighbors = molecule.neighbors(of: anchorID).filter { ringAtoms.contains($0) }
-        let externalNeighbor = try XCTUnwrap(molecule.neighbors(of: anchorID).first { !ringAtoms.contains($0) })
+        let externalNeighbor = try XCTUnwrap(
+            molecule.neighbors(of: anchorID).first { !ringAtoms.contains($0) })
 
         XCTAssertEqual(ringNeighbors.count, 2)
 
@@ -133,46 +144,55 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         let internalRingAngle = angleDegrees(a: firstRingPoint, center: center, b: secondRingPoint)
         let exocyclicAngles = [
             angleDegrees(a: firstRingPoint, center: center, b: externalPoint),
-            angleDegrees(a: secondRingPoint, center: center, b: externalPoint)
+            angleDegrees(a: secondRingPoint, center: center, b: externalPoint),
         ].sorted()
 
         XCTAssertEqual(internalRingAngle, 108, accuracy: 8)
         XCTAssertGreaterThan(exocyclicAngles[0], 116)
         XCTAssertLessThan(exocyclicAngles[1], 136)
-        XCTAssertEqual(exocyclicAngles[0],
-                       exocyclicAngles[1],
-                       accuracy: 6,
-                       "Single-anchor ring placement should place the external bond on the ring-bond bisector, not collinear with one ring bond.")
+        XCTAssertEqual(
+            exocyclicAngles[0],
+            exocyclicAngles[1],
+            accuracy: 6,
+            "Single-anchor ring placement should place the external bond on the ring-bond bisector, not collinear with one ring bond."
+        )
     }
 
     func testTrigonalCarbonateOxygensUseOpenOneHundredTwentyDegreeLayout() throws {
         let molecule = try parse("O=C([O-])[O-]")
-        let carbon = try XCTUnwrap(molecule.atoms.first { atom in
-            atom.element.uppercased() == "C"
-                && molecule.neighbors(of: atom.id).count == 3
-                && molecule.neighbors(of: atom.id).allSatisfy { neighbor in
-                    molecule.atom(id: neighbor)?.element.uppercased() == "O"
-                }
-        })
+        let carbon = try XCTUnwrap(
+            molecule.atoms.first { atom in
+                atom.element.uppercased() == "C"
+                    && molecule.neighbors(of: atom.id).count == 3
+                    && molecule.neighbors(of: atom.id).allSatisfy { neighbor in
+                        molecule.atom(id: neighbor)?.element.uppercased() == "O"
+                    }
+            })
 
         let center = carbon.position
-        let oxygenPoints = molecule.neighbors(of: carbon.id).compactMap { molecule.atom(id: $0)?.position }
+        let oxygenPoints = molecule.neighbors(of: carbon.id).compactMap {
+            molecule.atom(id: $0)?.position
+        }
         XCTAssertEqual(oxygenPoints.count, 3)
 
         var angles: [CGFloat] = []
         for leftIndex in 0..<oxygenPoints.count {
             for rightIndex in (leftIndex + 1)..<oxygenPoints.count {
-                angles.append(angleDegrees(a: oxygenPoints[leftIndex],
-                                           center: center,
-                                           b: oxygenPoints[rightIndex]))
+                angles.append(
+                    angleDegrees(
+                        a: oxygenPoints[leftIndex],
+                        center: center,
+                        b: oxygenPoints[rightIndex]))
             }
         }
 
         for angle in angles {
-            XCTAssertEqual(angle,
-                           120,
-                           accuracy: 8,
-                           "Three-coordinate carbonate-like centers should depict as an open trigonal fan, not a collapsed or near-linear branch.")
+            XCTAssertEqual(
+                angle,
+                120,
+                accuracy: 8,
+                "Three-coordinate carbonate-like centers should depict as an open trigonal fan, not a collapsed or near-linear branch."
+            )
         }
     }
 
@@ -197,24 +217,29 @@ final class StructureDiagramGeneratorTests: XCTestCase {
 
         let laidOut = Depiction2DGenerator.generate(for: molecule)
         let box = try XCTUnwrap(laidOut.boundingBox())
-        XCTAssertGreaterThan(box.width,
-                             box.height,
-                             "A long substituted acyclic parent chain should be oriented as a readable horizontal zig-zag.")
+        XCTAssertGreaterThan(
+            box.width,
+            box.height,
+            "A long substituted acyclic parent chain should be oriented as a readable horizontal zig-zag."
+        )
 
         let parentChain = [1, 2, 3, 4, 5, 6, 7, 8]
         let terminalStart = try XCTUnwrap(laidOut.atom(id: parentChain[0])?.position)
         let terminalEnd = try XCTUnwrap(laidOut.atom(id: parentChain[parentChain.count - 1])?.position)
-        XCTAssertGreaterThan(abs(terminalEnd.x - terminalStart.x),
-                             abs(terminalEnd.y - terminalStart.y),
-                             "The oct-2-ene parent chain should not be laid out vertically after the double bond.")
+        XCTAssertGreaterThan(
+            abs(terminalEnd.x - terminalStart.x),
+            abs(terminalEnd.y - terminalStart.y),
+            "The oct-2-ene parent chain should not be laid out vertically after the double bond.")
 
         for index in 1..<(parentChain.count - 1) {
             let previous = try XCTUnwrap(laidOut.atom(id: parentChain[index - 1])?.position)
             let center = try XCTUnwrap(laidOut.atom(id: parentChain[index])?.position)
             let next = try XCTUnwrap(laidOut.atom(id: parentChain[index + 1])?.position)
             let angle = angleDegrees(a: previous, center: center, b: next)
-            XCTAssertGreaterThan(angle, 100, "Unexpectedly compressed parent-chain angle at atom \(parentChain[index]).")
-            XCTAssertLessThan(angle, 140, "Unexpectedly linear parent-chain angle at atom \(parentChain[index]).")
+            XCTAssertGreaterThan(
+                angle, 100, "Unexpectedly compressed parent-chain angle at atom \(parentChain[index]).")
+            XCTAssertLessThan(
+                angle, 140, "Unexpectedly linear parent-chain angle at atom \(parentChain[index]).")
         }
     }
 
@@ -249,13 +274,16 @@ final class StructureDiagramGeneratorTests: XCTestCase {
     func testMarkushRootOrientationMatchesCDKLayoutIntent() throws {
         let molecule = try parse("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
         let components = connectedComponents(in: molecule)
-        let rootComponent = try XCTUnwrap(components.first { membership(of: $0, molecule: molecule) == nil })
+        let rootComponent = try XCTUnwrap(
+            components.first { membership(of: $0, molecule: molecule) == nil })
         let rootBounds = try XCTUnwrap(rowBounds(for: [rootComponent], molecule: molecule))
 
         let repeatAtomID = try XCTUnwrap(molecule.sgroups.first?.atomIDs.first)
         let repeatAtom = try XCTUnwrap(molecule.atom(id: repeatAtomID))
-        let rGroupAtom = try XCTUnwrap(molecule.atoms.first { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" })
-        let nitrogen = try XCTUnwrap(molecule.atoms.first { $0.element.uppercased() == "N" && rootComponent.contains($0.id) })
+        let rGroupAtom = try XCTUnwrap(
+            molecule.atoms.first { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" })
+        let nitrogen = try XCTUnwrap(
+            molecule.atoms.first { $0.element.uppercased() == "N" && rootComponent.contains($0.id) })
 
         XCTAssertLessThan(repeatAtom.position.x, rootBounds.midX)
         XCTAssertGreaterThan(rGroupAtom.position.x, rootBounds.midX)
@@ -267,9 +295,10 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         let r1Atoms = molecule.atoms.filter { $0.rGroupMembership == "R1" }
         let groups = Dictionary(grouping: r1Atoms, by: { $0.componentGroupID ?? -1 })
 
-        let methoxy = try XCTUnwrap(groups.values.first { atoms in
-            atoms.contains(where: { $0.element == "O" }) && atoms.contains(where: { $0.element == "C" })
-        })
+        let methoxy = try XCTUnwrap(
+            groups.values.first { atoms in
+                atoms.contains(where: { $0.element == "O" }) && atoms.contains(where: { $0.element == "C" })
+            })
         let methoxyAttachment = try XCTUnwrap(methoxy.first { $0.attachmentPoint == 1 })
         let oxygen = try XCTUnwrap(methoxy.first { $0.element == "O" })
         let methyl = try XCTUnwrap(methoxy.first { $0.element == "C" })
@@ -278,14 +307,69 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         XCTAssertGreaterThan(methoxyAttachment.position.y, oxygen.position.y)
         XCTAssertGreaterThan(methyl.position.x, oxygen.position.x)
 
-        let nitrile = try XCTUnwrap(groups.values.first { atoms in
-            atoms.contains(where: { $0.element == "N" }) && atoms.contains(where: { $0.element == "C" })
-        })
+        let nitrile = try XCTUnwrap(
+            groups.values.first { atoms in
+                atoms.contains(where: { $0.element == "N" }) && atoms.contains(where: { $0.element == "C" })
+            })
         let nitrileAttachment = try XCTUnwrap(nitrile.first { $0.attachmentPoint == 1 })
         let nitrileNitrogen = try XCTUnwrap(nitrile.first { $0.element == "N" })
 
         XCTAssertLessThan(nitrileAttachment.position.x, nitrileNitrogen.position.x)
         XCTAssertGreaterThan(nitrileAttachment.position.y, nitrileNitrogen.position.y)
+    }
+
+    func testCDK213CoordinateBondedSandwichRingsAreStackedAroundMetal() throws {
+        let firstRing = Array(1...5)
+        let secondRing = Array(6...10)
+        let atoms =
+            (1...10).map { id in
+                Atom(id: id, element: "C", position: .zero, aromatic: true)
+            } + [Atom(id: 11, element: "Fe", position: .zero, charge: 2)]
+        var bonds: [Bond] = []
+        var nextBondID = 1
+        for ring in [firstRing, secondRing] {
+            for index in ring.indices {
+                bonds.append(
+                    Bond(
+                        id: nextBondID,
+                        a1: ring[index],
+                        a2: ring[(index + 1) % ring.count],
+                        order: .aromatic))
+                nextBondID += 1
+            }
+        }
+        bonds.append(
+            Bond(
+                id: nextBondID,
+                a1: 11,
+                a2: firstRing[0],
+                order: .single,
+                coordinateBondReferenceAtomID: 11))
+        bonds.append(
+            Bond(
+                id: nextBondID + 1,
+                a1: 11,
+                a2: secondRing[0],
+                order: .single,
+                coordinateBondReferenceAtomID: 11))
+
+        let laidOut = CDKStructureDiagramGenerator.apply(
+            to: Molecule(name: "ferrocene-like sandwich", atoms: atoms, bonds: bonds)
+        )
+        let metal = try XCTUnwrap(laidOut.atom(id: 11)?.position)
+        let firstCenter = centroid(firstRing.compactMap { laidOut.atom(id: $0)?.position })
+        let secondCenter = centroid(secondRing.compactMap { laidOut.atom(id: $0)?.position })
+
+        XCTAssertEqual(firstCenter.x, metal.x, accuracy: 0.0001)
+        XCTAssertEqual(secondCenter.x, metal.x, accuracy: 0.0001)
+        XCTAssertGreaterThan(firstCenter.y, metal.y)
+        XCTAssertLessThan(secondCenter.y, metal.y)
+        XCTAssertEqual((firstCenter.y + secondCenter.y) * 0.5, metal.y, accuracy: 0.0001)
+
+        let firstDonor = try XCTUnwrap(laidOut.atom(id: firstRing[0])?.position)
+        let secondDonor = try XCTUnwrap(laidOut.atom(id: secondRing[0])?.position)
+        XCTAssertEqual(firstDonor.x, metal.x, accuracy: 0.0001)
+        XCTAssertEqual(secondDonor.x, metal.x, accuracy: 0.0001)
     }
 
     private func angleDegrees(a: CGPoint, center: CGPoint, b: CGPoint) -> CGFloat {
@@ -296,6 +380,16 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         let dot = (v1.dx * v2.dx + v1.dy * v2.dy) / (l1 * l2)
         let clamped = max(-1.0, min(1.0, dot))
         return acos(clamped) * 180.0 / .pi
+    }
+
+    private func centroid(_ points: [CGPoint]) -> CGPoint {
+        guard !points.isEmpty else { return .zero }
+        let count = CGFloat(points.count)
+        return points.reduce(.zero) { partial, point in
+            CGPoint(
+                x: partial.x + point.x / count,
+                y: partial.y + point.y / count)
+        }
     }
 
     private func parse(_ smiles: String) throws -> Molecule {
@@ -332,7 +426,8 @@ final class StructureDiagramGeneratorTests: XCTestCase {
             molecule.atom(id: neighborID)?.element.uppercased() != "H"
         }
         guard heavyNeighborIDs.count >= 2,
-              let center = molecule.atom(id: atomID)?.position else {
+            let center = molecule.atom(id: atomID)?.position
+        else {
             return []
         }
 
@@ -340,7 +435,8 @@ final class StructureDiagramGeneratorTests: XCTestCase {
         for leftIndex in 0..<heavyNeighborIDs.count {
             for rightIndex in (leftIndex + 1)..<heavyNeighborIDs.count {
                 guard let leftPoint = molecule.atom(id: heavyNeighborIDs[leftIndex])?.position,
-                      let rightPoint = molecule.atom(id: heavyNeighborIDs[rightIndex])?.position else {
+                    let rightPoint = molecule.atom(id: heavyNeighborIDs[rightIndex])?.position
+                else {
                     continue
                 }
                 angles.append(angleDegrees(a: leftPoint, center: center, b: rightPoint))

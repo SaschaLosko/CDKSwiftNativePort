@@ -1,6 +1,7 @@
 import Foundation
+
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 public enum ChemFormat: String, CaseIterable, Identifiable, Sendable {
@@ -61,6 +62,20 @@ public enum BondStereo: Codable, Hashable, Sendable {
 public enum DoubleBondStereo: String, Codable, Hashable, Sendable {
     case cis
     case trans
+}
+
+/// Reacting-center status encoded by MDL V2000/V3000 bond records.
+public enum CDKMDLReactingCenterStatus: Int, Codable, CaseIterable, Hashable, Sendable {
+    case notReactingCenter = -1
+    case unmarked = 0
+    case genericReactingCenter = 1
+    case noChange = 2
+    case bondMadeOrBroken = 4
+    case genericReactingCenterAndBondMadeOrBroken = 5
+    case bondOrderChanges = 8
+    case genericReactingCenterAndBondOrderChanges = 9
+    case bondMadeOrBrokenAndBondOrderChanges = 12
+    case genericReactingCenterAndBondMadeOrBrokenAndBondOrderChanges = 13
 }
 
 public enum AtomChirality: Codable, Hashable, Sendable {
@@ -168,25 +183,27 @@ public struct MoleculeSgroup: Hashable, Codable, Sendable {
     public var brackets: [MoleculeSgroupBracket]
     public var childGroupIndices: [Int]
 
-    public init(kind: Kind,
-                keyword: String? = nil,
-                atomIDs: [Int],
-                crossingBondIDs: [Int] = [],
-                subscriptText: String? = nil,
-                superscriptText: String? = nil,
-                roundBrackets: Bool = false,
-                connectivity: String? = nil,
-                dataFieldName: String? = nil,
-                dataValue: String? = nil,
-                dataOperator: String? = nil,
-                dataUnit: String? = nil,
-                dataTag: String? = nil,
-                subtype: String? = nil,
-                parentAtomIDs: [Int] = [],
-                componentNumber: Int? = nil,
-                expanded: Bool = false,
-                brackets: [MoleculeSgroupBracket] = [],
-                childGroupIndices: [Int] = []) {
+    public init(
+        kind: Kind,
+        keyword: String? = nil,
+        atomIDs: [Int],
+        crossingBondIDs: [Int] = [],
+        subscriptText: String? = nil,
+        superscriptText: String? = nil,
+        roundBrackets: Bool = false,
+        connectivity: String? = nil,
+        dataFieldName: String? = nil,
+        dataValue: String? = nil,
+        dataOperator: String? = nil,
+        dataUnit: String? = nil,
+        dataTag: String? = nil,
+        subtype: String? = nil,
+        parentAtomIDs: [Int] = [],
+        componentNumber: Int? = nil,
+        expanded: Bool = false,
+        brackets: [MoleculeSgroupBracket] = [],
+        childGroupIndices: [Int] = []
+    ) {
         self.kind = kind
         self.keyword = keyword
         self.atomIDs = atomIDs
@@ -259,6 +276,9 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         }
         if let rGroupLabel {
             let normalized = element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            if rGroupLabel == 0, normalized == "R" {
+                return "R"
+            }
             if normalized.isEmpty || normalized == "*" || normalized == "R" || normalized == "R#" {
                 return "R\(rGroupLabel)"
             }
@@ -269,43 +289,45 @@ public struct Atom: Identifiable, Hashable, Codable, Sendable {
         return element
     }
 
-    public init(id: Int,
-                externalID: String? = nil,
-                element: String,
-                position: CGPoint,
-                zPosition: Double? = nil,
-                charge: Int = 0,
-                isotopeMassNumber: Int? = nil,
-                aromatic: Bool = false,
-                chirality: AtomChirality = .none,
-                explicitHydrogenCount: Int? = nil,
-                queryType: AtomQueryType? = nil,
-                atomList: [String]? = nil,
-                atomListIsNegated: Bool = false,
-                radical: Int? = nil,
-                radicalType: CxRadicalType? = nil,
-                atomValue: String? = nil,
-                rGroupLabel: Int? = nil,
-                rGroupMembership: String? = nil,
-                componentGroupID: Int? = nil,
-                reactionRole: CDKReactionRole? = nil,
-                substitutionCount: Int? = nil,
-                unsaturated: Int? = nil,
-                ringBondCount: Int? = nil,
-                attachmentPoint: Int? = nil,
-                valenceOverride: Int? = nil,
-                cxStereoGroup: Int? = nil,
-                ligandOrderingAtomIDs: [Int]? = nil,
-                atomClass: Int? = nil,
-                atomMapNumber: Int? = nil,
-                aliasLabel: String? = nil,
-                properties: [String: String] = [:],
-                atomTypeName: String? = nil,
-                maximumBondOrder: BondOrder? = nil,
-                bondOrderSum: Double? = nil,
-                valency: Int? = nil,
-                formalNeighbourCount: Int? = nil,
-                hybridization: AtomHybridization? = nil) {
+    public init(
+        id: Int,
+        externalID: String? = nil,
+        element: String,
+        position: CGPoint,
+        zPosition: Double? = nil,
+        charge: Int = 0,
+        isotopeMassNumber: Int? = nil,
+        aromatic: Bool = false,
+        chirality: AtomChirality = .none,
+        explicitHydrogenCount: Int? = nil,
+        queryType: AtomQueryType? = nil,
+        atomList: [String]? = nil,
+        atomListIsNegated: Bool = false,
+        radical: Int? = nil,
+        radicalType: CxRadicalType? = nil,
+        atomValue: String? = nil,
+        rGroupLabel: Int? = nil,
+        rGroupMembership: String? = nil,
+        componentGroupID: Int? = nil,
+        reactionRole: CDKReactionRole? = nil,
+        substitutionCount: Int? = nil,
+        unsaturated: Int? = nil,
+        ringBondCount: Int? = nil,
+        attachmentPoint: Int? = nil,
+        valenceOverride: Int? = nil,
+        cxStereoGroup: Int? = nil,
+        ligandOrderingAtomIDs: [Int]? = nil,
+        atomClass: Int? = nil,
+        atomMapNumber: Int? = nil,
+        aliasLabel: String? = nil,
+        properties: [String: String] = [:],
+        atomTypeName: String? = nil,
+        maximumBondOrder: BondOrder? = nil,
+        bondOrderSum: Double? = nil,
+        valency: Int? = nil,
+        formalNeighbourCount: Int? = nil,
+        hybridization: AtomHybridization? = nil
+    ) {
         self.id = id
         self.externalID = externalID
         self.element = element
@@ -401,17 +423,24 @@ public struct Bond: Identifiable, Hashable, Codable, Sendable {
     public var stereoReferenceAtomIDs: [Int]? = nil
     public var queryType: BondQueryType? = nil
     public var topology: BondTopology? = nil
+    /// Atom referenced by a CXSMILES `C:atom.bond` coordinate-bond entry.
+    public var coordinateBondReferenceAtomID: Int? = nil
+    public var reactingCenterStatus: CDKMDLReactingCenterStatus? = nil
 
-    public init(id: Int,
-                externalID: String? = nil,
-                a1: Int,
-                a2: Int,
-                order: BondOrder,
-                stereo: BondStereo = .none,
-                doubleBondStereo: DoubleBondStereo? = nil,
-                stereoReferenceAtomIDs: [Int]? = nil,
-                queryType: BondQueryType? = nil,
-                topology: BondTopology? = nil) {
+    public init(
+        id: Int,
+        externalID: String? = nil,
+        a1: Int,
+        a2: Int,
+        order: BondOrder,
+        stereo: BondStereo = .none,
+        doubleBondStereo: DoubleBondStereo? = nil,
+        stereoReferenceAtomIDs: [Int]? = nil,
+        queryType: BondQueryType? = nil,
+        topology: BondTopology? = nil,
+        coordinateBondReferenceAtomID: Int? = nil,
+        reactingCenterStatus: CDKMDLReactingCenterStatus? = nil
+    ) {
         self.id = id
         self.externalID = externalID
         self.a1 = a1
@@ -422,6 +451,8 @@ public struct Bond: Identifiable, Hashable, Codable, Sendable {
         self.stereoReferenceAtomIDs = stereoReferenceAtomIDs
         self.queryType = queryType
         self.topology = topology
+        self.coordinateBondReferenceAtomID = coordinateBondReferenceAtomID
+        self.reactingCenterStatus = reactingCenterStatus
     }
 }
 
@@ -545,6 +576,43 @@ public struct Molecule: Hashable, Codable, Sendable {
         return Array(uniqueCycles)
     }
 
+    /// Returns the size of the smallest ring containing an atom, or `nil` when
+    /// no ring up to `maxSize` contains it.
+    public func smallestRingSize(
+        containingAtomID atomID: Int,
+        maxSize: Int? = nil
+    ) -> Int? {
+        guard atoms.contains(where: { $0.id == atomID }) else { return nil }
+        let limit = max(3, min(maxSize ?? atoms.count, atoms.count))
+        return simpleCycles(maxSize: limit)
+            .lazy
+            .filter { $0.contains(atomID) }
+            .map(\.count)
+            .min()
+    }
+
+    /// Returns the size of the smallest ring containing a bond, or `nil` when
+    /// no ring up to `maxSize` contains it.
+    public func smallestRingSize(
+        containingBondID bondID: Int,
+        maxSize: Int? = nil
+    ) -> Int? {
+        guard let bond = bonds.first(where: { $0.id == bondID }) else { return nil }
+        let limit = max(3, min(maxSize ?? atoms.count, atoms.count))
+        return simpleCycles(maxSize: limit)
+            .lazy
+            .filter { cycle in
+                cycle.indices.contains { index in
+                    let first = cycle[index]
+                    let second = cycle[(index + 1) % cycle.count]
+                    return (first == bond.a1 && second == bond.a2)
+                        || (first == bond.a2 && second == bond.a1)
+                }
+            }
+            .map(\.count)
+            .min()
+    }
+
     /// Rings that should be rendered with aromatic styling.
     /// Includes explicit aromatic rings and common alternating single/double rings.
     public func aromaticDisplayRings() -> [[Int]] {
@@ -588,13 +656,16 @@ public struct Molecule: Hashable, Codable, Sendable {
         guard targetValence > 0 else { return 0 }
 
         let bondOrderSum = bonds(forAtom: atomID)
-            .reduce(0.0) { $0 + $1.order.valenceContribution }
+            .reduce(0.0) { partial, bond in
+                partial + (bond.coordinateBondReferenceAtomID == nil ? bond.order.valenceContribution : 0)
+            }
 
         return max(0, Int(round(targetValence - bondOrderSum)))
     }
 
     public mutating func assignWedgeHashFromChiralCenters() {
-        let degreeByAtom = Dictionary(uniqueKeysWithValues: atoms.map { ($0.id, neighbors(of: $0.id).count) })
+        let degreeByAtom = Dictionary(
+            uniqueKeysWithValues: atoms.map { ($0.id, neighbors(of: $0.id).count) })
         let positionsByAtom = Dictionary(uniqueKeysWithValues: atoms.map { ($0.id, $0.position) })
 
         for atom in atoms where atom.chirality != .none {
@@ -609,8 +680,10 @@ public struct Molecule: Hashable, Codable, Sendable {
                 let l = bondStereoPriority(for: bonds[lhs], around: atom.id, degreeByAtom: degreeByAtom)
                 let r = bondStereoPriority(for: bonds[rhs], around: atom.id, degreeByAtom: degreeByAtom)
                 if l != r { return l < r }
-                let lc = bondStereoClearance(for: bonds[lhs], around: atom.id, positionsByAtom: positionsByAtom)
-                let rc = bondStereoClearance(for: bonds[rhs], around: atom.id, positionsByAtom: positionsByAtom)
+                let lc = bondStereoClearance(
+                    for: bonds[lhs], around: atom.id, positionsByAtom: positionsByAtom)
+                let rc = bondStereoClearance(
+                    for: bonds[rhs], around: atom.id, positionsByAtom: positionsByAtom)
                 if abs(lc - rc) > 0.0001 { return lc > rc }
                 return bonds[lhs].id < bonds[rhs].id
             }
@@ -644,7 +717,8 @@ public struct Molecule: Hashable, Codable, Sendable {
             maxX = max(maxX, a.position.x)
             maxY = max(maxY, a.position.y)
         }
-        return CGRect(x: minX, y: minY, width: max(0.0001, maxX - minX), height: max(0.0001, maxY - minY))
+        return CGRect(
+            x: minX, y: minY, width: max(0.0001, maxX - minX), height: max(0.0001, maxY - minY))
     }
 
     private func adjacencyMap() -> [Int: [Int]] {
@@ -714,18 +788,24 @@ public struct Molecule: Hashable, Codable, Sendable {
         }
     }
 
-    private func bondStereoPriority(for bond: Bond, around atomID: Int, degreeByAtom: [Int: Int]) -> Int {
+    private func bondStereoPriority(for bond: Bond, around atomID: Int, degreeByAtom: [Int: Int])
+        -> Int
+    {
         let neighborID = (bond.a1 == atomID) ? bond.a2 : bond.a1
         let neighborDegree = degreeByAtom[neighborID] ?? 0
         // Prefer terminal substituents; then stable ordering by atom id.
         return (neighborDegree == 1 ? 0 : 10) + neighborID
     }
 
-    private func bondStereoClearance(for bond: Bond,
-                                     around atomID: Int,
-                                     positionsByAtom: [Int: CGPoint]) -> CGFloat {
+    private func bondStereoClearance(
+        for bond: Bond,
+        around atomID: Int,
+        positionsByAtom: [Int: CGPoint]
+    ) -> CGFloat {
         let neighborID = (bond.a1 == atomID) ? bond.a2 : bond.a1
-        guard let center = positionsByAtom[atomID], let neighbor = positionsByAtom[neighborID] else { return 0 }
+        guard let center = positionsByAtom[atomID], let neighbor = positionsByAtom[neighborID] else {
+            return 0
+        }
         let dx = neighbor.x - center.x
         let dy = neighbor.y - center.y
         let len = hypot(dx, dy)
@@ -754,10 +834,12 @@ public struct Molecule: Hashable, Codable, Sendable {
         return lhs.count < rhs.count
     }
 
-    public init(name: String = "Untitled",
-                externalID: String? = nil,
-                atoms: [Atom] = [],
-                bonds: [Bond] = []) {
+    public init(
+        name: String = "Untitled",
+        externalID: String? = nil,
+        atoms: [Atom] = [],
+        bonds: [Bond] = []
+    ) {
         self.name = name
         self.externalID = externalID
         self.atoms = atoms
@@ -774,14 +856,19 @@ public struct Molecule: Hashable, Codable, Sendable {
         atoms = try container.decodeIfPresent([Atom].self, forKey: .atoms) ?? []
         bonds = try container.decodeIfPresent([Bond].self, forKey: .bonds) ?? []
         sgroups = try container.decodeIfPresent([MoleculeSgroup].self, forKey: .sgroups) ?? []
-        highlightedAtomIDs = try container.decodeIfPresent([Int].self, forKey: .highlightedAtomIDs) ?? []
-        highlightedBondIDs = try container.decodeIfPresent([Int].self, forKey: .highlightedBondIDs) ?? []
+        highlightedAtomIDs =
+            try container.decodeIfPresent([Int].self, forKey: .highlightedAtomIDs) ?? []
+        highlightedBondIDs =
+            try container.decodeIfPresent([Int].self, forKey: .highlightedBondIDs) ?? []
         cxState = try container.decodeIfPresent(CDKCxSmilesState.self, forKey: .cxState)
         dataFields = try container.decodeIfPresent([String: [String]].self, forKey: .dataFields) ?? [:]
         dataFieldOrder = try container.decodeIfPresent([String].self, forKey: .dataFieldOrder) ?? []
-        dataFieldOrder = Molecule.normalizedDataFieldOrder(preferredOrder: dataFieldOrder, availableFields: dataFields)
-        rGroupLogicDefinitions = try container.decodeIfPresent([Int: MoleculeRGroupLogic].self,
-                                                               forKey: .rGroupLogicDefinitions) ?? [:]
+        dataFieldOrder = Molecule.normalizedDataFieldOrder(
+            preferredOrder: dataFieldOrder, availableFields: dataFields)
+        rGroupLogicDefinitions =
+            try container.decodeIfPresent(
+                [Int: MoleculeRGroupLogic].self,
+                forKey: .rGroupLogicDefinitions) ?? [:]
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -823,8 +910,10 @@ public struct Molecule: Hashable, Codable, Sendable {
         fieldName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private static func normalizedDataFieldOrder(preferredOrder: [String],
-                                                 availableFields: [String: [String]]) -> [String] {
+    private static func normalizedDataFieldOrder(
+        preferredOrder: [String],
+        availableFields: [String: [String]]
+    ) -> [String] {
         var orderedNames: [String] = []
         orderedNames.reserveCapacity(availableFields.count)
         var seen = Set<String>()
@@ -832,8 +921,9 @@ public struct Molecule: Hashable, Codable, Sendable {
         for rawName in preferredOrder {
             let normalized = normalizedDataFieldName(rawName)
             guard !normalized.isEmpty,
-                  availableFields[normalized] != nil,
-                  seen.insert(normalized).inserted else {
+                availableFields[normalized] != nil,
+                seen.insert(normalized).inserted
+            else {
                 continue
             }
             orderedNames.append(normalized)
@@ -854,9 +944,10 @@ public enum Depiction2DGenerator {
         }
 
         let laidOutScaffold = CDKStructureDiagramGenerator.apply(to: collapsed.scaffold)
-        return CDKHydrogenLayoutCollapse.restore(original: molecule,
-                                                 from: laidOutScaffold,
-                                                 hydrogenAnchorByID: collapsed.hydrogenAnchorByID)
+        return CDKHydrogenLayoutCollapse.restore(
+            original: molecule,
+            from: laidOutScaffold,
+            hydrogenAnchorByID: collapsed.hydrogenAnchorByID)
     }
 }
 
@@ -867,14 +958,16 @@ private struct CDKHydrogenLayoutCollapseResult {
 
 private enum CDKHydrogenLayoutCollapse {
     static func collapse(in molecule: Molecule) -> CDKHydrogenLayoutCollapseResult? {
-        let hydrogenAnchorByID = Dictionary(uniqueKeysWithValues: molecule.atoms.compactMap { atom -> (Int, Int)? in
-            guard isSuppressibleHydrogen(atomID: atom.id, in: molecule),
-                  let bond = molecule.bonds(forAtom: atom.id).first else {
-                return nil
-            }
-            let anchorID = (bond.a1 == atom.id) ? bond.a2 : bond.a1
-            return (atom.id, anchorID)
-        })
+        let hydrogenAnchorByID = Dictionary(
+            uniqueKeysWithValues: molecule.atoms.compactMap { atom -> (Int, Int)? in
+                guard isSuppressibleHydrogen(atomID: atom.id, in: molecule),
+                    let bond = molecule.bonds(forAtom: atom.id).first
+                else {
+                    return nil
+                }
+                let anchorID = (bond.a1 == atom.id) ? bond.a2 : bond.a1
+                return (atom.id, anchorID)
+            })
 
         guard !hydrogenAnchorByID.isEmpty else { return nil }
 
@@ -897,15 +990,19 @@ private enum CDKHydrogenLayoutCollapse {
             !suppressedHydrogenIDs.contains(bond.a1) && !suppressedHydrogenIDs.contains(bond.a2)
         }
 
-        return CDKHydrogenLayoutCollapseResult(scaffold: scaffold,
-                                               hydrogenAnchorByID: hydrogenAnchorByID)
+        return CDKHydrogenLayoutCollapseResult(
+            scaffold: scaffold,
+            hydrogenAnchorByID: hydrogenAnchorByID)
     }
 
-    static func restore(original: Molecule,
-                        from scaffold: Molecule,
-                        hydrogenAnchorByID: [Int: Int]) -> Molecule {
+    static func restore(
+        original: Molecule,
+        from scaffold: Molecule,
+        hydrogenAnchorByID: [Int: Int]
+    ) -> Molecule {
         var restored = original
-        let scaffoldPositionByAtomID = Dictionary(uniqueKeysWithValues: scaffold.atoms.map { ($0.id, $0.position) })
+        let scaffoldPositionByAtomID = Dictionary(
+            uniqueKeysWithValues: scaffold.atoms.map { ($0.id, $0.position) })
 
         for index in restored.atoms.indices {
             if let position = scaffoldPositionByAtomID[restored.atoms[index].id] {
@@ -917,12 +1014,17 @@ private enum CDKHydrogenLayoutCollapse {
         return restored
     }
 
-    private static func placeSuppressedHydrogens(in molecule: inout Molecule,
-                                                 hydrogenAnchorByID: [Int: Int]) {
-        let groupedByAnchor = Dictionary(grouping: hydrogenAnchorByID.keys, by: { hydrogenAnchorByID[$0] ?? -1 })
+    private static func placeSuppressedHydrogens(
+        in molecule: inout Molecule,
+        hydrogenAnchorByID: [Int: Int]
+    ) {
+        let groupedByAnchor = Dictionary(
+            grouping: hydrogenAnchorByID.keys, by: { hydrogenAnchorByID[$0] ?? -1 })
 
         for (anchorID, hydrogenIDs) in groupedByAnchor {
-            guard let anchorIndex = molecule.atoms.firstIndex(where: { $0.id == anchorID }) else { continue }
+            guard let anchorIndex = molecule.atoms.firstIndex(where: { $0.id == anchorID }) else {
+                continue
+            }
             let anchor = molecule.atoms[anchorIndex]
             let anchorPoint = anchor.position
 
@@ -932,18 +1034,22 @@ private enum CDKHydrogenLayoutCollapse {
             let placedNeighborPoints = placedNeighborIDs.compactMap { molecule.atom(id: $0)?.position }
             let heavyNeighborPoints = placedNeighborIDs.compactMap { neighborID -> CGPoint? in
                 guard let atom = molecule.atom(id: neighborID),
-                      !isHydrogen(atom) else {
+                    !isHydrogen(atom)
+                else {
                     return nil
                 }
                 return atom.position
             }
 
-            let baseAngle = preferredHydrogenBaseAngle(anchor: anchorPoint,
-                                                       neighborPoints: heavyNeighborPoints.isEmpty ? placedNeighborPoints : heavyNeighborPoints)
+            let baseAngle = preferredHydrogenBaseAngle(
+                anchor: anchorPoint,
+                neighborPoints: heavyNeighborPoints.isEmpty ? placedNeighborPoints : heavyNeighborPoints)
             let step = CGFloat.pi / 3.0
             let centeredOffsets = hydrogenOffsets(count: hydrogenIDs.count, step: step)
-            let referenceNeighbors = heavyNeighborPoints.isEmpty ? placedNeighborPoints : heavyNeighborPoints
-            let meanNeighborDistance = referenceNeighbors.isEmpty
+            let referenceNeighbors =
+                heavyNeighborPoints.isEmpty ? placedNeighborPoints : heavyNeighborPoints
+            let meanNeighborDistance =
+                referenceNeighbors.isEmpty
                 ? CGFloat(1.4)
                 : referenceNeighbors.reduce(CGFloat.zero) { partial, point in
                     partial + anchorPoint.distance(to: point)
@@ -951,16 +1057,21 @@ private enum CDKHydrogenLayoutCollapse {
             let hydrogenBondLength = max(0.72, min(1.15, meanNeighborDistance * 0.78))
 
             for (offset, hydrogenID) in zip(centeredOffsets, hydrogenIDs.sorted()) {
-                guard let hydrogenIndex = molecule.atoms.firstIndex(where: { $0.id == hydrogenID }) else { continue }
+                guard let hydrogenIndex = molecule.atoms.firstIndex(where: { $0.id == hydrogenID }) else {
+                    continue
+                }
                 let angle = baseAngle + offset
-                molecule.atoms[hydrogenIndex].position = CGPoint(x: anchorPoint.x + cos(angle) * hydrogenBondLength,
-                                                                 y: anchorPoint.y + sin(angle) * hydrogenBondLength)
+                molecule.atoms[hydrogenIndex].position = CGPoint(
+                    x: anchorPoint.x + cos(angle) * hydrogenBondLength,
+                    y: anchorPoint.y + sin(angle) * hydrogenBondLength)
             }
         }
     }
 
-    private static func preferredHydrogenBaseAngle(anchor: CGPoint,
-                                                   neighborPoints: [CGPoint]) -> CGFloat {
+    private static func preferredHydrogenBaseAngle(
+        anchor: CGPoint,
+        neighborPoints: [CGPoint]
+    ) -> CGFloat {
         guard !neighborPoints.isEmpty else { return 0 }
 
         let unitVectors = neighborPoints.compactMap { point -> CGVector? in
@@ -981,7 +1092,8 @@ private enum CDKHydrogenLayoutCollapse {
             return atan2(-summed.dy, -summed.dx)
         }
 
-        let sortedAngles = unitVectors
+        let sortedAngles =
+            unitVectors
             .map { atan2($0.dy, $0.dx) }
             .sorted()
         guard sortedAngles.count >= 2 else {
@@ -992,7 +1104,9 @@ private enum CDKHydrogenLayoutCollapse {
         var bestMidpoint = sortedAngles[0] + .pi
         for index in sortedAngles.indices {
             let start = sortedAngles[index]
-            let end = sortedAngles[(index + 1) % sortedAngles.count] + (index + 1 == sortedAngles.count ? (.pi * 2.0) : 0)
+            let end =
+                sortedAngles[(index + 1) % sortedAngles.count]
+                + (index + 1 == sortedAngles.count ? (.pi * 2.0) : 0)
             let gap = end - start
             if gap > widestGap {
                 widestGap = gap
@@ -1024,20 +1138,43 @@ private enum CDKHydrogenLayoutCollapse {
     private static func isSuppressibleHydrogen(atomID: Int, in molecule: Molecule) -> Bool {
         guard let atom = molecule.atom(id: atomID), isHydrogen(atom) else { return false }
         guard atom.charge == 0,
-              atom.isotopeMassNumber == nil,
-              atom.radical == nil,
-              atom.queryType == nil,
-              atom.atomList == nil else {
+            atom.isotopeMassNumber == nil,
+            atom.radical == nil,
+            atom.queryType == nil,
+            atom.atomList == nil
+        else {
             return false
         }
 
         let attachedBonds = molecule.bonds(forAtom: atom.id)
         guard attachedBonds.count == 1, let bond = attachedBonds.first else { return false }
-        guard bond.order == .single, bond.stereo == .none, bond.queryType == nil else { return false }
-
         let neighborID = (bond.a1 == atom.id) ? bond.a2 : bond.a1
+        guard bond.order == .single,
+            bond.queryType == nil,
+            bond.stereo == .none
+                || isDirectionalDoubleBondHydrogen(
+                    atomID: atomID,
+                    neighborID: neighborID,
+                    in: molecule)
+        else {
+            return false
+        }
         guard let neighbor = molecule.atom(id: neighborID), !isHydrogen(neighbor) else { return false }
         return true
+    }
+
+    private static func isDirectionalDoubleBondHydrogen(
+        atomID: Int,
+        neighborID: Int,
+        in molecule: Molecule
+    ) -> Bool {
+        let hydrogenNeighborCount = molecule.neighbors(of: neighborID).filter { candidateID in
+            molecule.atom(id: candidateID).map(isHydrogen) == true
+        }.count
+        guard hydrogenNeighborCount >= 2 else { return false }
+        return molecule.bonds(forAtom: neighborID).contains { bond in
+            bond.order == .double && bond.a1 != atomID && bond.a2 != atomID
+        }
     }
 
     private static func isHydrogen(_ atom: Atom) -> Bool {

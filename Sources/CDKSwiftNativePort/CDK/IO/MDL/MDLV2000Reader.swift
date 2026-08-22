@@ -1,6 +1,7 @@
 import Foundation
+
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 public enum CDKMDLV2000Reader {
@@ -26,7 +27,8 @@ public enum CDKMDLV2000Reader {
     }
 
     public static func read(text: String) throws -> Molecule {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         return try read(lines: normalized.components(separatedBy: "\n"))
@@ -91,10 +93,11 @@ public enum CDKMDLV2000Reader {
                 break
             }
 
-            lineIndex += consumePropertyLine(trimmed,
-                                             index: lineIndex,
-                                             molecule: &molecule,
-                                             sgroupDrafts: &sgroupDrafts)
+            lineIndex += consumePropertyLine(
+                trimmed,
+                index: lineIndex,
+                molecule: &molecule,
+                sgroupDrafts: &sgroupDrafts)
         }
 
         guard foundMEnd else {
@@ -106,8 +109,9 @@ public enum CDKMDLV2000Reader {
         CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
 
         if molecule.atomCount > 0,
-           let box = molecule.boundingBox(),
-           box.width <= 0.0001 && box.height <= 0.0001 {
+            let box = molecule.boundingBox(),
+            box.width <= 0.0001 && box.height <= 0.0001
+        {
             molecule = Depiction2DGenerator.generate(for: molecule)
         }
 
@@ -150,7 +154,8 @@ public enum CDKMDLV2000Reader {
 
         let chargeCode = parseFixedInt(line, start: 36, length: 3) ?? parseInt(parts, index: 5) ?? 0
         let parity = parseFixedInt(line, start: 39, length: 3) ?? parseInt(parts, index: 6) ?? 0
-        let hydrogenCountCode = parseFixedInt(line, start: 42, length: 3) ?? parseInt(parts, index: 7) ?? 0
+        let hydrogenCountCode =
+            parseFixedInt(line, start: 42, length: 3) ?? parseInt(parts, index: 7) ?? 0
         let valenceCode = parseFixedInt(line, start: 48, length: 3) ?? parseInt(parts, index: 9) ?? 0
         let atomMapFixed = parseFixedInt(line, start: 60, length: 3)
         let atomMapToken = parseInt(parts, index: 12)
@@ -190,24 +195,27 @@ public enum CDKMDLV2000Reader {
             aromatic = false
         }
 
-        return Atom(id: atomID,
-                    element: element,
-                    position: CGPoint(x: x, y: y),
-                    zPosition: z,
-                    charge: charge,
-                    isotopeMassNumber: isotopeMassNumber,
-                    aromatic: aromatic,
-                    chirality: chirality,
-                    explicitHydrogenCount: explicitHydrogenCount,
-                    queryType: query,
-                    radical: radical,
-                    valenceOverride: valenceOverride,
-                    atomMapNumber: atomMapValue)
+        return Atom(
+            id: atomID,
+            element: element,
+            position: CGPoint(x: x, y: y),
+            zPosition: z,
+            charge: charge,
+            isotopeMassNumber: isotopeMassNumber,
+            aromatic: aromatic,
+            chirality: chirality,
+            explicitHydrogenCount: explicitHydrogenCount,
+            queryType: query,
+            radical: radical,
+            valenceOverride: valenceOverride,
+            atomMapNumber: atomMapValue)
     }
 
-    private static func parseBondLine(_ line: String,
-                                      bondID: Int,
-                                      atomCount: Int) throws -> Bond {
+    private static func parseBondLine(
+        _ line: String,
+        bondID: Int,
+        atomCount: Int
+    ) throws -> Bond {
         let parts = line.split(whereSeparator: \.isWhitespace).map(String.init)
         guard parts.count >= 3 else {
             throw ChemError.parseFailed("Invalid bond line at bond index \(bondID).")
@@ -218,9 +226,12 @@ public enum CDKMDLV2000Reader {
         let typeCode = parseFixedInt(line, start: 6, length: 3) ?? parseInt(parts, index: 2) ?? 1
         let stereoCode = parseFixedInt(line, start: 9, length: 3) ?? parseInt(parts, index: 3) ?? 0
         let topologyCode = parseFixedInt(line, start: 15, length: 3) ?? parseInt(parts, index: 5) ?? 0
+        let reactingCenterCode =
+            parseFixedInt(line, start: 18, length: 3) ?? parseInt(parts, index: 6) ?? 0
 
         guard a1 == 0 || (1...atomCount).contains(a1),
-              a2 == 0 || (1...atomCount).contains(a2) else {
+            a2 == 0 || (1...atomCount).contains(a2)
+        else {
             throw ChemError.parseFailed("Bond references unknown atom index.")
         }
         guard a1 > 0 && a2 > 0 else {
@@ -228,25 +239,32 @@ public enum CDKMDLV2000Reader {
         }
 
         let (order, queryType) = try bondFromTypeCode(typeCode, rawLine: line)
-        return Bond(id: bondID,
-                    a1: a1,
-                    a2: a2,
-                    order: order,
-                    stereo: stereoFromMolfile(stereoCode, bondTypeCode: typeCode),
-                    queryType: queryType,
-                    topology: topologyFromMolfile(topologyCode))
+        return Bond(
+            id: bondID,
+            a1: a1,
+            a2: a2,
+            order: order,
+            stereo: stereoFromMolfile(stereoCode, bondTypeCode: typeCode),
+            queryType: queryType,
+            topology: topologyFromMolfile(topologyCode),
+            reactingCenterStatus: reactingCenterCode == 0
+                ? nil
+                : CDKMDLReactingCenterStatus(rawValue: reactingCenterCode))
     }
 
-    private static func consumePropertyLine(_ lines: [String],
-                                            index: Int,
-                                            molecule: inout Molecule,
-                                            sgroupDrafts: inout [Int: SgroupDraft]) -> Int {
+    private static func consumePropertyLine(
+        _ lines: [String],
+        index: Int,
+        molecule: inout Molecule,
+        sgroupDrafts: inout [Int: SgroupDraft]
+    ) -> Int {
         let line = lines[index]
         let trimmed = line.trimmingCharacters(in: .whitespaces)
 
         if isAliasLine(trimmed) {
             guard index + 1 < lines.count,
-                  let atomID = parseTrailingInt(in: trimmed) else {
+                let atomID = parseTrailingInt(in: trimmed)
+            else {
                 return 1
             }
             applyAlias(lines[index + 1], atomID: atomID, to: &molecule)
@@ -260,7 +278,8 @@ public enum CDKMDLV2000Reader {
 
         if trimmed.hasPrefix("G  ") {
             guard index + 1 < lines.count,
-                  let atomID = parseFixedInt(trimmed, start: 3, length: 3) else {
+                let atomID = parseFixedInt(trimmed, start: 3, length: 3)
+            else {
                 return 1
             }
             applyAlias(lines[index + 1], atomID: atomID, to: &molecule)
@@ -298,7 +317,7 @@ public enum CDKMDLV2000Reader {
             }
         case "RGP":
             applyAtomIntPairs(fields, to: &molecule) { atom, value in
-                atom.rGroupLabel = value > 0 ? value : nil
+                atom.rGroupLabel = (0...32).contains(value) ? value : nil
                 if atom.rGroupLabel != nil {
                     atom.aliasLabel = nil
                 }
@@ -378,19 +397,24 @@ public enum CDKMDLV2000Reader {
             let sourceIndex = 3 + pair * 2
             let keywordIndex = sourceIndex + 1
             guard keywordIndex < fields.count,
-                  let source = Int(fields[sourceIndex]) else { continue }
+                let source = Int(fields[sourceIndex])
+            else { continue }
             var draft = drafts[source] ?? SgroupDraft(sourceIndex: source)
-            draft.keyword = fields[keywordIndex].trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            draft.keyword = fields[keywordIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+                .uppercased()
             drafts[source] = draft
         }
     }
 
-    private static func applySgroupIndexList(_ fields: [String],
-                                             drafts: inout [Int: SgroupDraft],
-                                             kind: SgroupIndexListKind) {
+    private static func applySgroupIndexList(
+        _ fields: [String],
+        drafts: inout [Int: SgroupDraft],
+        kind: SgroupIndexListKind
+    ) {
         guard let source = parseInt(fields, index: 2),
-              let count = parseInt(fields, index: 3),
-              count > 0 else { return }
+            let count = parseInt(fields, index: 3),
+            count > 0
+        else { return }
 
         let values = fields.dropFirst(4).prefix(count).compactMap(Int.init)
         guard !values.isEmpty else { return }
@@ -416,8 +440,9 @@ public enum CDKMDLV2000Reader {
             let childIndex = 3 + pair * 2
             let parentIndex = childIndex + 1
             guard parentIndex < fields.count,
-                  let child = Int(fields[childIndex]),
-                  let parent = Int(fields[parentIndex]) else { continue }
+                let child = Int(fields[childIndex]),
+                let parent = Int(fields[parentIndex])
+            else { continue }
             var draft = drafts[child] ?? SgroupDraft(sourceIndex: child)
             draft.parentSourceIndices.append(parent)
             draft.parentSourceIndices = uniqueInts(draft.parentSourceIndices)
@@ -425,31 +450,37 @@ public enum CDKMDLV2000Reader {
         }
     }
 
-    private static func applySgroupRepeatedTextLine(_ fields: [String],
-                                                    drafts: inout [Int: SgroupDraft],
-                                                    assign: (inout SgroupDraft, String) -> Void) {
+    private static func applySgroupRepeatedTextLine(
+        _ fields: [String],
+        drafts: inout [Int: SgroupDraft],
+        assign: (inout SgroupDraft, String) -> Void
+    ) {
         guard let count = parseInt(fields, index: 2), count > 0 else { return }
         for pair in 0..<count {
             let sourceIndex = 3 + pair * 2
             let valueIndex = sourceIndex + 1
             guard valueIndex < fields.count,
-                  let source = Int(fields[sourceIndex]) else { continue }
+                let source = Int(fields[sourceIndex])
+            else { continue }
             var draft = drafts[source] ?? SgroupDraft(sourceIndex: source)
             assign(&draft, fields[valueIndex].trimmingCharacters(in: .whitespacesAndNewlines))
             drafts[source] = draft
         }
     }
 
-    private static func applySgroupRepeatedIntLine(_ fields: [String],
-                                                   drafts: inout [Int: SgroupDraft],
-                                                   assign: (inout SgroupDraft, Int) -> Void) {
+    private static func applySgroupRepeatedIntLine(
+        _ fields: [String],
+        drafts: inout [Int: SgroupDraft],
+        assign: (inout SgroupDraft, Int) -> Void
+    ) {
         guard let count = parseInt(fields, index: 2), count > 0 else { return }
         for pair in 0..<count {
             let sourceIndex = 3 + pair * 2
             let valueIndex = sourceIndex + 1
             guard valueIndex < fields.count,
-                  let source = Int(fields[sourceIndex]),
-                  let value = Int(fields[valueIndex]) else { continue }
+                let source = Int(fields[sourceIndex]),
+                let value = Int(fields[valueIndex])
+            else { continue }
             var draft = drafts[source] ?? SgroupDraft(sourceIndex: source)
             assign(&draft, value)
             drafts[source] = draft
@@ -458,20 +489,25 @@ public enum CDKMDLV2000Reader {
 
     private static func applySDILine(_ fields: [String], drafts: inout [Int: SgroupDraft]) {
         guard let source = parseInt(fields, index: 2),
-              let valueCount = parseInt(fields, index: 3),
-              valueCount >= 4 else { return }
+            let valueCount = parseInt(fields, index: 3),
+            valueCount >= 4
+        else { return }
         let values = fields.dropFirst(4).compactMap(Double.init)
         guard values.count >= 4 else { return }
 
         var draft = drafts[source] ?? SgroupDraft(sourceIndex: source)
-        draft.brackets.append(MoleculeSgroupBracket(firstPoint: CGPoint(x: values[0], y: values[1]),
-                                                    secondPoint: CGPoint(x: values[2], y: values[3])))
+        draft.brackets.append(
+            MoleculeSgroupBracket(
+                firstPoint: CGPoint(x: values[0], y: values[1]),
+                secondPoint: CGPoint(x: values[2], y: values[3])))
         drafts[source] = draft
     }
 
-    private static func applySingleSgroupTextLine(_ line: String,
-                                                  drafts: inout [Int: SgroupDraft],
-                                                  assign: (inout SgroupDraft, String) -> Void) {
+    private static func applySingleSgroupTextLine(
+        _ line: String,
+        drafts: inout [Int: SgroupDraft],
+        assign: (inout SgroupDraft, String) -> Void
+    ) {
         guard let source = parseFixedInt(line, start: 7, length: 3) else { return }
         let start = line.index(line.startIndex, offsetBy: min(11, line.count))
         let value = String(line[start...]).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -482,7 +518,8 @@ public enum CDKMDLV2000Reader {
 
     private static func applySDSLine(_ fields: [String], drafts: inout [Int: SgroupDraft]) {
         guard fields.count >= 5, fields[2].uppercased() == "EXP",
-              let count = Int(fields[3]), count > 0 else { return }
+            let count = Int(fields[3]), count > 0
+        else { return }
         for raw in fields.dropFirst(4).prefix(count) {
             guard let source = Int(raw) else { continue }
             var draft = drafts[source] ?? SgroupDraft(sourceIndex: source)
@@ -493,19 +530,25 @@ public enum CDKMDLV2000Reader {
 
     private static func applySDTLine(_ line: String, drafts: inout [Int: SgroupDraft]) {
         let fields = line.split(whereSeparator: \.isWhitespace).map(String.init)
-        guard let source = parseFixedInt(line, start: 7, length: 3) ?? parseInt(fields, index: 2) else { return }
+        guard let source = parseFixedInt(line, start: 7, length: 3) ?? parseInt(fields, index: 2) else {
+            return
+        }
         var draft = drafts[source] ?? SgroupDraft(sourceIndex: source)
 
-        if let fixedFieldName = substring(line, start: 11, length: 30)?.trimmingCharacters(in: .whitespaces),
-           !fixedFieldName.isEmpty {
+        if let fixedFieldName = substring(line, start: 11, length: 30)?.trimmingCharacters(
+            in: .whitespaces),
+            !fixedFieldName.isEmpty
+        {
             draft.dataFieldName = fixedFieldName
         } else if let tokenFieldName = parseTokenizedSDTComponent(fields, index: 3) {
             draft.dataFieldName = tokenFieldName
         }
 
-        let unit = substring(line, start: 43, length: 20)?.trimmingCharacters(in: .whitespaces)
+        let unit =
+            substring(line, start: 43, length: 20)?.trimmingCharacters(in: .whitespaces)
             ?? parseTokenizedSDTComponent(fields, index: 4)
-        let tag = substring(line, start: 63, length: 2)?.trimmingCharacters(in: .whitespaces)
+        let tag =
+            substring(line, start: 63, length: 2)?.trimmingCharacters(in: .whitespaces)
             ?? parseTokenizedSDTComponent(fields, index: 5)
         let opStart = min(65, line.count)
         let opIndex = line.index(line.startIndex, offsetBy: opStart)
@@ -546,7 +589,10 @@ public enum CDKMDLV2000Reader {
     }
 
     private static func applyAtomValueLine(_ line: String, to molecule: inout Molecule) {
-        guard let atomID = parseFixedInt(line, start: 3, length: 3) ?? parseTrailingPrefixedInt(line, prefix: "V") else {
+        guard
+            let atomID = parseFixedInt(line, start: 3, length: 3)
+                ?? parseTrailingPrefixedInt(line, prefix: "V")
+        else {
             return
         }
         let commentStart = min(7, line.count)
@@ -559,10 +605,11 @@ public enum CDKMDLV2000Reader {
     private static func applyLegacyAtomListLine(_ line: String, to molecule: inout Molecule) {
         let fields = line.split(whereSeparator: \.isWhitespace).map(String.init)
         guard fields.count >= 4,
-              let atomID = Int(fields[0]),
-              let count = Int(fields[2]),
-              count > 0,
-              let atomIndex = molecule.indexOfAtom(id: atomID) else { return }
+            let atomID = Int(fields[0]),
+            let count = Int(fields[2]),
+            count > 0,
+            let atomIndex = molecule.indexOfAtom(id: atomID)
+        else { return }
 
         let negated = fields[1].uppercased() == "T"
         let numbers = fields.dropFirst(3).prefix(count).compactMap(Int.init)
@@ -577,10 +624,11 @@ public enum CDKMDLV2000Reader {
 
     private static func applyMALSLine(_ fields: [String], to molecule: inout Molecule) {
         guard fields.count >= 6,
-              let atomID = Int(fields[2]),
-              let count = Int(fields[3]),
-              count > 0,
-              let atomIndex = molecule.indexOfAtom(id: atomID) else {
+            let atomID = Int(fields[2]),
+            let count = Int(fields[3]),
+            count > 0,
+            let atomIndex = molecule.indexOfAtom(id: atomID)
+        else {
             return
         }
 
@@ -594,9 +642,11 @@ public enum CDKMDLV2000Reader {
         molecule.atoms[atomIndex].atomListIsNegated = negated
     }
 
-    private static func applyAtomIntPairs(_ fields: [String],
-                                          to molecule: inout Molecule,
-                                          assign: (inout Atom, Int) -> Void) {
+    private static func applyAtomIntPairs(
+        _ fields: [String],
+        to molecule: inout Molecule,
+        assign: (inout Atom, Int) -> Void
+    ) {
         for (atomID, value) in parseAtomValuePairs(fields) {
             guard let atomIndex = molecule.indexOfAtom(id: atomID) else { continue }
             assign(&molecule.atoms[atomIndex], value)
@@ -618,25 +668,26 @@ public enum CDKMDLV2000Reader {
 
             let dataValue = draft.dataValueSegments.isEmpty ? nil : draft.dataValueSegments.joined()
 
-            let sgroup = MoleculeSgroup(kind: sgroupKind(for: keyword),
-                                        keyword: keyword,
-                                        atomIDs: uniqueInts(draft.atomIDs),
-                                        crossingBondIDs: crossingBondIDs,
-                                        subscriptText: emptyToNil(draft.subscriptText),
-                                        superscriptText: nil,
-                                        roundBrackets: draft.roundBrackets,
-                                        connectivity: emptyToNil(draft.connectivity),
-                                        dataFieldName: emptyToNil(draft.dataFieldName),
-                                        dataValue: emptyToNil(dataValue),
-                                        dataOperator: emptyToNil(draft.dataOperator),
-                                        dataUnit: emptyToNil(draft.dataUnit),
-                                        dataTag: emptyToNil(draft.dataTag),
-                                        subtype: emptyToNil(draft.subtype),
-                                        parentAtomIDs: uniqueInts(draft.parentAtomIDs),
-                                        componentNumber: draft.componentNumber,
-                                        expanded: draft.expanded,
-                                        brackets: draft.brackets,
-                                        childGroupIndices: [])
+            let sgroup = MoleculeSgroup(
+                kind: sgroupKind(for: keyword),
+                keyword: keyword,
+                atomIDs: uniqueInts(draft.atomIDs),
+                crossingBondIDs: crossingBondIDs,
+                subscriptText: emptyToNil(draft.subscriptText),
+                superscriptText: nil,
+                roundBrackets: draft.roundBrackets,
+                connectivity: emptyToNil(draft.connectivity),
+                dataFieldName: emptyToNil(draft.dataFieldName),
+                dataValue: emptyToNil(dataValue),
+                dataOperator: emptyToNil(draft.dataOperator),
+                dataUnit: emptyToNil(draft.dataUnit),
+                dataTag: emptyToNil(draft.dataTag),
+                subtype: emptyToNil(draft.subtype),
+                parentAtomIDs: uniqueInts(draft.parentAtomIDs),
+                componentNumber: draft.componentNumber,
+                expanded: draft.expanded,
+                brackets: draft.brackets,
+                childGroupIndices: [])
             sourceToMoleculeIndex[draft.sourceIndex] = molecule.sgroups.count
             molecule.sgroups.append(sgroup)
         }
@@ -645,7 +696,8 @@ public enum CDKMDLV2000Reader {
             guard let childIndex = sourceToMoleculeIndex[draft.sourceIndex] else { continue }
             for parentSource in draft.parentSourceIndices {
                 guard let parentIndex = sourceToMoleculeIndex[parentSource],
-                      molecule.sgroups.indices.contains(parentIndex) else { continue }
+                    molecule.sgroups.indices.contains(parentIndex)
+                else { continue }
                 molecule.sgroups[parentIndex].childGroupIndices.append(childIndex)
             }
         }
@@ -676,14 +728,16 @@ public enum CDKMDLV2000Reader {
         let kind = chiralFlag == 1 ? "abs" : "or"
         let number = chiralFlag == 1 ? 0 : 1
         for idx in stereoIndices where molecule.atoms[idx].cxStereoGroup == nil {
-            molecule.atoms[idx].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(kind: kind, number: number)
+            molecule.atoms[idx].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(
+                kind: kind, number: number)
         }
     }
 
     private static func parseAtomValuePairs(_ fields: [String]) -> [(Int, Int)] {
         guard fields.count >= 4,
-              let pairCount = Int(fields[2]),
-              pairCount > 0 else {
+            let pairCount = Int(fields[2]),
+            pairCount > 0
+        else {
             return []
         }
 
@@ -692,8 +746,9 @@ public enum CDKMDLV2000Reader {
             let atomTokenIndex = 3 + pair * 2
             let valueTokenIndex = atomTokenIndex + 1
             guard valueTokenIndex < fields.count,
-                  let atomID = Int(fields[atomTokenIndex]),
-                  let value = Int(fields[valueTokenIndex]) else {
+                let atomID = Int(fields[atomTokenIndex]),
+                let value = Int(fields[valueTokenIndex])
+            else {
                 continue
             }
             pairs.append((atomID, value))
@@ -712,7 +767,8 @@ public enum CDKMDLV2000Reader {
 
     private static func parseAtomSymbol(line: String, parts: [String]) -> String {
         if let fixed = substring(line, start: 31, length: 3)?.trimmingCharacters(in: .whitespaces),
-           !fixed.isEmpty {
+            !fixed.isEmpty
+        {
             return fixed
         }
         return parts.count > 3 ? parts[3] : "C"
@@ -744,7 +800,9 @@ public enum CDKMDLV2000Reader {
         }
     }
 
-    private static func bondFromTypeCode(_ code: Int, rawLine: String) throws -> (BondOrder, BondQueryType?) {
+    private static func bondFromTypeCode(_ code: Int, rawLine: String) throws -> (
+        BondOrder, BondQueryType?
+    ) {
         switch code {
         case 1:
             return (.single, nil)
@@ -822,7 +880,8 @@ public enum CDKMDLV2000Reader {
 
     private static func parseRGroupLabel(_ label: String) -> Int? {
         let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard trimmed.hasPrefix("R"), trimmed.count > 1 else { return nil }
+        guard trimmed.hasPrefix("R") else { return nil }
+        if trimmed == "R" { return 0 }
         return Int(trimmed.dropFirst())
     }
 
@@ -943,6 +1002,6 @@ public enum CDKMDLV2000Reader {
         "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th",
         "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm",
         "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds",
-        "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
+        "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og",
     ]
 }

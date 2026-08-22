@@ -212,7 +212,7 @@ let markushScene = CDKMetalDepictionSceneBuilder.build(
 )
 ```
 
-Current CDK 2.12-style CX coverage in the supported path includes:
+Current CDK 2.13-style CX coverage in the supported path includes:
 
 - atom labels and atom values
 - coordinates
@@ -220,6 +220,7 @@ Current CDK 2.12-style CX coverage in the supported path includes:
 - enhanced stereo state
 - highlight layers
 - ligand ordering
+- coordinate bonds (`C:`)
 - polymer/data/generic/positional-variation Sgroups
 - Markush `RG:` and `LN:`
 

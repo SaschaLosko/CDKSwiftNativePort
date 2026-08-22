@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "suite": "CDK Reaction Reference Corpus",
   "referenceRepository": "https://github.com/cdk/cdk",
-  "referenceTag": "cdk-2.12",
-  "referenceCommit": "ca4faabbc37a42fed16cfc2ee683636b519b91cd",
+  "referenceTag": "cdk-2.13",
+  "referenceCommit": "3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d",
   "sourceTests": [
     "storage/libiocml/src/test/java/org/openscience/cdk/io/cml/CML2Test.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNReaderTest.java",

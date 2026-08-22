@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "suite": "CDK Reaction Port",
-  "cdkReferenceVersion": "2.12",
-  "cdkReferenceTag": "cdk-2.12",
+  "cdkReferenceVersion": "2.13",
+  "cdkReferenceTag": "cdk-2.13",
   "sourceTests": [
     "storage/libiocml/src/test/java/org/openscience/cdk/io/cml/CML2Test.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLRXNReaderTest.java",
@@ -39,6 +39,7 @@
     { "id": "reaction_scheme_manipulator_branching", "source": "ReactionSchemeManipulatorTest.testCreateReactionScheme_IReactionSet" },
     { "id": "reaction_scheme_manipulator_paths", "source": "ReactionSchemeManipulatorTest.testGetMoleculeSet_IAtomContainer_IAtomContainer_IReactionScheme" },
     { "id": "reaction_smiles_counts_and_agents", "source": "SmilesParserTest.testReactionWithAgents" },
-    { "id": "reaction_smiles_fragment_grouping", "source": "CxSmilesTest.fragmentGroupingReactants" }
+    { "id": "reaction_smiles_fragment_grouping", "source": "CxSmilesTest.fragmentGroupingReactants" },
+    { "id": "reaction_manipulator_stereo_safe_atom_removal", "source": "AtomContainerTest CDK 2.13 stereo-element carrier repair behavior" }
   ]
 }

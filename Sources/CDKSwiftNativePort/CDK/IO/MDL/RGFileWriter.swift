@@ -11,7 +11,6 @@ public enum CDKRGFileWriter {
         !query.rootStructure.atoms.isEmpty
             && !query.rGroupDefinitions.isEmpty
             && query.areRootAtomsDefined()
-            && query.areSubstituentsDefined()
     }
 
     public static func write(_ molecule: Molecule) throws -> String {
@@ -20,7 +19,8 @@ public enum CDKRGFileWriter {
 
     public static func write(_ query: CDKRGroupQuery) throws -> String {
         guard canWrite(query) else {
-            throw ChemError.unsupported("RGfile export requires a root structure with R-group query atoms and matching substituent definitions.")
+            throw ChemError.unsupported(
+                "RGfile export requires a root structure with matching R-group definitions.")
         }
 
         let timestamp = currentTimestamp()
@@ -32,23 +32,30 @@ public enum CDKRGFileWriter {
             "  CDK    \(timestamp)2D",
             "",
             "$END HDR",
-            "$CTAB"
+            "$CTAB",
         ]
 
         var rootLines = try ctabBody(for: query.rootStructure)
-        guard let mendIndex = rootLines.lastIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "M  END" }) else {
+        guard
+            let mendIndex = rootLines.lastIndex(where: {
+                $0.trimmingCharacters(in: .whitespaces) == "M  END"
+            })
+        else {
             throw ChemError.parseFailed("Unable to locate M  END while building RGfile root CTAB.")
         }
 
         let insertionIndex = mendIndex
         rootLines.insert(contentsOf: logLines(for: query), at: insertionIndex)
-        rootLines.insert(contentsOf: aalLines(for: query.rootStructure), at: insertionIndex + logLines(for: query).count)
+        rootLines.insert(
+            contentsOf: aalLines(for: query.rootStructure),
+            at: insertionIndex + logLines(for: query).count)
         lines.append(contentsOf: rootLines)
         lines.append("$END CTAB")
 
         for rGroupNumber in query.rGroupDefinitions.keys.sorted() {
             guard let definition = query.rGroupDefinitions[rGroupNumber],
-                  !definition.rGroups.isEmpty else { continue }
+                !definition.rGroups.isEmpty
+            else { continue }
 
             lines.append("$RGP")
             lines.append(formatMDLInt(rGroupNumber, width: 4))
@@ -75,7 +82,8 @@ public enum CDKRGFileWriter {
 
     private static func ctabBody(for molecule: Molecule) throws -> [String] {
         let molfile = try CDKMDLV2000Writer.write(molecule)
-        let lines = molfile
+        let lines =
+            molfile
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
             .components(separatedBy: "\n")
@@ -88,6 +96,13 @@ public enum CDKRGFileWriter {
     private static func logLines(for query: CDKRGroupQuery) -> [String] {
         query.rGroupDefinitions.keys.sorted().compactMap { rGroupNumber in
             guard let definition = query.rGroupDefinitions[rGroupNumber] else { return nil }
+            if definition.rGroups.isEmpty,
+                !definition.restH,
+                definition.occurrence == CDKRGroupList.defaultOccurrence,
+                definition.requiredRGroupNumber == 0
+            {
+                return nil
+            }
             let restH = definition.restH ? 1 : 0
             return "M  LOG"
                 + formatMDLInt(1, width: 3)
@@ -100,22 +115,26 @@ public enum CDKRGFileWriter {
     }
 
     private static func aalLines(for molecule: Molecule) -> [String] {
-        let atomOrder = Dictionary(uniqueKeysWithValues: molecule.atoms.enumerated().map { ($0.element.id, $0.offset + 1) })
+        let atomOrder = Dictionary(
+            uniqueKeysWithValues: molecule.atoms.enumerated().map { ($0.element.id, $0.offset + 1) })
         var lines: [String] = []
 
         for atom in molecule.atoms where atom.rGroupLabel != nil {
             let neighbors = molecule.neighbors(of: atom.id)
             guard neighbors.count > 1,
-                  let rootPosition = atomOrder[atom.id] else { continue }
+                let rootPosition = atomOrder[atom.id]
+            else { continue }
 
             let naturalOrder = neighbors.sorted { lhs, rhs in
                 (atomOrder[lhs] ?? .max) < (atomOrder[rhs] ?? .max)
             }
-            let orderedPartners = sanitizeLigandOrder(atom.ligandOrderingAtomIDs,
-                                                      neighbors: naturalOrder)
+            let orderedPartners = sanitizeLigandOrder(
+                atom.ligandOrderingAtomIDs,
+                neighbors: naturalOrder)
             guard orderedPartners != naturalOrder else { continue }
 
-            var payload = "M  AAL"
+            var payload =
+                "M  AAL"
                 + formatMDLInt(rootPosition, width: 4)
                 + formatMDLInt(orderedPartners.count, width: 3)
             for (index, partnerID) in orderedPartners.enumerated() {

@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import CDKSwiftNativePort
 
 final class CxSmilesParserPortTests: XCTestCase {
@@ -10,6 +11,14 @@ final class CxSmilesParserPortTests: XCTestCase {
         XCTAssertEqual(molecule.atomCount, 2)
         XCTAssertEqual(molecule.atoms[0].element, "C")
         XCTAssertEqual(molecule.atoms[1].element, "R1")
+    }
+
+    func testCDK213TreatsBareRAsR0() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+        let molecule = try parser.parseSmiles("C* |$;R$|")
+
+        XCTAssertEqual(molecule.atoms[1].rGroupLabel, 0)
+        XCTAssertEqual(molecule.atoms[1].symbolToDraw, "R")
     }
 
     func testParsesCxRacemicLayerWithoutFailure() throws {
@@ -29,6 +38,34 @@ final class CxSmilesParserPortTests: XCTestCase {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
         let molecule = try parser.parseSmiles("C.*.C |f:0.2|")
         XCTAssertEqual(molecule.atomCount, 3)
+    }
+
+    func testParsesCDK213CoordinateBondsAndRestoresEndpointHydrogens() throws {
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
+
+        let rightCoordinate = try parser.parseSmiles("N[Pt]P |C:1.1|")
+        XCTAssertEqual(
+            rightCoordinate.bonds[1].coordinateBondReferenceAtomID,
+            rightCoordinate.atoms[1].id)
+        XCTAssertEqual(rightCoordinate.implicitHydrogenCount(for: rightCoordinate.atoms[2].id), 3)
+
+        let leftCoordinate = try parser.parseSmiles("N[Pt]P |C:1.0|")
+        XCTAssertEqual(
+            leftCoordinate.bonds[0].coordinateBondReferenceAtomID,
+            leftCoordinate.atoms[1].id)
+        XCTAssertEqual(leftCoordinate.implicitHydrogenCount(for: leftCoordinate.atoms[0].id), 3)
+
+        let bothCoordinate = try parser.parseSmiles("N[Pt]P |C:1.0,1.1|")
+        XCTAssertEqual(bothCoordinate.bonds.compactMap(\.coordinateBondReferenceAtomID).count, 2)
+        XCTAssertEqual(bothCoordinate.implicitHydrogenCount(for: bothCoordinate.atoms[0].id), 3)
+        XCTAssertEqual(bothCoordinate.implicitHydrogenCount(for: bothCoordinate.atoms[2].id), 3)
+    }
+
+    func testRejectsMalformedCDK213CoordinateBondLayerAsCxTitle() throws {
+        let split = try CDKCxSmilesParser.split("N[Pt]P |C:1|", enabled: true)
+
+        XCTAssertEqual(split.title, "|C:1|")
+        XCTAssertNil(split.state.coordinateBonds)
     }
 
     func testParsesCxWithTitle() throws {
@@ -61,8 +98,10 @@ final class CxSmilesParserPortTests: XCTestCase {
         let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
 
         XCTAssertEqual(connectedComponents(in: molecule).count, 4)
-        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
-        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 3)
+        XCTAssertEqual(
+            molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+        XCTAssertEqual(
+            molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 3)
         XCTAssertEqual(molecule.sgroups.count, 1)
         XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
     }
@@ -72,7 +111,8 @@ final class CxSmilesParserPortTests: XCTestCase {
         let molecule = try parser.parseSmiles("C* |$;R1$,RG:_R1={Cl* |$;_AP1$|},{Br* |$;_AP1$|}|")
 
         XCTAssertEqual(connectedComponents(in: molecule).count, 3)
-        XCTAssertEqual(molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 2)
+        XCTAssertEqual(
+            molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 2)
         XCTAssertTrue(molecule.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Cl" })
         XCTAssertTrue(molecule.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Br" })
     }
@@ -113,16 +153,18 @@ final class CxSmilesParserPortTests: XCTestCase {
 
     func testPreservesDisconnectedMarkushAlternativesUsingComponentGroupIDs() throws {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
-        let molecule = try parser.parseSmiles("*c1ncccc1 |$R1$,RG:_R1={Cl},{Br},{C(=O)*.Cl |$;;R2$,RG:_R2={OC},{N}|}|")
+        let molecule = try parser.parseSmiles(
+            "*c1ncccc1 |$R1$,RG:_R1={Cl},{Br},{C(=O)*.Cl |$;;R2$,RG:_R2={OC},{N}|}|")
 
         let r1Atoms = molecule.atoms.filter { $0.rGroupMembership == "R1" }
         let grouped = Dictionary(grouping: r1Atoms, by: { $0.componentGroupID ?? -1 })
 
         XCTAssertGreaterThanOrEqual(grouped.count, 3)
-        XCTAssertTrue(grouped.values.contains { atoms in
-            atoms.contains(where: { $0.element == "Cl" }) &&
-            atoms.contains(where: { $0.element == "C" || $0.element == "O" })
-        })
+        XCTAssertTrue(
+            grouped.values.contains { atoms in
+                atoms.contains(where: { $0.element == "Cl" })
+                    && atoms.contains(where: { $0.element == "C" || $0.element == "O" })
+            })
     }
 
     func testTreatsNonCxLayerAsTitleLikeCDK() throws {
@@ -145,7 +187,8 @@ final class CxSmilesParserPortTests: XCTestCase {
     }
 
     func testParsesEscapedComplexAtomLabelEntity() throws {
-        let split = try CDKCxSmilesParser.split("CCCC |$;;;&#40;C&#40;R41&#41;&#40;R41&#41;&#41;n$|", enabled: true)
+        let split = try CDKCxSmilesParser.split(
+            "CCCC |$;;;&#40;C&#40;R41&#41;&#40;R41&#41;&#41;n$|", enabled: true)
         XCTAssertEqual(split.state.atomLabels[3], "(C(R41)(R41))n")
     }
 
@@ -257,7 +300,9 @@ final class CxSmilesParserPortTests: XCTestCase {
 
     func testParsesSgroupHierarchy() throws {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
-        let molecule = try parser.parseSmiles("CN1CCCCC1.CO.O |Sg:c:0,1,2,3,4,5,6::,Sg:c:7,8::,Sg:c:9::,Sg:mix:0,1,2,3,4,5,6,7,8,9::,Sg:mix:7,8,9::,SgH:3:4.0,4:2.1|")
+        let molecule = try parser.parseSmiles(
+            "CN1CCCCC1.CO.O |Sg:c:0,1,2,3,4,5,6::,Sg:c:7,8::,Sg:c:9::,Sg:mix:0,1,2,3,4,5,6,7,8,9::,Sg:mix:7,8,9::,SgH:3:4.0,4:2.1|"
+        )
 
         XCTAssertEqual(molecule.sgroups.count, 5)
         XCTAssertEqual(Set(molecule.sgroups[3].childGroupIndices), Set([0, 4]))
@@ -272,23 +317,31 @@ final class CxSmilesParserPortTests: XCTestCase {
     }
 
     func testParsesStereoGroupState() throws {
-        let split = try CDKCxSmilesParser.split("CC[C@H](O)[C@H](O)CCCCCC |o1:2,&5:4,a:1|", enabled: true)
+        let split = try CDKCxSmilesParser.split(
+            "CC[C@H](O)[C@H](O)CCCCCC |o1:2,&5:4,a:1|", enabled: true)
 
-        XCTAssertEqual(split.state.stereoGroups[2], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
-        XCTAssertEqual(split.state.stereoGroups[4], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 5))
-        XCTAssertEqual(split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0))
+        XCTAssertEqual(
+            split.state.stereoGroups[2], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
+        XCTAssertEqual(
+            split.state.stereoGroups[4], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 5))
+        XCTAssertEqual(
+            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0))
     }
 
     func testParsesSingleAndStereoGroupState() throws {
         let split = try CDKCxSmilesParser.split("CC |&1:0,1|", enabled: true)
-        XCTAssertEqual(split.state.stereoGroups[0], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1))
-        XCTAssertEqual(split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1))
+        XCTAssertEqual(
+            split.state.stereoGroups[0], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1))
+        XCTAssertEqual(
+            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1))
     }
 
     func testParsesSingleOrStereoGroupState() throws {
         let split = try CDKCxSmilesParser.split("CC |o1:0,1|", enabled: true)
-        XCTAssertEqual(split.state.stereoGroups[0], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
-        XCTAssertEqual(split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
+        XCTAssertEqual(
+            split.state.stereoGroups[0], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
+        XCTAssertEqual(
+            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
     }
 
     func testParsesRadicalLayerIntoAtoms() throws {
@@ -312,11 +365,14 @@ final class CxSmilesParserPortTests: XCTestCase {
         let molecule = try parser.parseSmiles("Cl[*](Br)I |$;_R1;;$,LO:1:0.2.3|")
 
         XCTAssertEqual(molecule.atoms[1].element, "R1")
-        XCTAssertEqual(molecule.atoms[1].ligandOrderingAtomIDs, [molecule.atoms[0].id, molecule.atoms[2].id, molecule.atoms[3].id])
+        XCTAssertEqual(
+            molecule.atoms[1].ligandOrderingAtomIDs,
+            [molecule.atoms[0].id, molecule.atoms[2].id, molecule.atoms[3].id])
     }
 
     func testParsesHighlightAndWedgeLayersWithoutFailure() throws {
-        let split = try CDKCxSmilesParser.split("C1NCNC1 |ha:0,1,3,hb:2,4,wD:1.0,wU:2.1|", enabled: true)
+        let split = try CDKCxSmilesParser.split(
+            "C1NCNC1 |ha:0,1,3,hb:2,4,wD:1.0,wU:2.1|", enabled: true)
 
         XCTAssertEqual(split.state.atomHighlights, [0, 1, 3])
         XCTAssertEqual(split.state.bondHighlights, [2, 4])
@@ -327,15 +383,19 @@ final class CxSmilesParserPortTests: XCTestCase {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
         let molecule = try parser.parseSmiles("C1NCNC1 |ha:0,1,3,hb:2,4|")
 
-        XCTAssertEqual(molecule.highlightedAtomIDs,
-                       [molecule.atoms[0].id, molecule.atoms[1].id, molecule.atoms[3].id])
-        XCTAssertEqual(molecule.highlightedBondIDs,
-                       [molecule.bonds[2].id, molecule.bonds[4].id])
+        XCTAssertEqual(
+            molecule.highlightedAtomIDs,
+            [molecule.atoms[0].id, molecule.atoms[1].id, molecule.atoms[3].id])
+        XCTAssertEqual(
+            molecule.highlightedBondIDs,
+            [molecule.bonds[2].id, molecule.bonds[4].id])
     }
 
     func testParsesAtomLabelsAndAtomValuesTogether() throws {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
-        let molecule = try parser.parseSmiles("[H]C1=C([H])N2C(=O)C(=C([O-])[N+](CC3=CN=C(Cl)S3)=C2C(C)=C1[H])C1=CC(*)=CC=C1.** |$;;;;;;;;;;;;;;;;;;;;;;;;;;R;;;;RA;$,$_AV:;;;;;;;;;;;;;;;;;;;;;;;;2;;;4;5;6;;$,m:31:29.28.27.25.24.23|")
+        let molecule = try parser.parseSmiles(
+            "[H]C1=C([H])N2C(=O)C(=C([O-])[N+](CC3=CN=C(Cl)S3)=C2C(C)=C1[H])C1=CC(*)=CC=C1.** |$;;;;;;;;;;;;;;;;;;;;;;;;;;R;;;;RA;$,$_AV:;;;;;;;;;;;;;;;;;;;;;;;;2;;;4;5;6;;$,m:31:29.28.27.25.24.23|"
+        )
 
         XCTAssertEqual(molecule.atoms[26].element, "R")
         XCTAssertEqual(molecule.atoms[30].element, "RA")

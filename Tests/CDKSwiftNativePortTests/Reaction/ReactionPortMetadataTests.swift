@@ -24,15 +24,20 @@ final class ReactionPortMetadataTests: XCTestCase {
         let metadata = try JSONDecoder().decode(CDKReactionPortMetadata.self, from: data)
 
         XCTAssertGreaterThanOrEqual(metadata.schemaVersion, 1)
-        XCTAssertEqual(metadata.cdkReferenceVersion, "2.12")
-        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.12")
+        XCTAssertEqual(metadata.cdkReferenceVersion, "2.13")
+        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.13")
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLRXNReaderTest.java") }))
-        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLRXNV2000ReaderTest.java") }))
-        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLRXNV3000ReaderTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("MDLRXNV2000ReaderTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("MDLRXNV3000ReaderTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLRXNWriterTest.java") }))
-        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("ReactionManipulatorTest.java") }))
-        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("ReactionSetManipulatorTest.java") }))
-        XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("ReactionSchemeManipulatorTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("ReactionManipulatorTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("ReactionSetManipulatorTest.java") }))
+        XCTAssertTrue(
+            metadata.sourceTests.contains(where: { $0.contains("ReactionSchemeManipulatorTest.java") }))
 
         XCTAssertGreaterThanOrEqual(metadata.portedCases.count, 20)
         XCTAssertEqual(Set(metadata.portedCases.map(\.id)).count, metadata.portedCases.count)

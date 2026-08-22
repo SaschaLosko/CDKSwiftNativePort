@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+
 @testable import CDKSwiftNativePort
 
 private struct ReactionReferenceCorpus: Decodable {
@@ -107,16 +108,19 @@ final class ReactionReferenceParityTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(corpus.schemaVersion, 1)
         XCTAssertEqual(corpus.suite, "CDK Reaction Reference Corpus")
         XCTAssertEqual(corpus.referenceRepository, "https://github.com/cdk/cdk")
-        XCTAssertEqual(corpus.referenceTag, "cdk-2.12")
+        XCTAssertEqual(corpus.referenceTag, "cdk-2.13")
         XCTAssertEqual(corpus.referenceCommit.count, 40)
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("CML2Test.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNReaderTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNV2000ReaderTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNV3000ReaderTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNWriterTest.java") }))
-        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("ReactionManipulatorTest.java") }))
-        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("ReactionSetManipulatorTest.java") }))
-        XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("ReactionSchemeManipulatorTest.java") }))
+        XCTAssertTrue(
+            corpus.sourceTests.contains(where: { $0.contains("ReactionManipulatorTest.java") }))
+        XCTAssertTrue(
+            corpus.sourceTests.contains(where: { $0.contains("ReactionSetManipulatorTest.java") }))
+        XCTAssertTrue(
+            corpus.sourceTests.contains(where: { $0.contains("ReactionSchemeManipulatorTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("SmilesParserTest.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("CxSmilesTest.java") }))
         XCTAssertEqual(corpus.cases.count, 22)
@@ -203,7 +207,9 @@ final class ReactionReferenceParityTests: XCTestCase {
         )
     }
 
-    private func collectGapDetails(from corpus: ReactionReferenceCorpus) -> [ReactionReferenceGapDetail] {
+    private func collectGapDetails(from corpus: ReactionReferenceCorpus)
+        -> [ReactionReferenceGapDetail]
+    {
         var gaps: [ReactionReferenceGapDetail] = []
 
         for entry in corpus.cases {
@@ -252,22 +258,26 @@ final class ReactionReferenceParityTests: XCTestCase {
                 do {
                     let parsed = try parseReactionHierarchy(text: text, caseEntry: entry)
                     let actualSnapshot = snapshot(from: parsed)
-                    gaps.append(contentsOf: compare(expected: expectedHierarchy,
-                                                    actual: actualSnapshot,
-                                                    caseEntry: entry,
-                                                    phase: "parse",
-                                                    location: "root"))
+                    gaps.append(
+                        contentsOf: compare(
+                            expected: expectedHierarchy,
+                            actual: actualSnapshot,
+                            caseEntry: entry,
+                            phase: "parse",
+                            location: "root"))
 
                     if entry.roundTrip {
                         do {
                             let exported = try exportReactionHierarchy(parsed, caseEntry: entry)
                             let roundTripped = try parseReactionHierarchy(text: exported, caseEntry: entry)
                             let roundTripSnapshot = snapshot(from: roundTripped)
-                            gaps.append(contentsOf: compare(expected: expectedHierarchy,
-                                                            actual: roundTripSnapshot,
-                                                            caseEntry: entry,
-                                                            phase: "roundtrip",
-                                                            location: "root"))
+                            gaps.append(
+                                contentsOf: compare(
+                                    expected: expectedHierarchy,
+                                    actual: roundTripSnapshot,
+                                    caseEntry: entry,
+                                    phase: "roundtrip",
+                                    location: "root"))
                         } catch {
                             gaps.append(
                                 ReactionReferenceGapDetail(
@@ -321,7 +331,8 @@ final class ReactionReferenceParityTests: XCTestCase {
                     )
                 } catch {
                     if let expectedMessage = entry.expected.errorContains,
-                       !error.localizedDescription.contains(expectedMessage) {
+                        !error.localizedDescription.contains(expectedMessage)
+                    {
                         gaps.append(
                             ReactionReferenceGapDetail(
                                 caseID: entry.id,
@@ -360,76 +371,88 @@ final class ReactionReferenceParityTests: XCTestCase {
         return gaps.sorted(by: sortGapDetails)
     }
 
-    private func compare(expected: ReactionReferenceCorpus.ExpectedHierarchyNode,
-                         actual: ActualHierarchySnapshot,
-                         caseEntry: ReactionReferenceCorpus.Case,
-                         phase: String,
-                         location: String) -> [ReactionReferenceGapDetail] {
+    private func compare(
+        expected: ReactionReferenceCorpus.ExpectedHierarchyNode,
+        actual: ActualHierarchySnapshot,
+        caseEntry: ReactionReferenceCorpus.Case,
+        phase: String,
+        location: String
+    ) -> [ReactionReferenceGapDetail] {
         var gaps: [ReactionReferenceGapDetail] = []
 
         if expected.kind != actual.kind {
             gaps.append(
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "kind_mismatch",
-                          expected: expected.kind,
-                          actual: actual.kind)
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "kind_mismatch",
+                    expected: expected.kind,
+                    actual: actual.kind)
             )
         }
 
         if let expectedID = expected.id, expectedID != actual.id {
             gaps.append(
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "id_mismatch",
-                          expected: expectedID,
-                          actual: actual.id)
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "id_mismatch",
+                    expected: expectedID,
+                    actual: actual.id)
             )
         }
 
         if let expectedStepList = expected.isStepList, expectedStepList != actual.isStepList {
             gaps.append(
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "is_step_list_mismatch",
-                          expected: String(expectedStepList),
-                          actual: actual.isStepList.map { String(describing: $0) })
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "is_step_list_mismatch",
+                    expected: String(expectedStepList),
+                    actual: actual.isStepList.map { String(describing: $0) })
             )
         }
 
-        gaps.append(contentsOf: compareParticipants(expected.reactants,
-                                                    actual: actual.reactants,
-                                                    role: "reactants",
-                                                    caseEntry: caseEntry,
-                                                    phase: phase,
-                                                    location: location))
-        gaps.append(contentsOf: compareParticipants(expected.agents,
-                                                    actual: actual.agents,
-                                                    role: "agents",
-                                                    caseEntry: caseEntry,
-                                                    phase: phase,
-                                                    location: location))
-        gaps.append(contentsOf: compareParticipants(expected.products,
-                                                    actual: actual.products,
-                                                    role: "products",
-                                                    caseEntry: caseEntry,
-                                                    phase: phase,
-                                                    location: location))
+        gaps.append(
+            contentsOf: compareParticipants(
+                expected.reactants,
+                actual: actual.reactants,
+                role: "reactants",
+                caseEntry: caseEntry,
+                phase: phase,
+                location: location))
+        gaps.append(
+            contentsOf: compareParticipants(
+                expected.agents,
+                actual: actual.agents,
+                role: "agents",
+                caseEntry: caseEntry,
+                phase: phase,
+                location: location))
+        gaps.append(
+            contentsOf: compareParticipants(
+                expected.products,
+                actual: actual.products,
+                role: "products",
+                caseEntry: caseEntry,
+                phase: phase,
+                location: location))
 
         if let expectedProperties = expected.properties {
             let actualProperties = actual.properties ?? [:]
             for key in expectedProperties.keys.sorted() {
                 if actualProperties[key] != expectedProperties[key] {
                     gaps.append(
-                        gapDetail(caseEntry: caseEntry,
-                                  phase: phase,
-                                  location: location,
-                                  issue: "property_mismatch",
-                                  expected: "\(key)=\(expectedProperties[key] ?? "")",
-                                  actual: actualProperties[key].map { "\(key)=\($0)" })
+                        gapDetail(
+                            caseEntry: caseEntry,
+                            phase: phase,
+                            location: location,
+                            issue: "property_mismatch",
+                            expected: "\(key)=\(expectedProperties[key] ?? "")",
+                            actual: actualProperties[key].map { "\(key)=\($0)" })
                     )
                 }
             }
@@ -438,74 +461,83 @@ final class ReactionReferenceParityTests: XCTestCase {
         if let expectedChildren = expected.children {
             if expectedChildren.count != actual.children.count {
                 gaps.append(
-                    gapDetail(caseEntry: caseEntry,
-                              phase: phase,
-                              location: location,
-                              issue: "children_count_mismatch",
-                              expected: String(expectedChildren.count),
-                              actual: String(actual.children.count))
+                    gapDetail(
+                        caseEntry: caseEntry,
+                        phase: phase,
+                        location: location,
+                        issue: "children_count_mismatch",
+                        expected: String(expectedChildren.count),
+                        actual: String(actual.children.count))
                 )
             }
 
             for index in 0..<min(expectedChildren.count, actual.children.count) {
-                gaps.append(contentsOf: compare(expected: expectedChildren[index],
-                                                actual: actual.children[index],
-                                                caseEntry: caseEntry,
-                                                phase: phase,
-                                                location: "\(location).children[\(index)]"))
+                gaps.append(
+                    contentsOf: compare(
+                        expected: expectedChildren[index],
+                        actual: actual.children[index],
+                        caseEntry: caseEntry,
+                        phase: phase,
+                        location: "\(location).children[\(index)]"))
             }
         }
 
         return gaps
     }
 
-    private func compareParticipants(_ expected: ReactionReferenceCorpus.ParticipantExpectation?,
-                                     actual: ActualParticipantSnapshot?,
-                                     role: String,
-                                     caseEntry: ReactionReferenceCorpus.Case,
-                                     phase: String,
-                                     location: String) -> [ReactionReferenceGapDetail] {
+    private func compareParticipants(
+        _ expected: ReactionReferenceCorpus.ParticipantExpectation?,
+        actual: ActualParticipantSnapshot?,
+        role: String,
+        caseEntry: ReactionReferenceCorpus.Case,
+        phase: String,
+        location: String
+    ) -> [ReactionReferenceGapDetail] {
         guard let expected else { return [] }
         guard let actual else {
             return [
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "\(role)_missing",
-                          expected: describe(expected),
-                          actual: nil)
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "\(role)_missing",
+                    expected: describe(expected),
+                    actual: nil)
             ]
         }
 
         var gaps: [ReactionReferenceGapDetail] = []
         if let expectedCount = expected.count, expectedCount != actual.ids.count {
             gaps.append(
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "\(role)_count_mismatch",
-                          expected: String(expectedCount),
-                          actual: String(actual.ids.count))
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "\(role)_count_mismatch",
+                    expected: String(expectedCount),
+                    actual: String(actual.ids.count))
             )
         }
         if let expectedIDs = expected.ids, expectedIDs != actual.ids {
             gaps.append(
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "\(role)_ids_mismatch",
-                          expected: expectedIDs.joined(separator: ","),
-                          actual: actual.ids.joined(separator: ","))
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "\(role)_ids_mismatch",
+                    expected: expectedIDs.joined(separator: ","),
+                    actual: actual.ids.joined(separator: ","))
             )
         }
         if let expectedAtomCounts = expected.atomCounts, expectedAtomCounts != actual.atomCounts {
             gaps.append(
-                gapDetail(caseEntry: caseEntry,
-                          phase: phase,
-                          location: location,
-                          issue: "\(role)_atom_counts_mismatch",
-                          expected: expectedAtomCounts.map(String.init).joined(separator: ","),
-                          actual: actual.atomCounts.map(String.init).joined(separator: ","))
+                gapDetail(
+                    caseEntry: caseEntry,
+                    phase: phase,
+                    location: location,
+                    issue: "\(role)_atom_counts_mismatch",
+                    expected: expectedAtomCounts.map(String.init).joined(separator: ","),
+                    actual: actual.atomCounts.map(String.init).joined(separator: ","))
             )
         }
         if let expectedFormulaByID = expected.formulaByID {
@@ -513,12 +545,13 @@ final class ReactionReferenceParityTests: XCTestCase {
                 let actualFormula = actual.formulasByID[key]?.first
                 if actualFormula != expectedFormulaByID[key] {
                     gaps.append(
-                        gapDetail(caseEntry: caseEntry,
-                                  phase: phase,
-                                  location: location,
-                                  issue: "\(role)_formula_mismatch",
-                                  expected: "\(key)=\(expectedFormulaByID[key] ?? "")",
-                                  actual: actualFormula.map { "\(key)=\($0)" })
+                        gapDetail(
+                            caseEntry: caseEntry,
+                            phase: phase,
+                            location: location,
+                            issue: "\(role)_formula_mismatch",
+                            expected: "\(key)=\(expectedFormulaByID[key] ?? "")",
+                            actual: actualFormula.map { "\(key)=\($0)" })
                     )
                 }
             }
@@ -630,37 +663,46 @@ final class ReactionReferenceParityTests: XCTestCase {
                 formulasByID[label] = formulas
             }
         }
-        return ActualParticipantSnapshot(ids: ids,
-                                         atomCounts: molecules.map(\.atomCount),
-                                         formulasByID: formulasByID)
+        return ActualParticipantSnapshot(
+            ids: ids,
+            atomCounts: molecules.map(\.atomCount),
+            formulasByID: formulasByID)
     }
 
     private func participantLabel(_ molecule: Molecule) -> String {
         molecule.externalID ?? molecule.name
     }
 
-    private func parseReactionHierarchy(text: String,
-                                        caseEntry: ReactionReferenceCorpus.Case) throws -> CDKReactionHierarchy {
+    private func parseReactionHierarchy(
+        text: String,
+        caseEntry: ReactionReferenceCorpus.Case
+    ) throws -> CDKReactionHierarchy {
         switch caseEntry.format {
         case "rxn":
             let mode = rxnMode(for: caseEntry.readerMode)
-            return hierarchy(from: try CDKRXNReader.readReactions(text: text,
-                                                                  options: .init(mode: mode)))
+            return hierarchy(
+                from: try CDKRXNReader.readReactions(
+                    text: text,
+                    options: .init(mode: mode)))
         default:
             return try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: caseEntry.format)
         }
     }
 
-    private func exportReactionHierarchy(_ hierarchy: CDKReactionHierarchy,
-                                         caseEntry: ReactionReferenceCorpus.Case) throws -> String {
+    private func exportReactionHierarchy(
+        _ hierarchy: CDKReactionHierarchy,
+        caseEntry: ReactionReferenceCorpus.Case
+    ) throws -> String {
         switch caseEntry.format {
         case "rxn":
             let options = CDKRXNWriter.Options(alwaysV3000: caseEntry.inputFile.contains("reaction_v3"))
-            return try CDKRXNWriter.write(reactions: hierarchy.flattenedReactions,
-                                          options: options)
+            return try CDKRXNWriter.write(
+                reactions: hierarchy.flattenedReactions,
+                options: options)
         default:
-            return try CDKFileExporter.write(reactionHierarchy: hierarchy,
-                                             as: exportFormat(for: caseEntry.format))
+            return try CDKFileExporter.write(
+                reactionHierarchy: hierarchy,
+                as: exportFormat(for: caseEntry.format))
         }
     }
 
@@ -727,13 +769,15 @@ final class ReactionReferenceParityTests: XCTestCase {
             .appendingPathComponent("UpstreamReference")
     }
 
-    private func gapDetail(caseEntry: ReactionReferenceCorpus.Case,
-                           phase: String,
-                           location: String,
-                           issue: String,
-                           expected: String?,
-                           actual: String?,
-                           message: String? = nil) -> ReactionReferenceGapDetail {
+    private func gapDetail(
+        caseEntry: ReactionReferenceCorpus.Case,
+        phase: String,
+        location: String,
+        issue: String,
+        expected: String?,
+        actual: String?,
+        message: String? = nil
+    ) -> ReactionReferenceGapDetail {
         ReactionReferenceGapDetail(
             caseID: caseEntry.id,
             format: caseEntry.format,
@@ -749,15 +793,18 @@ final class ReactionReferenceParityTests: XCTestCase {
     }
 
     private func describe(_ node: ReactionReferenceCorpus.ExpectedHierarchyNode) -> String {
-        (try? String(data: JSONEncoder.prettySorted.encode(node), encoding: .utf8)) ?? String(describing: node)
+        (try? String(data: JSONEncoder.prettySorted.encode(node), encoding: .utf8))
+            ?? String(describing: node)
     }
 
     private func describe(_ participant: ReactionReferenceCorpus.ParticipantExpectation) -> String {
-        (try? String(data: JSONEncoder.prettySorted.encode(participant), encoding: .utf8)) ?? String(describing: participant)
+        (try? String(data: JSONEncoder.prettySorted.encode(participant), encoding: .utf8))
+            ?? String(describing: participant)
     }
 
     private func describe(_ node: ActualHierarchySnapshot) -> String {
-        (try? String(data: JSONEncoder.prettySorted.encode(node), encoding: .utf8)) ?? String(describing: node)
+        (try? String(data: JSONEncoder.prettySorted.encode(node), encoding: .utf8))
+            ?? String(describing: node)
     }
 
     private func formatSummary(_ summary: [String: Int]) -> String {
@@ -771,14 +818,18 @@ final class ReactionReferenceParityTests: XCTestCase {
             .joined(separator: ", ")
     }
 
-    private func sortGapDetails(_ lhs: ReactionReferenceGapDetail, _ rhs: ReactionReferenceGapDetail) -> Bool {
+    private func sortGapDetails(_ lhs: ReactionReferenceGapDetail, _ rhs: ReactionReferenceGapDetail)
+        -> Bool
+    {
         if lhs.caseID != rhs.caseID { return lhs.caseID < rhs.caseID }
         if lhs.phase != rhs.phase { return lhs.phase < rhs.phase }
         if lhs.location != rhs.location { return lhs.location < rhs.location }
         return lhs.issue < rhs.issue
     }
 
-    private func sortGaps(_ lhs: ReactionReferenceKnownGapInventory.Gap, _ rhs: ReactionReferenceKnownGapInventory.Gap) -> Bool {
+    private func sortGaps(
+        _ lhs: ReactionReferenceKnownGapInventory.Gap, _ rhs: ReactionReferenceKnownGapInventory.Gap
+    ) -> Bool {
         if lhs.caseID != rhs.caseID { return lhs.caseID < rhs.caseID }
         if lhs.phase != rhs.phase { return lhs.phase < rhs.phase }
         if lhs.location != rhs.location { return lhs.location < rhs.location }
@@ -786,8 +837,8 @@ final class ReactionReferenceParityTests: XCTestCase {
     }
 }
 
-private extension JSONEncoder {
-    static var prettySorted: JSONEncoder {
+extension JSONEncoder {
+    fileprivate static var prettySorted: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return encoder

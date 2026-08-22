@@ -9,16 +9,16 @@ public final class CDKSmilesParser {
     }
 
     public func parseSmiles(_ smiles: String) throws -> Molecule {
-        let split = try CDKCxSmilesParser.split(smiles, enabled: flavor.contains(.cxsmiles))
+        let cxEnabled = flavor.contains(.cxsmiles) || !flavor.intersection(.cxAll).isEmpty
+        let split = try CDKCxSmilesParser.split(smiles, enabled: cxEnabled)
         var molecule = try parseCoreSmiles(split.coreSmiles)
         try CDKCxSmilesParser.apply(to: &molecule, state: split.state) { [self] definition in
             try parseSmiles(definition)
         }
-        let needsGeneratedLayout = split.state.atomCoordinates.isEmpty &&
-            (!split.state.rGroupDefinitions.isEmpty ||
-             !split.state.linkNodes.isEmpty ||
-             !split.state.sgroups.isEmpty ||
-             !split.state.positionalVariations.isEmpty)
+        let needsGeneratedLayout =
+            split.state.atomCoordinates.isEmpty
+            && (!split.state.rGroupDefinitions.isEmpty || !split.state.linkNodes.isEmpty
+                || !split.state.sgroups.isEmpty || !split.state.positionalVariations.isEmpty)
         if needsGeneratedLayout {
             molecule = Depiction2DGenerator.generate(for: molecule)
             molecule.assignWedgeHashFromChiralCenters()
@@ -93,9 +93,11 @@ public final class CDKSmilesParser {
             return digits
         }
 
-        func normalizeElement(symbol: String,
-                              aromatic: Bool,
-                              isotopeMass: Int?) -> (symbol: String, aromatic: Bool, isotopeMass: Int?) {
+        func normalizeElement(
+            symbol: String,
+            aromatic: Bool,
+            isotopeMass: Int?
+        ) -> (symbol: String, aromatic: Bool, isotopeMass: Int?) {
             switch symbol.uppercased() {
             case "D":
                 return ("H", aromatic, isotopeMass ?? 2)
@@ -107,34 +109,37 @@ public final class CDKSmilesParser {
             }
         }
 
-        func appendAtom(element: String,
-                        aromatic: Bool = false,
-                        charge: Int = 0,
-                        isotopeMass: Int? = nil,
-                        chirality: AtomChirality = .none,
-                        explicitHydrogenCount: Int? = nil,
-                        exactDegree: Int? = nil,
-                        totalConnectivity: Int? = nil,
-                        valence: Int? = nil,
-                        ringMembership: Int? = nil,
-                        ringSize: Int? = nil,
-                        unsaturated: Int? = nil,
-                        atomClass: Int? = nil,
-                        atomMapNumber: Int? = nil) -> Int {
+        func appendAtom(
+            element: String,
+            aromatic: Bool = false,
+            charge: Int = 0,
+            isotopeMass: Int? = nil,
+            chirality: AtomChirality = .none,
+            explicitHydrogenCount: Int? = nil,
+            exactDegree: Int? = nil,
+            totalConnectivity: Int? = nil,
+            valence: Int? = nil,
+            ringMembership: Int? = nil,
+            ringSize: Int? = nil,
+            unsaturated: Int? = nil,
+            atomClass: Int? = nil,
+            atomMapNumber: Int? = nil
+        ) -> Int {
             nextAtomID += 1
-            var atom = Atom(id: nextAtomID,
-                            element: element,
-                            position: .zero,
-                            charge: charge,
-                            isotopeMassNumber: isotopeMass,
-                            aromatic: aromatic,
-                            chirality: chirality,
-                            explicitHydrogenCount: explicitHydrogenCount,
-                            substitutionCount: exactDegree ?? totalConnectivity,
-                            unsaturated: unsaturated ?? valence,
-                            ringBondCount: ringMembership ?? ringSize,
-                            atomClass: atomClass,
-                            atomMapNumber: atomMapNumber)
+            var atom = Atom(
+                id: nextAtomID,
+                element: element,
+                position: .zero,
+                charge: charge,
+                isotopeMassNumber: isotopeMass,
+                aromatic: aromatic,
+                chirality: chirality,
+                explicitHydrogenCount: explicitHydrogenCount,
+                substitutionCount: exactDegree ?? totalConnectivity,
+                unsaturated: unsaturated ?? valence,
+                ringBondCount: ringMembership ?? ringSize,
+                atomClass: atomClass,
+                atomMapNumber: atomMapNumber)
             atom.charge = charge
             molecule.atoms.append(atom)
             return atom.id
@@ -237,7 +242,7 @@ public final class CDKSmilesParser {
             guard peek() == "[" else {
                 throw ChemError.parseFailed("Invalid bracket atom start.")
             }
-            advance() // '['
+            advance()  // '['
 
             let isotopeDigits = readDigits()
             let isotopeMass = isotopeDigits.isEmpty ? nil : Int(isotopeDigits)
@@ -276,22 +281,24 @@ public final class CDKSmilesParser {
                 throw ChemError.parseFailed("Invalid bracket atom element token.")
             }
 
-            let normalized = normalizeElement(symbol: rawSymbol, aromatic: aromatic, isotopeMass: isotopeMass)
-            var descriptor = BracketAtomDescriptor(element: normalized.symbol,
-                                                   aromatic: normalized.aromatic,
-                                                   charge: 0,
-                                                   isotopeMass: normalized.isotopeMass,
-                                                   chirality: .none,
-                                                   explicitHydrogenCount: 0,
-                                                   hasExplicitHydrogenSpecification: false,
-                                                   exactDegree: nil,
-                                                   totalConnectivity: nil,
-                                                   valence: nil,
-                                                   ringMembership: nil,
-                                                   ringSize: nil,
-                                                   unsaturated: nil,
-                                                   atomClass: nil,
-                                                   atomMapNumber: nil)
+            let normalized = normalizeElement(
+                symbol: rawSymbol, aromatic: aromatic, isotopeMass: isotopeMass)
+            var descriptor = BracketAtomDescriptor(
+                element: normalized.symbol,
+                aromatic: normalized.aromatic,
+                charge: 0,
+                isotopeMass: normalized.isotopeMass,
+                chirality: .none,
+                explicitHydrogenCount: 0,
+                hasExplicitHydrogenSpecification: false,
+                exactDegree: nil,
+                totalConnectivity: nil,
+                valence: nil,
+                ringMembership: nil,
+                ringSize: nil,
+                unsaturated: nil,
+                atomClass: nil,
+                atomMapNumber: nil)
 
             while let ch = peek(), ch != "]" {
                 if ch == "@" {
@@ -394,7 +401,8 @@ public final class CDKSmilesParser {
                 }
 
                 if flavor.contains(.strict) {
-                    throw ChemError.parseFailed("Unsupported bracket decorator '\(ch)' in strict SMILES mode.")
+                    throw ChemError.parseFailed(
+                        "Unsupported bracket decorator '\(ch)' in strict SMILES mode.")
                 }
                 advance()
             }
@@ -402,7 +410,7 @@ public final class CDKSmilesParser {
             guard peek() == "]" else {
                 throw ChemError.parseFailed("Unterminated bracket atom.")
             }
-            advance() // ']'
+            advance()  // ']'
             return descriptor
         }
 
@@ -498,12 +506,15 @@ public final class CDKSmilesParser {
 
                     let explicitOrder = pendingOrder ?? open.explicitOrder
                     let order = resolveBondOrder(a1: open.atomID, a2: cur, explicit: explicitOrder)
-                    let stereo = (order == .single) ? (pendingDirectionalStereo ?? open.directionalStereo ?? .none) : .none
+                    let stereo =
+                        (order == .single)
+                        ? (pendingDirectionalStereo ?? open.directionalStereo ?? .none) : .none
                     appendBond(open.atomID, cur, order: order, stereo: stereo)
                 } else {
-                    ringClosures[ringIndex] = RingClosureState(atomID: cur,
-                                                               explicitOrder: pendingOrder,
-                                                               directionalStereo: pendingDirectionalStereo)
+                    ringClosures[ringIndex] = RingClosureState(
+                        atomID: cur,
+                        explicitOrder: pendingOrder,
+                        directionalStereo: pendingDirectionalStereo)
                 }
 
                 pendingOrder = nil
@@ -511,27 +522,30 @@ public final class CDKSmilesParser {
 
             case "[":
                 let bracket = try parseBracketAtom()
-                let newID = appendAtom(element: bracket.element,
-                                       aromatic: bracket.aromatic,
-                                       charge: bracket.charge,
-                                       isotopeMass: bracket.isotopeMass,
-                                       chirality: bracket.chirality,
-                                       explicitHydrogenCount: bracket.hasExplicitHydrogenSpecification ? bracket.explicitHydrogenCount : nil,
-                                       exactDegree: bracket.exactDegree,
-                                       totalConnectivity: bracket.totalConnectivity,
-                                       valence: bracket.valence,
-                                       ringMembership: bracket.ringMembership,
-                                       ringSize: bracket.ringSize,
-                                       unsaturated: bracket.unsaturated,
-                                       atomClass: bracket.atomClass,
-                                       atomMapNumber: bracket.atomMapNumber)
+                let newID = appendAtom(
+                    element: bracket.element,
+                    aromatic: bracket.aromatic,
+                    charge: bracket.charge,
+                    isotopeMass: bracket.isotopeMass,
+                    chirality: bracket.chirality,
+                    explicitHydrogenCount: bracket.hasExplicitHydrogenSpecification
+                        ? bracket.explicitHydrogenCount : nil,
+                    exactDegree: bracket.exactDegree,
+                    totalConnectivity: bracket.totalConnectivity,
+                    valence: bracket.valence,
+                    ringMembership: bracket.ringMembership,
+                    ringSize: bracket.ringSize,
+                    unsaturated: bracket.unsaturated,
+                    atomClass: bracket.atomClass,
+                    atomMapNumber: bracket.atomMapNumber)
                 connectCurrentTo(newID, aromatic: bracket.aromatic)
 
             default:
                 if let atom = parsePlainAtom() {
-                    let newID = appendAtom(element: atom.element,
-                                           aromatic: atom.aromatic,
-                                           isotopeMass: atom.isotopeMass)
+                    let newID = appendAtom(
+                        element: atom.element,
+                        aromatic: atom.aromatic,
+                        isotopeMass: atom.isotopeMass)
                     connectCurrentTo(newID, aromatic: atom.aromatic)
                 } else {
                     throw ChemError.parseFailed("Unexpected token '\(ch)' in SMILES.")
@@ -573,15 +587,18 @@ public final class CDKSmilesParser {
             switch element {
             case "B", "C":
                 if degree > 3 {
-                    throw ChemError.parseFailed("Aromatic atom '\(atom.element)' exceeds valence-like degree.")
+                    throw ChemError.parseFailed(
+                        "Aromatic atom '\(atom.element)' exceeds valence-like degree.")
                 }
             case "N", "O":
                 if element == "O", degree > 2 && atom.charge <= 0 {
-                    throw ChemError.parseFailed("Aromatic atom '\(atom.element)' has invalid degree without positive charge.")
+                    throw ChemError.parseFailed(
+                        "Aromatic atom '\(atom.element)' has invalid degree without positive charge.")
                 }
             case "P", "S", "SE", "AS":
                 if degree > 3 && atom.charge <= 0 {
-                    throw ChemError.parseFailed("Aromatic atom '\(atom.element)' has unsupported high degree.")
+                    throw ChemError.parseFailed(
+                        "Aromatic atom '\(atom.element)' has unsupported high degree.")
                 }
             case "*":
                 continue
@@ -640,14 +657,18 @@ public final class CDKSmilesParser {
             let db = molecule.bonds[idx]
 
             let sideAHasDirection = molecule.bonds.contains { bond in
-                guard bond.id != db.id, bond.order == .single, isDirectional(bond.stereo) else { return false }
+                guard bond.id != db.id, bond.order == .single, isDirectional(bond.stereo) else {
+                    return false
+                }
                 if bond.a1 == db.a1 && bond.a2 != db.a2 { return true }
                 if bond.a2 == db.a1 && bond.a1 != db.a2 { return true }
                 return false
             }
 
             let sideBHasDirection = molecule.bonds.contains { bond in
-                guard bond.id != db.id, bond.order == .single, isDirectional(bond.stereo) else { return false }
+                guard bond.id != db.id, bond.order == .single, isDirectional(bond.stereo) else {
+                    return false
+                }
                 if bond.a1 == db.a2 && bond.a2 != db.a1 { return true }
                 if bond.a2 == db.a2 && bond.a1 != db.a1 { return true }
                 return false
@@ -660,7 +681,7 @@ public final class CDKSmilesParser {
     }
 }
 
-private extension Character {
-    var isUppercase: Bool { String(self).uppercased() == String(self) && isLetter }
-    var isLowercase: Bool { String(self).lowercased() == String(self) && isLetter }
+extension Character {
+    fileprivate var isUppercase: Bool { String(self).uppercased() == String(self) && isLetter }
+    fileprivate var isLowercase: Bool { String(self).lowercased() == String(self) && isLetter }
 }

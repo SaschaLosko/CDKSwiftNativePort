@@ -14,6 +14,18 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.27] - 2026-08-22
+
+### Added
+
+- Promoted the maintained upstream parity baseline to CDK 2.13, including
+  CXSMILES coordinate bonds, MDL V2000/V3000 reacting-center metadata,
+  R0/partial R-group handling, small-ring queries, fixed-H AuxInfo numbering,
+  and coordinate-bonded sandwich-ring layout.
+- Added CDK 2.13 regression coverage for adjacent stereocenters, double-bond
+  hydrogen suppression, degenerate double-bond geometry, and heavy-atom counts
+  that exclude pseudo atoms.
+
 ## [1.4.26] - 2026-08-15
 
 ### Fixed

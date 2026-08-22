@@ -1,6 +1,7 @@
 import Foundation
+
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 // CDK-inspired SDG port entry point and layout support types.
@@ -85,7 +86,8 @@ private enum CDKRingSearch {
         guard !candidates.isEmpty else { return [] }
 
         let edgeUniverse = Array(graph.edgeBonds.keys).sorted(by: edgeLess)
-        let edgeIndex = Dictionary(uniqueKeysWithValues: edgeUniverse.enumerated().map { ($0.element, $0.offset) })
+        let edgeIndex = Dictionary(
+            uniqueKeysWithValues: edgeUniverse.enumerated().map { ($0.element, $0.offset) })
         return selectIndependentCycles(candidates, rank: rank, edgeIndex: edgeIndex)
     }
 
@@ -96,7 +98,9 @@ private enum CDKRingSearch {
         }
     }
 
-    private static func shortestCycleCandidates(graph: CDKMolecularGraph, maxCycleSize: Int) -> [[Int]] {
+    private static func shortestCycleCandidates(graph: CDKMolecularGraph, maxCycleSize: Int)
+        -> [[Int]]
+    {
         let edges = Array(graph.edgeBonds.keys).sorted { lhs, rhs in
             if lhs.a != rhs.a { return lhs.a < rhs.a }
             return lhs.b < rhs.b
@@ -104,13 +108,16 @@ private enum CDKRingSearch {
 
         var out: [[Int]] = []
         for edge in edges {
-            guard let path = shortestPathExcludingEdge(graph: graph,
-                                                       start: edge.a,
-                                                       end: edge.b,
-                                                       excluding: edge,
-                                                       maxDepth: maxCycleSize - 1),
-                  path.count >= 3,
-                  path.count <= maxCycleSize else { continue }
+            guard
+                let path = shortestPathExcludingEdge(
+                    graph: graph,
+                    start: edge.a,
+                    end: edge.b,
+                    excluding: edge,
+                    maxDepth: maxCycleSize - 1),
+                path.count >= 3,
+                path.count <= maxCycleSize
+            else { continue }
             out.append(canonicalCycle(path))
         }
         return out
@@ -149,7 +156,9 @@ private enum CDKRingSearch {
                 let curDepth = depth[current] ?? 0
                 let nextDepth = depth[next] ?? 0
                 guard nextDepth < curDepth else { continue }
-                guard let chain = pathToAncestor(from: current, ancestor: next), chain.count >= 3 else { continue }
+                guard let chain = pathToAncestor(from: current, ancestor: next), chain.count >= 3 else {
+                    continue
+                }
                 out.append(canonicalCycle(chain))
             }
         }
@@ -164,11 +173,13 @@ private enum CDKRingSearch {
         return out
     }
 
-    private static func shortestPathExcludingEdge(graph: CDKMolecularGraph,
-                                                  start: Int,
-                                                  end: Int,
-                                                  excluding: CDKEdgeKey,
-                                                  maxDepth: Int) -> [Int]? {
+    private static func shortestPathExcludingEdge(
+        graph: CDKMolecularGraph,
+        start: Int,
+        end: Int,
+        excluding: CDKEdgeKey,
+        maxDepth: Int
+    ) -> [Int]? {
         var queue: [Int] = [start]
         var head = 0
         var seen: Set<Int> = [start]
@@ -214,9 +225,11 @@ private enum CDKRingSearch {
         return out
     }
 
-    private static func selectIndependentCycles(_ cycles: [[Int]],
-                                                rank: Int,
-                                                edgeIndex: [CDKEdgeKey: Int]) -> [[Int]] {
+    private static func selectIndependentCycles(
+        _ cycles: [[Int]],
+        rank: Int,
+        edgeIndex: [CDKEdgeKey: Int]
+    ) -> [[Int]] {
         guard rank > 0 else { return [] }
 
         typealias Row = (pivot: Int, bits: Set<Int>)
@@ -315,7 +328,8 @@ enum CDKStructureDiagramGenerator {
         let standardBond: CGFloat = 1.4
         let graph = CDKMolecularGraph(molecule: molecule)
         let connectedComponents = graph.connectedComponents()
-        let isMarkush = connectedComponents.count > 1
+        let isMarkush =
+            connectedComponents.count > 1
             && connectedComponents.contains { componentRGroupMembership($0, molecule: molecule) != nil }
         let components = connectedComponents.sorted {
             compareComponents($0, $1, molecule: molecule, markush: isMarkush)
@@ -326,7 +340,8 @@ enum CDKStructureDiagramGenerator {
         var offsetX: CGFloat = 0
 
         for component in components {
-            let ringsInComponent = sssr
+            let ringsInComponent =
+                sssr
                 .filter { !Set($0).isDisjoint(with: component) }
                 .sorted { lhs, rhs in
                     if lhs.count != rhs.count { return lhs.count < rhs.count }
@@ -346,22 +361,24 @@ enum CDKStructureDiagramGenerator {
             let rigidRingAtoms = simpleRingLockAtoms(ringSystems)
 
             if let primaryRingSystem = ringSystems.first {
-                placeRingSystem(primaryRingSystem,
-                                graph: graph,
-                                component: component,
-                                positions: &positions,
-                                center: CGPoint(x: offsetX, y: 0),
-                                bondLength: standardBond)
+                placeRingSystem(
+                    primaryRingSystem,
+                    graph: graph,
+                    component: component,
+                    positions: &positions,
+                    center: CGPoint(x: offsetX, y: 0),
+                    bondLength: standardBond)
             }
 
             let ringAtoms = Set(ringsInComponent.flatMap { $0 })
             let ringEdges = Set(ringsInComponent.flatMap { CDKRingSearch.edgeKeys(for: $0) })
 
             if !component.contains(where: { positions[$0] != nil }) {
-                let seed = chooseSeed(in: component,
-                                      graph: graph,
-                                      ringSet: Set(ringsInComponent.flatMap { $0 }),
-                                      preferAcyclicTerminalSeed: !isMarkush)
+                let seed = chooseSeed(
+                    in: component,
+                    graph: graph,
+                    ringSet: Set(ringsInComponent.flatMap { $0 }),
+                    preferAcyclicTerminalSeed: !isMarkush)
                 positions[seed] = CGPoint(x: offsetX, y: 0)
             }
 
@@ -369,49 +386,58 @@ enum CDKStructureDiagramGenerator {
             var progressed = true
             while progressed && rounds < Tuning.chainPassLimit {
                 progressed = false
-                if placeLongestUnplacedChains(component: component,
-                                              graph: graph,
-                                              molecule: molecule,
-                                              ringAtoms: ringAtoms,
-                                              ringEdges: ringEdges,
-                                              positions: &positions,
-                                              bondLength: standardBond) {
+                if placeLongestUnplacedChains(
+                    component: component,
+                    graph: graph,
+                    molecule: molecule,
+                    ringAtoms: ringAtoms,
+                    ringEdges: ringEdges,
+                    positions: &positions,
+                    bondLength: standardBond)
+                {
                     progressed = true
                 }
-                if placeDistributedPartners(component: component,
-                                           graph: graph,
-                                           molecule: molecule,
-                                           ringsInComponent: ringsInComponent,
-                                           positions: &positions,
-                                           bondLength: standardBond,
-                                           fallbackCenter: CGPoint(x: offsetX, y: 0)) {
+                if placeDistributedPartners(
+                    component: component,
+                    graph: graph,
+                    molecule: molecule,
+                    ringsInComponent: ringsInComponent,
+                    positions: &positions,
+                    bondLength: standardBond,
+                    fallbackCenter: CGPoint(x: offsetX, y: 0))
+                {
                     progressed = true
                 }
                 rounds += 1
             }
 
             // Second ring-placement pass after chain growth, useful for distal/fused systems.
-            for system in ringSystems where system.contains(where: { ring in ring.contains(where: { positions[$0] == nil }) }) {
+            for system in ringSystems
+            where system.contains(where: { ring in ring.contains(where: { positions[$0] == nil }) }) {
                 let anchorCandidates = Set(system.flatMap { $0 }).compactMap { positions[$0] }
-                let anchor = anchorCandidates.isEmpty
+                let anchor =
+                    anchorCandidates.isEmpty
                     ? CGPoint(x: offsetX, y: 0)
-                    : CGPoint(x: anchorCandidates.reduce(0) { $0 + $1.x } / CGFloat(anchorCandidates.count),
-                              y: anchorCandidates.reduce(0) { $0 + $1.y } / CGFloat(anchorCandidates.count))
-                placeRingSystem(system,
-                                graph: graph,
-                                component: component,
-                                positions: &positions,
-                                center: anchor,
-                                bondLength: standardBond)
+                    : CGPoint(
+                        x: anchorCandidates.reduce(0) { $0 + $1.x } / CGFloat(anchorCandidates.count),
+                        y: anchorCandidates.reduce(0) { $0 + $1.y } / CGFloat(anchorCandidates.count))
+                placeRingSystem(
+                    system,
+                    graph: graph,
+                    component: component,
+                    positions: &positions,
+                    center: anchor,
+                    bondLength: standardBond)
             }
 
-            _ = placeDistributedPartners(component: component,
-                                         graph: graph,
-                                         molecule: molecule,
-                                         ringsInComponent: ringsInComponent,
-                                         positions: &positions,
-                                         bondLength: standardBond,
-                                         fallbackCenter: CGPoint(x: offsetX, y: 0))
+            _ = placeDistributedPartners(
+                component: component,
+                graph: graph,
+                molecule: molecule,
+                ringsInComponent: ringsInComponent,
+                positions: &positions,
+                bondLength: standardBond,
+                fallbackCenter: CGPoint(x: offsetX, y: 0))
 
             // Handle any leftover atoms in this component.
             for atomID in component where positions[atomID] == nil {
@@ -432,41 +458,47 @@ enum CDKStructureDiagramGenerator {
             // to relax and untangle if they start with a rough placement.
             let lockedAtoms = Set(component.filter { isAromaticAtom($0, molecule: molecule) })
                 .union(rigidRingAtoms)
-            optimizeByBondFlips(component: component,
-                                graph: graph,
-                                positions: &positions,
-                                locked: lockedAtoms,
-                                ringEdges: ringEdges,
-                                bondLength: standardBond)
-            relax(component: component,
-                  graph: graph,
-                  positions: &positions,
-                  bondLength: standardBond,
-                  locked: lockedAtoms,
-                  iterations: Tuning.relaxIterations)
+            optimizeByBondFlips(
+                component: component,
+                graph: graph,
+                positions: &positions,
+                locked: lockedAtoms,
+                ringEdges: ringEdges,
+                bondLength: standardBond)
+            relax(
+                component: component,
+                graph: graph,
+                positions: &positions,
+                bondLength: standardBond,
+                locked: lockedAtoms,
+                iterations: Tuning.relaxIterations)
             if isMarkush {
-                let usedAttachmentOrientation = orientMarkushAttachmentComponent(component: component,
-                                                                                 graph: graph,
-                                                                                 molecule: molecule,
-                                                                                 positions: &positions)
+                let usedAttachmentOrientation = orientMarkushAttachmentComponent(
+                    component: component,
+                    graph: graph,
+                    molecule: molecule,
+                    positions: &positions)
                 if !usedAttachmentOrientation {
-                    selectOrientation(component: component,
-                                      graph: graph,
-                                      molecule: molecule,
-                                      positions: &positions,
-                                      widthDiff: standardBond,
-                                      alignDiff: 1)
+                    selectOrientation(
+                        component: component,
+                        graph: graph,
+                        molecule: molecule,
+                        positions: &positions,
+                        widthDiff: standardBond,
+                        alignDiff: 1)
                 }
-                orientMarkushRootComponent(component: component,
-                                           molecule: molecule,
-                                           positions: &positions)
+                orientMarkushRootComponent(
+                    component: component,
+                    molecule: molecule,
+                    positions: &positions)
             } else if ringsInComponent.isEmpty {
-                selectOrientation(component: component,
-                                  graph: graph,
-                                  molecule: molecule,
-                                  positions: &positions,
-                                  widthDiff: standardBond,
-                                  alignDiff: 1)
+                selectOrientation(
+                    component: component,
+                    graph: graph,
+                    molecule: molecule,
+                    positions: &positions,
+                    widthDiff: standardBond,
+                    alignDiff: 1)
             }
 
             if let box = boundingBox(component: component, positions: positions) {
@@ -487,11 +519,18 @@ enum CDKStructureDiagramGenerator {
             }
         }
 
+        arrangeCoordinateBondedSandwichRings(
+            molecule: molecule,
+            rings: sssr,
+            positions: &positions,
+            bondLength: standardBond)
+
         if isMarkush {
-            arrangeMarkushComponents(components: components,
-                                     molecule: molecule,
-                                     positions: &positions,
-                                     spacing: standardBond)
+            arrangeMarkushComponents(
+                components: components,
+                molecule: molecule,
+                positions: &positions,
+                spacing: standardBond)
         }
 
         var out = molecule
@@ -503,10 +542,89 @@ enum CDKStructureDiagramGenerator {
         return out
     }
 
-    private static func compareComponents(_ lhs: Set<Int>,
-                                          _ rhs: Set<Int>,
-                                          molecule: Molecule,
-                                          markush: Bool) -> Bool {
+    private static func arrangeCoordinateBondedSandwichRings(
+        molecule: Molecule,
+        rings: [[Int]],
+        positions: inout [Int: CGPoint],
+        bondLength: CGFloat
+    ) {
+        let coordinateBondsByReference = Dictionary(
+            grouping: molecule.bonds.compactMap { bond -> Bond? in
+                bond.coordinateBondReferenceAtomID == nil ? nil : bond
+            }, by: { $0.coordinateBondReferenceAtomID ?? -1 })
+
+        for (referenceAtomID, coordinateBonds) in coordinateBondsByReference where referenceAtomID >= 0 {
+            let donorAtomIDs = Set(
+                coordinateBonds.compactMap { bond -> Int? in
+                    if bond.a1 == referenceAtomID { return bond.a2 }
+                    if bond.a2 == referenceAtomID { return bond.a1 }
+                    return nil
+                })
+            let attachedRings =
+                rings
+                .filter { ring in ring.contains(where: donorAtomIDs.contains) }
+                .sorted { lhs, rhs in
+                    if lhs.count != rhs.count { return lhs.count < rhs.count }
+                    return lhs.lexicographicallyPrecedes(rhs)
+                }
+            guard attachedRings.count == 2,
+                Set(attachedRings[0]).isDisjoint(with: attachedRings[1])
+            else {
+                continue
+            }
+
+            let metalPosition = positions[referenceAtomID] ?? .zero
+            let verticalOffset = bondLength * 1.30
+            for (index, ring) in attachedRings.enumerated() {
+                guard let donorAtomID = ring.first(where: donorAtomIDs.contains) else { continue }
+                let center = CGPoint(
+                    x: metalPosition.x,
+                    y: metalPosition.y + (index == 0 ? verticalOffset : -verticalOffset))
+                placeSandwichRing(
+                    ring,
+                    donorAtomID: donorAtomID,
+                    center: center,
+                    pointsToward: metalPosition,
+                    bondLength: bondLength,
+                    positions: &positions)
+            }
+            positions[referenceAtomID] = metalPosition
+        }
+    }
+
+    private static func placeSandwichRing(
+        _ ring: [Int],
+        donorAtomID: Int,
+        center: CGPoint,
+        pointsToward target: CGPoint,
+        bondLength: CGFloat,
+        positions: inout [Int: CGPoint]
+    ) {
+        guard ring.count >= 3,
+            let donorIndex = ring.firstIndex(of: donorAtomID)
+        else {
+            return
+        }
+        let count = CGFloat(ring.count)
+        let radius = bondLength / (2 * sin(.pi / count))
+        let targetAngle = atan2(target.y - center.y, target.x - center.x)
+        let step = (2 * .pi) / count
+        let base = targetAngle - (CGFloat(donorIndex) * step)
+
+        for (index, atomID) in ring.enumerated() {
+            let angle = base + (CGFloat(index) * step)
+            positions[atomID] = CGPoint(
+                x: center.x + cos(angle) * radius,
+                y: center.y + sin(angle) * radius)
+        }
+    }
+
+    private static func compareComponents(
+        _ lhs: Set<Int>,
+        _ rhs: Set<Int>,
+        molecule: Molecule,
+        markush: Bool
+    ) -> Bool {
         if markush {
             let leftLabel = componentRGroupMembership(lhs, molecule: molecule)
             let rightLabel = componentRGroupMembership(rhs, molecule: molecule)
@@ -528,7 +646,9 @@ enum CDKStructureDiagramGenerator {
         return (lhs.min() ?? 0) < (rhs.min() ?? 0)
     }
 
-    private static func componentRGroupMembership(_ component: Set<Int>, molecule: Molecule) -> String? {
+    private static func componentRGroupMembership(_ component: Set<Int>, molecule: Molecule)
+        -> String?
+    {
         component
             .compactMap { molecule.atom(id: $0)?.rGroupMembership }
             .sorted()
@@ -542,10 +662,12 @@ enum CDKStructureDiagramGenerator {
             .first
     }
 
-    private static func arrangeMarkushComponents(components: [Set<Int>],
-                                                 molecule: Molecule,
-                                                 positions: inout [Int: CGPoint],
-                                                 spacing: CGFloat) {
+    private static func arrangeMarkushComponents(
+        components: [Set<Int>],
+        molecule: Molecule,
+        positions: inout [Int: CGPoint],
+        spacing: CGFloat
+    ) {
         guard !components.isEmpty else { return }
 
         let rows = buildMarkushRows(from: components, molecule: molecule)
@@ -555,9 +677,10 @@ enum CDKStructureDiagramGenerator {
         rowBounds.reserveCapacity(rows.count)
 
         for row in rows {
-            layoutMarkushGrid(cells: row,
-                              positions: &positions,
-                              spacing: spacing)
+            layoutMarkushGrid(
+                cells: row,
+                positions: &positions,
+                spacing: spacing)
             rowBounds.append(markushBounds(for: row, positions: positions) ?? .zero)
         }
 
@@ -573,17 +696,22 @@ enum CDKStructureDiagramGenerator {
         }
 
         for row in 0..<rows.count {
-            guard let currentBounds = markushBounds(for: rows[row], positions: positions) else { continue }
+            guard let currentBounds = markushBounds(for: rows[row], positions: positions) else {
+                continue
+            }
             let dest = CGPoint(x: 0, y: (yOffsets[row] + yOffsets[row + 1]) * 0.5)
-            translateMarkushCells(rows[row],
-                                  positions: &positions,
-                                  dx: dest.x - currentBounds.midX,
-                                  dy: dest.y - currentBounds.midY)
+            translateMarkushCells(
+                rows[row],
+                positions: &positions,
+                dx: dest.x - currentBounds.midX,
+                dy: dest.y - currentBounds.midY)
         }
     }
 
-    private static func buildMarkushRows(from components: [Set<Int>],
-                                         molecule: Molecule) -> [[[Set<Int>]]] {
+    private static func buildMarkushRows(
+        from components: [Set<Int>],
+        molecule: Molecule
+    ) -> [[[Set<Int>]]] {
         var rows: [[[Set<Int>]]] = []
         var currentRow: [[Set<Int>]] = []
         var currentCell: [Set<Int>] = []
@@ -632,9 +760,11 @@ enum CDKStructureDiagramGenerator {
         return rows
     }
 
-    private static func layoutMarkushGrid(cells: [[Set<Int>]],
-                                          positions: inout [Int: CGPoint],
-                                          spacing: CGFloat) {
+    private static func layoutMarkushGrid(
+        cells: [[Set<Int>]],
+        positions: inout [Int: CGPoint],
+        spacing: CGFloat
+    ) {
         guard !cells.isEmpty else { return }
 
         let limits = cells.map { markushBounds(for: [$0], positions: positions) ?? .zero }
@@ -670,17 +800,21 @@ enum CDKStructureDiagramGenerator {
             let row = index / columnCount
             let column = index % columnCount
             let bounds = limits[index]
-            let dest = CGPoint(x: (xOffsets[column] + xOffsets[column + 1]) * 0.5,
-                               y: (yOffsets[row] + yOffsets[row + 1]) * 0.5)
-            translateMarkushCells([cells[index]],
-                                  positions: &positions,
-                                  dx: dest.x - bounds.midX,
-                                  dy: dest.y - bounds.midY)
+            let dest = CGPoint(
+                x: (xOffsets[column] + xOffsets[column + 1]) * 0.5,
+                y: (yOffsets[row] + yOffsets[row + 1]) * 0.5)
+            translateMarkushCells(
+                [cells[index]],
+                positions: &positions,
+                dx: dest.x - bounds.midX,
+                dy: dest.y - bounds.midY)
         }
     }
 
-    private static func markushBounds(for cells: [[Set<Int>]],
-                                      positions: [Int: CGPoint]) -> CGRect? {
+    private static func markushBounds(
+        for cells: [[Set<Int>]],
+        positions: [Int: CGPoint]
+    ) -> CGRect? {
         var result: CGRect?
         for cell in cells {
             for component in cell {
@@ -691,10 +825,12 @@ enum CDKStructureDiagramGenerator {
         return result
     }
 
-    private static func translateMarkushCells(_ cells: [[Set<Int>]],
-                                              positions: inout [Int: CGPoint],
-                                              dx: CGFloat,
-                                              dy: CGFloat) {
+    private static func translateMarkushCells(
+        _ cells: [[Set<Int>]],
+        positions: inout [Int: CGPoint],
+        dx: CGFloat,
+        dy: CGFloat
+    ) {
         guard abs(dx) > 0.0001 || abs(dy) > 0.0001 else { return }
         for cell in cells {
             for component in cell {
@@ -706,100 +842,119 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func selectOrientation(component: Set<Int>,
-                                          graph: CDKMolecularGraph,
-                                          molecule: Molecule,
-                                          positions: inout [Int: CGPoint],
-                                          widthDiff: CGFloat,
-                                          alignDiff: Int) {
-        let bonds = orientableBonds(in: component,
-                                    graph: graph,
-                                    molecule: molecule)
+    private static func selectOrientation(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule,
+        positions: inout [Int: CGPoint],
+        widthDiff: CGFloat,
+        alignDiff: Int
+    ) {
+        let bonds = orientableBonds(
+            in: component,
+            graph: graph,
+            molecule: molecule)
         guard !bonds.isEmpty,
-              let bounds = boundingBox(component: component, positions: positions) else {
+            let bounds = boundingBox(component: component, positions: positions)
+        else {
             return
         }
 
         let pivot = CGPoint(x: bounds.midX, y: bounds.midY)
 
         if bonds.count == 1,
-           let p1 = positions[bonds[0].a1],
-           let p2 = positions[bonds[0].a2] {
+            let p1 = positions[bonds[0].a1],
+            let p2 = positions[bonds[0].a2]
+        {
             let dx = p1.x - p2.x
             let dy = p1.y - p2.y
-            rotate(component: component,
-                   around: pivot,
-                   by: atan2(dx, dy) + (.pi / 2),
-                   positions: &positions)
+            rotate(
+                component: component,
+                around: pivot,
+                by: atan2(dx, dy) + (.pi / 2),
+                positions: &positions)
             return
         }
 
         var directionHistogram = Array(repeating: 0, count: 180)
-        calcDirectionHistogram(bonds: bonds,
-                               positions: positions,
-                               counts: &directionHistogram,
-                               limit: 60)
-        if let maxBucket = directionHistogram.indices.max(by: { directionHistogram[$0] < directionHistogram[$1] }),
-           maxBucket != 0,
-           Double(directionHistogram[maxBucket]) / Double(max(1, bonds.count)) > 0.5 {
-            rotate(component: component,
-                   around: pivot,
-                   by: CGFloat((60 - maxBucket)) * .pi / 180.0,
-                   positions: &positions)
+        calcDirectionHistogram(
+            bonds: bonds,
+            positions: positions,
+            counts: &directionHistogram,
+            limit: 60)
+        if let maxBucket = directionHistogram.indices.max(by: {
+            directionHistogram[$0] < directionHistogram[$1]
+        }),
+            maxBucket != 0,
+            Double(directionHistogram[maxBucket]) / Double(max(1, bonds.count)) > 0.5
+        {
+            rotate(
+                component: component,
+                around: pivot,
+                by: CGFloat((60 - maxBucket)) * .pi / 180.0,
+                positions: &positions)
         }
 
-        guard let startingBounds = boundingBox(component: component, positions: positions) else { return }
+        guard let startingBounds = boundingBox(component: component, positions: positions) else {
+            return
+        }
         let baselineWidth = startingBounds.width
         var bestWidth = baselineWidth
 
-        calcDirectionHistogram(bonds: bonds,
-                               positions: positions,
-                               counts: &directionHistogram,
-                               limit: 180)
+        calcDirectionHistogram(
+            bonds: bonds,
+            positions: positions,
+            counts: &directionHistogram,
+            limit: 180)
         var maxAligned = directionHistogram[60] + directionHistogram[120]
-        var bestCoordinates = Dictionary(uniqueKeysWithValues: component.compactMap { atomID in
-            positions[atomID].map { (atomID, $0) }
-        })
+        var bestCoordinates = Dictionary(
+            uniqueKeysWithValues: component.compactMap { atomID in
+                positions[atomID].map { (atomID, $0) }
+            })
 
         let step = CGFloat.pi / 3
         var total: CGFloat = 0
 
         while total < (2 * .pi) {
             total += step
-            rotate(component: component,
-                   around: pivot,
-                   by: step,
-                   positions: &positions)
+            rotate(
+                component: component,
+                around: pivot,
+                by: step,
+                positions: &positions)
 
-            guard let currentBounds = boundingBox(component: component, positions: positions) else { continue }
+            guard let currentBounds = boundingBox(component: component, positions: positions) else {
+                continue
+            }
             let width = currentBounds.width
             let widthDelta = abs(width - baselineWidth)
 
             if widthDelta >= widthDiff && width > bestWidth {
                 bestWidth = width
-                bestCoordinates = Dictionary(uniqueKeysWithValues: component.compactMap { atomID in
-                    positions[atomID].map { (atomID, $0) }
-                })
+                bestCoordinates = Dictionary(
+                    uniqueKeysWithValues: component.compactMap { atomID in
+                        positions[atomID].map { (atomID, $0) }
+                    })
                 continue
             }
 
             guard widthDelta <= widthDiff else { continue }
 
-            calcDirectionHistogram(bonds: bonds,
-                                   positions: positions,
-                                   counts: &directionHistogram,
-                                   limit: 180)
+            calcDirectionHistogram(
+                bonds: bonds,
+                positions: positions,
+                counts: &directionHistogram,
+                limit: 180)
             let aligned = directionHistogram[60] + directionHistogram[120]
             let alignDelta = aligned - maxAligned
 
-            if alignDelta > alignDiff ||
-                aligned == bonds.count ||
-                (alignDelta == 0 && width > bestWidth) {
+            if alignDelta > alignDiff || aligned == bonds.count || (alignDelta == 0 && width > bestWidth) {
                 maxAligned = aligned
                 bestWidth = width
-                bestCoordinates = Dictionary(uniqueKeysWithValues: component.compactMap { atomID in
-                    positions[atomID].map { (atomID, $0) }
-                })
+                bestCoordinates = Dictionary(
+                    uniqueKeysWithValues: component.compactMap { atomID in
+                        positions[atomID].map { (atomID, $0) }
+                    })
             }
         }
 
@@ -810,21 +965,28 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func orientMarkushRootComponent(component: Set<Int>,
-                                                   molecule: Molecule,
-                                                   positions: inout [Int: CGPoint]) {
+    private static func orientMarkushRootComponent(
+        component: Set<Int>,
+        molecule: Molecule,
+        positions: inout [Int: CGPoint]
+    ) {
         guard componentRGroupMembership(component, molecule: molecule) == nil,
-              let bounds = boundingBox(component: component, positions: positions) else {
+            let bounds = boundingBox(component: component, positions: positions)
+        else {
             return
         }
 
         let repeatAtomID = molecule.sgroups
-            .filter { $0.kind == .structureRepeatUnit && $0.atomIDs.count == 1 && component.contains($0.atomIDs[0]) }
+            .filter {
+                $0.kind == .structureRepeatUnit && $0.atomIDs.count == 1
+                    && component.contains($0.atomIDs[0])
+            }
             .compactMap(\.atomIDs.first)
             .first
 
         guard let repeatAtomID,
-              let repeatPosition = positions[repeatAtomID] else {
+            let repeatPosition = positions[repeatAtomID]
+        else {
             return
         }
 
@@ -833,16 +995,19 @@ enum CDKStructureDiagramGenerator {
         let dy = repeatPosition.y - center.y
         guard hypot(dx, dy) > 0.0001 else { return }
 
-        rotate(component: component,
-               around: center,
-               by: .pi - atan2(dy, dx),
-               positions: &positions)
+        rotate(
+            component: component,
+            around: center,
+            by: .pi - atan2(dy, dx),
+            positions: &positions)
     }
 
-    private static func orientMarkushAttachmentComponent(component: Set<Int>,
-                                                         graph: CDKMolecularGraph,
-                                                         molecule: Molecule,
-                                                         positions: inout [Int: CGPoint]) -> Bool {
+    private static func orientMarkushAttachmentComponent(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule,
+        positions: inout [Int: CGPoint]
+    ) -> Bool {
         guard componentRGroupMembership(component, molecule: molecule) != nil else {
             return false
         }
@@ -853,23 +1018,26 @@ enum CDKStructureDiagramGenerator {
             }
         }
         guard let attachment = attachmentAtoms.first,
-              component.count > 2,
-              let bounds = boundingBox(component: component, positions: positions),
-              let attachmentNeighbors = positions[attachment.id].map({ _ in
-                  graph.neighbors(of: attachment.id).filter(component.contains)
-              }),
-              attachmentNeighbors.count == 1,
-              let attachmentPosition = positions[attachment.id],
-              let neighborPosition = positions[attachmentNeighbors[0]] else {
+            component.count > 2,
+            let bounds = boundingBox(component: component, positions: positions),
+            let attachmentNeighbors = positions[attachment.id].map({ _ in
+                graph.neighbors(of: attachment.id).filter(component.contains)
+            }),
+            attachmentNeighbors.count == 1,
+            let attachmentPosition = positions[attachment.id],
+            let neighborPosition = positions[attachmentNeighbors[0]]
+        else {
             return false
         }
 
         let pivot = CGPoint(x: bounds.midX, y: bounds.midY)
-        rotate(component: component,
-               around: pivot,
-               by: -atan2(neighborPosition.y - attachmentPosition.y,
-                          neighborPosition.x - attachmentPosition.x),
-               positions: &positions)
+        rotate(
+            component: component,
+            around: pivot,
+            by: -atan2(
+                neighborPosition.y - attachmentPosition.y,
+                neighborPosition.x - attachmentPosition.x),
+            positions: &positions)
 
         guard let rotatedAttachmentPosition = positions[attachment.id] else {
             return false
@@ -890,22 +1058,28 @@ enum CDKStructureDiagramGenerator {
         if abs(lowestBelow) < highestAbove {
             for atomID in component {
                 guard let point = positions[atomID] else { continue }
-                positions[atomID] = CGPoint(x: point.x,
-                                            y: (2 * rotatedAttachmentPosition.y) - point.y)
+                positions[atomID] = CGPoint(
+                    x: point.x,
+                    y: (2 * rotatedAttachmentPosition.y) - point.y)
             }
         }
 
-        rotate(component: component,
-               around: pivot,
-               by: -.pi / 6,
-               positions: &positions)
+        rotate(
+            component: component,
+            around: pivot,
+            by: -.pi / 6,
+            positions: &positions)
         return true
     }
 
-    private static func orientableBonds(in component: Set<Int>,
-                                        graph: CDKMolecularGraph,
-                                        molecule: Molecule) -> [Bond] {
-        let componentBonds = molecule.bonds.filter { component.contains($0.a1) && component.contains($0.a2) }
+    private static func orientableBonds(
+        in component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule
+    ) -> [Bond] {
+        let componentBonds = molecule.bonds.filter {
+            component.contains($0.a1) && component.contains($0.a2)
+        }
         var filtered: [Bond] = []
         filtered.reserveCapacity(componentBonds.count)
 
@@ -925,10 +1099,12 @@ enum CDKStructureDiagramGenerator {
         return filtered.isEmpty ? componentBonds : filtered
     }
 
-    private static func calcDirectionHistogram(bonds: [Bond],
-                                               positions: [Int: CGPoint],
-                                               counts: inout [Int],
-                                               limit: Int) {
+    private static func calcDirectionHistogram(
+        bonds: [Bond],
+        positions: [Int: CGPoint],
+        counts: inout [Int],
+        limit: Int
+    ) {
         guard limit > 0, limit <= counts.count else { return }
         for index in counts.indices {
             counts[index] = 0
@@ -947,10 +1123,12 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func rotate(component: Set<Int>,
-                               around pivot: CGPoint,
-                               by angle: CGFloat,
-                               positions: inout [Int: CGPoint]) {
+    private static func rotate(
+        component: Set<Int>,
+        around pivot: CGPoint,
+        by angle: CGFloat,
+        positions: inout [Int: CGPoint]
+    ) {
         guard abs(angle) > 0.0001 else { return }
         let cosAngle = cos(angle)
         let sinAngle = sin(angle)
@@ -958,8 +1136,9 @@ enum CDKStructureDiagramGenerator {
             guard let point = positions[atomID] else { continue }
             let dx = point.x - pivot.x
             let dy = point.y - pivot.y
-            positions[atomID] = CGPoint(x: pivot.x + (dx * cosAngle) - (dy * sinAngle),
-                                        y: pivot.y + (dx * sinAngle) + (dy * cosAngle))
+            positions[atomID] = CGPoint(
+                x: pivot.x + (dx * cosAngle) - (dy * sinAngle),
+                y: pivot.y + (dx * sinAngle) + (dy * cosAngle))
         }
     }
 
@@ -990,10 +1169,11 @@ enum CDKStructureDiagramGenerator {
     }
 
     private static func simpleRingLockAtoms(_ ringSystems: [[[Int]]]) -> Set<Int> {
-        Set(ringSystems.compactMap { system -> [Int]? in
-            guard system.count == 1 else { return nil }
-            return system[0]
-        }.flatMap { $0 })
+        Set(
+            ringSystems.compactMap { system -> [Int]? in
+                guard system.count == 1 else { return nil }
+                return system[0]
+            }.flatMap { $0 })
     }
 
     private static func ringEdgeMultiplicity(_ rings: [[Int]]) -> [CDKEdgeKey: Int] {
@@ -1006,8 +1186,10 @@ enum CDKStructureDiagramGenerator {
         return out
     }
 
-    private static func fusedEdgeCount(_ ringSystem: [[Int]],
-                                       multiplicity: [CDKEdgeKey: Int]) -> Int {
+    private static func fusedEdgeCount(
+        _ ringSystem: [[Int]],
+        multiplicity: [CDKEdgeKey: Int]
+    ) -> Int {
         let edges = Set(ringSystem.flatMap { CDKRingSearch.edgeKeys(for: $0) })
         return edges.reduce(into: 0) { acc, edge in
             if (multiplicity[edge] ?? 0) > 1 { acc += 1 }
@@ -1036,12 +1218,14 @@ enum CDKStructureDiagramGenerator {
         return .isolated
     }
 
-    private static func placeRingSystem(_ rings: [[Int]],
-                                        graph: CDKMolecularGraph,
-                                        component: Set<Int>,
-                                        positions: inout [Int: CGPoint],
-                                        center: CGPoint,
-                                        bondLength: CGFloat) {
+    private static func placeRingSystem(
+        _ rings: [[Int]],
+        graph: CDKMolecularGraph,
+        component: Set<Int>,
+        positions: inout [Int: CGPoint],
+        center: CGPoint,
+        bondLength: CGFloat
+    ) {
         guard !rings.isEmpty else { return }
         let ordered = rings.sorted { lhs, rhs in
             if lhs.count != rhs.count { return lhs.count < rhs.count }
@@ -1049,27 +1233,31 @@ enum CDKStructureDiagramGenerator {
         }
 
         // Seed with a ring that already has most anchors, otherwise place the first ring regularly.
-        let seedIndex = ordered.indices.max { a, b in
-            let ca = ordered[a].filter { positions[$0] != nil }.count
-            let cb = ordered[b].filter { positions[$0] != nil }.count
-            if ca != cb { return ca < cb }
-            return ordered[a].count > ordered[b].count
-        } ?? 0
+        let seedIndex =
+            ordered.indices.max { a, b in
+                let ca = ordered[a].filter { positions[$0] != nil }.count
+                let cb = ordered[b].filter { positions[$0] != nil }.count
+                if ca != cb { return ca < cb }
+                return ordered[a].count > ordered[b].count
+            } ?? 0
 
         let seedRing = ordered[seedIndex]
         if seedRing.allSatisfy({ positions[$0] == nil }) {
-            placeRegularRing(seedRing,
-                             center: center,
-                             bondLength: bondLength,
-                             positions: &positions)
+            placeRegularRing(
+                seedRing,
+                center: center,
+                bondLength: bondLength,
+                positions: &positions)
         } else if seedRing.contains(where: { positions[$0] == nil }) {
             let shared = seedRing.filter { positions[$0] != nil }
-            if let candidate = bestRingPlacementCandidate(ring: seedRing,
-                                                          sharedAnchors: shared,
-                                                          graph: graph,
-                                                          component: component,
-                                                          positions: positions,
-                                                          bondLength: bondLength) {
+            if let candidate = bestRingPlacementCandidate(
+                ring: seedRing,
+                sharedAnchors: shared,
+                graph: graph,
+                component: component,
+                positions: positions,
+                bondLength: bondLength)
+            {
                 for atomID in seedRing where positions[atomID] == nil {
                     positions[atomID] = candidate[atomID]
                 }
@@ -1128,12 +1316,14 @@ enum CDKStructureDiagramGenerator {
                 let shared = ring.filter { positions[$0] != nil }
                 guard !shared.isEmpty else { continue }
 
-                if let candidate = bestRingPlacementCandidate(ring: ring,
-                                                              sharedAnchors: shared,
-                                                              graph: graph,
-                                                              component: component,
-                                                              positions: positions,
-                                                              bondLength: bondLength) {
+                if let candidate = bestRingPlacementCandidate(
+                    ring: ring,
+                    sharedAnchors: shared,
+                    graph: graph,
+                    component: component,
+                    positions: positions,
+                    bondLength: bondLength)
+                {
                     var didPlace = false
                     for atomID in ring where positions[atomID] == nil {
                         if let p = candidate[atomID] {
@@ -1151,13 +1341,15 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func placeDistributedPartners(component: Set<Int>,
-                                                 graph: CDKMolecularGraph,
-                                                 molecule: Molecule,
-                                                 ringsInComponent: [[Int]],
-                                                 positions: inout [Int: CGPoint],
-                                                 bondLength: CGFloat,
-                                                 fallbackCenter: CGPoint) -> Bool {
+    private static func placeDistributedPartners(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule,
+        ringsInComponent: [[Int]],
+        positions: inout [Int: CGPoint],
+        bondLength: CGFloat,
+        fallbackCenter: CGPoint
+    ) -> Bool {
         var progressedAny = false
         var localProgress = true
         var guardPasses = 0
@@ -1177,23 +1369,25 @@ enum CDKStructureDiagramGenerator {
                     ring.contains(center) && ring.contains(where: { positions[$0] == nil })
                 }
                 for ring in candidateRings {
-                    placeRingSystem([ring],
-                                    graph: graph,
-                                    component: component,
-                                    positions: &positions,
-                                    center: positions[center] ?? fallbackCenter,
-                                    bondLength: bondLength)
+                    placeRingSystem(
+                        [ring],
+                        graph: graph,
+                        component: component,
+                        positions: &positions,
+                        center: positions[center] ?? fallbackCenter,
+                        bondLength: bondLength)
                 }
 
                 unplaced = neighbors.filter { positions[$0] == nil }
                 guard !unplaced.isEmpty else { continue }
 
-                let dirs = proposedDirections(center: center,
-                                              placedNeighbors: placed,
-                                              unplacedCount: unplaced.count,
-                                              positions: positions,
-                                              molecule: molecule,
-                                              graph: graph)
+                let dirs = proposedDirections(
+                    center: center,
+                    placedNeighbors: placed,
+                    unplacedCount: unplaced.count,
+                    positions: positions,
+                    molecule: molecule,
+                    graph: graph)
                 for (idxUnplaced, atomID) in unplaced.enumerated() {
                     guard let centerPos = positions[center] else { continue }
                     let dir = dirs[min(idxUnplaced, dirs.count - 1)]
@@ -1210,37 +1404,44 @@ enum CDKStructureDiagramGenerator {
         return progressedAny
     }
 
-    private static func placeLongestUnplacedChains(component: Set<Int>,
-                                                   graph: CDKMolecularGraph,
-                                                   molecule: Molecule,
-                                                   ringAtoms: Set<Int>,
-                                                   ringEdges: Set<CDKEdgeKey>,
-                                                   positions: inout [Int: CGPoint],
-                                                   bondLength: CGFloat) -> Bool {
+    private static func placeLongestUnplacedChains(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule,
+        ringAtoms: Set<Int>,
+        ringEdges: Set<CDKEdgeKey>,
+        positions: inout [Int: CGPoint],
+        bondLength: CGFloat
+    ) -> Bool {
         var anyPlaced = false
         var passes = 0
 
         while passes < Tuning.chainPassLimit {
-            guard let chain = bestUnplacedChain(component: component,
-                                                graph: graph,
-                                                molecule: molecule,
-                                                ringAtoms: ringAtoms,
-                                                ringEdges: ringEdges,
-                                                positions: positions),
-                  chain.count >= 3 else { break }
+            guard
+                let chain = bestUnplacedChain(
+                    component: component,
+                    graph: graph,
+                    molecule: molecule,
+                    ringAtoms: ringAtoms,
+                    ringEdges: ringEdges,
+                    positions: positions),
+                chain.count >= 3
+            else { break }
 
             let anchor = chain[0]
             let first = chain[1]
-            let initial = initialChainVector(anchor: anchor,
-                                             firstUnplaced: first,
-                                             component: component,
-                                             graph: graph,
-                                             positions: positions)
-            placeLinearChain(chain,
-                             initialVector: initial,
-                             component: component,
-                             positions: &positions,
-                             bondLength: bondLength)
+            let initial = initialChainVector(
+                anchor: anchor,
+                firstUnplaced: first,
+                component: component,
+                graph: graph,
+                positions: positions)
+            placeLinearChain(
+                chain,
+                initialVector: initial,
+                component: component,
+                positions: &positions,
+                bondLength: bondLength)
             anyPlaced = true
             passes += 1
         }
@@ -1248,12 +1449,14 @@ enum CDKStructureDiagramGenerator {
         return anyPlaced
     }
 
-    private static func bestUnplacedChain(component: Set<Int>,
-                                          graph: CDKMolecularGraph,
-                                          molecule: Molecule,
-                                          ringAtoms: Set<Int>,
-                                          ringEdges: Set<CDKEdgeKey>,
-                                          positions: [Int: CGPoint]) -> [Int]? {
+    private static func bestUnplacedChain(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule,
+        ringAtoms: Set<Int>,
+        ringEdges: Set<CDKEdgeKey>,
+        positions: [Int: CGPoint]
+    ) -> [Int]? {
         var best: [Int] = []
 
         for anchor in component.sorted() where positions[anchor] != nil {
@@ -1266,16 +1469,18 @@ enum CDKStructureDiagramGenerator {
                 .sorted()
 
             for start in starts {
-                let chain = longestUnplacedChain(anchor: anchor,
-                                                 start: start,
-                                                 component: component,
-                                                 graph: graph,
-                                                 molecule: molecule,
-                                                 ringAtoms: ringAtoms,
-                                                 ringEdges: ringEdges,
-                                                 positions: positions)
-                if chain.count > best.count ||
-                    (chain.count == best.count && pathLexicographicallyPrecedes(chain, best)) {
+                let chain = longestUnplacedChain(
+                    anchor: anchor,
+                    start: start,
+                    component: component,
+                    graph: graph,
+                    molecule: molecule,
+                    ringAtoms: ringAtoms,
+                    ringEdges: ringEdges,
+                    positions: positions)
+                if chain.count > best.count
+                    || (chain.count == best.count && pathLexicographicallyPrecedes(chain, best))
+                {
                     best = chain
                 }
             }
@@ -1284,21 +1489,24 @@ enum CDKStructureDiagramGenerator {
         return best.count >= 3 ? best : nil
     }
 
-    private static func longestUnplacedChain(anchor: Int,
-                                             start: Int,
-                                             component: Set<Int>,
-                                             graph: CDKMolecularGraph,
-                                             molecule: Molecule,
-                                             ringAtoms: Set<Int>,
-                                             ringEdges: Set<CDKEdgeKey>,
-                                             positions: [Int: CGPoint]) -> [Int] {
+    private static func longestUnplacedChain(
+        anchor: Int,
+        start: Int,
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        molecule: Molecule,
+        ringAtoms: Set<Int>,
+        ringEdges: Set<CDKEdgeKey>,
+        positions: [Int: CGPoint]
+    ) -> [Int] {
         guard positions[start] == nil else { return [anchor] }
         var best: [Int] = [anchor, start]
         var visited: Set<Int> = [anchor, start]
 
         func updateBest(_ path: [Int]) {
-            if path.count > best.count ||
-                (path.count == best.count && pathLexicographicallyPrecedes(path, best)) {
+            if path.count > best.count
+                || (path.count == best.count && pathLexicographicallyPrecedes(path, best))
+            {
                 best = path
             }
         }
@@ -1315,7 +1523,9 @@ enum CDKStructureDiagramGenerator {
 
             var extended = false
             let neighbors = graph.neighbors(of: cur)
-                .filter { component.contains($0) && $0 != prev && positions[$0] == nil && !visited.contains($0) }
+                .filter {
+                    component.contains($0) && $0 != prev && positions[$0] == nil && !visited.contains($0)
+                }
                 .sorted()
 
             for nxt in neighbors {
@@ -1341,37 +1551,45 @@ enum CDKStructureDiagramGenerator {
         return best
     }
 
-    private static func chainEligibleAtom(_ atomID: Int,
-                                          molecule: Molecule,
-                                          ringAtoms: Set<Int>) -> Bool {
+    private static func chainEligibleAtom(
+        _ atomID: Int,
+        molecule: Molecule,
+        ringAtoms: Set<Int>
+    ) -> Bool {
         guard !ringAtoms.contains(atomID), let atom = molecule.atom(id: atomID) else { return false }
         return atom.element.uppercased() != "H"
     }
 
-    private static func chainEligibleEdge(_ a: Int,
-                                          _ b: Int,
-                                          graph: CDKMolecularGraph,
-                                          ringEdges: Set<CDKEdgeKey>) -> Bool {
+    private static func chainEligibleEdge(
+        _ a: Int,
+        _ b: Int,
+        graph: CDKMolecularGraph,
+        ringEdges: Set<CDKEdgeKey>
+    ) -> Bool {
         let key = CDKEdgeKey(a, b)
         guard !ringEdges.contains(key) else { return false }
         guard let bond = graph.edgeBonds[key] else { return false }
         return bond.order == .single || bond.order == .double
     }
 
-    private static func placeLinearChain(_ chain: [Int],
-                                         initialVector: CGVector,
-                                         component: Set<Int>,
-                                         positions: inout [Int: CGPoint],
-                                         bondLength: CGFloat) {
+    private static func placeLinearChain(
+        _ chain: [Int],
+        initialVector: CGVector,
+        component: Set<Int>,
+        positions: inout [Int: CGPoint],
+        bondLength: CGFloat
+    ) {
         guard chain.count >= 2, let anchorPos = positions[chain[0]] else { return }
         let startDir = normalize(initialVector) ?? unitVector(angle: 0)
         if positions[chain[1]] == nil {
-            positions[chain[1]] = CGPoint(x: anchorPos.x + startDir.dx * bondLength,
-                                          y: anchorPos.y + startDir.dy * bondLength)
+            positions[chain[1]] = CGPoint(
+                x: anchorPos.x + startDir.dx * bondLength,
+                y: anchorPos.y + startDir.dy * bondLength)
         }
         if chain.count < 3 { return }
 
-        let centroid = placedCentroid(component: component, positions: positions, excluding: Set(chain.dropFirst()))
+        let centroid = placedCentroid(
+            component: component, positions: positions, excluding: Set(chain.dropFirst()))
         var lastSign: CGFloat = 0
 
         for i in 2..<chain.count {
@@ -1385,8 +1603,10 @@ enum CDKStructureDiagramGenerator {
             let dir2 = rotate(back, by: -Tuning.chainPreferredAngle)
             let p1 = CGPoint(x: pb.x + dir1.dx * bondLength, y: pb.y + dir1.dy * bondLength)
             let p2 = CGPoint(x: pb.x + dir2.dx * bondLength, y: pb.y + dir2.dy * bondLength)
-            let s1 = chainPointScore(point: p1, centroid: centroid, positions: positions, bondLength: bondLength)
-            let s2 = chainPointScore(point: p2, centroid: centroid, positions: positions, bondLength: bondLength)
+            let s1 = chainPointScore(
+                point: p1, centroid: centroid, positions: positions, bondLength: bondLength)
+            let s2 = chainPointScore(
+                point: p2, centroid: centroid, positions: positions, bondLength: bondLength)
 
             let sign1: CGFloat = 1
             let sign2: CGFloat = -1
@@ -1409,11 +1629,13 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func initialChainVector(anchor: Int,
-                                           firstUnplaced: Int,
-                                           component: Set<Int>,
-                                           graph: CDKMolecularGraph,
-                                           positions: [Int: CGPoint]) -> CGVector {
+    private static func initialChainVector(
+        anchor: Int,
+        firstUnplaced: Int,
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        positions: [Int: CGPoint]
+    ) -> CGVector {
         guard let center = positions[anchor] else {
             let angle = CGFloat((anchor * 41 + firstUnplaced * 17) % 360) * .pi / 180.0
             return unitVector(angle: angle)
@@ -1421,7 +1643,9 @@ enum CDKStructureDiagramGenerator {
 
         var sum = CGVector.zero
         for n in graph.neighbors(of: anchor) where component.contains(n) {
-            guard let p = positions[n], let u = normalize(CGVector(dx: p.x - center.x, dy: p.y - center.y)) else { continue }
+            guard let p = positions[n],
+                let u = normalize(CGVector(dx: p.x - center.x, dy: p.y - center.y))
+            else { continue }
             sum.dx += u.dx
             sum.dy += u.dy
         }
@@ -1433,10 +1657,12 @@ enum CDKStructureDiagramGenerator {
         return unitVector(angle: angle)
     }
 
-    private static func chainPointScore(point: CGPoint,
-                                        centroid: CGPoint?,
-                                        positions: [Int: CGPoint],
-                                        bondLength: CGFloat) -> CGFloat {
+    private static func chainPointScore(
+        point: CGPoint,
+        centroid: CGPoint?,
+        positions: [Int: CGPoint],
+        bondLength: CGFloat
+    ) -> CGFloat {
         var score: CGFloat = 0
         let hard = bondLength * 0.95
         let soft = bondLength * 1.20
@@ -1456,10 +1682,13 @@ enum CDKStructureDiagramGenerator {
         return score
     }
 
-    private static func placedCentroid(component: Set<Int>,
-                                       positions: [Int: CGPoint],
-                                       excluding: Set<Int> = []) -> CGPoint? {
-        let points = component
+    private static func placedCentroid(
+        component: Set<Int>,
+        positions: [Int: CGPoint],
+        excluding: Set<Int> = []
+    ) -> CGPoint? {
+        let points =
+            component
             .filter { !excluding.contains($0) }
             .compactMap { positions[$0] }
         guard !points.isEmpty else { return nil }
@@ -1476,10 +1705,12 @@ enum CDKStructureDiagramGenerator {
         return lhs.count < rhs.count
     }
 
-    private static func placeRegularRing(_ ring: [Int],
-                                         center: CGPoint,
-                                         bondLength: CGFloat,
-                                         positions: inout [Int: CGPoint]) {
+    private static func placeRegularRing(
+        _ ring: [Int],
+        center: CGPoint,
+        bondLength: CGFloat,
+        positions: inout [Int: CGPoint]
+    ) {
         guard ring.count >= 3 else { return }
         let n = CGFloat(ring.count)
         let radius = bondLength / (2 * sin(.pi / n))
@@ -1503,7 +1734,9 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func regularRingLocalCoordinates(_ ring: [Int], bondLength: CGFloat) -> [Int: CGPoint] {
+    private static func regularRingLocalCoordinates(_ ring: [Int], bondLength: CGFloat) -> [Int:
+        CGPoint]
+    {
         guard ring.count >= 3 else { return [:] }
         let n = CGFloat(ring.count)
         let radius = bondLength / (2 * sin(.pi / n))
@@ -1516,12 +1749,14 @@ enum CDKStructureDiagramGenerator {
         return out
     }
 
-    private static func bestRingPlacementCandidate(ring: [Int],
-                                                   sharedAnchors: [Int],
-                                                   graph: CDKMolecularGraph,
-                                                   component: Set<Int>,
-                                                   positions: [Int: CGPoint],
-                                                   bondLength: CGFloat) -> [Int: CGPoint]? {
+    private static func bestRingPlacementCandidate(
+        ring: [Int],
+        sharedAnchors: [Int],
+        graph: CDKMolecularGraph,
+        component: Set<Int>,
+        positions: [Int: CGPoint],
+        bondLength: CGFloat
+    ) -> [Int: CGPoint]? {
         var candidates: [[Int: CGPoint]] = []
         let local = regularRingLocalCoordinates(ring, bondLength: bondLength)
         let localMirror = local.mapValues { CGPoint(x: $0.x, y: -$0.y) }
@@ -1529,39 +1764,46 @@ enum CDKStructureDiagramGenerator {
         if sharedAnchors.count >= 2 {
             for pair in anchorPairs(in: ring, shared: sharedAnchors, maxPairs: 4) {
                 guard let t1 = positions[pair.0], let t2 = positions[pair.1] else { continue }
-                if let c1 = transformedRing(local: local, ring: ring, anchor1: pair.0, anchor2: pair.1, target1: t1, target2: t2) {
+                if let c1 = transformedRing(
+                    local: local, ring: ring, anchor1: pair.0, anchor2: pair.1, target1: t1, target2: t2)
+                {
                     candidates.append(c1)
                 }
-                if let c2 = transformedRing(local: localMirror, ring: ring, anchor1: pair.0, anchor2: pair.1, target1: t1, target2: t2) {
+                if let c2 = transformedRing(
+                    local: localMirror, ring: ring, anchor1: pair.0, anchor2: pair.1, target1: t1, target2: t2
+                ) {
                     candidates.append(c2)
                 }
             }
         } else if let s = sharedAnchors.first, let target = positions[s] {
-            candidates += singleAnchorCandidates(ring: ring,
-                                                 local: local,
-                                                 localMirror: localMirror,
-                                                 sharedAtom: s,
-                                                 target: target,
-                                                 graph: graph,
-                                                 positions: positions)
+            candidates += singleAnchorCandidates(
+                ring: ring,
+                local: local,
+                localMirror: localMirror,
+                sharedAtom: s,
+                target: target,
+                graph: graph,
+                positions: positions)
         }
 
         guard !candidates.isEmpty else { return nil }
         return candidates.min { lhs, rhs in
-            let sl = ringPlacementScore(candidate: lhs,
-                                        ring: ring,
-                                        sharedAnchors: sharedAnchors,
-                                        graph: graph,
-                                        component: component,
-                                        positions: positions,
-                                        bondLength: bondLength)
-            let sr = ringPlacementScore(candidate: rhs,
-                                        ring: ring,
-                                        sharedAnchors: sharedAnchors,
-                                        graph: graph,
-                                        component: component,
-                                        positions: positions,
-                                        bondLength: bondLength)
+            let sl = ringPlacementScore(
+                candidate: lhs,
+                ring: ring,
+                sharedAnchors: sharedAnchors,
+                graph: graph,
+                component: component,
+                positions: positions,
+                bondLength: bondLength)
+            let sr = ringPlacementScore(
+                candidate: rhs,
+                ring: ring,
+                sharedAnchors: sharedAnchors,
+                graph: graph,
+                component: component,
+                positions: positions,
+                bondLength: bondLength)
             return sl < sr
         }
     }
@@ -1624,12 +1866,14 @@ enum CDKStructureDiagramGenerator {
         return Array(pairs.prefix(max(1, maxPairs)))
     }
 
-    private static func transformedRing(local: [Int: CGPoint],
-                                        ring: [Int],
-                                        anchor1: Int,
-                                        anchor2: Int,
-                                        target1: CGPoint,
-                                        target2: CGPoint) -> [Int: CGPoint]? {
+    private static func transformedRing(
+        local: [Int: CGPoint],
+        ring: [Int],
+        anchor1: Int,
+        anchor2: Int,
+        target1: CGPoint,
+        target2: CGPoint
+    ) -> [Int: CGPoint]? {
         guard let l1 = local[anchor1], let l2 = local[anchor2] else { return nil }
         let lv = CGVector(dx: l2.x - l1.x, dy: l2.y - l1.y)
         let tv = CGVector(dx: target2.x - target1.x, dy: target2.y - target1.y)
@@ -1654,13 +1898,15 @@ enum CDKStructureDiagramGenerator {
         return out
     }
 
-    private static func singleAnchorCandidates(ring: [Int],
-                                               local: [Int: CGPoint],
-                                               localMirror: [Int: CGPoint],
-                                               sharedAtom: Int,
-                                               target: CGPoint,
-                                               graph: CDKMolecularGraph,
-                                               positions: [Int: CGPoint]) -> [[Int: CGPoint]] {
+    private static func singleAnchorCandidates(
+        ring: [Int],
+        local: [Int: CGPoint],
+        localMirror: [Int: CGPoint],
+        sharedAtom: Int,
+        target: CGPoint,
+        graph: CDKMolecularGraph,
+        positions: [Int: CGPoint]
+    ) -> [[Int: CGPoint]] {
         guard ring.contains(sharedAtom) else { return [] }
         let preferred = preferredExpansionDirection(for: sharedAtom, graph: graph, positions: positions)
 
@@ -1692,9 +1938,11 @@ enum CDKStructureDiagramGenerator {
         return out
     }
 
-    private static func preferredExpansionDirection(for atomID: Int,
-                                                    graph: CDKMolecularGraph,
-                                                    positions: [Int: CGPoint]) -> CGVector {
+    private static func preferredExpansionDirection(
+        for atomID: Int,
+        graph: CDKMolecularGraph,
+        positions: [Int: CGPoint]
+    ) -> CGVector {
         guard let center = positions[atomID] else { return CGVector(dx: 1, dy: 0) }
         let placedNeighbors = graph.neighbors(of: atomID).compactMap { id -> CGPoint? in
             positions[id]
@@ -1721,13 +1969,15 @@ enum CDKStructureDiagramGenerator {
         return CGVector(dx: 1, dy: 0)
     }
 
-    private static func ringPlacementScore(candidate: [Int: CGPoint],
-                                           ring: [Int],
-                                           sharedAnchors: [Int],
-                                           graph: CDKMolecularGraph,
-                                           component: Set<Int>,
-                                           positions: [Int: CGPoint],
-                                           bondLength: CGFloat) -> CGFloat {
+    private static func ringPlacementScore(
+        candidate: [Int: CGPoint],
+        ring: [Int],
+        sharedAnchors: [Int],
+        graph: CDKMolecularGraph,
+        component: Set<Int>,
+        positions: [Int: CGPoint],
+        bondLength: CGFloat
+    ) -> CGFloat {
         var score: CGFloat = 0
         let sharedSet = Set(sharedAnchors)
         let ringSet = Set(ring)
@@ -1802,13 +2052,16 @@ enum CDKStructureDiagramGenerator {
         return score
     }
 
-    private static func chooseSeed(in component: Set<Int>,
-                                   graph: CDKMolecularGraph,
-                                   ringSet: Set<Int>,
-                                   preferAcyclicTerminalSeed: Bool) -> Int {
+    private static func chooseSeed(
+        in component: Set<Int>,
+        graph: CDKMolecularGraph,
+        ringSet: Set<Int>,
+        preferAcyclicTerminalSeed: Bool
+    ) -> Int {
         if preferAcyclicTerminalSeed,
-           ringSet.isEmpty,
-           let acyclicSeed = acyclicTerminalSeed(in: component, graph: graph) {
+            ringSet.isEmpty,
+            let acyclicSeed = acyclicTerminalSeed(in: component, graph: graph)
+        {
             return acyclicSeed
         }
 
@@ -1820,9 +2073,12 @@ enum CDKStructureDiagramGenerator {
         } ?? (component.min() ?? 0)
     }
 
-    private static func acyclicTerminalSeed(in component: Set<Int>,
-                                            graph: CDKMolecularGraph) -> Int? {
-        let leaves = component
+    private static func acyclicTerminalSeed(
+        in component: Set<Int>,
+        graph: CDKMolecularGraph
+    ) -> Int? {
+        let leaves =
+            component
             .filter { graph.neighbors(of: $0).filter(component.contains).count <= 1 }
             .sorted()
         guard !leaves.isEmpty else { return component.min() }
@@ -1835,9 +2091,11 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func maximumGraphDistance(from seed: Int,
-                                             in component: Set<Int>,
-                                             graph: CDKMolecularGraph) -> Int {
+    private static func maximumGraphDistance(
+        from seed: Int,
+        in component: Set<Int>,
+        graph: CDKMolecularGraph
+    ) -> Int {
         var queue: [Int] = [seed]
         var head = 0
         var distance: [Int: Int] = [seed: 0]
@@ -1864,12 +2122,14 @@ enum CDKStructureDiagramGenerator {
         return molecule.bonds(forAtom: atomID).contains { $0.order == .aromatic }
     }
 
-    private static func proposedDirections(center: Int,
-                                           placedNeighbors: [Int],
-                                           unplacedCount: Int,
-                                           positions: [Int: CGPoint],
-                                           molecule: Molecule,
-                                           graph: CDKMolecularGraph) -> [CGVector] {
+    private static func proposedDirections(
+        center: Int,
+        placedNeighbors: [Int],
+        unplacedCount: Int,
+        positions: [Int: CGPoint],
+        molecule: Molecule,
+        graph: CDKMolecularGraph
+    ) -> [CGVector] {
         guard unplacedCount > 0 else { return [] }
         guard let centerPos = positions[center] else {
             return (0..<unplacedCount).map { i in
@@ -1905,7 +2165,8 @@ enum CDKStructureDiagramGenerator {
         let sum = vecs.reduce(CGVector.zero) { acc, v in
             CGVector(dx: acc.dx + v.dx, dy: acc.dy + v.dy)
         }
-        let open = normalize(CGVector(dx: -sum.dx, dy: -sum.dy))
+        let open =
+            normalize(CGVector(dx: -sum.dx, dy: -sum.dy))
             ?? normalize(CGVector(dx: -vecs.first!.dy, dy: vecs.first!.dx))
             ?? CGVector(dx: 1, dy: 0)
 
@@ -1914,16 +2175,22 @@ enum CDKStructureDiagramGenerator {
         return fanDirections(count: unplacedCount, baseAngle: base, totalSpread: spread)
     }
 
-    private static func preferredAngle(at atomID: Int, molecule: Molecule, graph: CDKMolecularGraph) -> CGFloat {
+    private static func preferredAngle(at atomID: Int, molecule: Molecule, graph: CDKMolecularGraph)
+        -> CGFloat
+    {
         let neighbors = graph.neighbors(of: atomID)
         guard let atom = molecule.atom(id: atomID) else { return 109.5 * .pi / 180.0 }
 
-        let hasPiLike = molecule.bonds(forAtom: atomID).contains { $0.order == .double || $0.order == .triple || $0.order == .aromatic }
+        let hasPiLike =
+            molecule.bonds(forAtom: atomID).contains {
+                $0.order == .double || $0.order == .triple || $0.order == .aromatic
+            }
             || atom.aromatic
             || neighbors.contains(where: { n in
                 molecule.bonds(forAtom: n).contains { b in
                     let other = (b.a1 == n) ? b.a2 : b.a1
-                    return other != atomID && (b.order == .double || b.order == .triple || b.order == .aromatic)
+                    return other != atomID
+                        && (b.order == .double || b.order == .triple || b.order == .aromatic)
                 }
             })
 
@@ -1937,12 +2204,14 @@ enum CDKStructureDiagramGenerator {
         }
     }
 
-    private static func optimizeByBondFlips(component: Set<Int>,
-                                            graph: CDKMolecularGraph,
-                                            positions: inout [Int: CGPoint],
-                                            locked: Set<Int>,
-                                            ringEdges: Set<CDKEdgeKey>,
-                                            bondLength: CGFloat) {
+    private static func optimizeByBondFlips(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        positions: inout [Int: CGPoint],
+        locked: Set<Int>,
+        ringEdges: Set<CDKEdgeKey>,
+        bondLength: CGFloat
+    ) {
         let candidateBonds = graph.edgeBonds.values
             .filter { component.contains($0.a1) && component.contains($0.a2) && $0.order == .single }
             .sorted { $0.id < $1.id }
@@ -1951,12 +2220,13 @@ enum CDKStructureDiagramGenerator {
             let edge = CDKEdgeKey(bond.a1, bond.a2)
             if ringEdges.contains(edge) { continue }
 
-            let left = sideComponent(start: bond.a1,
-                                     blockedA: bond.a1,
-                                     blockedB: bond.a2,
-                                     graph: graph,
-                                     component: component)
-            if left.contains(bond.a2) { continue } // not a bridge in this component
+            let left = sideComponent(
+                start: bond.a1,
+                blockedA: bond.a1,
+                blockedB: bond.a2,
+                graph: graph,
+                component: component)
+            if left.contains(bond.a2) { continue }  // not a bridge in this component
             let right = component.subtracting(left)
 
             let sideToFlip = (left.count <= right.count) ? left : right
@@ -1964,30 +2234,34 @@ enum CDKStructureDiagramGenerator {
             if sideToFlip.contains(where: { locked.contains($0) }) { continue }
             guard let p1 = positions[bond.a1], let p2 = positions[bond.a2] else { continue }
 
-            let before = layoutPenalty(component: component,
-                                       graph: graph,
-                                       positions: positions,
-                                       bondLength: bondLength)
+            let before = layoutPenalty(
+                component: component,
+                graph: graph,
+                positions: positions,
+                bondLength: bondLength)
             var trial = positions
             for atomID in sideToFlip {
                 guard let p = trial[atomID] else { continue }
                 trial[atomID] = reflect(point: p, acrossLineFrom: p1, to: p2)
             }
-            let after = layoutPenalty(component: component,
-                                      graph: graph,
-                                      positions: trial,
-                                      bondLength: bondLength)
+            let after = layoutPenalty(
+                component: component,
+                graph: graph,
+                positions: trial,
+                bondLength: bondLength)
             if after < before * Tuning.bondFlipGainThreshold {
                 positions = trial
             }
         }
     }
 
-    private static func sideComponent(start: Int,
-                                      blockedA: Int,
-                                      blockedB: Int,
-                                      graph: CDKMolecularGraph,
-                                      component: Set<Int>) -> Set<Int> {
+    private static func sideComponent(
+        start: Int,
+        blockedA: Int,
+        blockedB: Int,
+        graph: CDKMolecularGraph,
+        component: Set<Int>
+    ) -> Set<Int> {
         var seen: Set<Int> = [start]
         var stack: [Int] = [start]
         while let cur = stack.popLast() {
@@ -2003,13 +2277,17 @@ enum CDKStructureDiagramGenerator {
         return seen
     }
 
-    private static func layoutPenalty(component: Set<Int>,
-                                      graph: CDKMolecularGraph,
-                                      positions: [Int: CGPoint],
-                                      bondLength: CGFloat) -> CGFloat {
+    private static func layoutPenalty(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        positions: [Int: CGPoint],
+        bondLength: CGFloat
+    ) -> CGFloat {
         var score: CGFloat = 0
         let atoms = component.sorted()
-        let bonds = graph.edgeBonds.values.filter { component.contains($0.a1) && component.contains($0.a2) }
+        let bonds = graph.edgeBonds.values.filter {
+            component.contains($0.a1) && component.contains($0.a2)
+        }
         let bonded = Set(bonds.map { CDKEdgeKey($0.a1, $0.a2) })
 
         for i in 0..<atoms.count {
@@ -2039,7 +2317,8 @@ enum CDKStructureDiagramGenerator {
                     continue
                 }
                 guard let p1 = positions[b1.a1], let p2 = positions[b1.a2],
-                      let q1 = positions[b2.a1], let q2 = positions[b2.a2] else { continue }
+                    let q1 = positions[b2.a1], let q2 = positions[b2.a2]
+                else { continue }
                 if segmentsIntersect(p1, p2, q1, q2) {
                     score += 160
                 } else {
@@ -2055,16 +2334,20 @@ enum CDKStructureDiagramGenerator {
         return score
     }
 
-    private static func relax(component: Set<Int>,
-                              graph: CDKMolecularGraph,
-                              positions: inout [Int: CGPoint],
-                              bondLength: CGFloat,
-                              locked: Set<Int>,
-                              iterations: Int) {
+    private static func relax(
+        component: Set<Int>,
+        graph: CDKMolecularGraph,
+        positions: inout [Int: CGPoint],
+        bondLength: CGFloat,
+        locked: Set<Int>,
+        iterations: Int
+    ) {
         let atoms = component.sorted()
         guard atoms.count >= 2 else { return }
         let bonded = Set(graph.edgeBonds.keys)
-        let bonds = graph.edgeBonds.values.filter { component.contains($0.a1) && component.contains($0.a2) }
+        let bonds = graph.edgeBonds.values.filter {
+            component.contains($0.a1) && component.contains($0.a2)
+        }
 
         for _ in 0..<max(1, iterations) {
             for bond in bonds {
@@ -2118,7 +2401,8 @@ enum CDKStructureDiagramGenerator {
                         continue
                     }
                     guard let p1 = positions[b1.a1], let p2 = positions[b1.a2],
-                          let q1 = positions[b2.a1], let q2 = positions[b2.a2] else { continue }
+                        let q1 = positions[b2.a1], let q2 = positions[b2.a2]
+                    else { continue }
                     guard segmentsIntersect(p1, p2, q1, q2) else { continue }
 
                     let v1 = normalize(CGVector(dx: p2.x - p1.x, dy: p2.y - p1.y)) ?? CGVector(dx: 1, dy: 0)
@@ -2158,10 +2442,13 @@ enum CDKStructureDiagramGenerator {
             maxX = max(maxX, p.x)
             maxY = max(maxY, p.y)
         }
-        return CGRect(x: minX, y: minY, width: max(0.0001, maxX - minX), height: max(0.0001, maxY - minY))
+        return CGRect(
+            x: minX, y: minY, width: max(0.0001, maxX - minX), height: max(0.0001, maxY - minY))
     }
 
-    private static func fanDirections(count: Int, baseAngle: CGFloat, totalSpread: CGFloat) -> [CGVector] {
+    private static func fanDirections(count: Int, baseAngle: CGFloat, totalSpread: CGFloat)
+        -> [CGVector]
+    {
         guard count > 0 else { return [] }
         if count == 1 { return [unitVector(angle: baseAngle)] }
 
@@ -2199,7 +2486,9 @@ enum CDKStructureDiagramGenerator {
         )
     }
 
-    private static func segmentsIntersect(_ p1: CGPoint, _ p2: CGPoint, _ p3: CGPoint, _ p4: CGPoint) -> Bool {
+    private static func segmentsIntersect(_ p1: CGPoint, _ p2: CGPoint, _ p3: CGPoint, _ p4: CGPoint)
+        -> Bool
+    {
         let o1 = orientation(p1, p2, p3)
         let o2 = orientation(p1, p2, p4)
         let o3 = orientation(p3, p4, p1)
@@ -2221,7 +2510,9 @@ enum CDKStructureDiagramGenerator {
         return CGPoint(x: 2 * proj.x - p.x, y: 2 * proj.y - p.y)
     }
 
-    private static func segmentDistance(_ p1: CGPoint, _ p2: CGPoint, _ p3: CGPoint, _ p4: CGPoint) -> CGFloat {
+    private static func segmentDistance(_ p1: CGPoint, _ p2: CGPoint, _ p3: CGPoint, _ p4: CGPoint)
+        -> CGFloat
+    {
         if segmentsIntersect(p1, p2, p3, p4) { return 0 }
         return min(
             pointSegmentDistance(p1, a: p3, b: p4),

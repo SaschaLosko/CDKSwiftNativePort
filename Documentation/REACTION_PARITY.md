@@ -1,7 +1,7 @@
 # Reaction Parity
 
 `CDKSwiftNativePort` now tracks a curated reaction parity corpus derived from
-upstream CDK `2.12` reaction model, reaction-IO, and reaction-manipulator
+upstream CDK `2.13` reaction model, reaction-IO, and reaction-manipulator
 tests.
 
 ## Scope

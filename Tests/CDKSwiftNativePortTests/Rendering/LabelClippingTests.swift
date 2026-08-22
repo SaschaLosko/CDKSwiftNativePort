@@ -1,24 +1,46 @@
 import Foundation
-#if canImport(CoreGraphics)
-import CoreGraphics
-#endif
 import XCTest
+
 @testable import CDKSwiftNativePort
 
+#if canImport(CoreGraphics)
+    import CoreGraphics
+#endif
+
 final class LabelClippingTests: XCTestCase {
+
+    func testNegativeChargesUseAsciiMinus() {
+        XCTAssertEqual(
+            CDKLabelText.chargeText(
+                for: Atom(
+                    id: 1,
+                    element: "O",
+                    position: .zero,
+                    charge: -1)),
+            "-")
+        XCTAssertEqual(
+            CDKLabelText.chargeText(
+                for: Atom(
+                    id: 1,
+                    element: "O",
+                    position: .zero,
+                    charge: -2)),
+            "-2")
+    }
 
     func testClipSegmentTrimsEndpointsInsideLabelRects() {
         let start = CGPoint(x: 0, y: 0)
         let end = CGPoint(x: 100, y: 0)
         let rects = [
             CGRect(x: -10, y: -8, width: 20, height: 16),
-            CGRect(x: 90, y: -8, width: 20, height: 16)
+            CGRect(x: 90, y: -8, width: 20, height: 16),
         ]
 
-        let clipped = CDKLabelClipping.clipSegmentEndpoints(start,
-                                                            end,
-                                                            labelRects: rects,
-                                                            padding: 2.0)
+        let clipped = CDKLabelClipping.clipSegmentEndpoints(
+            start,
+            end,
+            labelRects: rects,
+            padding: 2.0)
 
         let trimmed = try? XCTUnwrap(clipped)
         XCTAssertNotNil(trimmed)
@@ -33,26 +55,29 @@ final class LabelClippingTests: XCTestCase {
         let end = CGPoint(x: 10, y: 0)
         let rect = CGRect(x: -5, y: -5, width: 20, height: 10)
 
-        let clipped = CDKLabelClipping.clipSegmentEndpoints(start,
-                                                            end,
-                                                            labelRects: [rect],
-                                                            padding: 2.0)
+        let clipped = CDKLabelClipping.clipSegmentEndpoints(
+            start,
+            end,
+            labelRects: [rect],
+            padding: 2.0)
 
         XCTAssertNil(clipped)
     }
 
     func testGlyphObstacleTrimsSegmentFromLabelInterior() {
-        let obstacle = CDKLabelClipping.makeGlyphObstacle(text: "O",
-                                                          center: CGPoint(x: 40, y: 20),
-                                                          fontSize: 24,
-                                                          padding: 2.0)
+        let obstacle = CDKLabelClipping.makeGlyphObstacle(
+            text: "O",
+            center: CGPoint(x: 40, y: 20),
+            fontSize: 24,
+            padding: 2.0)
 
         let start = CGPoint(x: 40, y: 20)
         let end = CGPoint(x: 80, y: 20)
-        let clipped = CDKLabelClipping.clipSegmentEndpoints(start,
-                                                            end,
-                                                            labelObstacles: [obstacle],
-                                                            padding: 2.0)
+        let clipped = CDKLabelClipping.clipSegmentEndpoints(
+            start,
+            end,
+            labelObstacles: [obstacle],
+            padding: 2.0)
 
         let trimmed = try? XCTUnwrap(clipped)
         XCTAssertNotNil(trimmed)

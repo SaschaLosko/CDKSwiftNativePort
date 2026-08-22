@@ -23,9 +23,12 @@ public final class CDKSmilesGenerator {
     }
 
     public func create(_ reaction: CDKReaction) -> String {
-        let reactants = reaction.reactantParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(separator: ".")
-        let agents = reaction.agentParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(separator: ".")
-        let products = reaction.productParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(separator: ".")
+        let reactants = reaction.reactantParticipants.map { createCoreSmiles($0.molecule).smiles }
+            .joined(separator: ".")
+        let agents = reaction.agentParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(
+            separator: ".")
+        let products = reaction.productParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(
+            separator: ".")
 
         let base = reactants + ">" + agents + ">" + products
         guard wantsCxOutput, let cxState = reaction.cxState else { return base }
@@ -39,7 +42,8 @@ public final class CDKSmilesGenerator {
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
         let adjacency = buildAdjacency(molecule)
         let bondByEdge = buildBondLookup(molecule)
-        let aromaticBondIDs = flavor.contains(.useAromaticSymbols) ? molecule.aromaticDisplayBondIDs() : Set<Int>()
+        let aromaticBondIDs =
+            flavor.contains(.useAromaticSymbols) ? molecule.aromaticDisplayBondIDs() : Set<Int>()
 
         let components = connectedComponents(molecule, adjacency: adjacency)
 
@@ -51,9 +55,10 @@ public final class CDKSmilesGenerator {
             let componentSet = Set(component)
             guard let root = component.min() else { continue }
 
-            let (treeAdjacency, treeEdges) = buildTree(component: componentSet,
-                                                       root: root,
-                                                       adjacency: adjacency)
+            let (treeAdjacency, treeEdges) = buildTree(
+                component: componentSet,
+                root: root,
+                adjacency: adjacency)
 
             let componentEdges = Set(
                 bondByEdge.keys.filter { componentSet.contains($0.a) && componentSet.contains($0.b) }
@@ -81,15 +86,16 @@ public final class CDKSmilesGenerator {
             }
 
             var visitedTreeAtoms: Set<Int> = []
-            let rendered = renderTreeAtom(root,
-                                          parent: nil,
-                                          treeAdjacency: treeAdjacency,
-                                          ringClosuresByAtom: ringClosuresByAtom,
-                                          bondByEdge: bondByEdge,
-                                          atomByID: atomByID,
-                                          aromaticBondIDs: aromaticBondIDs,
-                                          atomOutputOrder: &atomOutputOrder,
-                                          visited: &visitedTreeAtoms)
+            let rendered = renderTreeAtom(
+                root,
+                parent: nil,
+                treeAdjacency: treeAdjacency,
+                ringClosuresByAtom: ringClosuresByAtom,
+                bondByEdge: bondByEdge,
+                atomByID: atomByID,
+                aromaticBondIDs: aromaticBondIDs,
+                atomOutputOrder: &atomOutputOrder,
+                visited: &visitedTreeAtoms)
             componentStrings.append(rendered)
         }
 
@@ -104,17 +110,36 @@ public final class CDKSmilesGenerator {
         guard wantsCxOutput else { return nil }
 
         let atomIDs = atomOutputOrder.isEmpty ? molecule.atoms.map(\.id) : atomOutputOrder
-        let atomIndexByID = Dictionary(uniqueKeysWithValues: atomIDs.enumerated().map { ($0.element, $0.offset) })
+        let atomIndexByID = Dictionary(
+            uniqueKeysWithValues: atomIDs.enumerated().map { ($0.element, $0.offset) })
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
+        let orderedBonds = molecule.bonds.sorted { $0.id < $1.id }
+        let bondIndexByID = Dictionary(
+            uniqueKeysWithValues: orderedBonds.enumerated().map { ($1.id, $0) })
 
         var state = molecule.cxState ?? CDKCxSmilesState()
+
+        let generatedCoordinateBonds = Dictionary(
+            grouping: orderedBonds.compactMap { bond -> (Int, Int)? in
+                guard let referenceAtomID = bond.coordinateBondReferenceAtomID,
+                    let atomIndex = atomIndexByID[referenceAtomID],
+                    let bondIndex = bondIndexByID[bond.id]
+                else { return nil }
+                return (atomIndex, bondIndex)
+            }, by: \.0
+        )
+        .mapValues { entries in entries.map(\.1).sorted() }
+        if !generatedCoordinateBonds.isEmpty {
+            state.coordinateBonds = generatedCoordinateBonds
+        }
 
         if shouldEmitAtomLabels {
             state.atomLabels = [:]
             for atomID in atomIDs {
                 guard let atom = atomByID[atomID],
-                      let outputIndex = atomIndexByID[atomID],
-                      let label = cxAtomLabel(for: atom) else { continue }
+                    let outputIndex = atomIndexByID[atomID],
+                    let label = cxAtomLabel(for: atom)
+                else { continue }
                 state.atomLabels[outputIndex] = label
             }
         }
@@ -123,8 +148,9 @@ public final class CDKSmilesGenerator {
             state.atomValues = [:]
             for atomID in atomIDs {
                 guard let atom = atomByID[atomID],
-                      let outputIndex = atomIndexByID[atomID],
-                      let value = atom.atomValue else { continue }
+                    let outputIndex = atomIndexByID[atomID],
+                    let value = atom.atomValue
+                else { continue }
                 state.atomValues[outputIndex] = value
             }
         }
@@ -132,9 +158,10 @@ public final class CDKSmilesGenerator {
         if shouldEmitCoordinates(for: molecule) {
             state.atomCoordinates = atomIDs.compactMap { atomID in
                 guard let atom = atomByID[atomID] else { return nil }
-                return CxCoordinate(x: atom.position.x,
-                                    y: atom.position.y,
-                                    z: atom.zPosition ?? 0)
+                return CxCoordinate(
+                    x: atom.position.x,
+                    y: atom.position.y,
+                    z: atom.zPosition ?? 0)
             }
             state.has3DCoordinates = state.atomCoordinates.contains { abs($0.z) > 0.000_000_1 }
         }
@@ -143,8 +170,9 @@ public final class CDKSmilesGenerator {
             state.atomRadicals = [:]
             for atomID in atomIDs {
                 guard let atom = atomByID[atomID],
-                      let outputIndex = atomIndexByID[atomID],
-                      let radicalType = atom.radicalType ?? radicalType(for: atom.radical) else { continue }
+                    let outputIndex = atomIndexByID[atomID],
+                    let radicalType = atom.radicalType ?? radicalType(for: atom.radical)
+                else { continue }
                 state.atomRadicals[outputIndex] = radicalType
             }
         }
@@ -153,8 +181,9 @@ public final class CDKSmilesGenerator {
             state.ligandOrdering = [:]
             for atomID in atomIDs {
                 guard let atom = atomByID[atomID],
-                      let outputIndex = atomIndexByID[atomID],
-                      let orderingIDs = atom.ligandOrderingAtomIDs else { continue }
+                    let outputIndex = atomIndexByID[atomID],
+                    let orderingIDs = atom.ligandOrderingAtomIDs
+                else { continue }
                 let orderingIndices = orderingIDs.compactMap { atomIndexByID[$0] }
                 guard !orderingIndices.isEmpty else { continue }
                 state.ligandOrdering[outputIndex] = orderingIndices
@@ -165,8 +194,9 @@ public final class CDKSmilesGenerator {
             state.stereoGroups = [:]
             for atomID in atomIDs {
                 guard let atom = atomByID[atomID],
-                      let outputIndex = atomIndexByID[atomID],
-                      let group = atom.cxStereoGroup else { continue }
+                    let outputIndex = atomIndexByID[atomID],
+                    let group = atom.cxStereoGroup
+                else { continue }
                 state.stereoGroups[outputIndex] = group
             }
 
@@ -174,10 +204,12 @@ public final class CDKSmilesGenerator {
                 let groupedIndices = Set(state.stereoGroups.keys)
                 for atomID in atomIDs {
                     guard let atom = atomByID[atomID],
-                          atom.chirality != .none,
-                          let outputIndex = atomIndexByID[atomID],
-                          !groupedIndices.contains(outputIndex) else { continue }
-                    state.stereoGroups[outputIndex] = CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0)
+                        atom.chirality != .none,
+                        let outputIndex = atomIndexByID[atomID],
+                        !groupedIndices.contains(outputIndex)
+                    else { continue }
+                    state.stereoGroups[outputIndex] = CDKCxSmilesParser.encodeStereoGroup(
+                        kind: "abs", number: 0)
                 }
             }
         }
@@ -186,7 +218,8 @@ public final class CDKSmilesGenerator {
             state.positionalVariations = [:]
             for sgroup in molecule.sgroups where sgroup.kind == .extMulticenter {
                 guard let beginID = sgroup.atomIDs.first,
-                      let beginIndex = atomIndexByID[beginID] else { continue }
+                    let beginIndex = atomIndexByID[beginID]
+                else { continue }
                 let endpointIndices = sgroup.atomIDs.dropFirst().compactMap { atomIndexByID[$0] }
                 guard !endpointIndices.isEmpty else { continue }
                 state.positionalVariations[beginIndex] = endpointIndices
@@ -195,28 +228,31 @@ public final class CDKSmilesGenerator {
 
         if shouldEmitPolymer || shouldEmitDataSgroups {
             var generatedSgroups: [CDKCxSmilesState.SgroupDefinition] = []
-            for sgroup in molecule.sgroups where sgroup.kind == .structureRepeatUnit || sgroup.kind == .polymer || sgroup.kind == .data {
+            for sgroup in molecule.sgroups
+            where sgroup.kind == .structureRepeatUnit || sgroup.kind == .polymer || sgroup.kind == .data {
                 switch sgroup.kind {
                 case .data:
                     if shouldEmitDataSgroups {
                         generatedSgroups.append(
-                            .init(kind: .data,
-                                  atomIndices: sgroup.atomIDs.compactMap { atomIndexByID[$0] },
-                                  dataFieldName: sgroup.dataFieldName,
-                                  dataValue: sgroup.dataValue,
-                                  dataOperator: sgroup.dataOperator,
-                                  dataUnit: sgroup.dataUnit,
-                                  dataTag: sgroup.dataTag)
+                            .init(
+                                kind: .data,
+                                atomIndices: sgroup.atomIDs.compactMap { atomIndexByID[$0] },
+                                dataFieldName: sgroup.dataFieldName,
+                                dataValue: sgroup.dataValue,
+                                dataOperator: sgroup.dataOperator,
+                                dataUnit: sgroup.dataUnit,
+                                dataTag: sgroup.dataTag)
                         )
                     }
                 case .structureRepeatUnit, .polymer:
                     generatedSgroups.append(
-                        .init(kind: .polymer,
-                              keyword: sgroup.keyword ?? defaultPolymerKeyword(for: sgroup),
-                              atomIndices: sgroup.atomIDs.compactMap { atomIndexByID[$0] },
-                              subscriptText: sgroup.subscriptText,
-                              superscriptText: sgroup.connectivity ?? sgroup.superscriptText,
-                              childIndices: sgroup.childGroupIndices)
+                        .init(
+                            kind: .polymer,
+                            keyword: sgroup.keyword ?? defaultPolymerKeyword(for: sgroup),
+                            atomIndices: sgroup.atomIDs.compactMap { atomIndexByID[$0] },
+                            subscriptText: sgroup.subscriptText,
+                            superscriptText: sgroup.connectivity ?? sgroup.superscriptText,
+                            childIndices: sgroup.childGroupIndices)
                     )
                 case .extMulticenter, .generic:
                     break
@@ -232,15 +268,20 @@ public final class CDKSmilesGenerator {
         var layers: [String] = []
 
         if shouldEmitFragmentGroups, !state.fragmentGroups.isEmpty {
-            let groups = state.fragmentGroups.map { $0.map(String.init).joined(separator: ".") }.joined(separator: ",")
+            let groups = state.fragmentGroups.map { $0.map(String.init).joined(separator: ".") }.joined(
+                separator: ",")
             layers.append("f:\(groups)")
         }
 
-        if shouldEmitAtomLabels, let layer = serializeAtomMetadata(state.atomLabels, prefix: "$", suffix: "$") {
+        if shouldEmitAtomLabels,
+            let layer = serializeAtomMetadata(state.atomLabels, prefix: "$", suffix: "$")
+        {
             layers.append(layer)
         }
 
-        if shouldEmitAtomValues, let layer = serializeAtomMetadata(state.atomValues, prefix: "$_AV:", suffix: "$") {
+        if shouldEmitAtomValues,
+            let layer = serializeAtomMetadata(state.atomValues, prefix: "$_AV:", suffix: "$")
+        {
             layers.append(layer)
         }
 
@@ -263,6 +304,18 @@ public final class CDKSmilesGenerator {
             layers.append(layer)
         }
 
+        if shouldEmitCoordinateBonds,
+            let coordinateBonds = state.coordinateBonds,
+            !coordinateBonds.isEmpty
+        {
+            let entries = coordinateBonds.keys.sorted().flatMap { atomIndex in
+                coordinateBonds[atomIndex, default: []].sorted().map { "\(atomIndex).\($0)" }
+            }
+            if !entries.isEmpty {
+                layers.append("C:" + entries.joined(separator: ","))
+            }
+        }
+
         if shouldEmitMulticenter, !state.positionalVariations.isEmpty {
             let entries = state.positionalVariations.keys.sorted().compactMap { key -> String? in
                 guard let values = state.positionalVariations[key], !values.isEmpty else { return nil }
@@ -283,7 +336,7 @@ public final class CDKSmilesGenerator {
             }
         }
 
-        if (shouldEmitPolymer || shouldEmitDataSgroups), !state.sgroups.isEmpty {
+        if shouldEmitPolymer || shouldEmitDataSgroups, !state.sgroups.isEmpty {
             for sgroup in state.sgroups {
                 switch sgroup.kind {
                 case .polymer:
@@ -335,7 +388,8 @@ public final class CDKSmilesGenerator {
         }
 
         if shouldEmitRGroups, !state.rGroupDefinitions.isEmpty {
-            let orderedLabels = !state.rGroupOrder.isEmpty ? state.rGroupOrder : state.rGroupDefinitions.keys.sorted()
+            let orderedLabels =
+                !state.rGroupOrder.isEmpty ? state.rGroupOrder : state.rGroupDefinitions.keys.sorted()
             let definitions = orderedLabels.compactMap { label -> String? in
                 guard let values = state.rGroupDefinitions[label], !values.isEmpty else { return nil }
                 return "_\(label)=" + values.map { "{\($0)}" }.joined(separator: ",")
@@ -403,6 +457,10 @@ public final class CDKSmilesGenerator {
         flavor.contains(.cxsmiles) || flavor.contains(.cxRGroups)
     }
 
+    private var shouldEmitCoordinateBonds: Bool {
+        flavor.contains(.cxsmiles) || flavor.contains(.cxCoordinateBonds)
+    }
+
     private struct EdgeKey: Hashable, Comparable {
         let a: Int
         let b: Int
@@ -450,8 +508,10 @@ public final class CDKSmilesGenerator {
         return lookup
     }
 
-    private func connectedComponents(_ molecule: Molecule,
-                                     adjacency: [Int: [Int]]) -> [[Int]] {
+    private func connectedComponents(
+        _ molecule: Molecule,
+        adjacency: [Int: [Int]]
+    ) -> [[Int]] {
         var visited: Set<Int> = []
         var components: [[Int]] = []
 
@@ -481,9 +541,11 @@ public final class CDKSmilesGenerator {
         return components
     }
 
-    private func buildTree(component: Set<Int>,
-                           root: Int,
-                           adjacency: [Int: [Int]]) -> (adjacency: [Int: [Int]], edges: Set<EdgeKey>) {
+    private func buildTree(
+        component: Set<Int>,
+        root: Int,
+        adjacency: [Int: [Int]]
+    ) -> (adjacency: [Int: [Int]], edges: Set<EdgeKey>) {
         var treeAdjacency: [Int: [Int]] = [:]
         var treeEdges: Set<EdgeKey> = []
         var visited: Set<Int> = []
@@ -545,15 +607,17 @@ public final class CDKSmilesGenerator {
         return assignments
     }
 
-    private func renderTreeAtom(_ atomID: Int,
-                                parent: Int?,
-                                treeAdjacency: [Int: [Int]],
-                                ringClosuresByAtom: [Int: [RingClosure]],
-                                bondByEdge: [EdgeKey: Bond],
-                                atomByID: [Int: Atom],
-                                aromaticBondIDs: Set<Int>,
-                                atomOutputOrder: inout [Int],
-                                visited: inout Set<Int>) -> String {
+    private func renderTreeAtom(
+        _ atomID: Int,
+        parent: Int?,
+        treeAdjacency: [Int: [Int]],
+        ringClosuresByAtom: [Int: [RingClosure]],
+        bondByEdge: [EdgeKey: Bond],
+        atomByID: [Int: Atom],
+        aromaticBondIDs: Set<Int>,
+        atomOutputOrder: inout [Int],
+        visited: inout Set<Int>
+    ) -> String {
         var out = ""
         var stack: [RenderEvent] = [.atom(id: atomID, parent: parent)]
 
@@ -588,14 +652,16 @@ public final class CDKSmilesGenerator {
                     guard let bond = bondByEdge[edge] else { continue }
 
                     pending.append(.text("("))
-                    pending.append(.text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
+                    pending.append(
+                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
                     pending.append(.atom(id: childID, parent: atomID))
                     pending.append(.text(")"))
                 }
 
                 let edge = EdgeKey(atomID, mainChild)
                 if let bond = bondByEdge[edge] {
-                    pending.append(.text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
+                    pending.append(
+                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
                     pending.append(.atom(id: mainChild, parent: atomID))
                 }
 
@@ -669,6 +735,11 @@ public final class CDKSmilesGenerator {
         }
 
         if let rGroupLabel = atom.rGroupLabel {
+            if rGroupLabel == 0,
+                atom.element.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "R"
+            {
+                return "R"
+            }
             return "R\(rGroupLabel)"
         }
 
@@ -709,9 +780,11 @@ public final class CDKSmilesGenerator {
         }
     }
 
-    private func serializeAtomMetadata(_ values: [Int: String],
-                                       prefix: String,
-                                       suffix: String) -> String? {
+    private func serializeAtomMetadata(
+        _ values: [Int: String],
+        prefix: String,
+        suffix: String
+    ) -> String? {
         guard !values.isEmpty else { return nil }
         let lastIndex = values.keys.max() ?? -1
         guard lastIndex >= 0 else { return nil }
@@ -747,7 +820,8 @@ public final class CDKSmilesGenerator {
         }
 
         if sortedEntries.count == 1,
-           sortedEntries.first?.kind == "and" {
+            sortedEntries.first?.kind == "and"
+        {
             return ["r"]
         }
 
@@ -894,9 +968,11 @@ public final class CDKSmilesGenerator {
         return "\(sign)\(magnitude)"
     }
 
-    private func bondToken(_ bond: Bond,
-                           atomByID: [Int: Atom],
-                           aromaticBondIDs: Set<Int>) -> String {
+    private func bondToken(
+        _ bond: Bond,
+        atomByID: [Int: Atom],
+        aromaticBondIDs: Set<Int>
+    ) -> String {
         if bond.queryType != nil {
             return "-"
         }
