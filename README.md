@@ -127,6 +127,7 @@ This boundary is enforced in tests:
 - Swift language mode: `6`
 - Apple deployment targets declared in `Package.swift`:
   - `macOS 15+`
+    - Apple silicon (`arm64`) only; Intel `x86_64` compilation is rejected
   - `iOS 13+`
 - Linux:
   - builds and runs as a Swift package under Swift on Linux
