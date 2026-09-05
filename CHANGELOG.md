@@ -14,6 +14,18 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.29] - 2026-09-05
+
+### Fixed
+
+- Replaced the VABC descriptor's exhaustive simple-cycle fallback with
+  shortest-path-tree cycle candidates and independent minimum-basis selection.
+  Dense or fused ring systems no longer enumerate every cycle up to 24 atoms,
+  avoiding runaway CPU and memory use during molecular property calculation.
+- Verified basis rank, total length, connectivity, macrocycles, and explicit
+  hydrogen exclusion, including all 1,024 five-atom graphs and a 70-atom
+  disconnected stress graph. Existing VABC reference values remain unchanged.
+
 ## [1.4.27] - 2026-08-22
 
 ### Added

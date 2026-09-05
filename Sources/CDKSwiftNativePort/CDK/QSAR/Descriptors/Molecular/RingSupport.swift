@@ -54,7 +54,7 @@ enum CDKDescriptorRingSupport {
         return false
     }
 
-    static func smallestRingBasis(in molecule: Molecule, maximumCycleSize: Int = 24) -> [Cycle] {
+    static func smallestRingBasis(in molecule: Molecule) -> [Cycle] {
         let heavyAtomIDs = CDKDescriptorSupport.heavyAtomIDs(in: molecule)
         guard !heavyAtomIDs.isEmpty else { return [] }
 
@@ -65,28 +65,27 @@ enum CDKDescriptorRingSupport {
         let adjacency = heavyAdjacency(in: molecule, heavyAtomIDs: heavyAtomIDs)
         var candidatesByBondSet: [Set<Int>: Cycle] = [:]
 
-        for bond in heavyBonds {
-            guard let path = shortestPath(from: bond.a1,
-                                          to: bond.a2,
-                                          excludingBondID: bond.id,
-                                          adjacency: adjacency) else {
-                continue
-            }
-
-            let pathBondIDs = bondIDs(for: path, in: molecule)
-            guard !pathBondIDs.isEmpty else { continue }
-            let cycleBondIDs = pathBondIDs.union([bond.id])
-            candidatesByBondSet[cycleBondIDs] = Cycle(atoms: path, bondIDs: cycleBondIDs)
-        }
-
-        if candidatesByBondSet.count < cycleRank {
-            let cappedCycleSize = min(maximumCycleSize, max(3, heavyAtomIDs.count))
-            for ring in molecule.simpleCycles(maxSize: cappedCycleSize) {
-                guard ring.count >= 3 else { continue }
-                guard ring.allSatisfy({ heavyAtomIDs.contains($0) }) else { continue }
-                let ringBondIDs = bondIDs(in: ring, molecule: molecule)
-                guard ringBondIDs.count == ring.count else { continue }
-                candidatesByBondSet[ringBondIDs] = Cycle(atoms: ring, bondIDs: ringBondIDs)
+        // Horton candidates: fundamental cycles of one shortest-path tree per
+        // atom. This polynomial-size set contains a minimum cycle basis. A
+        // cycle-length cap does not bound exhaustive simple-cycle enumeration:
+        // fused/cage graphs can have millions of cycles shorter than 24 atoms.
+        // Reference: https://doi.org/10.1137/0216026
+        for root in heavyAtomIDs.sorted() {
+            let paths = shortestPaths(from: root, adjacency: adjacency)
+            for bond in heavyBonds {
+                guard let left = paths[bond.a1], let right = paths[bond.a2] else { continue }
+                var commonCount = 0
+                while commonCount < min(left.count, right.count),
+                      left[commonCount] == right[commonCount] {
+                    commonCount += 1
+                }
+                // Remove the shared root-to-ancestor path. Tree edges yield
+                // only two atoms and are not cycles.
+                let atoms = Array(left[(commonCount - 1)...].reversed()) + right[commonCount...]
+                guard atoms.count >= 3 else { continue }
+                let cycleBondIDs = bondIDs(in: atoms, molecule: molecule)
+                guard cycleBondIDs.count == atoms.count else { continue }
+                candidatesByBondSet[cycleBondIDs] = Cycle(atoms: atoms, bondIDs: cycleBondIDs)
             }
         }
 
@@ -133,55 +132,20 @@ enum CDKDescriptorRingSupport {
         }
     }
 
-    private static func shortestPath(from start: Int,
-                                     to goal: Int,
-                                     excludingBondID: Int,
-                                     adjacency: [Int: [(neighbor: Int, bondID: Int)]]) -> [Int]? {
-        guard start != goal else { return nil }
-
-        var queue = [start]
-        var visited: Set<Int> = [start]
-        var previous: [Int: Int] = [:]
+    private static func shortestPaths(from root: Int,
+                                      adjacency: [Int: [(neighbor: Int, bondID: Int)]]) -> [Int: [Int]] {
+        var paths = [root: [root]]
+        var queue = [root]
         var cursor = 0
-
         while cursor < queue.count {
             let current = queue[cursor]
             cursor += 1
-
-            for entry in adjacency[current, default: []] where entry.bondID != excludingBondID {
-                if !visited.insert(entry.neighbor).inserted {
-                    continue
-                }
-                previous[entry.neighbor] = current
-                if entry.neighbor == goal {
-                    var path = [goal]
-                    var step = goal
-                    while let predecessor = previous[step] {
-                        path.append(predecessor)
-                        if predecessor == start {
-                            return path.reversed()
-                        }
-                        step = predecessor
-                    }
-                    return nil
-                }
+            for entry in adjacency[current, default: []] where paths[entry.neighbor] == nil {
+                paths[entry.neighbor] = paths[current, default: []] + [entry.neighbor]
                 queue.append(entry.neighbor)
             }
         }
-
-        return nil
-    }
-
-    private static func bondIDs(for atomPath: [Int], in molecule: Molecule) -> Set<Int> {
-        guard atomPath.count >= 2 else { return [] }
-        var bondIDs = Set<Int>()
-        for index in 0..<(atomPath.count - 1) {
-            guard let bond = molecule.bond(between: atomPath[index], and: atomPath[index + 1]) else {
-                return []
-            }
-            bondIDs.insert(bond.id)
-        }
-        return bondIDs
+        return paths
     }
 
     private static func bondIDs(in cycle: [Int], molecule: Molecule) -> Set<Int> {
