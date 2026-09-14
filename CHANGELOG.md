@@ -14,6 +14,21 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.30] - 2026-09-14
+
+### Added
+
+- Native Swift CDX and CDXML export for 2D molecules and reactions, with binary
+  Data APIs, Unicode titles, stereo, multi-page layout, and reaction atom maps.
+- Explicit unsupported-feature errors and independent Indigo read-back tooling;
+  no additional runtime dependency.
+
+### Fixed
+
+- Preserve SMILES neighbor encounter order, including ring-closure positions and
+  virtual hydrogen ligands, for parity-correct ChemDraw wedges. Mark generated
+  SMILES coordinates so unspecified double bonds remain unspecified on export.
+
 ## [1.4.29] - 2026-09-05
 
 ### Fixed

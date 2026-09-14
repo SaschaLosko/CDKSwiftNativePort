@@ -333,7 +333,16 @@ and extension-style host integrations.
 - `.rdf`
 - `.svg`
 
-### 6.2 Format-specific writers
+### 6.2 Native ChemDraw writers
+
+`CDKChemDrawWriter.cdx(molecules:)`, `cdxml(molecules:)`, `cdx(reactions:)`,
+and `cdxml(reactions:)` export editable 2D structures. The facade supports
+`.cdx` and `.cdxml` through `writeData(molecule:as:options:)`, the molecule-array,
+reaction, and reaction-hierarchy overloads, and the existing molecule URL writer.
+CDXML also supports `write(...as: .cdxml)` returning a String. CDX is binary and
+must use the Data or URL API. See [capabilities and validation](ChemDrawExport.md).
+
+### 6.3 Format-specific writers
 
 - MDL / SDF:
   - `CDKMDLV2000Writer`

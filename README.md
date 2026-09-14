@@ -464,3 +464,10 @@ Reference citations:
 
 For the full upstream attribution and redistribution notice, see
 [`NOTICE.md`](NOTICE.md).
+
+## ChemDraw interchange
+
+Native Swift CDX and CDXML export is available for molecules and reactions.
+Use `CDKFileExporter.writeData(..., as: .cdx)` for binary CDX. See
+[ChemDraw export](Documentation/ChemDrawExport.md) for examples, supported
+chemistry, explicit limitations, and independent read-back validation.

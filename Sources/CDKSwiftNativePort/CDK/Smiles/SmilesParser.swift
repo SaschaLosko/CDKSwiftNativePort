@@ -109,6 +109,8 @@ public final class CDKSmilesParser {
             }
         }
 
+        var stereoNeighborOrder: [Int: [Int]] = [:]
+
         func appendAtom(
             element: String,
             aromatic: Bool = false,
@@ -141,11 +143,20 @@ public final class CDKSmilesParser {
                 atomClass: atomClass,
                 atomMapNumber: atomMapNumber)
             atom.charge = charge
+            stereoNeighborOrder[atom.id] = currentAtom.map { [$0] } ?? []
+            if chirality != .none, explicitHydrogenCount == 1 {
+                stereoNeighborOrder[atom.id, default: []].append(atom.id)
+            }
             molecule.atoms.append(atom)
             return atom.id
         }
 
         func appendBond(_ a1: Int, _ a2: Int, order: BondOrder, stereo: BondStereo = .none) {
+            for (center, neighbor) in [(a1, a2), (a2, a1)] {
+                if !stereoNeighborOrder[center, default: []].contains(neighbor) {
+                    stereoNeighborOrder[center, default: []].append(neighbor)
+                }
+            }
             nextBondID += 1
             molecule.bonds.append(Bond(id: nextBondID, a1: a1, a2: a2, order: order, stereo: stereo))
         }
@@ -509,8 +520,12 @@ public final class CDKSmilesParser {
                     let stereo =
                         (order == .single)
                         ? (pendingDirectionalStereo ?? open.directionalStereo ?? .none) : .none
+                    if let slot = stereoNeighborOrder[open.atomID]?.firstIndex(of: -ringIndex - 1) {
+                        stereoNeighborOrder[open.atomID]?[slot] = cur
+                    }
                     appendBond(open.atomID, cur, order: order, stereo: stereo)
                 } else {
+                    stereoNeighborOrder[cur, default: []].append(-ringIndex - 1)
                     ringClosures[ringIndex] = RingClosureState(
                         atomID: cur,
                         explicitOrder: pendingOrder,
@@ -567,9 +582,14 @@ public final class CDKSmilesParser {
             throw ChemError.parseFailed("Dangling bond token at end of SMILES.")
         }
 
+        for index in molecule.atoms.indices where molecule.atoms[index].chirality != .none {
+            let order = stereoNeighborOrder[molecule.atoms[index].id] ?? []
+            if order.count == 4 { molecule.atoms[index].ligandOrderingAtomIDs = order }
+        }
         try validateAromaticConstraints(in: molecule)
         annotateDirectionalDoubleBonds(in: &molecule)
         molecule = Depiction2DGenerator.generate(for: molecule)
+        molecule.coordinatesAreGenerated = true
         molecule.assignWedgeHashFromChiralCenters()
         return molecule
     }
