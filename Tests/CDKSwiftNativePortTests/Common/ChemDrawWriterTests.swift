@@ -1,9 +1,11 @@
 import Foundation
+import XCTest
+
+@testable import CDKSwiftNativePort
+
 #if canImport(FoundationXML)
     import FoundationXML
 #endif
-import XCTest
-@testable import CDKSwiftNativePort
 
 final class ChemDrawWriterTests: XCTestCase {
     private let parser = CDKSmilesParser()
@@ -11,8 +13,10 @@ final class ChemDrawWriterTests: XCTestCase {
     func testMoleculeInterchangeFixtures() throws {
         let smiles = [
             "CC(=O)Oc1ccccc1C(=O)O", "[13CH3][NH3+]", "[Na+].[Cl-]", "c1cc[nH]c1",
-            "N[C@@H](C)C(=O)O", "N[C@H](C)C(=O)O", "F/C=C/F", "F/C=C\\F", "C#N", "[2H]O[2H]", "F[C@](Cl)(Br)I",
-            "F[C@@](Cl)(Br)I", "C[C@H](O)[C@@H](C)O", "CC=CC", "C/C=C/C=C/C", "C/C=C\\C=C/C", "[C@@H]1(O)CCC[C@H]1O",
+            "N[C@@H](C)C(=O)O", "N[C@H](C)C(=O)O", "F/C=C/F", "F/C=C\\F", "C#N", "[2H]O[2H]",
+            "F[C@](Cl)(Br)I",
+            "F[C@@](Cl)(Br)I", "C[C@H](O)[C@@H](C)O", "CC=CC", "C/C=C/C=C/C", "C/C=C\\C=C/C",
+            "[C@@H]1(O)CCC[C@H]1O",
         ]
         for (index, smiles) in smiles.enumerated() {
             var molecule = try parser.parseSmiles(smiles)
@@ -52,10 +56,12 @@ final class ChemDrawWriterTests: XCTestCase {
     func testBinaryURLWriterAndTextAPIGuard() throws {
         let molecule = try parser.parseSmiles("CO")
         XCTAssertThrowsError(try CDKFileExporter.write(molecule: molecule, as: .cdx))
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".cdx")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString + ".cdx")
         defer { try? FileManager.default.removeItem(at: url) }
         try CDKFileExporter.write(molecule: molecule, to: url)
-        XCTAssertEqual(try Data(contentsOf: url), try CDKFileExporter.writeData(molecule: molecule, as: .cdx))
+        XCTAssertEqual(
+            try Data(contentsOf: url), try CDKFileExporter.writeData(molecule: molecule, as: .cdx))
     }
 
     func testInvalidOrUnsupportedChemistryFailsInsteadOfLosingInformation() throws {
@@ -71,27 +77,46 @@ final class ChemDrawWriterTests: XCTestCase {
         XCTAssertThrowsError(try CDKChemDrawWriter.cdx(molecules: []))
     }
 
+    func testUnprojectedCXAnnotationsAreRejected() throws {
+        var reaction = try parser.parseReactionSmiles("CCO>>CC=O")
+        reaction.cxState = CDKCxSmilesState(racemic: true)
+        var molecule = try parser.parseSmiles("CCO")
+        molecule.cxState = CDKCxSmilesState(positionalVariations: [0: [1, 2]])
+        for format in [CDKFileExportFormat.cdx, .cdxml] {
+            XCTAssertThrowsError(try CDKFileExporter.writeData(reaction: reaction, as: format))
+            XCTAssertThrowsError(try CDKFileExporter.writeData(molecule: molecule, as: format))
+        }
+    }
+
     func testExtendedPropertyLengthAndXMLNames() throws {
         var molecule = try parser.parseSmiles("CO")
         molecule.name = String(repeating: "β", count: 40000)
         let records = try CDXTestDecoder.decode(CDKChemDrawWriter.cdx(molecules: [molecule]))
         XCTAssertEqual(records.first { $0.tag == 0x8003 }?.properties[0x0008]?.count, 80012)
-        XCTAssertTrue(XMLParser(data: Data(try CDKChemDrawWriter.cdxml(molecules: [molecule]).utf8)).parse())
+        XCTAssertTrue(
+            XMLParser(data: Data(try CDKChemDrawWriter.cdxml(molecules: [molecule]).utf8)).parse())
     }
 
     private func evidence(_ name: String, xml: Data, binary: Data, smiles: String) throws {
-        guard let directory = ProcessInfo.processInfo.environment["CDK_CHEMDRAW_EVIDENCE_DIR"] else { return }
+        guard let directory = ProcessInfo.processInfo.environment["CDK_CHEMDRAW_EVIDENCE_DIR"] else {
+            return
+        }
         let root = URL(fileURLWithPath: directory)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try xml.write(to: root.appendingPathComponent(name + ".cdxml"))
         try binary.write(to: root.appendingPathComponent(name + ".cdx"))
-        try smiles.write(to: root.appendingPathComponent(name + ".smi"), atomically: true, encoding: .utf8)
+        try smiles.write(
+            to: root.appendingPathComponent(name + ".smi"), atomically: true, encoding: .utf8)
     }
 }
 
 // Bounds-checked, test-only decoder independent of the production serializer.
 private enum CDXTestDecoder {
-    struct Record { var tag: UInt16; var id: UInt32; var properties: [UInt16: Data] = [:] }
+    struct Record {
+        var tag: UInt16
+        var id: UInt32
+        var properties: [UInt16: Data] = [:]
+    }
     static func uint32(_ data: Data, _ offset: Int) -> UInt32 {
         (0..<4).reduce(0) { $0 | UInt32(data[data.startIndex + offset + $1]) << (8 * $1) }
     }
@@ -110,7 +135,10 @@ private enum CDXTestDecoder {
         }
         while offset < data.count {
             let tag = try short()
-            if tag == 0 { if !stack.isEmpty { stack.removeLast() }; continue }
+            if tag == 0 {
+                if !stack.isEmpty { stack.removeLast() }
+                continue
+            }
             if tag & 0x8000 != 0 {
                 records.append(Record(tag: tag, id: uint32(try read(4), 0)))
                 stack.append(records.count - 1)

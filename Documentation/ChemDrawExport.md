@@ -26,7 +26,7 @@ properties. Reaction hierarchy nesting is flattened into pages.
 The writer rejects unsupported chemistry explicitly: 3D coordinates, query atoms
 and bonds, pseudo/R-group definitions, polymer/Sgroups, radicals, atom aliases,
 valence overrides, enhanced/racemic stereo, coordinate bonds, reaction-center
-annotations, non-unit stoichiometry, and no-go arrows. Use MOL V3000, RGfile, or
+annotations, non-unit stoichiometry, no-go arrows, and reaction-level CXSMILES annotations. Use MOL V3000, RGfile, or
 CML as appropriate for those cases. Imported 2D wedge drawings are preserved;
 explicit ligand parity is converted to outgoing wedges using the drawn geometry.
 Degenerate geometry that cannot represent stereo fails rather than discarding it.
@@ -49,6 +49,6 @@ aromatic heterocycles, salts, and isotopes. Reaction participants and agents mat
 Indigo does not read reaction mapping properties, so those references are checked
 separately by the bounds-checked test-only CDX decoder. Tests also cover invalid
 graphs, unsupported data, extended lengths, XML escaping, and atomic binary URL
-writes. Full package suites pass on macOS and Linux: 595 tests, two platform skips,
+writes. Full package suites pass on macOS and Linux: 596 tests, two platform skips,
 zero failures on each platform. Actual desktop ChemDraw visual/open verification
 is not part of this evidence.

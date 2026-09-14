@@ -14,6 +14,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.31] - 2026-09-14
+
+### Fixed
+
+- Reject reaction-level CXSMILES annotations and unprojected molecular variation,
+  link-node, R-group, and Sgroup data instead of silently omitting their chemistry
+  from ChemDraw exports.
+
 ## [1.4.30] - 2026-09-14
 
 ### Added

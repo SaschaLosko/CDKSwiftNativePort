@@ -96,17 +96,21 @@ struct ChemDrawBuilder {
         var molecule = source
         let positions = Dictionary(uniqueKeysWithValues: source.atoms.map { ($0.id, $0.position) })
         let lengths = source.bonds.map { bond in
-            let a = positions[bond.a1]!, b = positions[bond.a2]!
+            let a = positions[bond.a1]!
+            let b = positions[bond.a2]!
             return hypot(Double(a.x - b.x), Double(a.y - b.y))
         }.filter { $0 > 0.0001 }
-        if lengths.count != source.bonds.count || (source.atoms.count > 1 && source.boundingBox()?.size == .zero) {
+        if lengths.count != source.bonds.count
+            || (source.atoms.count > 1 && source.boundingBox()?.size == .zero)
+        {
             molecule = Depiction2DGenerator.generate(for: source)
         }
         molecule = try ChemDrawStereo.prepare(molecule)
         let bounds = molecule.boundingBox()!
         let byID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.position) })
         let normalizedLengths = molecule.bonds.map { bond in
-            let a = byID[bond.a1]!, b = byID[bond.a2]!
+            let a = byID[bond.a1]!
+            let b = byID[bond.a2]!
             return hypot(Double(a.x - b.x), Double(a.y - b.y))
         }.filter { $0 > 0.0001 }.sorted()
         let scale = normalizedLengths.isEmpty ? 1 : 30 / normalizedLengths[normalizedLengths.count / 2]
@@ -119,7 +123,8 @@ struct ChemDrawBuilder {
             ids[atom.id] = node.id
             if let map = atom.atomMapNumber, map > 0 {
                 guard maps.updateValue(node.id, forKey: map) == nil else {
-                    throw ChemError.unsupported("ChemDraw export requires unique atom map numbers per participant.")
+                    throw ChemError.unsupported(
+                        "ChemDraw export requires unique atom map numbers per participant.")
                 }
             }
             let atomicNumber = Self.elements.firstIndex(of: atom.element)!
@@ -139,21 +144,25 @@ struct ChemDrawBuilder {
             if let hydrogens = atom.explicitHydrogenCount {
                 node.properties.append(.integer(0x042B, "NumHydrogens", UInt16(hydrogens)))
             }
-            if let map = atom.atomMapNumber { node.properties.append(.string(0x0439, "AtomNumber", String(map))) }
+            if let map = atom.atomMapNumber {
+                node.properties.append(.string(0x0439, "AtomNumber", String(map)))
+            }
             fragment.children.append(node)
         }
         for bond in molecule.bonds {
             var edge = try object(0x8005, "b")
             let order: UInt16 =
                 switch bond.order {
-                case .single: 1;
-                case .double: 2;
-                case .triple: 4;
+                case .single: 1
+                case .double: 2
+                case .triple: 4
                 case .aromatic: 128
                 }
             edge.properties = [
                 .integer(0x0604, "B", ids[bond.a1]!), .integer(0x0605, "E", ids[bond.a2]!),
-                .integer(0x0600, "Order", order, text: bond.order == .aromatic ? "1.5" : String(bond.order.rawValue)),
+                .integer(
+                    0x0600, "Order", order,
+                    text: bond.order == .aromatic ? "1.5" : String(bond.order.rawValue)),
             ]
             let display: (UInt16, String) =
                 switch bond.stereo {
@@ -167,7 +176,9 @@ struct ChemDrawBuilder {
             edge.properties.append(.integer(0x0601, "Display", display.0, text: display.1))
             fragment.children.append(edge)
         }
-        return (fragment, max(30, Double(bounds.width) * scale), max(30, Double(bounds.height) * scale), maps)
+        return (
+            fragment, max(30, Double(bounds.width) * scale), max(30, Double(bounds.height) * scale), maps
+        )
     }
 
     private func validateText(_ value: String) throws {
@@ -189,20 +200,27 @@ struct ChemDrawBuilder {
             Set(molecule.bonds.map(\.id)).count == molecule.bonds.count,
             molecule.bonds.allSatisfy({ ids.contains($0.a1) && ids.contains($0.a2) && $0.a1 != $0.a2 })
         else {
-            throw ChemError.unsupported("ChemDraw export requires a valid graph with unique atom and bond IDs.")
+            throw ChemError.unsupported(
+                "ChemDraw export requires a valid graph with unique atom and bond IDs.")
         }
         guard molecule.sgroups.isEmpty, molecule.rGroupLogicDefinitions.isEmpty,
             molecule.cxState?.racemic != true,
             molecule.cxState?.racemicFragments.isEmpty != false,
-            molecule.cxState?.stereoGroups.isEmpty != false
+            molecule.cxState?.stereoGroups.isEmpty != false,
+            molecule.cxState?.positionalVariations.isEmpty != false,
+            molecule.cxState?.linkNodes.isEmpty != false,
+            molecule.cxState?.rGroupDefinitions.isEmpty != false,
+            molecule.cxState?.sgroups.isEmpty != false
         else {
             throw ChemError.unsupported(
-                "ChemDraw export does not yet support polymer groups or R-group definitions. Use MOL V3000 or RGfile.")
+                "ChemDraw export does not yet support polymer groups or R-group definitions. Use MOL V3000 or RGfile."
+            )
         }
         for atom in molecule.atoms {
             guard atom.zPosition == nil || atom.zPosition == 0 else {
                 throw ChemError.unsupported(
-                    "ChemDraw export currently supports 2D structures. Use MOL V3000 to preserve 3D coordinates.")
+                    "ChemDraw export currently supports 2D structures. Use MOL V3000 to preserve 3D coordinates."
+                )
             }
             guard Self.elements.contains(atom.element), atom.queryType == nil, atom.atomList == nil,
                 atom.rGroupLabel == nil, atom.rGroupMembership == nil, atom.attachmentPoint == nil,
@@ -215,8 +233,8 @@ struct ChemDrawBuilder {
                 )
             }
             guard atom.position.x.isFinite, atom.position.y.isFinite, (-128...127).contains(atom.charge),
-                (atom.isotopeMassNumber.map { (1...32767).contains($0) } ?? true),
-                (atom.explicitHydrogenCount.map { (0...65535).contains($0) } ?? true)
+                atom.isotopeMassNumber.map { (1...32767).contains($0) } ?? true,
+                atom.explicitHydrogenCount.map { (0...65535).contains($0) } ?? true
             else {
                 throw ChemError.unsupported(
                     "Invalid atom coordinates, charge, isotope, or hydrogen count for ChemDraw export.")

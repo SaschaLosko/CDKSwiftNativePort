@@ -9,6 +9,12 @@ extension ChemDrawBuilder {
             throw ChemError.unsupported(
                 "ChemDraw export does not yet support stoichiometric coefficients or no-go arrows.")
         }
+        // Reaction-level CX annotations are not necessarily applied to participants.
+        // Refuse them until their chemistry can be represented without information loss.
+        if let state = reaction.cxState, state != CDKCxSmilesState() {
+            throw ChemError.unsupported(
+                "ChemDraw export does not yet support reaction-level CXSMILES annotations. Use CML.")
+        }
         var page = try object(0x8001, "page")
         if let name = reaction.name { page.children.append(try text(name, x: 40, y: 25)) }
         // Place agents above the arrow and substrates/products below, without overlap.
@@ -86,7 +92,8 @@ extension ChemDrawBuilder {
         let tail = reaction.direction == .backward ? arrowEnd : arrowStart
         // Graphic BoundingBox encodes the directed head then tail, not sorted bounds.
         arrow.properties = [
-            try .coordinates(0x0204, "BoundingBox", [head, y + 15, tail, y + 15], binaryOrder: [1, 0, 3, 2]),
+            try .coordinates(
+                0x0204, "BoundingBox", [head, y + 15, tail, y + 15], binaryOrder: [1, 0, 3, 2]),
             .integer(0x0A00, "GraphicType", UInt16(1), text: "Line"),
             .integer(0x0A02, "ArrowType", arrowType.0, text: arrowType.1),
         ]
@@ -114,7 +121,8 @@ extension ChemDrawBuilder {
     private func merge(_ source: [Int: UInt32], into destination: inout [Int: UInt32]) throws {
         for (number, id) in source {
             guard destination.updateValue(id, forKey: number) == nil else {
-                throw ChemError.unsupported("ChemDraw export requires unique atom map numbers on each reaction side.")
+                throw ChemError.unsupported(
+                    "ChemDraw export requires unique atom map numbers on each reaction side.")
             }
         }
     }
