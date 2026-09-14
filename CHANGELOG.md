@@ -14,6 +14,16 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.32] - 2026-09-14
+
+### Fixed
+
+- Preserve reaction and participant display names in CML even when the name is
+  also used as the generated identifier.
+- Keep distinct participants with colliding identifiers separate while retaining
+  references to identical molecules shared across reaction lists and schemes.
+- Verified with 598 tests on macOS and Linux (two existing skips on each).
+
 ## [1.4.31] - 2026-09-14
 
 ### Fixed

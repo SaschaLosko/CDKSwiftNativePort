@@ -26,11 +26,17 @@ public enum CDKCMLReactionWriter {
     }
 
     public static func write(_ hierarchy: CDKReactionHierarchy) throws -> String {
-        let lines = cmlDocumentLines(for: hierarchy)
+        let lines = CMLReactionDocumentWriter().cmlDocumentLines(for: hierarchy)
         return lines.joined(separator: "\n") + "\n"
     }
 
-    private static func cmlDocumentLines(for hierarchy: CDKReactionHierarchy) -> [String] {
+}
+
+/// Per-document identity allocation keeps independently named participants distinct.
+private final class CMLReactionDocumentWriter {
+    private var moleculesByID: [String: Molecule] = [:]
+
+    func cmlDocumentLines(for hierarchy: CDKReactionHierarchy) -> [String] {
         var lines: [String] = []
         lines.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
         lines.append("<cml xmlns=\"http://www.xml-cml.org/schema\">")
@@ -39,7 +45,7 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func hierarchyLines(for hierarchy: CDKReactionHierarchy,
+    private func hierarchyLines(for hierarchy: CDKReactionHierarchy,
                                        indent: String,
                                        defaultIndex: Int) -> [String] {
         switch hierarchy {
@@ -54,7 +60,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func reactionSetLines(_ set: CDKReactionSet,
+    private func reactionSetLines(_ set: CDKReactionSet,
                                          indent: String) -> [String] {
         if set.members.count == 1, let member = set.members.first {
             return setMemberLines(member, indent: indent, defaultIndex: 1)
@@ -67,7 +73,7 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func setMemberLines(_ member: CDKReactionSetMember,
+    private func setMemberLines(_ member: CDKReactionSetMember,
                                        indent: String,
                                        defaultIndex: Int) -> [String] {
         switch member {
@@ -80,7 +86,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func reactionListLines(_ list: CDKReactionList,
+    private func reactionListLines(_ list: CDKReactionList,
                                           indent: String,
                                           defaultIndex: Int) -> [String] {
         let tagName = list.isStepList ? "reactionStepList" : "reactionList"
@@ -90,7 +96,7 @@ public enum CDKCMLReactionWriter {
         let listName = normalizedName(list.name)
 
         var attrs = ["id=\"\(xmlEsc(listID))\""]
-        if let listName, listName != listID {
+        if let listName {
             attrs.append("title=\"\(xmlEsc(listName))\"")
         }
 
@@ -116,7 +122,7 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func reactionListEntryLines(_ entry: CDKReactionListEntry,
+    private func reactionListEntryLines(_ entry: CDKReactionListEntry,
                                                indent: String,
                                                defaultIndex: Int) -> [String] {
         switch entry {
@@ -129,7 +135,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func reactionSchemeLines(_ scheme: CDKReactionScheme,
+    private func reactionSchemeLines(_ scheme: CDKReactionScheme,
                                             indent: String,
                                             defaultIndex: Int) -> [String] {
         let schemeID = sanitizedIdentifier(scheme.id)
@@ -138,7 +144,7 @@ public enum CDKCMLReactionWriter {
         let schemeName = normalizedName(scheme.name)
 
         var attrs = ["id=\"\(xmlEsc(schemeID))\""]
-        if let schemeName, schemeName != schemeID {
+        if let schemeName {
             attrs.append("title=\"\(xmlEsc(schemeName))\"")
         }
 
@@ -156,7 +162,7 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func reactionSchemeEntryLines(_ entry: CDKReactionSchemeEntry,
+    private func reactionSchemeEntryLines(_ entry: CDKReactionSchemeEntry,
                                                  indent: String,
                                                  defaultIndex: Int) -> [String] {
         switch entry {
@@ -169,7 +175,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func reactionLines(_ reaction: CDKReaction,
+    private func reactionLines(_ reaction: CDKReaction,
                                       indent: String,
                                       defaultIndex: Int) -> [String] {
         let reactionID = sanitizedIdentifier(reaction.id)
@@ -178,7 +184,7 @@ public enum CDKCMLReactionWriter {
         let reactionName = normalizedName(reaction.name)
 
         var attrs = ["id=\"\(xmlEsc(reactionID))\""]
-        if let reactionName, reactionName != reactionID {
+        if let reactionName {
             attrs.append("title=\"\(xmlEsc(reactionName))\"")
         }
 
@@ -208,7 +214,7 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func propertyLines(_ properties: [String: String],
+    private func propertyLines(_ properties: [String: String],
                                       indent: String) -> [String] {
         properties.keys.sorted().compactMap { key in
             guard let value = properties[key] else { return nil }
@@ -216,7 +222,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func participantListLines(listTag: String,
+    private func participantListLines(listTag: String,
                                              participantTag: String,
                                              participants: [Molecule],
                                              indent: String,
@@ -236,19 +242,24 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func moleculeLines(_ molecule: Molecule,
+    private func moleculeLines(_ molecule: Molecule,
                                       indent: String,
                                       defaultIdentifier: String) -> [String] {
         let has3D = molecule.atoms.contains { $0.zPosition != nil }
         let aromaticBondIDs = molecule.aromaticDisplayBondIDs()
-        let moleculeID = sanitizedIdentifier(molecule.externalID)
-            ?? sanitizedIdentifier(molecule.name)
-            ?? defaultIdentifier
+        let identity = moleculeIdentity(
+            sanitizedIdentifier(molecule.externalID)
+                ?? sanitizedIdentifier(molecule.name)
+                ?? defaultIdentifier, molecule: molecule)
+        if identity.isReference {
+            return ["\(indent)<molecule ref=\"\(xmlEsc(identity.id))\" />"]
+        }
+        let moleculeID = identity.id
         let moleculeName = normalizedName(molecule.name)
         let formulaValues = molecule.dataFieldValues(named: "Formula")
 
         var attrs = ["id=\"\(xmlEsc(moleculeID))\""]
-        if let moleculeName, moleculeName != moleculeID {
+        if let moleculeName {
             attrs.append("title=\"\(xmlEsc(moleculeName))\"")
         }
 
@@ -352,11 +363,25 @@ public enum CDKCMLReactionWriter {
         return lines
     }
 
-    private static func atomReference(for atomID: Int, in molecule: Molecule) -> String {
+    private func moleculeIdentity(_ preferred: String, molecule: Molecule) -> (id: String, isReference: Bool) {
+        var candidate = preferred
+        var suffix = 2
+        while let existing = moleculesByID[candidate] {
+            if existing == molecule {
+                return (candidate, true)
+            }
+            candidate = "\(preferred)_\(suffix)"
+            suffix += 1
+        }
+        moleculesByID[candidate] = molecule
+        return (candidate, false)
+    }
+
+    private func atomReference(for atomID: Int, in molecule: Molecule) -> String {
         molecule.atom(id: atomID)?.externalID ?? "a\(atomID)"
     }
 
-    private static func cmlOrder(for order: BondOrder) -> String {
+    private func cmlOrder(for order: BondOrder) -> String {
         switch order {
         case .single:
             return "S"
@@ -369,7 +394,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func cmlBondStereo(for stereo: BondStereo) -> (dictRef: String, content: String)? {
+    private func cmlBondStereo(for stereo: BondStereo) -> (dictRef: String, content: String)? {
         switch stereo {
         case .up, .upReversed:
             return ("cml:W", "W")
@@ -380,7 +405,7 @@ public enum CDKCMLReactionWriter {
         }
     }
 
-    private static func pseudoLabel(for atom: Atom) -> String? {
+    private func pseudoLabel(for atom: Atom) -> String? {
         if let alias = atom.aliasLabel?.trimmingCharacters(in: .whitespacesAndNewlines),
            !alias.isEmpty {
             return alias
@@ -405,7 +430,7 @@ public enum CDKCMLReactionWriter {
         return CDKDescriptorSupport.averageAtomicMass(forElementSymbol: canonical) > 0 ? nil : trimmed
     }
 
-    private static func normalizedElementType(for atom: Atom) -> String {
+    private func normalizedElementType(for atom: Atom) -> String {
         let canonical = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
         if !canonical.isEmpty {
             return canonical
@@ -413,19 +438,19 @@ public enum CDKCMLReactionWriter {
         return atom.element.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "C" : atom.element
     }
 
-    private static func normalizedName(_ value: String?) -> String? {
+    private func normalizedName(_ value: String?) -> String? {
         guard let value else { return nil }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    private static func sanitizedIdentifier(_ value: String?) -> String? {
+    private func sanitizedIdentifier(_ value: String?) -> String? {
         guard let value = normalizedName(value) else { return nil }
         let sanitized = value.replacingOccurrences(of: " ", with: "_")
         return sanitized.isEmpty ? nil : sanitized
     }
 
-    private static func xmlEsc(_ value: String) -> String {
+    private func xmlEsc(_ value: String) -> String {
         value
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "\"", with: "&quot;")
@@ -433,7 +458,7 @@ public enum CDKCMLReactionWriter {
             .replacingOccurrences(of: ">", with: "&gt;")
     }
 
-    private static func fmt(_ value: Double) -> String {
+    private func fmt(_ value: Double) -> String {
         if value == 0 { return "0" }
         let string = String(format: "%.6f", value)
         let trimmed = string.replacingOccurrences(of: #"(\.\d*?[1-9])0+$"#,
