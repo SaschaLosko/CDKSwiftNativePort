@@ -17,6 +17,7 @@ public enum CDKFileExportFormat: String, CaseIterable, Identifiable, Sendable {
     case pdb
     case xyz
     case cml
+    // Reserved for source compatibility. These formats require an external extension.
     case cdx
     case cdxml
     case rxn
@@ -152,16 +153,6 @@ public enum CDKFileExporter {
             fileExtensions: ["xyz"],
             utiIdentifiers: ["chemical/x-xyz"]),
         CDKFileExporterFormat(
-            format: .cdx,
-            displayName: "ChemDraw CDX",
-            fileExtensions: ["cdx"],
-            utiIdentifiers: ["com.cambridgesoft.cdx"]),
-        CDKFileExporterFormat(
-            format: .cdxml,
-            displayName: "ChemDraw CDXML",
-            fileExtensions: ["cdxml"],
-            utiIdentifiers: ["com.cambridgesoft.cdxml"]),
-        CDKFileExporterFormat(
             format: .cml,
             displayName: "Chemical Markup Language",
             fileExtensions: ["cml"],
@@ -207,7 +198,7 @@ public enum CDKFileExporter {
         return nil
     }
 
-    /// Serializes binary and text formats without applying a text encoding to binary CDX.
+    /// Serializes supported text formats as UTF-8 data.
     public static func writeData(
         molecule: Molecule, as format: CDKFileExportFormat,
         options: CDKFileExportOptions = CDKFileExportOptions()
@@ -219,7 +210,6 @@ public enum CDKFileExporter {
         molecules: [Molecule], as format: CDKFileExportFormat,
         options: CDKFileExportOptions = CDKFileExportOptions()
     ) throws -> Data {
-        if format == .cdx { return try CDKChemDrawWriter.cdx(molecules: molecules) }
         return Data(try write(molecules: molecules, as: format, options: options).utf8)
     }
 
@@ -234,7 +224,6 @@ public enum CDKFileExporter {
         reactionHierarchy: CDKReactionHierarchy, as format: CDKFileExportFormat,
         options: CDKFileExportOptions = CDKFileExportOptions()
     ) throws -> Data {
-        if format == .cdx { return try CDKChemDrawWriter.cdx(reactions: reactionHierarchy.flattenedReactions) }
         return Data(try write(reactionHierarchy: reactionHierarchy, as: format, options: options).utf8)
     }
 
@@ -289,10 +278,8 @@ public enum CDKFileExporter {
             return try CDKPDBWriter.write(molecules)
         case .xyz:
             return try CDKXYZWriter.write(molecules)
-        case .cdx:
-            throw ChemError.unsupported("CDX is binary. Use CDKFileExporter.writeData or the URL writer.")
-        case .cdxml:
-            return try CDKChemDrawWriter.cdxml(molecules: molecules)
+        case .cdx, .cdxml:
+            throw ChemError.unsupported("ChemDraw export requires an external format extension.")
         case .cml:
             return try CDKCMLWriter.write(molecules)
         case .rxn:
@@ -367,10 +354,8 @@ public enum CDKFileExporter {
         guard !reactions.isEmpty else { throw ChemError.emptyInput }
 
         switch format {
-        case .cdx:
-            throw ChemError.unsupported("CDX is binary. Use CDKFileExporter.writeData.")
-        case .cdxml:
-            return try CDKChemDrawWriter.cdxml(reactions: reactions)
+        case .cdx, .cdxml:
+            throw ChemError.unsupported("ChemDraw export requires an external format extension.")
         case .cml:
             return try CDKCMLReactionWriter.write(reactionHierarchy)
         case .rxn:

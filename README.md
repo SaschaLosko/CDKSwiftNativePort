@@ -465,9 +465,8 @@ Reference citations:
 For the full upstream attribution and redistribution notice, see
 [`NOTICE.md`](NOTICE.md).
 
-## ChemDraw interchange
+## External ChemDraw interchange
 
-Native Swift CDX and CDXML export is available for molecules and reactions.
-Use `CDKFileExporter.writeData(..., as: .cdx)` for binary CDX. See
-[ChemDraw export](Documentation/ChemDrawExport.md) for examples, supported
-chemistry, explicit limitations, and independent read-back validation.
+CDX and CDXML codecs are supplied by applications through an external format extension.
+The package does not distribute a ChemDraw encoder or decoder. Reserved legacy API
+entry points throw an unsupported-format error and are excluded from the format catalog.

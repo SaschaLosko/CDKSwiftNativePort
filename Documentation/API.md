@@ -333,14 +333,11 @@ and extension-style host integrations.
 - `.rdf`
 - `.svg`
 
-### 6.2 Native ChemDraw writers
+### 6.2 External format extensions
 
-`CDKChemDrawWriter.cdx(molecules:)`, `cdxml(molecules:)`, `cdx(reactions:)`,
-and `cdxml(reactions:)` export editable 2D structures. The facade supports
-`.cdx` and `.cdxml` through `writeData(molecule:as:options:)`, the molecule-array,
-reaction, and reaction-hierarchy overloads, and the existing molecule URL writer.
-CDXML also supports `write(...as: .cdxml)` returning a String. CDX is binary and
-must use the Data or URL API. See [capabilities and validation](ChemDrawExport.md).
+ChemDraw codecs are not distributed by CDKSwiftNativePort. Applications can build
+external readers and writers using the public Molecule and CDKReaction models.
+Legacy CDX/CDXML entry points throw an unsupported-format error.
 
 ### 6.3 Format-specific writers
 
