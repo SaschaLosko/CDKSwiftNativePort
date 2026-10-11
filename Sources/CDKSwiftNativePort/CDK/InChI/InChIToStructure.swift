@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 /// Swift counterpart of CDK's InChI-to-structure adapter.
@@ -176,10 +176,11 @@ private enum CDKInChIParser {
         let hydrogenInfo = parseHydrogenLayer(layers["h"], atomCount: atomCount)
         ignoredTokens.append(contentsOf: hydrogenInfo.ignoredTokens)
 
-        let isotopeInfo = parseIsotopeLayer(layers["i"],
-                                            isotopeHydrogenLayer: isotopeHydrogenLayerParts,
-                                            atomCount: atomCount,
-                                            atoms: molecule.atoms)
+        let isotopeInfo = parseIsotopeLayer(
+            layers["i"],
+            isotopeHydrogenLayer: isotopeHydrogenLayerParts,
+            atomCount: atomCount,
+            atoms: molecule.atoms)
         ignoredTokens.append(contentsOf: isotopeInfo.ignoredTokens)
 
         applyIsotopeAssignments(isotopeInfo.massNumberByAtom, to: &molecule)
@@ -204,9 +205,10 @@ private enum CDKInChIParser {
         }
         applyProtonLayerAdjustment(protonInfo.delta, to: &molecule, hydrogenByAtom: &hydrogenByAtom)
         distributeMobileHydrogens(hydrogenInfo.mobileGroups, in: molecule, hydrogenByAtom: &hydrogenByAtom)
-        materializeHydrogenOnlyBondsIfNeeded(in: &molecule,
-                                             hydrogenByAtom: hydrogenByAtom,
-                                             isotopeInfo: isotopeInfo)
+        materializeHydrogenOnlyBondsIfNeeded(
+            in: &molecule,
+            hydrogenByAtom: hydrogenByAtom,
+            isotopeInfo: isotopeInfo)
 
         assignInferredBondOrders(to: &molecule, hydrogenByAtom: hydrogenByAtom)
         let doubleBondStereoInfo = parseDoubleBondStereoLayer(layers["b"], in: &molecule)
@@ -244,7 +246,8 @@ private enum CDKInChIParser {
     private static func parseHydrogenOnlyAtomCount(fromFormula formula: String) -> Int {
         let elements = parseFormulaElements(formula)
         guard !elements.isEmpty else { return 0 }
-        return elements.allSatisfy { $0.uppercased() == "H" || $0.uppercased() == "D" || $0.uppercased() == "T" } ? elements.count : 0
+        return elements.allSatisfy { $0.uppercased() == "H" || $0.uppercased() == "D" || $0.uppercased() == "T" }
+            ? elements.count : 0
     }
 
     private static func parseFormulaElements(_ formula: String) -> [String] {
@@ -258,7 +261,8 @@ private enum CDKInChIParser {
         var out: [String] = []
         regex?.enumerateMatches(in: normalized, options: [], range: nsRange) { match, _, _ in
             guard let match,
-                  let componentRange = Range(match.range(at: 2), in: normalized) else {
+                let componentRange = Range(match.range(at: 2), in: normalized)
+            else {
                 return
             }
 
@@ -287,8 +291,9 @@ private enum CDKInChIParser {
         var out: [String] = []
         regex?.enumerateMatches(in: component, options: [], range: nsRange) { match, _, _ in
             guard let match,
-                  let symbolRange = Range(match.range(at: 1), in: component),
-                  let countRange = Range(match.range(at: 2), in: component) else {
+                let symbolRange = Range(match.range(at: 1), in: component),
+                let countRange = Range(match.range(at: 2), in: component)
+            else {
                 return
             }
 
@@ -329,7 +334,8 @@ private enum CDKInChIParser {
             if ch.isNumber {
                 let atomIndex = parseInteger(layer, from: &idx)
                 guard (1...atomCount).contains(atomIndex) else {
-                    throw ChemError.parseFailed("InChI connectivity references atom \(atomIndex) outside formula range 1...\(atomCount).")
+                    throw ChemError.parseFailed(
+                        "InChI connectivity references atom \(atomIndex) outside formula range 1...\(atomCount).")
                 }
                 if let cur = current, cur != atomIndex {
                     edges.insert(InChIEdgeKey(cur, atomIndex))
@@ -407,14 +413,17 @@ private enum CDKInChIParser {
         )
     }
 
-    private static func parseFixedHydrogenToken(_ token: String,
-                                                atomCount: Int,
-                                                into hydrogenByAtom: inout [Int: Int]) -> Bool {
+    private static func parseFixedHydrogenToken(
+        _ token: String,
+        atomCount: Int,
+        into hydrogenByAtom: inout [Int: Int]
+    ) -> Bool {
         var normalizedToken = token
         var multiplier = 1
         if let star = normalizedToken.firstIndex(of: "*"),
-           let prefix = Int(normalizedToken[..<star]),
-           prefix > 0 {
+            let prefix = Int(normalizedToken[..<star]),
+            prefix > 0
+        {
             multiplier = prefix
             normalizedToken = String(normalizedToken[normalizedToken.index(after: star)...])
         }
@@ -485,17 +494,20 @@ private enum CDKInChIParser {
         return InChIMobileHydrogenGroup(count: count, candidateAtoms: candidates)
     }
 
-    private static func parseIsotopeLayer(_ layer: String?,
-                                          isotopeHydrogenLayer: [String],
-                                          atomCount: Int,
-                                          atoms: [Atom]) -> InChIIsotopeLayerResult {
+    private static func parseIsotopeLayer(
+        _ layer: String?,
+        isotopeHydrogenLayer: [String],
+        atomCount: Int,
+        atoms: [Atom]
+    ) -> InChIIsotopeLayerResult {
         if (layer == nil || layer?.isEmpty == true) && isotopeHydrogenLayer.isEmpty {
-            return InChIIsotopeLayerResult(massNumberByAtom: [:],
-                                           deuteriumByAtom: [:],
-                                           tritiumByAtom: [:],
-                                           standaloneDeuteriumCount: 0,
-                                           standaloneTritiumCount: 0,
-                                           ignoredTokens: [])
+            return InChIIsotopeLayerResult(
+                massNumberByAtom: [:],
+                deuteriumByAtom: [:],
+                tritiumByAtom: [:],
+                standaloneDeuteriumCount: 0,
+                standaloneTritiumCount: 0,
+                ignoredTokens: [])
         }
 
         let atomByID = Dictionary(uniqueKeysWithValues: atoms.map { ($0.id, $0) })
@@ -515,7 +527,9 @@ private enum CDKInChIParser {
 
                 if let parsed = parseCombinedMassAndIsotopicHydrogenToken(token, atomCount: atomCount) {
                     for (atomID, shift) in parsed.massShifts {
-                        guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else { continue }
+                        guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else {
+                            continue
+                        }
                         massNumberByAtom[atomID] = max(1, base + shift)
                     }
                     for atomID in parsed.atomIDs {
@@ -531,7 +545,9 @@ private enum CDKInChIParser {
 
                 if let parsed = parseMassShiftToken(token, atomCount: atomCount) {
                     for (atomID, shift) in parsed {
-                        guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else { continue }
+                        guard let atom = atomByID[atomID], let base = baseMassNumber(for: atom.element) else {
+                            continue
+                        }
                         massNumberByAtom[atomID] = max(1, base + shift)
                     }
                     continue
@@ -589,11 +605,15 @@ private enum CDKInChIParser {
         return atoms.map { ($0, shift) }
     }
 
-    private static func parseCombinedMassAndIsotopicHydrogenToken(_ token: String,
-                                                                  atomCount: Int)
-    -> (massShifts: [(Int, Int)], atomIDs: [Int], deuteriumCount: Int, tritiumCount: Int)? {
+    private static func parseCombinedMassAndIsotopicHydrogenToken(
+        _ token: String,
+        atomCount: Int
+    )
+        -> (massShifts: [(Int, Int)], atomIDs: [Int], deuteriumCount: Int, tritiumCount: Int)?
+    {
         guard let marker = token.firstIndex(where: { $0 == "D" || $0 == "T" }),
-              let signPos = token[..<marker].firstIndex(where: { $0 == "+" || $0 == "-" }) else {
+            let signPos = token[..<marker].firstIndex(where: { $0 == "+" || $0 == "-" })
+        else {
             return nil
         }
 
@@ -603,15 +623,18 @@ private enum CDKInChIParser {
         let atomSpec = String(token[..<signPos])
         let atomIDs = parseAtomSpec(atomSpec, atomCount: atomCount)
         guard !atomIDs.isEmpty,
-              let counts = parseIsotopeHydrogenCounts(String(token[marker...])) else {
+            let counts = parseIsotopeHydrogenCounts(String(token[marker...]))
+        else {
             return nil
         }
 
         return (massShifts, atomIDs, counts.deuterium, counts.tritium)
     }
 
-    private static func parseIsotopicHydrogenToken(_ token: String,
-                                                   atomCount: Int) -> (atomIDs: [Int], deuteriumCount: Int, tritiumCount: Int)? {
+    private static func parseIsotopicHydrogenToken(
+        _ token: String,
+        atomCount: Int
+    ) -> (atomIDs: [Int], deuteriumCount: Int, tritiumCount: Int)? {
         guard let marker = token.firstIndex(where: { $0 == "D" || $0 == "T" }) else {
             return nil
         }
@@ -621,7 +644,8 @@ private enum CDKInChIParser {
 
         let atoms = parseAtomSpec(atomSpec, atomCount: atomCount)
         guard !atoms.isEmpty,
-              let counts = parseIsotopeHydrogenCounts(String(token[marker...])) else {
+            let counts = parseIsotopeHydrogenCounts(String(token[marker...]))
+        else {
             return nil
         }
         return (atoms, counts.deuterium, counts.tritium)
@@ -679,9 +703,11 @@ private enum CDKInChIParser {
         }
     }
 
-    private static func materializeHydrogenOnlyBondsIfNeeded(in molecule: inout Molecule,
-                                                             hydrogenByAtom: [Int: Int],
-                                                             isotopeInfo: InChIIsotopeLayerResult) {
+    private static func materializeHydrogenOnlyBondsIfNeeded(
+        in molecule: inout Molecule,
+        hydrogenByAtom: [Int: Int],
+        isotopeInfo: InChIIsotopeLayerResult
+    ) {
         guard molecule.atoms.allSatisfy({ $0.element.uppercased() == "H" }) else { return }
 
         if molecule.atomCount == 1 {
@@ -694,27 +720,33 @@ private enum CDKInChIParser {
         }
 
         if molecule.atomCount == 2,
-           molecule.bondCount == 0,
-           (hydrogenByAtom[molecule.atoms[0].id] ?? 0) > 0 {
-            molecule.bonds.append(Bond(id: 1,
-                                       a1: molecule.atoms[0].id,
-                                       a2: molecule.atoms[1].id,
-                                       order: .single))
+            molecule.bondCount == 0,
+            (hydrogenByAtom[molecule.atoms[0].id] ?? 0) > 0
+        {
+            molecule.bonds.append(
+                Bond(
+                    id: 1,
+                    a1: molecule.atoms[0].id,
+                    a2: molecule.atoms[1].id,
+                    order: .single))
         }
 
         assignHydrogenOnlyAttachedIsotopes(from: isotopeInfo.deuteriumByAtom, massNumber: 2, to: &molecule)
         assignHydrogenOnlyAttachedIsotopes(from: isotopeInfo.tritiumByAtom, massNumber: 3, to: &molecule)
     }
 
-    private static func assignHydrogenOnlyAttachedIsotopes(from mapping: [Int: Int],
-                                                           massNumber: Int,
-                                                           to molecule: inout Molecule) {
+    private static func assignHydrogenOnlyAttachedIsotopes(
+        from mapping: [Int: Int],
+        massNumber: Int,
+        to molecule: inout Molecule
+    ) {
         guard molecule.atomCount == 2 else { return }
         let ids = molecule.atoms.map(\.id)
         for (anchorID, count) in mapping where count > 0 {
             let otherID = ids.first(where: { $0 != anchorID })
             guard let otherID,
-                  let otherIndex = molecule.atoms.firstIndex(where: { $0.id == otherID }) else {
+                let otherIndex = molecule.atoms.firstIndex(where: { $0.id == otherID })
+            else {
                 continue
             }
             molecule.atoms[otherIndex].isotopeMassNumber = massNumber
@@ -782,8 +814,10 @@ private enum CDKInChIParser {
         return InChIProtonLayerResult(delta: delta, ignoredTokens: ignored)
     }
 
-    private static func parseDoubleBondStereoLayer(_ layer: String?,
-                                                   in molecule: inout Molecule) -> InChIDoubleBondLayerResult {
+    private static func parseDoubleBondStereoLayer(
+        _ layer: String?,
+        in molecule: inout Molecule
+    ) -> InChIDoubleBondLayerResult {
         guard let layer, !layer.isEmpty else {
             return InChIDoubleBondLayerResult(ignoredTokens: [])
         }
@@ -798,9 +832,11 @@ private enum CDKInChIParser {
                 ignored.append(token)
                 continue
             }
-            guard let idx = molecule.bonds.firstIndex(where: { bond in
-                (bond.a1 == pair.0 && bond.a2 == pair.1) || (bond.a1 == pair.1 && bond.a2 == pair.0)
-            }) else {
+            guard
+                let idx = molecule.bonds.firstIndex(where: { bond in
+                    (bond.a1 == pair.0 && bond.a2 == pair.1) || (bond.a1 == pair.1 && bond.a2 == pair.0)
+                })
+            else {
                 ignored.append(token)
                 continue
             }
@@ -858,9 +894,11 @@ private enum CDKInChIParser {
         return nil
     }
 
-    private static func applyProtonLayerAdjustment(_ protonDelta: Int,
-                                                   to molecule: inout Molecule,
-                                                   hydrogenByAtom: inout [Int: Int]) {
+    private static func applyProtonLayerAdjustment(
+        _ protonDelta: Int,
+        to molecule: inout Molecule,
+        hydrogenByAtom: inout [Int: Int]
+    ) {
         guard protonDelta != 0, !molecule.atoms.isEmpty else { return }
 
         var atomIndexByID: [Int: Int] = [:]
@@ -912,15 +950,17 @@ private enum CDKInChIParser {
         if protonDelta > 0 {
             for _ in 0..<protonDelta {
                 guard let atomID = atomIDs.max(by: { protonationScore(atomID: $0) < protonationScore(atomID: $1) }),
-                      let atomIndex = atomIndexByID[atomID] else { break }
+                    let atomIndex = atomIndexByID[atomID]
+                else { break }
                 hydrogenByAtom[atomID, default: 0] += 1
                 molecule.atoms[atomIndex].charge += 1
             }
         } else {
             for _ in 0..<(-protonDelta) {
                 guard let atomID = atomIDs.max(by: { deprotonationScore(atomID: $0) < deprotonationScore(atomID: $1) }),
-                      let atomIndex = atomIndexByID[atomID],
-                      (hydrogenByAtom[atomID] ?? 0) > 0 else { break }
+                    let atomIndex = atomIndexByID[atomID],
+                    (hydrogenByAtom[atomID] ?? 0) > 0
+                else { break }
                 hydrogenByAtom[atomID, default: 0] = max(0, (hydrogenByAtom[atomID] ?? 0) - 1)
                 molecule.atoms[atomIndex].charge -= 1
             }
@@ -970,9 +1010,11 @@ private enum CDKInChIParser {
         }
     }
 
-    private static func distributeCharge(_ totalCharge: Int,
-                                         in component: Set<Int>,
-                                         molecule: inout Molecule) {
+    private static func distributeCharge(
+        _ totalCharge: Int,
+        in component: Set<Int>,
+        molecule: inout Molecule
+    ) {
         guard totalCharge != 0 else { return }
         guard !component.isEmpty else { return }
 
@@ -1000,13 +1042,15 @@ private enum CDKInChIParser {
         if totalCharge > 0 {
             for _ in 0..<totalCharge {
                 guard let atomID = chooseCandidate(positive: true),
-                      let idx = atomIndexByID[atomID] else { break }
+                    let idx = atomIndexByID[atomID]
+                else { break }
                 molecule.atoms[idx].charge += 1
             }
         } else {
             for _ in 0..<(-totalCharge) {
                 guard let atomID = chooseCandidate(positive: false),
-                      let idx = atomIndexByID[atomID] else { break }
+                    let idx = atomIndexByID[atomID]
+                else { break }
                 molecule.atoms[idx].charge -= 1
             }
         }
@@ -1047,9 +1091,11 @@ private enum CDKInChIParser {
         return base + terminalBonus + neutralizeBonus - chargePenalty
     }
 
-    private static func distributeMobileHydrogens(_ groups: [InChIMobileHydrogenGroup],
-                                                  in molecule: Molecule,
-                                                  hydrogenByAtom: inout [Int: Int]) {
+    private static func distributeMobileHydrogens(
+        _ groups: [InChIMobileHydrogenGroup],
+        in molecule: Molecule,
+        hydrogenByAtom: inout [Int: Int]
+    ) {
         guard !groups.isEmpty else { return }
 
         for group in groups {
@@ -1069,9 +1115,11 @@ private enum CDKInChIParser {
         }
     }
 
-    private static func mobileHydrogenScore(atomID: Int,
-                                            molecule: Molecule,
-                                            hydrogenByAtom: [Int: Int]) -> Int {
+    private static func mobileHydrogenScore(
+        atomID: Int,
+        molecule: Molecule,
+        hydrogenByAtom: [Int: Int]
+    ) -> Int {
         guard let atom = molecule.atom(id: atomID) else { return Int.min }
 
         let element = atom.element.uppercased()
@@ -1153,10 +1201,12 @@ private enum CDKInChIParser {
 
         var deficits = valenceDeficits(in: molecule, hydrogenByAtom: hydrogenByAtom)
 
-        while let idx = bestTripleCandidate(in: molecule,
-                                            deficits: deficits,
-                                            degreeByAtom: degreeByAtom,
-                                            ringEdges: ringEdges) {
+        while let idx = bestTripleCandidate(
+            in: molecule,
+            deficits: deficits,
+            degreeByAtom: degreeByAtom,
+            ringEdges: ringEdges)
+        {
             let a = molecule.bonds[idx].a1
             let b = molecule.bonds[idx].a2
             molecule.bonds[idx].order = .triple
@@ -1164,10 +1214,12 @@ private enum CDKInChIParser {
             deficits[b, default: 0] = max(0, deficits[b, default: 0] - 2)
         }
 
-        while let idx = bestDoubleCandidate(in: molecule,
-                                            deficits: deficits,
-                                            degreeByAtom: degreeByAtom,
-                                            ringEdges: ringEdges) {
+        while let idx = bestDoubleCandidate(
+            in: molecule,
+            deficits: deficits,
+            degreeByAtom: degreeByAtom,
+            ringEdges: ringEdges)
+        {
             let a = molecule.bonds[idx].a1
             let b = molecule.bonds[idx].a2
             molecule.bonds[idx].order = .double
@@ -1199,7 +1251,29 @@ private enum CDKInChIParser {
     private static func valenceDeficits(in molecule: Molecule, hydrogenByAtom: [Int: Int]) -> [Int: Int] {
         var out: [Int: Int] = [:]
         for atom in molecule.atoms {
-            let target = preferredValence(for: atom)
+            var target = preferredValence(for: atom)
+            if atom.element.uppercased() == "S", atom.charge == 0 {
+                // InChI connectivity omits bond orders. Terminal oxygen without its
+                // assigned hydrogen needs an oxo bond; sulfur can use valence 4 or 6.
+                // Keep divalent sulfur for sulfides and aromatic sulfur. Hydrogenated
+                // and anionic oxygens do not create an extra bond-order demand.
+                let sulfurBonds = molecule.bonds(forAtom: atom.id)
+                let used =
+                    sulfurBonds.reduce(0) { $0 + bondOrderValue($1.order) }
+                    + (hydrogenByAtom[atom.id] ?? 0)
+                let oxoDemand = sulfurBonds.reduce(0) { demand, bond in
+                    let otherID = bond.a1 == atom.id ? bond.a2 : bond.a1
+                    guard let other = molecule.atom(id: otherID), other.element.uppercased() == "O",
+                        molecule.bonds(forAtom: otherID).count == 1
+                    else { return demand }
+                    return demand
+                        + max(
+                            0,
+                            preferredValence(for: other)
+                                - bondOrderValue(bond.order) - (hydrogenByAtom[otherID] ?? 0))
+                }
+                target = [2, 4, 6].first { $0 >= used + oxoDemand } ?? target
+            }
             guard target > 0 else {
                 out[atom.id] = 0
                 continue
@@ -1248,10 +1322,12 @@ private enum CDKInChIParser {
         }
     }
 
-    private static func bestTripleCandidate(in molecule: Molecule,
-                                            deficits: [Int: Int],
-                                            degreeByAtom: [Int: Int],
-                                            ringEdges: Set<InChIEdgeKey>) -> Int? {
+    private static func bestTripleCandidate(
+        in molecule: Molecule,
+        deficits: [Int: Int],
+        degreeByAtom: [Int: Int],
+        ringEdges: Set<InChIEdgeKey>
+    ) -> Int? {
         let elementByAtom = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.element.uppercased()) })
 
         var best: (idx: Int, score: Int)?
@@ -1291,10 +1367,12 @@ private enum CDKInChIParser {
         return best?.idx
     }
 
-    private static func bestDoubleCandidate(in molecule: Molecule,
-                                            deficits: [Int: Int],
-                                            degreeByAtom: [Int: Int],
-                                            ringEdges: Set<InChIEdgeKey>) -> Int? {
+    private static func bestDoubleCandidate(
+        in molecule: Molecule,
+        deficits: [Int: Int],
+        degreeByAtom: [Int: Int],
+        ringEdges: Set<InChIEdgeKey>
+    ) -> Int? {
         let elementByAtom = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.element.uppercased()) })
 
         var best: (idx: Int, score: Int)?
@@ -1318,7 +1396,8 @@ private enum CDKInChIParser {
             }
 
             if (eA == "C" && (eB == "O" || eB == "S" || eB == "N") && degB == 1)
-                || (eB == "C" && (eA == "O" || eA == "S" || eA == "N") && degA == 1) {
+                || (eB == "C" && (eA == "O" || eA == "S" || eA == "N") && degA == 1)
+            {
                 score += 10
             }
 

@@ -2,6 +2,49 @@ import XCTest
 @testable import CDKSwiftNativePort
 
 final class InChIToStructureTests: XCTestCase {
+    func testReconstructsSulfurOxoBondOrdersBeforeSerialization() throws {
+        let cases: [(String, Int, String?)] = [
+            ("InChI=1S/H2O4S/c1-5(2,3)4/h(H2,1,2,3,4)", 2, "H2O4S"),
+            ("InChI=1S/H2O3S/c1-4(2)3/h(H2,1,2,3)", 1, "H2O3S"),
+            ("InChI=1S/C2H6OS/c1-4(2)3/h1-2H3", 1, "C2H6OS"),
+            ("InChI=1S/C2H6S/c1-3-2/h1-2H3", 0, "C2H6S"),
+            ("InChI=1S/H2S/h1H2", 0, "H2S"),
+        ]
+        for (source, doubles, formula) in cases {
+            let parser = CDKInChIGeneratorFactory.shared.getInChIToStructure(source)
+            let molecule = try parser.getAtomContainer()
+            XCTAssertNotEqual(parser.getStatus(), .error)
+            XCTAssertEqual(molecule.bonds.filter { $0.order == .double }.count, doubles, source)
+            if let formula { XCTAssertEqual(CDKMolecularFormulaDescriptor.calculate(for: molecule), formula) }
+            if doubles > 0 {
+                let cml = try CDKFileExporter.write(molecule: molecule, as: .cml)
+                let reopened = try XCTUnwrap(CDKFileImporter.readMolecules(text: cml, fileExtension: "cml").first)
+                XCTAssertEqual(reopened.bonds.filter { $0.order == .double }.count, doubles)
+                if let formula {
+                    XCTAssertEqual(CDKMolecularFormulaDescriptor.calculate(for: reopened), formula)
+                    var uncached = reopened
+                    uncached.dataFields = [:]
+                    uncached.dataFieldOrder = []
+                    XCTAssertEqual(try CDKInChIGenerator(molecule: uncached).getInchi(), source)
+                }
+            }
+        }
+    }
+
+    func testSulfuricAcidAgentSurvivesRInChIToCMLRoundTrip() throws {
+        let source =
+            "RInChI=1.00.1S/C2H4O2/c1-2(3)4/h1H3,(H,3,4)!C2H6O/c1-2-3/h3H,2H2,1H3<>C4H8O2/c1-3-6-4(2)5/h3H2,1-2H3!H2O/h1H2<>H2O4S/c1-5(2,3)4/h(H2,1,2,3,4)/d+"
+        let parser = CDKRInChIToReaction(rinchi: source)
+        let reaction = try XCTUnwrap(parser.getReaction())
+        XCTAssertNotEqual(parser.getStatus(), .error)
+        XCTAssertEqual(reaction.agents.count, 1)
+        XCTAssertEqual(CDKMolecularFormulaDescriptor.calculate(for: reaction.agents[0]), "H2O4S")
+        let cml = try CDKFileExporter.write(reaction: reaction, as: .cml)
+        let reopened = try CDKFileImporter.readReaction(text: cml, fileExtension: "cml")
+        XCTAssertEqual(reopened.agents.count, 1)
+        XCTAssertEqual(reopened.agents[0].bonds.filter { $0.order == .double }.count, 2)
+        XCTAssertEqual(CDKMolecularFormulaDescriptor.calculate(for: reopened.agents[0]), "H2O4S")
+    }
 
     // Mirrors CDK InChI-to-structure coverage at a Swift/XCTest level.
     func testParsesEthanolConnectivityAndFormula() throws {
@@ -137,7 +180,7 @@ final class InChIToStructureTests: XCTestCase {
     func testParsesRepeatedComponentHydrogenTokensWithoutWarning() throws {
         let cases = [
             "InChI=1S/2CH3.Zn/h2*1H3;",
-            "InChI=1S/BH3.72FH/h1H3;72*1H"
+            "InChI=1S/BH3.72FH/h1H3;72*1H",
         ]
 
         for inchi in cases {
