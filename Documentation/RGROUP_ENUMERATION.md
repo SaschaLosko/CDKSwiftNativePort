@@ -154,7 +154,7 @@ identities of its twelve configurations through CXSMILES.
 Wildcard aliases retain pseudoatom provenance, including labels B and Y that
 look like element symbols. Actual boron, yttrium and metals remain elements.
 All 103 M2S backbones are variable before and after a CX round trip, fixing the
-12 false negatives found in the EPO starter-pack assessment. The compact fixture
+12 false negatives found in the M2S backbone regression assessment. The compact fixture
 and its CC BY 4.0 attribution are in `RGroupEnumerationFixtures/m2s-backbones.json`
 and `M2S-ATTRIBUTION.md`. These backbones are not executable membership rulesets.
 

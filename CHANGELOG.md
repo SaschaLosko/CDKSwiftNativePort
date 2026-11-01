@@ -14,6 +14,11 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.37] - 2026-11-01
+
+- Use project-neutral terminology in the Markush regression documentation.
+- Documentation-only update; runtime code and tests are unchanged from 1.4.36.
+
 ## [1.4.36] - 2026-11-01
 
 - Add bounded scaffold repeat/link-node expansion combined with R-group enumeration,
