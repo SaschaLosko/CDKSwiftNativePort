@@ -470,3 +470,11 @@ For the full upstream attribution and redistribution notice, see
 CDX and CDXML codecs are supplied by applications through an external format extension.
 The package does not distribute a ChemDraw encoder or decoder. Reserved legacy API
 entry points throw an unsupported-format error and are excluded from the format catalog.
+
+## R-group enumeration (1.4.35)
+
+Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
+configuration semantics without a Java dependency. See the [API, limits and
+Java parity evidence](Documentation/RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
+remain separate capabilities.

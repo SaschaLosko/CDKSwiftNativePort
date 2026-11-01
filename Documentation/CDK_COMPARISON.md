@@ -159,3 +159,11 @@ Reaction hierarchy and reaction IO parity are tracked separately in
 upstream-derived reaction corpus and keeps a committed known-gap inventory plus
 an opt-in strict parity gate for reaction CML, RXN V2000/V3000, RDF, reaction
 SMILES, and the maintained reaction manipulator surface.
+
+## R-group enumeration (1.4.35)
+
+Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
+configuration semantics without a Java dependency. See the [API, limits and
+Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
+remain separate capabilities.

@@ -122,7 +122,7 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
 
             if condition.hasPrefix("<"), let upperBound = Int(condition.dropFirst()) {
                 if upperBound > 0 {
-                    for value in 0..<min(upperBound, maxAttachments + 1) {
+                    for value in 0...min(upperBound - 1, maxAttachments) {
                         matched.insert(value)
                     }
                 }
@@ -130,8 +130,8 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
             }
 
             if condition.hasPrefix(">"), let lowerBound = Int(condition.dropFirst()) {
-                let start = max(0, lowerBound + 1)
-                if start <= maxAttachments {
+                if lowerBound < maxAttachments {
+                    let start = max(0, lowerBound + 1)
                     for value in start...maxAttachments {
                         matched.insert(value)
                     }
@@ -143,7 +143,7 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
             if parts.count == 2,
                 let lower = Int(parts[0]),
                 let upper = Int(parts[1]),
-                lower <= upper
+                lower <= min(upper, maxAttachments)
             {
                 for value in lower...min(upper, maxAttachments) {
                     matched.insert(value)
@@ -270,6 +270,7 @@ public enum CDKRGroupQueryManipulator {
                         rGroupLabel: copied.rGroupLabel,
                         rGroupMembership: copied.rGroupMembership ?? label,
                         componentGroupID: componentGroupID,
+                        reactionRole: copied.reactionRole,
                         substitutionCount: copied.substitutionCount,
                         unsaturated: copied.unsaturated,
                         ringBondCount: copied.ringBondCount,
@@ -279,7 +280,14 @@ public enum CDKRGroupQueryManipulator {
                         ligandOrderingAtomIDs: copied.ligandOrderingAtomIDs,
                         atomClass: copied.atomClass,
                         atomMapNumber: copied.atomMapNumber,
-                        aliasLabel: copied.aliasLabel)
+                        aliasLabel: copied.aliasLabel,
+                        properties: copied.properties,
+                        atomTypeName: copied.atomTypeName,
+                        maximumBondOrder: copied.maximumBondOrder,
+                        bondOrderSum: copied.bondOrderSum,
+                        valency: copied.valency,
+                        formalNeighbourCount: copied.formalNeighbourCount,
+                        hybridization: copied.hybridization)
                     molecule.atoms.append(copied)
                 }
 
@@ -310,6 +318,9 @@ public enum CDKRGroupQueryManipulator {
                     guard let mappedID = atomIDMap[atom.id],
                         let atomIndex = sourceToFlatIndex[mappedID]
                     else { continue }
+                    molecule.atoms[atomIndex].ligandOrderingAtomIDs = atom.ligandOrderingAtomIDs?.compactMap {
+                        atomIDMap[$0]
+                    }
                     if atom.id == rGroup.firstAttachmentPointAtomID {
                         molecule.atoms[atomIndex].attachmentPoint =
                             (atom.id == rGroup.secondAttachmentPointAtomID) ? 3 : 1

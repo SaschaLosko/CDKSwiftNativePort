@@ -1,0 +1,32 @@
+{
+  "1": {
+    "count": 4,
+    "signatureCount": 4,
+    "sha256": "bd1b43ae29a2f7d3113d1ecb5ef1634f8452ed1b0631362bb8ecd366cb9f47f1"
+  },
+  "2": {
+    "count": 12,
+    "signatureCount": 10,
+    "sha256": "dc1bf902afbe71443eac2698aedfdce5a0d5f2837ec863717b8e18e816f508a0"
+  },
+  "3": {
+    "count": 8,
+    "signatureCount": 8,
+    "sha256": "46c8de914fdacee9c44926580f07d8420e2abe42fafa85368932c7841674f236"
+  },
+  "4": {
+    "count": 2,
+    "signatureCount": 2,
+    "sha256": "f0a285fa0d12652e24e26c5dfdf3ec76f81e0d62c8528f76c4b0c41af6030af8"
+  },
+  "5": {
+    "count": 17820,
+    "signatureCount": 7560,
+    "sha256": "5e32afbfa4713cd9af3eaabff72ac8fe7f07bae4eaa00df5bb93bd6cae298cf9"
+  },
+  "7": {
+    "count": 20,
+    "signatureCount": 20,
+    "sha256": "d09e037456dd90d54388e02e4a69a8f5d3047fe8dd5b85c4ba6ca7fac7c7362d"
+  }
+}

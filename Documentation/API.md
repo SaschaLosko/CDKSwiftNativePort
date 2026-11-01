@@ -511,3 +511,11 @@ For most host applications, the smallest useful public surface is:
 
 That set covers the common parse, layout, inspect, depict, and export loop
 without forcing host code to bind to every lower-level reader or writer.
+
+## R-group enumeration (1.4.35)
+
+Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
+configuration semantics without a Java dependency. See the [API, limits and
+Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
+remain separate capabilities.

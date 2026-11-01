@@ -14,6 +14,23 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.35] - 2026-11-01
+
+### Added
+
+- Native CDK 2.13 R-group configuration enumeration with occurrence rules,
+  positional assignments, dependencies, ordered attachments, REST_H and hydrogen
+  handling, deterministic streaming, cancellation and configurable output limits.
+- Java-derived regression fixtures and independently generated graph/REST_H
+  histogram references covering 17,866 configurations. Repeat units and nested
+  definitions report unsupported features instead of losing their semantics.
+
+### Fixed
+
+- Avoid overflow and invalid ranges in R-group occurrence matching.
+- Preserve atom properties and stereo ligand references when flattening R-group
+  definitions for round trips.
+
 ## [1.4.34] - 2026-10-11
 
 ### Fixed

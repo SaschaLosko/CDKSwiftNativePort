@@ -63,3 +63,9 @@ Licensing:
   attribution when redistributing or presenting these palettes.
 - When redistributing binaries or modified source, ensure LGPL obligations
   (including notice and source availability requirements) are satisfied.
+
+R-group enumeration and its upstream regression fixtures derive from CDK 2.13:
+- Copyright (C) 2010 Mark Rijnbeek <mark_rynbeek@users.sf.net>.
+- Copyright (C) 2026 John Mayfield (explicit attachment-point support).
+- Licensed LGPL-2.1-or-later. The notices in `RGroupEnumeration.swift` and its
+  regression tests apply to the upstream-derived portions and fixtures.
