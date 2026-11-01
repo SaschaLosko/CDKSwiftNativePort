@@ -309,7 +309,7 @@ final class SmilesGeneratorPortTests: XCTestCase {
         let inferredSmiles = generator.create(inferred)
         XCTAssertTrue(inferredSmiles.hasSuffix(" |Sg:n:2,3:1-3:ht|"))
 
-        let explicit = try parser.parseSmiles("C1NC(O)NC1 |LN:2:1.3.1.3|")
+        let explicit = try parser.parseSmiles("C1NC(O)NC1 |LN:2:1.3.1.4|")
         let explicitSmiles = generator.create(explicit)
         XCTAssertTrue(explicitSmiles.hasSuffix(" |Sg:n:2,3:1-3:ht|"))
     }

@@ -20,6 +20,13 @@ or app session logic.
 
 ## Feature Set
 
+### Finite Markush members
+
+- bounded two-ended repeat/link-node expansion combined with R-group enumeration
+- CXSMILES LOG and family-preserving CX output for supported flat definitions
+- unresolved-variable detection, including named pseudoatoms
+- [API, supported scope and regression evidence](Documentation/RGROUP_ENUMERATION.md)
+
 ### Core chemistry model
 
 - `Molecule`, `Atom`, `Bond`, `MoleculeSgroup`

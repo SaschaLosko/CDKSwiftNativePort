@@ -1,0 +1,6 @@
+{
+  "indentation": { "spaces": 4 },
+  "lineLength": 120,
+  "rules": { "OrderedImports": false },
+  "version": 1
+}

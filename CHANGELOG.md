@@ -14,6 +14,19 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Added `CDK3DRepresentationMode` with a space-filling/CPK representation that
   uses van der Waals atom radii and omits bond cylinders.
 
+## [1.4.36] - 2026-11-01
+
+- Add bounded scaffold repeat/link-node expansion combined with R-group enumeration,
+  including streaming, cancellation, output/atom limits and explicit unresolved errors.
+- Correct CX LN neighbor-index interpretation; retain the earlier colon/bond-index variant.
+- Parse CX LOG, record rule provenance, and preserve alternatives, attachments and
+  conditions in supported flat-family CXSMILES output. Reject unsafe exports.
+- Preserve named wildcard provenance; all 103 M2S regression backbones are classified
+  as variable, including 12 cases previously exposed as specified compounds.
+- Verify nine distinct molecules from the original ring/repeat/R1 example and all
+  twelve identities in the assessment's RGfile-to-CX round trip.
+- Full macOS/Linux suites: 613 tests each, two existing skips, zero failures.
+
 ## [1.4.35] - 2026-11-01
 
 ### Added

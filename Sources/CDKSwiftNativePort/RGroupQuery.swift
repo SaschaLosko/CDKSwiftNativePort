@@ -1,6 +1,8 @@
 import Foundation
 
 public struct MoleculeRGroupLogic: Hashable, Codable, Sendable {
+    public enum Source: String, Codable, Sendable { case cxsmiles, rgfile, inferredDefault }
+    public var source: Source? = nil
     public var occurrence: String
     public var requiredRGroupNumber: Int
     public var restH: Bool
@@ -8,11 +10,13 @@ public struct MoleculeRGroupLogic: Hashable, Codable, Sendable {
     public init(
         occurrence: String = CDKRGroupList.defaultOccurrence,
         requiredRGroupNumber: Int = 0,
-        restH: Bool = false
+        restH: Bool = false,
+        source: Source? = nil
     ) {
         self.occurrence = CDKRGroupList.normalizedOccurrence(occurrence)
         self.requiredRGroupNumber = requiredRGroupNumber
         self.restH = restH
+        self.source = source
     }
 }
 
@@ -229,7 +233,11 @@ public enum CDKRGroupQueryManipulator {
                     MoleculeRGroupLogic(
                         occurrence: value.occurrence,
                         requiredRGroupNumber: value.requiredRGroupNumber,
-                        restH: value.restH)
+                        restH: value.restH,
+                        source: query.rootStructure.rGroupLogicDefinitions[key]?.source
+                            ?? (value.occurrence == CDKRGroupList.defaultOccurrence
+                                && value.requiredRGroupNumber == 0 && !value.restH
+                                ? .inferredDefault : nil))
                 )
             })
 
@@ -303,12 +311,15 @@ public enum CDKRGroupQueryManipulator {
                             order: bond.order,
                             stereo: bond.stereo,
                             doubleBondStereo: bond.doubleBondStereo,
-                            stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap { atomIDMap[$0] },
-                            queryType: bond.queryType,
-                            topology: bond.topology,
-                            coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap {
+                            stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap {
                                 atomIDMap[$0]
                             },
+                            queryType: bond.queryType,
+                            topology: bond.topology,
+                            coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID
+                                .flatMap {
+                                    atomIDMap[$0]
+                                },
                             reactingCenterStatus: bond.reactingCenterStatus))
                 }
 
@@ -318,9 +329,10 @@ public enum CDKRGroupQueryManipulator {
                     guard let mappedID = atomIDMap[atom.id],
                         let atomIndex = sourceToFlatIndex[mappedID]
                     else { continue }
-                    molecule.atoms[atomIndex].ligandOrderingAtomIDs = atom.ligandOrderingAtomIDs?.compactMap {
-                        atomIDMap[$0]
-                    }
+                    molecule.atoms[atomIndex].ligandOrderingAtomIDs = atom.ligandOrderingAtomIDs?
+                        .compactMap {
+                            atomIDMap[$0]
+                        }
                     if atom.id == rGroup.firstAttachmentPointAtomID {
                         molecule.atoms[atomIndex].attachmentPoint =
                             (atom.id == rGroup.secondAttachmentPointAtomID) ? 3 : 1
@@ -339,12 +351,11 @@ public enum CDKRGroupQueryManipulator {
             molecule.atoms.compactMap { atom in
                 atom.rGroupMembership == nil ? atom.id : nil
             })
-        var rootStructure = extractSubmolecule(
+        let rootStructure = extractSubmolecule(
             from: molecule,
             atomIDs: rootAtomIDs,
             name: molecule.name,
             preserveDataFields: true)
-        rootStructure.rGroupLogicDefinitions = [:]
 
         var definitions: [Int: CDKRGroupList] = [:]
         let groupedByLabel = Dictionary(
@@ -355,14 +366,17 @@ public enum CDKRGroupQueryManipulator {
 
         for label in groupedByLabel.keys.sorted(by: compareRGroupLabels) {
             guard let rGroupNumber = parseRGroupNumber(label) else {
-                throw ChemError.parseFailed("Unsupported R-group label '\(label)' for RGfile export.")
+                throw ChemError.parseFailed(
+                    "Unsupported R-group label '\(label)' for RGfile export.")
             }
             let atomsForLabel = groupedByLabel[label, default: []].map(\.1)
             let groupedByComponent = Dictionary(grouping: atomsForLabel, by: \.componentGroupID)
             var rGroups: [CDKRGroup] = []
 
             for componentGroupID in groupedByComponent.keys.compactMap({ $0 }).sorted() {
-                guard let atoms = groupedByComponent[componentGroupID], !atoms.isEmpty else { continue }
+                guard let atoms = groupedByComponent[componentGroupID], !atoms.isEmpty else {
+                    continue
+                }
                 let atomIDs = Set(atoms.map(\.id))
                 let group = extractSubmolecule(
                     from: molecule,
@@ -372,8 +386,10 @@ public enum CDKRGroupQueryManipulator {
                 rGroups.append(
                     CDKRGroup(
                         group: group,
-                        firstAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [1, 3]),
-                        secondAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [2, 3])))
+                        firstAttachmentPointAtomID: attachmentPointAtomID(
+                            in: group, matching: [1, 3]),
+                        secondAttachmentPointAtomID: attachmentPointAtomID(
+                            in: group, matching: [2, 3])))
             }
 
             if let ungroupedAtoms = groupedByComponent[nil], !ungroupedAtoms.isEmpty {
@@ -388,8 +404,10 @@ public enum CDKRGroupQueryManipulator {
                     rGroups.append(
                         CDKRGroup(
                             group: group,
-                            firstAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [1, 3]),
-                            secondAttachmentPointAtomID: attachmentPointAtomID(in: group, matching: [2, 3])))
+                            firstAttachmentPointAtomID: attachmentPointAtomID(
+                                in: group, matching: [1, 3]),
+                            secondAttachmentPointAtomID: attachmentPointAtomID(
+                                in: group, matching: [2, 3])))
                 }
             }
 
@@ -461,7 +479,8 @@ public enum CDKRGroupQueryManipulator {
 
             while let current = stack.popLast() {
                 component.insert(current)
-                for neighbor in adjacency[current, default: []].sorted() where !visited.contains(neighbor) {
+                for neighbor in adjacency[current, default: []].sorted()
+                where !visited.contains(neighbor) {
                     visited.insert(neighbor)
                     stack.append(neighbor)
                 }
@@ -519,7 +538,8 @@ public enum CDKRGroupQueryManipulator {
         }
 
         let includedIndexSet = Set(includedIndices)
-        let indexMap = Dictionary(uniqueKeysWithValues: includedIndices.enumerated().map { ($1, $0) })
+        let indexMap = Dictionary(
+            uniqueKeysWithValues: includedIndices.enumerated().map { ($1, $0) })
 
         return includedIndices.map { index in
             var sgroup = sgroups[index]

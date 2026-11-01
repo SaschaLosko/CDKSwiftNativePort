@@ -1,0 +1,517 @@
+[
+  {
+    "id": 0,
+    "image_name": "EP14861496NWB1_40.png",
+    "cxsmiles": "*C1=CC=C(C(=O)NC2=CC=C(*)C(*)=C2*)C(S(*)=O)=C1 |$R2;;;;;;;;;;;;R4;;R6;;R7;;;R1;;$,Sg:n:20:m:ht:::,|"
+  },
+  {
+    "id": 1,
+    "image_name": "US5953857_17.png",
+    "cxsmiles": "*C1=C(*)C(*)=C2C(=O)C(*)=C(*)C(*)=C2C1=O |$B16;;;B15;;A13;;;;;B17;;B18;;A14;;;$,|"
+  },
+  {
+    "id": 2,
+    "image_name": "US6232309_16.png",
+    "cxsmiles": "*C.CCC1=CN=CC=C1 |$R3;;;;;;;;;$,m:1:7.8.9.6.4.5|"
+  },
+  {
+    "id": 3,
+    "image_name": "US6344453_16.png",
+    "cxsmiles": "*C.CCC1=CN=CC=C1 |$R3;;;;;;;;;$,m:1:7.8.9.6.4.5|"
+  },
+  {
+    "id": 4,
+    "image_name": "US6521785_11.png",
+    "cxsmiles": "*C.*C.O=S(=O)(O)C1=C2C=CC=CC2=CC=C1 |$R2;;R3;;;;;;;;;;;;;;;$,m:1:11.10.12.9.14.13,m:3:14.15.9.8.17.16|"
+  },
+  {
+    "id": 5,
+    "image_name": "US8901170_31.png",
+    "cxsmiles": "*NC(=O)C1=C(NC(=O)C2=CC(*)=NN2C2=C(Cl)C=CC=N2)C(C)=CC(*)=C1 |$RB;;;;;;;;;;;;B2;;;;;;;;;;;;;;B1;$,|"
+  },
+  {
+    "id": 6,
+    "image_name": "US9550902_23.png",
+    "cxsmiles": "*C(C)(C)CC |$Re;;;;;$,Sg:n:4:e:ht:::,|"
+  },
+  {
+    "id": 7,
+    "image_name": "US10526338B2_17_c.png",
+    "cxsmiles": "*C.*C.*C(C)(C)C(CC(=O)O)NC1=C(F)C=*C(C2=CNC3=*C=*C=C32)=N1 |$R1;;R2;;R3;;;;;;;;;;;;;;X;;;;;;Y;;Z;;;$,m:1:25.24.26.23.28.27,m:3:18.17.19.29.14.15|"
+  },
+  {
+    "id": 8,
+    "image_name": "WO2002010163A1_23.png",
+    "cxsmiles": "*C(=O)C(*)* |$R;;;;L;R1$,|"
+  },
+  {
+    "id": 9,
+    "image_name": "WO2002010163A1_29_2.png",
+    "cxsmiles": "*C(=*)SC(*)(*)C1=NC(*)=C(*)O1 |$Z;;Y;;;R3;R2;;;;R1;;R;$,|"
+  },
+  {
+    "id": 10,
+    "image_name": "06521785_9.png",
+    "cxsmiles": "*[N+]([H])(*O[H])*O[H] |$R4;;;R5;;;R5;;$,,,Sg:n:6,7:x:ht:::,Sg:n:3,4:y:ht:::,|"
+  },
+  {
+    "id": 11,
+    "image_name": "07083908_90_c.png",
+    "cxsmiles": "*C.C1=CC2=C(C=C1)NN=N2 |$R;;;;;;;;;;$,m:0:6.5.4.7.2.3|"
+  },
+  {
+    "id": 12,
+    "image_name": "07083908_91.png",
+    "cxsmiles": "*C(*)C(*)C#N |$R1;;R2;;X;;$,|"
+  },
+  {
+    "id": 13,
+    "image_name": "EP1337602B1_13_c.png",
+    "cxsmiles": "*C1(C*******CC2(*)COC2)COC1 |$R1;;;X;Y;Z;M;Z';Y';X';;;R2;;;;;;$,|"
+  },
+  {
+    "id": 14,
+    "image_name": "EP1337602B1_14.png",
+    "cxsmiles": "*C1=C(OC(=O)C2=CC=C(OCOCC3(C)COC3)C=C2)C=CC(OC(=O)C2=CC=C(OCOC3(C)COC3)C=C2)=C1 |$R;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:32:n:ht:::,Sg:n:11:n:ht:::,|"
+  },
+  {
+    "id": 15,
+    "image_name": "EP12764969NWB2_43.png",
+    "cxsmiles": "**OOP(=O)(O*)O* |$R1;R2;;;;;;M1;;M2$,Sg:n:1,2:n:ht:::,|"
+  },
+  {
+    "id": 16,
+    "image_name": "EP14750931NWB1_98.png",
+    "cxsmiles": "*C.*C.*C1=NN=C(C2=CC3=C(C=C2O)N=CC=C3)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:16.17.12.18.11.19,m:3:18.11.19.16.17.12|"
+  },
+  {
+    "id": 17,
+    "image_name": "EP14750931NWB1_99.png",
+    "cxsmiles": "*C.*C.*C1=NN=C(C2=CC3=C(C=CC=N3)C=C2O)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:11.16.14.13.15.12,m:3:14.13.15.12.11.16|"
+  },
+  {
+    "id": 18,
+    "image_name": "EP14750931NWB1_99_2.png",
+    "cxsmiles": "*C.*C.*C1=NN=C(C2=CC3=C(C=CN=C3)C=C2O)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:11.16.14.13.12.15,m:3:14.13.12.15.11.16|"
+  },
+  {
+    "id": 19,
+    "image_name": "EP14750931NWB1_100.png",
+    "cxsmiles": "*C.*C.*C1=NN=C(C2=CC3=C(C=C2O)N=CC=N3)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:11.19.17.12.16.18,m:3:17.12.16.18.11.19|"
+  },
+  {
+    "id": 20,
+    "image_name": "US6239192_9.png",
+    "cxsmiles": "*C.*C.*C1=CC=CC(*)=C1C(=O)NC(=O)NC1=CC=CC=C1 |$R3;;R4;;R2;;;;;;R1;;;;;;;;;;;;;$,m:1:19.20.18.21.23.22,m:3:18.21.23.22.19.20|"
+  },
+  {
+    "id": 21,
+    "image_name": "US6495573_10.png",
+    "cxsmiles": "*C.*C.*C(*)=CC1C(C(=O)OC(*)C2=CC=CC(OC3=CC=CC=C3)=C2)C1(C)C |$R4;;R5;;R1;;R2;;;;;;;;R3;;;;;;;;;;;;;;;;$,m:1:15.16.17.27.18.19,m:3:22.21.23.24.25.26|"
+  },
+  {
+    "id": 22,
+    "image_name": "US6538013_36_c.png",
+    "cxsmiles": "*/*=C(\\N(*)*)N(*)C(=O)OC(*)(*)OC(*)=O |$Y;X;;;R1;T;;U;;;;;R2;R2';;;R;$,|"
+  },
+  {
+    "id": 23,
+    "image_name": "US6995262_37_c.png",
+    "cxsmiles": "**N*CC |$R;A;;Y;;$,Sg:n:4:n:ht:::,|"
+  },
+  {
+    "id": 24,
+    "image_name": "US7847043B2_22.png",
+    "cxsmiles": "*[Bi](*)C(*)(*)* |$R1;;R2;;R3;R4;R5$,|"
+  },
+  {
+    "id": 25,
+    "image_name": "US7847043B2_22_2.png",
+    "cxsmiles": "*[Bi](*)* |$Z;;R1;R2$,|"
+  },
+  {
+    "id": 26,
+    "image_name": "US8076430B2_12_c.png",
+    "cxsmiles": "*[Bi](*)* |$R1;;R2;R3$,|"
+  },
+  {
+    "id": 27,
+    "image_name": "US8076430B2_13.png",
+    "cxsmiles": "*C1=C(*)C(*)=C(SC)C(*)=C1* |$R7;;;R6;;R5;;;;;R4;;R8$,|"
+  },
+  {
+    "id": 28,
+    "image_name": "US8076430B2_13_2.png",
+    "cxsmiles": "*[Bi](*)* |$X;;X;X$,|"
+  },
+  {
+    "id": 29,
+    "image_name": "US8076430B2_13_4.png",
+    "cxsmiles": "*[Bi](*)C(*)(*)* |$R10;;R11;;R12;R13;R14$,|"
+  },
+  {
+    "id": 30,
+    "image_name": "US8076430B2_13_5.png",
+    "cxsmiles": "*[Te]C(*)(*)* |$R15;;;R12;R13;R14$,|"
+  },
+  {
+    "id": 31,
+    "image_name": "US20060078834A1_26_c.png",
+    "cxsmiles": "*C1=CC(=C(*)C2=C([O-])C(=C(*)*)C2=O)C=C(*)*1 |$A12;;;;;R11;;;;;;Q11;R12;;;;;A11;Z11$,|"
+  },
+  {
+    "id": 32,
+    "image_name": "US20060078834A1_28.png",
+    "cxsmiles": "*C1=C/C(=C(\\*)C2=C([O-])/C(=C(\\*)C3=CC(C4=CC=C(*)C(*)=C4)=[O+]C(*)=C3)C2=O)C=C(C2=CC(*)=C(*)C=C2)O1 |$R31;;;;;R11;;;;;;R12;;;;;;;;X1;;X2;;;;R31;;;;;;;;;X2;;X1;;;$,|"
+  },
+  {
+    "id": 33,
+    "image_name": "US20110217348A1_18.png",
+    "cxsmiles": "*C=C(*)C(=O)O* |$R2;;;R1;;;;R3$,|"
+  },
+  {
+    "id": 34,
+    "image_name": "US20110217348A1_18_2.png",
+    "cxsmiles": "C*C1C(=O)C(*C)C(=O)C(*C)C1=O |$;R4;;;;;R4;;;;;R4;;;$,Sg:n:1,2,3,5,8,10,13,4,6,9,7,11,14: :ht:::,|"
+  },
+  {
+    "id": 35,
+    "image_name": "US20200041896A1_18.png",
+    "cxsmiles": "*O[Sn](*[Sn](O*)(OC(*)=O)OC(*)=O)(OC(*)=O)OC(*)=O |$R32;;;L;;;R35;;;R34;;;;R36;;;;R31;;;;R33;$,|"
+  },
+  {
+    "id": 36,
+    "image_name": "WO2000004894A2_34.png",
+    "cxsmiles": "*OC(=O)CCC(NC(=O)CC(*)(*)*)C(N)=O |$M;;;;;;;;;;;;R;R1;R2;;;$,Sg:n:10:n:ht:::,|"
+  },
+  {
+    "id": 37,
+    "image_name": "WO2020146194A1_22_c.png",
+    "cxsmiles": "*C1=NO*=C1C(=O)N[C@H](C1=CN2N=CC(C(*)N3C[C@@H](C(F)(F)F)NC3=O)=CC2=N1)C1CCC(F)(F)CC1 |$R1;;;;X;;;;;;;;;;;;;R2;;;;;;;;;;;;;;;;;;;;;$,|"
+  },
+  {
+    "id": 38,
+    "image_name": "US6239192_9_2.png",
+    "cxsmiles": "*NC1=NC(N*)=NC(N*)=N1 |$R1;;;;;;R2;;;;R3;$,|"
+  },
+  {
+    "id": 39,
+    "image_name": "US6444415_41.png",
+    "cxsmiles": "*C1=CC(*)=C(O)C(C(*)C2=C(O)C(*)=CC(*)=C2)=C1 |$R'';;;;R';;;;;R;;;;;R';;;R'';;$,|"
+  },
+  {
+    "id": 40,
+    "image_name": "US6538013_36.png",
+    "cxsmiles": "*C(=O)OC(*)(*)OC(=O)N(*)/C(=C/N(=O)=O)N(*)* |$R;;;;;R2';R2;;;;;U;;;;;;;T;R1$,|"
+  },
+  {
+    "id": 41,
+    "image_name": "US8076430B2_13_3.png",
+    "cxsmiles": "*SC1=C(*)C(*)=C(*)C(*)=C1* |$Y;;;;R5;;R6;;R7;;R8;;R4$,|"
+  },
+  {
+    "id": 42,
+    "image_name": "US9372402B2_19.png",
+    "cxsmiles": "*C.*C.C1=CN=C(C2=NC=CC=C2)C=C1 |$R1;;R2;;;;;;;;;;;;;$,m:1:4.5.15.6.7.14,m:3:13.8.9.10.12.11|"
+  },
+  {
+    "id": 43,
+    "image_name": "US20210149301A1_106.png",
+    "cxsmiles": "*C.*C(C)(*C1=CC=CC=C1)C([H])([H])C.*O |$;R21;RA;;;YA;;;;;;;;;;;;$,,,,Sg:n:17:b:ht:::,Sg:n:1:c:ht:::,Sg:n:13,12,14,3,2,5,6,7,8,9,10,11: :ht:::,m:16:6.7.8.9.10.11,m:0:6.7.8.9.10.11|"
+  },
+  {
+    "id": 44,
+    "image_name": "WO2002010163A1_30.png",
+    "cxsmiles": "*C1=C(*)OC(C(*)(*)*)=N1 |$R1;;;R;;;;L;R2;R3;$,|"
+  },
+  {
+    "id": 45,
+    "image_name": "US9029365_37_c.png",
+    "cxsmiles": "*C1=CC(C(=O)N(*)*)=C(NC(=O)C2=CC(*)=NN2C2=C(*)C=CC=N2)C(*)=C1 |$R2;;;;;;;R4a;R4b;;;;;;;;R3;;;;;R5;;;;;;R1;$,|"
+  },
+  {
+    "id": 46,
+    "image_name": "US9372402B2_19_2.png",
+    "cxsmiles": "*C.*C.OC1=CC=CC=C1/C=N/CC/N=C\\C1=C(O)C=CC=C1 |$R1;;R2;;;;;;;;;;;;;;;;;;;;;$,m:1:7.8.6.9.10.5,m:3:20.18.21.22.23.17|"
+  },
+  {
+    "id": 47,
+    "image_name": "US20220213127A1_51.png",
+    "cxsmiles": "*C1=C(*)C2=C(C(*)=C1*)N(*)C1=C3B2C2=C(C4=C(*C5=C4*=**=*5)C=C2)N(*)C3=C(*)C(*)=C1* |$R32;;;R31;;;;R34;;R33;;R1;;;;;;;;Y3;;;Z4;Z3;Z2;Z1;;;;R1;;;R36;;R35;;R37$,|"
+  },
+  {
+    "id": 48,
+    "image_name": "WO2000043362A1_41.png",
+    "cxsmiles": "**C1=CC=C(S(=O)(=O)C2CCN(CC(*)(*)C3=CC=C(*)C=C3*)CC2)C=C1.*C |$Z;E;;;;;;;;;;;;;;R13;R14;;;;;R11;;;R12;;;;;R21;$,m:30:2.28.27.5.3.4|"
+  },
+  {
+    "id": 49,
+    "image_name": "WO2001014360A2_33_c.png",
+    "cxsmiles": "*C=CC1=CC=C(C(=O)O*)C=C1.*OCC1(*)CC*C2=C1C=CC=C2 |$;;;;;;;;;;R1;;;R3;;;;R2;;;X;;;;;;$,Sg:n:18:n:ht:::,m:0:25.26.24.21.22.23|"
+  },
+  {
+    "id": 50,
+    "image_name": "WO2002010163A1_24.png",
+    "cxsmiles": "*C(=O)C(*)(*)* |$X;;;;L;R2;R3$,|"
+  },
+  {
+    "id": 51,
+    "image_name": "WO2002010163A1_25.png",
+    "cxsmiles": "*C.*C.*C(=O)C1CCN(*)C1 |$R6;;R7;;X;;;;;;;P;$,,,Sg:n:8:m:ht:::,Sg:n:12:n:ht:::,m:1:7.8.9.12.10,m:3:7.8.9.12.10|"
+  },
+  {
+    "id": 52,
+    "image_name": "WO2002010163A1_29.png",
+    "cxsmiles": "*C(=O)C(*)* |$R;;;;L;R1$,|"
+  },
+  {
+    "id": 53,
+    "image_name": "11279716_34_c1.png",
+    "cxsmiles": "*C1=C(*)C(*)=[N+]2C1=C(*)C1=C(*)C(*)=C(*)N1[B-]2(*)* |$R3;;;R2;;R1;;;;R4;;;R5;;R6;;R7;;;X2;X1$,|"
+  },
+  {
+    "id": 54,
+    "image_name": "US8362048B2_131_c1.png",
+    "cxsmiles": "*C1=CC(C2=NC(C3=C4CC[C@H](*)C4=CC=C3)=NO2)=CC=C1OC(C)C |$Y;;;;;;;;;;;;X;;;;;;;;;;;;;$,|"
+  },
+  {
+    "id": 55,
+    "image_name": "US8980898B2_40.png",
+    "cxsmiles": "*CCCCNC(=N)NC(=O)C1=NC(Cl)=C(N)N=C1N |$A1;;;;;;;;;;;;;;;;;;;$,|"
+  },
+  {
+    "id": 56,
+    "image_name": "US10017503B2_3_c1.png",
+    "cxsmiles": "*C1=CC=C(C2=C(*)C(C(=O)NCCS(=O)(=O)N(*)*)=NO2)C=C1 |$R2a;;;;;;;R3;;;;;;;;;;;A;Re;;;;$,Sg:n:13:q:ht:::,|"
+  },
+  {
+    "id": 57,
+    "image_name": "US10239846B2_132_c1.png",
+    "cxsmiles": "*C1=CC(C2=NC(C3=CC=CC4=C3CC[C@@H]4*)=NO2)=CC=C1OC(C)C |$Y;;;;;;;;;;;;;;;;X;;;;;;;;;$,|"
+  },
+  {
+    "id": 58,
+    "image_name": "US10597390B2_129_c1.png",
+    "cxsmiles": "*NC1=C(F)C=*C(C2=C(*)NC3=C(*)C(*)=C(*)C(*)=C32)=N1 |$R6;;;;;;X;;;;R5;;;;R1;;R2;;R3;;R4;;$,|"
+  },
+  {
+    "id": 59,
+    "image_name": "US10946697_12_c.png",
+    "cxsmiles": "*C1=C(*)C(OC)=C(*)C(*)=C1C |$R3;;;R1;;;;;R2;;R4;;$,Sg:n:9,11,1,2,4,7,5,8,10,0,3::ht:::,|"
+  },
+  {
+    "id": 60,
+    "image_name": "US10975475_11_c1.png",
+    "cxsmiles": "*P(*)* |$R1;;R3;R2$,|"
+  },
+  {
+    "id": 61,
+    "image_name": "US11407846_27_c1.png",
+    "cxsmiles": "*C(N)COCCOC(*)COCC(*)N |$R7;;;;;;;;;R6;;;;;R5;$,,,,Sg:n:7,6,5:q:ht:::,Sg:n:12,11,10,8,9:p:ht:::,Sg:n:4,3,1,0:r:ht:::,|"
+  },
+  {
+    "id": 62,
+    "image_name": "US20010004639A1_8.png",
+    "cxsmiles": "*1=CC=CC=C1.*C.*C.*OC(=O)C(*)(*)* |$X;;;;;;W;;R3;;R;;;;;;R2;R1$,m:7:3.2.1.0.5.4,m:9:3.2.1.0.5.4,m:15:3.2.1.0.5.4|"
+  },
+  {
+    "id": 63,
+    "image_name": "US20010004639A1_8_c1.png",
+    "cxsmiles": "*1=CC=CC=C1.*C.*C1=C(SC(*)(*)C2=NC(*)C(*)O2)SC(N(*)C(=O)C(*)(*)*)=N1.*N(*)C(*)(*)* |$X;;;;;;R3;;R7;;;;;R9;R8;;;;R10;;R11;;;;;R6;;;;;R2;R1;;R13;;R12;;;R5;R4$,m:7:3.2.1.0.5.4,m:37:3.2.1.0.5.4,m:29:3.2.1.0.5.4|"
+  },
+  {
+    "id": 64,
+    "image_name": "US20170334882A1_304_2_c.png",
+    "cxsmiles": "*C.*C.*C.*C.*N(C(=O)C1=CC(S(=O)(=O)NC2CCCC2)=CC=C1)C1=CC=CC=C1 |$G1;;G2;;G3;;G4;;R4;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:23:w:ht:::,Sg:n:0:y:ht:::,m:1:31.30.32.27.28.29,m:3:12.13.14.26.24.25,m:5:19.20.21.22.23,m:7:19.20.21.22.22.23|"
+  },
+  {
+    "id": 65,
+    "image_name": "US20170334882A1_304_c.png",
+    "cxsmiles": "*C.*C.*C1=C(*)C(*)=C([H])C(N(C)C(=O)C2=CC=CC(S(=O)(=O)NC3CCCC3)=C2)=C1.CCO |$G2;;G4;;G1;;;X;;X;;;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:30:w:ht:::,Sg:n:34: :ht:::,m:33:26.27.28.29.30,m:1:17.31.18.21.20.19,m:3:26.27.28.29.30|"
+  },
+  {
+    "id": 66,
+    "image_name": "US20200050122A1_18_c1.png",
+    "cxsmiles": "*C1=C(*)C(*)=C(/C=C/C2=C(*)C(*)=C(*)C(*)=C2*)C(*)=C1* |$R1;;;R3;;R5;;;;;;R10;;R8;;R2;;R7;;R9;;R6;;R4$,|"
+  },
+  {
+    "id": 67,
+    "image_name": "US20200352840A1_29_c1.png",
+    "cxsmiles": "*NC(CNC(=N)N)C(*)=O |$R1;;;;;;;;;R2;$,Sg:n:3:n:ht:::,|"
+  },
+  {
+    "id": 68,
+    "image_name": "US20210102027A1_13_c1.png",
+    "cxsmiles": "*/N=C(/*)N(*)* |$R2;;;R1;;R4;R3$,|"
+  },
+  {
+    "id": 69,
+    "image_name": "US20210283300A9_9_c.png",
+    "cxsmiles": "C=C(C)C(=O)OC(=O)CC(=O)OC(=O)C(=C)C |Sg:n:8:n:ht:::,|"
+  },
+  {
+    "id": 70,
+    "image_name": "US20220115602A1_51_c.png",
+    "cxsmiles": "*C1=C(*)[N+](*)=C(*)N1* |$R4;;;R5;;R2;;R3;;R1$,|"
+  },
+  {
+    "id": 71,
+    "image_name": "US20220183287A1_13_c1.png",
+    "cxsmiles": "*OC(=O)C1=C(*)C(*)=C(*)C(*)=C1* |$R1;;;;;;R2;;R2;;R2;;R2;;R2$,|"
+  },
+  {
+    "id": 72,
+    "image_name": "US20220227955A1_18_c1.png",
+    "cxsmiles": "*/N=C(\\N*)NN |$R2;;;;R1;;$,|"
+  },
+  {
+    "id": 73,
+    "image_name": "US20220271335A1_26_c.png",
+    "cxsmiles": "*P(*)(*)=O |$R10;;R11;R12;$,|"
+  },
+  {
+    "id": 74,
+    "image_name": "US20220271335A1_26_c_2.png",
+    "cxsmiles": "*N=P(*)(*)* |$X;;;R1;R2;R3$,|"
+  },
+  {
+    "id": 75,
+    "image_name": "US20220288063A1_24_c.png",
+    "cxsmiles": "*NC1=NC(C2=CC(C(=O)N3CCN(CC4=CC=C(Cl)C=C4)CC3)=C(Cl)C=N2)=CS1 |$R;;;;;;;;;;;;;;;;;;;;;;;;;;;;;$,|"
+  },
+  {
+    "id": 76,
+    "image_name": "US20220332736A1_5_c.png",
+    "cxsmiles": "*C1=CC(*)=C(OP2OC3=C(*)C=C(*)C=C3C3=C(O2)C(*)=CC(*)=C3)C(C2=C(OP(OC3=CC=CC(C)=C3)OC3=CC(C)=CC=C3)C(*)=CC(*)=C2)=C1 |$R4;;;;R3;;;;;;;R1;;;R2;;;;;;;R1;;;R2;;;;;;;;;;;;;;;;;;;;;;;;R3;;;R4;;$,|"
+  },
+  {
+    "id": 77,
+    "image_name": "US20230174533A1_64_c.png",
+    "cxsmiles": "**N(*)C(=O)C(*)(*)N1C(*)=NC2=C1C(=O)N(*)C(=O)N2* |$Cy;Ar;;R5;;;;R3;R4;;;D;;;;;;;R1;;;;R2$,|"
+  },
+  {
+    "id": 78,
+    "image_name": "US7776936B2_16_c.png",
+    "cxsmiles": "*C(=C)C(=O)O*OC(=O)CC1CCSS1 |$R4;;;;;;R5;;;;;;;;;$,Sg:n:10:n:ht:::,|"
+  },
+  {
+    "id": 79,
+    "image_name": "US7776936B2_16_c1.png",
+    "cxsmiles": "*C(=C)C(=O)O*OC(=O)*P(=O)(O)O |$R1;;;;;;R2;;;;R3;;;;$,|"
+  },
+  {
+    "id": 80,
+    "image_name": "US9056043B2_12.png",
+    "cxsmiles": "*C(*)COCCCCOC |$OG;;Q;;;;;;;;$,,,Sg:n:9,8,7,6,5:n:ht:::,Sg:n:4,3,1,2:m:ht:::,|"
+  },
+  {
+    "id": 81,
+    "image_name": "US9056043B2_35.png",
+    "cxsmiles": "*C.*C(=C)C1=CC=CC=C1.CC |$R4;;R4;;;;;;;;;;$,m:11:9.10.7.6.5.8,m:1:9.10.7.6.5.8|"
+  },
+  {
+    "id": 82,
+    "image_name": "US9066852B2_2.png",
+    "cxsmiles": "*C(=C)C(=O)O*OC(=O)*P(=O)(O)O |$R1;;;;;;R2;;;;R3;;;;$,|"
+  },
+  {
+    "id": 83,
+    "image_name": "US9156839B2_4.png",
+    "cxsmiles": "*C.*C.*N(*)S(=O)(=O)C1=CC2=C(C=C1)NN=C2NC1=CC=CC=C1 |$R3;;R3;;R1;;R2;;;;;;;;;;;;;;;;;;;$,m:1:20,m:3:20.21.22.23.24.25|"
+  },
+  {
+    "id": 84,
+    "image_name": "US9237990B2_27_c.png",
+    "cxsmiles": "*C(=C)C(=O)O**N1C(=O)N(*)C(=O)N(*)C1=O |$R2;;;;;;Z;R1;;;;;R4;;;;R3;;$,|"
+  },
+  {
+    "id": 85,
+    "image_name": "US9237990B2_28_c.png",
+    "cxsmiles": "*C(=C)C(=O)O**N1C(=O)N(**OC(=O)C(*)=C)C(=O)N(**OC(=O)C(*)=C)C1=O |$R2;;;;;;Z;R1;;;;;R5;X;;;;;R2;;;;;R6;Y;;;;;R2;;;$,|"
+  },
+  {
+    "id": 86,
+    "image_name": "US9339510B2_229_c.png",
+    "cxsmiles": "*C.*C.*S(=O)(=O)C1=CC(C(=O)NC2=CC=CC=C2)=CC=C1 |$R2;;R1;;Cy;;;;;;;;;;;;;;;;;;$,Sg:n:2:x:ht:::,m:1:9.10.8.22.20.21,m:3:18.19.17.14.15.16|"
+  },
+  {
+    "id": 87,
+    "image_name": "US9682968B2_123.png",
+    "cxsmiles": "*C1=CC=C(C2CC(*)(C)CCN2CC2=C(*)C=C(*)C3=C2C(*)=CN3)C=*1 |$R5;;;;;;;;R6;;;;;;;;R1;;;R2;;;;R3;;;;X$,|"
+  },
+  {
+    "id": 88,
+    "image_name": "US10077240B2_3.png",
+    "cxsmiles": "CC(=O)O.CN1N=C(C(=O)N(*C2=CC=CC=C2)CC2=CC=CC=C2)C2=C1C1=C*=*C=C1OC2 |$;;;;;;;;;;;L2;;;;;;;;;;;;;;;;;;Z3;Z2;;;;$,m:0:13.14.12.17.15.16|"
+  },
+  {
+    "id": 89,
+    "image_name": "US10130564B2_22_c.png",
+    "cxsmiles": "*C(=C)C(=O)O*OC(=O)N*NC(=O)O*OC(=O)C=C |$Rd;;;;;;Rc;;;;;Ra;;;;;Rb;;;;;$,|"
+  },
+  {
+    "id": 90,
+    "image_name": "US10414768B2_14.png",
+    "cxsmiles": "*C1=NC(N(*)*)=C(N(*)*)C(*)=N1 |$R5;;;;;R7;R6;;;R3;R2;;R4;$,|"
+  },
+  {
+    "id": 91,
+    "image_name": "US10676429B2_13.png",
+    "cxsmiles": "*C.*C.*C.*C.*N(*)S(=O)(=O)C1=CC=CC(C(=O)NC2=CC=CC=C2)=C1F |$R3;;R4;;R4;;R4;;R1;;R2;;;;;;;;;;;;;;;;;;;$,m:1:17.18.16.15.14.28,m:3:25.24.23.22.27.26,m:5:25.24.23.22.27.26,m:7:25.24.23.22.27.26|"
+  },
+  {
+    "id": 92,
+    "image_name": "US10941113B2_7.png",
+    "cxsmiles": "*C.*C1=CC(NC(=O)C2=CC(S(=O)(=O)N(*)*)=CC=C2)=CC=C1F |$R3;;R4;;;;;;;;;;;;;;R2;R1;;;;;;;$,m:1:9.20.19.18.10.11|"
+  },
+  {
+    "id": 93,
+    "image_name": "US10961247B2_75_c.png",
+    "cxsmiles": "*C(=O)N1CCCC(NC2=NC(NC3=CC=CC(*)=C3)=NC3=C2C=CN3)C1 |$R3;;;;;;;;;;;;;;;;;;R';;;;;;;;$,|"
+  },
+  {
+    "id": 94,
+    "image_name": "US10961247B2_75_c_2.png",
+    "cxsmiles": "*C1=*NC2=C1C(NC1CCCN(C(=O)C=C)C1)=NC(NC1=CC=C(*)C=C1)=N2 |$R5;;X1;;;;;;;;;;;;;;;;;;;;;;;R';;;$,|"
+  },
+  {
+    "id": 95,
+    "image_name": "US11247998B2_71_c.png",
+    "cxsmiles": "*C.*C(*)NC(=O)C1=C2CN(C(=O)NC3=CC=*C=C3)C(*)CN2C=C1 |$R4;;R9;;R8;;;;;;;;;;;;;;G;;;;R3;;;;$,Sg:n:0:s:ht:::,m:1:19.18.20.15.17.16|"
+  },
+  {
+    "id": 96,
+    "image_name": "US20200332046A1_33.png",
+    "cxsmiles": "*C(=C)C(=O)O**C |$R4;;;;;;Z;R3;$,Sg:n:1,2,0,3,4,5:q:ht:::,|"
+  },
+  {
+    "id": 97,
+    "image_name": "US20200332046A1_33_2.png",
+    "cxsmiles": "*N(*C)C(=O)O*C |$R10;;R11;;;;;R9;$,|"
+  },
+  {
+    "id": 98,
+    "image_name": "US20200332046A1_34.png",
+    "cxsmiles": "C=C(C)C(=O)OCCNC(=O)OCC(C)OC(=O)NCCOC(=O)C(=C)C |Sg:n:11,12,13,14:n:ht:::,|"
+  },
+  {
+    "id": 99,
+    "image_name": "US20200332046A1_34_2.png",
+    "cxsmiles": "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C |Sg:n:23,24,25,26:n:ht:::,|"
+  },
+  {
+    "id": 100,
+    "image_name": "US20220227732A1_94_c.png",
+    "cxsmiles": "*NC(=O)C1=C(OC2=CC=C(*)C=C2*)N=CC(C(F)(F)F)=C1 |$R2;;;;;;;;;;;R16;;;R18;;;;;;;;$,|"
+  },
+  {
+    "id": 101,
+    "image_name": "US20220227732A1_c_2.png",
+    "cxsmiles": "*OC1=C(C(=O)NC2=C[N+]([O-])=CC=C2)C=C(C(F)(F)F)C=N1 |$R1;;;;;;;;;;;;;;;;;;;;;$,|"
+  },
+  {
+    "id": 102,
+    "image_name": "US20230117605A1_253.png",
+    "cxsmiles": "*C.CC1=NC=NC2=C1C=CC=C2 |$R1a;;;;;;;;;;;;$,Sg:n:0:m:ht:::,m:1:10.9.11.8.7.12|"
+  }
+]

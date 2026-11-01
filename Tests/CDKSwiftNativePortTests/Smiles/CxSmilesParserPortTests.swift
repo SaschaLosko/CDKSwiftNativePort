@@ -95,13 +95,16 @@ final class CxSmilesParserPortTests: XCTestCase {
 
     func testParsesMarkushRGroupsFromUserExample() throws {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
-        let molecule = try parser.parseSmiles("C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
+        let molecule = try parser.parseSmiles(
+            "C1CNCC(*)C1 |$;;;;;R1$,LN:0:1.3,RG:_R1={OC},{Cl},{C#N}|")
 
         XCTAssertEqual(connectedComponents(in: molecule).count, 4)
         XCTAssertEqual(
-            molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1)
+            molecule.atoms.filter { $0.rGroupMembership == nil && $0.symbolToDraw == "R1" }.count, 1
+        )
         XCTAssertEqual(
-            molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 3)
+            molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count,
+            3)
         XCTAssertEqual(molecule.sgroups.count, 1)
         XCTAssertEqual(molecule.sgroups.first?.subscriptText, "1-3")
     }
@@ -112,7 +115,8 @@ final class CxSmilesParserPortTests: XCTestCase {
 
         XCTAssertEqual(connectedComponents(in: molecule).count, 3)
         XCTAssertEqual(
-            molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count, 2)
+            molecule.atoms.filter { $0.rGroupMembership == "R1" && $0.attachmentPoint == 1 }.count,
+            2)
         XCTAssertTrue(molecule.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Cl" })
         XCTAssertTrue(molecule.atoms.contains { $0.rGroupMembership == "R1" && $0.element == "Br" })
     }
@@ -145,10 +149,10 @@ final class CxSmilesParserPortTests: XCTestCase {
         }
         XCTAssertEqual(Set(linkedElements), Set(["C", "O"]))
 
-        let withExplicitCrossingBonds = try parser.parseSmiles("C1NC(O)NC1 |LN:2:1.3.1.3|")
-        XCTAssertEqual(withExplicitCrossingBonds.sgroups.count, 1)
-        XCTAssertEqual(withExplicitCrossingBonds.sgroups[0].atomIDs.count, 2)
-        XCTAssertEqual(Set(withExplicitCrossingBonds.sgroups[0].crossingBondIDs).count, 2)
+        let withExplicitOuterAtoms = try parser.parseSmiles("C1NC(O)NC1 |LN:2:1.3.1.4|")
+        XCTAssertEqual(withExplicitOuterAtoms.sgroups.count, 1)
+        XCTAssertEqual(withExplicitOuterAtoms.sgroups[0].atomIDs.count, 2)
+        XCTAssertEqual(Set(withExplicitOuterAtoms.sgroups[0].crossingBondIDs).count, 2)
     }
 
     func testPreservesDisconnectedMarkushAlternativesUsingComponentGroupIDs() throws {
@@ -323,17 +327,21 @@ final class CxSmilesParserPortTests: XCTestCase {
         XCTAssertEqual(
             split.state.stereoGroups[2], CDKCxSmilesParser.encodeStereoGroup(kind: "or", number: 1))
         XCTAssertEqual(
-            split.state.stereoGroups[4], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 5))
+            split.state.stereoGroups[4], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 5)
+        )
         XCTAssertEqual(
-            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0))
+            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0)
+        )
     }
 
     func testParsesSingleAndStereoGroupState() throws {
         let split = try CDKCxSmilesParser.split("CC |&1:0,1|", enabled: true)
         XCTAssertEqual(
-            split.state.stereoGroups[0], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1))
+            split.state.stereoGroups[0], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1)
+        )
         XCTAssertEqual(
-            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1))
+            split.state.stereoGroups[1], CDKCxSmilesParser.encodeStereoGroup(kind: "and", number: 1)
+        )
     }
 
     func testParsesSingleOrStereoGroupState() throws {
@@ -354,7 +362,8 @@ final class CxSmilesParserPortTests: XCTestCase {
 
     func testParsesDivalentRadicalLayerIntoAtoms() throws {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
-        let molecule = try parser.parseSmiles("[C]1C2=CC=CC=C2C2=CC=CC=C12 |c:3,5,10,t:1,8,12,^3:0|")
+        let molecule = try parser.parseSmiles(
+            "[C]1C2=CC=CC=C2C2=CC=CC=C12 |c:3,5,10,t:1,8,12,^3:0|")
 
         XCTAssertEqual(molecule.atoms[0].radicalType, .divalentSinglet)
         XCTAssertEqual(molecule.atoms[0].radical, 2)
@@ -410,7 +419,8 @@ final class CxSmilesParserPortTests: XCTestCase {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
         let molecule = try parser.parseSmiles("[H]OCCO.C* |lp:1:2,4:2,m:6:3.2,Sg:n:1,2,3,5::ht|")
 
-        let sgroup = try XCTUnwrap(molecule.sgroups.first(where: { $0.kind == .structureRepeatUnit }))
+        let sgroup = try XCTUnwrap(
+            molecule.sgroups.first(where: { $0.kind == .structureRepeatUnit }))
         XCTAssertEqual(sgroup.atomIDs.count, 4)
         XCTAssertEqual(sgroup.crossingBondIDs.count, 2)
     }

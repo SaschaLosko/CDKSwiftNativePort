@@ -23,6 +23,8 @@ public struct CDKCxSmilesState: Equatable, Hashable, Codable, Sendable {
         public var lowerBound: Int
         public var upperBound: Int
         public var bondIndices: [Int]
+        /// CX LN trailing indices refer to neighboring atoms, not bonds.
+        public var outerAtomIndices: [Int]? = nil
 
         public init(
             atomIndex: Int,
@@ -104,6 +106,8 @@ public struct CDKCxSmilesState: Equatable, Hashable, Codable, Sendable {
     public var linkNodes: [LinkNode] = []
     public var rGroupDefinitions: [String: [String]] = [:]
     public var rGroupOrder: [String] = []
+    /// Optional for compatibility with older serialized CX state.
+    public var rGroupLogic: [Int: MoleculeRGroupLogic]? = nil
 
     public init(
         atomLabels: [Int: String] = [:],
@@ -187,7 +191,8 @@ public enum CDKCxSmilesParser {
         }
 
         let trailingStart = title.index(after: secondPipe)
-        let trailing = String(title[trailingStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let trailing = String(title[trailingStart...]).trimmingCharacters(
+            in: .whitespacesAndNewlines)
         return SplitResult(
             coreSmiles: basic.coreSmiles,
             title: trailing,
@@ -200,7 +205,8 @@ public enum CDKCxSmilesParser {
             return SplitResult(coreSmiles: input, title: nil, state: CDKCxSmilesState())
         }
 
-        let core = String(input[..<firstSeparatorRange.lowerBound]).trimmingCharacters(in: separators)
+        let core = String(input[..<firstSeparatorRange.lowerBound]).trimmingCharacters(
+            in: separators)
         let trailing = String(input[firstSeparatorRange.upperBound...]).trimmingCharacters(
             in: separators)
         return SplitResult(
@@ -225,6 +231,7 @@ public enum CDKCxSmilesParser {
         applySgroups(to: &molecule, state: state)
         applyLinkNodes(to: &molecule, state: state)
         try appendRGroupDefinitions(to: &molecule, state: state, parseDefinition: parseDefinition)
+        molecule.rGroupLogicDefinitions = state.rGroupLogic ?? [:]
         molecule.cxState = state
     }
 
@@ -246,6 +253,8 @@ public enum CDKCxSmilesParser {
                 existing.attachmentPoint = Int(label.dropFirst(3))
                 existing.explicitHydrogenCount = 0
             } else {
+                // Keep wildcard provenance even for aliases that resemble elements (B, Y).
+                if existing.element == "*" { existing.isUnresolvedPseudoAtom = true }
                 existing.element = label
                 existing.aromatic = false
                 if let rLabel = parseRGroupLabel(label) {
@@ -292,7 +301,8 @@ public enum CDKCxSmilesParser {
                 molecule.atoms[idx].cxStereoGroup = 1
             }
         }
-        for (atomIndex, group) in state.stereoGroups where molecule.atoms.indices.contains(atomIndex) {
+        for (atomIndex, group) in state.stereoGroups
+        where molecule.atoms.indices.contains(atomIndex) {
             molecule.atoms[atomIndex].cxStereoGroup = group
         }
     }
@@ -302,7 +312,8 @@ public enum CDKCxSmilesParser {
         for (atomIndex, neighborIndices) in state.ligandOrdering
         where molecule.atoms.indices.contains(atomIndex) {
             let neighborIDs = neighborIndices.compactMap { neighborIndex in
-                molecule.atoms.indices.contains(neighborIndex) ? molecule.atoms[neighborIndex].id : nil
+                molecule.atoms.indices.contains(neighborIndex)
+                    ? molecule.atoms[neighborIndex].id : nil
             }
             molecule.atoms[atomIndex].ligandOrderingAtomIDs = neighborIDs
         }
@@ -383,17 +394,19 @@ public enum CDKCxSmilesParser {
 
         for pending in pendingChildIndices
         where molecule.sgroups.indices.contains(pending.moleculeIndex) {
-            molecule.sgroups[pending.moleculeIndex].childGroupIndices = pending.childIndices.compactMap {
-                childIndex in
-                stateToMoleculeIndex[childIndex]
-            }
+            molecule.sgroups[pending.moleculeIndex].childGroupIndices = pending.childIndices
+                .compactMap {
+                    childIndex in
+                    stateToMoleculeIndex[childIndex]
+                }
         }
 
         for (atomIndex, endpoints) in state.positionalVariations
         where molecule.atoms.indices.contains(atomIndex) {
             let beginAtomID = molecule.atoms[atomIndex].id
             let endpointIDs = endpoints.compactMap { endpointIndex in
-                molecule.atoms.indices.contains(endpointIndex) ? molecule.atoms[endpointIndex].id : nil
+                molecule.atoms.indices.contains(endpointIndex)
+                    ? molecule.atoms[endpointIndex].id : nil
             }
             let firstBondID = molecule.bonds(forAtom: beginAtomID).first?.id
             molecule.sgroups.append(
@@ -417,7 +430,9 @@ public enum CDKCxSmilesParser {
         var nextComponentGroupID = (molecule.atoms.compactMap(\.componentGroupID).max() ?? 0) + 1
 
         for label in orderedRGroupLabels(from: state) {
-            guard let definitions = state.rGroupDefinitions[label], !definitions.isEmpty else { continue }
+            guard let definitions = state.rGroupDefinitions[label], !definitions.isEmpty else {
+                continue
+            }
 
             let rootAtoms = molecule.atoms.filter { rGroupDisplayLabel(for: $0) == label }
             let incomingOrders = try incomingBondOrders(for: rootAtoms, in: molecule, label: label)
@@ -430,7 +445,8 @@ public enum CDKCxSmilesParser {
                     in: &definition,
                     nextComponentGroupID: nextComponentGroupID)
 
-                for idx in definition.atoms.indices where definition.atoms[idx].rGroupMembership == nil {
+                for idx in definition.atoms.indices
+                where definition.atoms[idx].rGroupMembership == nil {
                     definition.atoms[idx].rGroupMembership = label
                 }
 
@@ -504,7 +520,8 @@ public enum CDKCxSmilesParser {
         guard let bondOrders else { return }
 
         var attachmentPointIndices = molecule.atoms.indices.filter { idx in
-            molecule.atoms[idx].attachmentPoint != nil && molecule.atoms[idx].rGroupMembership == nil
+            molecule.atoms[idx].attachmentPoint != nil
+                && molecule.atoms[idx].rGroupMembership == nil
         }
 
         if attachmentPointIndices.isEmpty {
@@ -542,7 +559,8 @@ public enum CDKCxSmilesParser {
             }
 
             attachmentPointIndices = molecule.atoms.indices.filter { idx in
-                molecule.atoms[idx].attachmentPoint != nil && molecule.atoms[idx].rGroupMembership == nil
+                molecule.atoms[idx].attachmentPoint != nil
+                    && molecule.atoms[idx].rGroupMembership == nil
             }
         }
 
@@ -658,7 +676,9 @@ public enum CDKCxSmilesParser {
                     stereoReferenceAtomIDs: bond.stereoReferenceAtomIDs?.compactMap { atomMap[$0] },
                     queryType: bond.queryType,
                     topology: bond.topology,
-                    coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap { atomMap[$0] },
+                    coordinateBondReferenceAtomID: bond.coordinateBondReferenceAtomID.flatMap {
+                        atomMap[$0]
+                    },
                     reactingCenterStatus: bond.reactingCenterStatus))
         }
 
@@ -709,7 +729,8 @@ public enum CDKCxSmilesParser {
         return digits.isEmpty ? 0 : Int(digits)
     }
 
-    private static func findClosingCxPipe(in input: String, startingAt start: String.Index) -> String
+    private static func findClosingCxPipe(in input: String, startingAt start: String.Index)
+        -> String
         .Index?
     {
         var cursor = start
@@ -768,7 +789,8 @@ public enum CDKCxSmilesParser {
             }
 
             if token.hasPrefix("r:") {
-                state.racemicFragments = try parseIntegerList(String(token.dropFirst(2)), separator: ",")
+                state.racemicFragments = try parseIntegerList(
+                    String(token.dropFirst(2)), separator: ",")
                 continue
             }
 
@@ -825,12 +847,14 @@ public enum CDKCxSmilesParser {
             }
 
             if token.hasPrefix("ha:") {
-                state.atomHighlights = try parseIntegerList(String(token.dropFirst(3)), separator: ",")
+                state.atomHighlights = try parseIntegerList(
+                    String(token.dropFirst(3)), separator: ",")
                 continue
             }
 
             if token.hasPrefix("hb:") {
-                state.bondHighlights = try parseIntegerList(String(token.dropFirst(3)), separator: ",")
+                state.bondHighlights = try parseIntegerList(
+                    String(token.dropFirst(3)), separator: ",")
                 continue
             }
 
@@ -852,6 +876,11 @@ public enum CDKCxSmilesParser {
 
             if token.hasPrefix("RG:") {
                 try parseRGroups(token, into: &state)
+                continue
+            }
+
+            if token.hasPrefix("LOG={") {
+                try parseRGroupLogic(token, into: &state)
                 continue
             }
 
@@ -941,7 +970,8 @@ public enum CDKCxSmilesParser {
         into state: inout CDKCxSmilesState
     ) throws {
         guard !body.isEmpty else { return }
-        for group in body.split(separator: ",", omittingEmptySubsequences: false) where !group.isEmpty {
+        for group in body.split(separator: ",", omittingEmptySubsequences: false)
+        where !group.isEmpty {
             let ids = try parseIntegerList(String(group), separator: ".")
             guard !ids.isEmpty else {
                 throw ChemError.parseFailed("Malformed CXSMILES fragment-group layer.")
@@ -1149,7 +1179,8 @@ public enum CDKCxSmilesParser {
             else {
                 throw ChemError.parseFailed("Malformed CXSMILES wedge layer.")
             }
-            state.bondDisplays.append(.init(atomIndex: atomIndex, bondIndex: bondIndex, display: display))
+            state.bondDisplays.append(
+                .init(atomIndex: atomIndex, bondIndex: bondIndex, display: display))
         }
     }
 
@@ -1247,34 +1278,76 @@ public enum CDKCxSmilesParser {
         }
     }
 
-    private static func parseLinkNodes(_ token: String, into state: inout CDKCxSmilesState) throws {
-        let body = String(token.dropFirst(3))
-        guard !body.isEmpty else { return }
+    private static func parseRGroupLogic(_ token: String, into state: inout CDKCxSmilesState) throws {
+        guard token.hasSuffix("}") else {
+            throw ChemError.parseFailed("Malformed CXSMILES LOG layer.")
+        }
+        var logic: [Int: MoleculeRGroupLogic] = [:]
+        for entry in token.dropFirst(5).dropLast().split(
+            separator: ".", omittingEmptySubsequences: false)
+        {
+            let pair = entry.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            guard pair.count == 2, pair[0].hasPrefix("_R"), let number = Int(pair[0].dropFirst(2)),
+                (0...32).contains(number), logic[number] == nil
+            else {
+                throw ChemError.parseFailed("Invalid CXSMILES R-group logic label.")
+            }
+            let fields = pair[1].split(separator: ";", omittingEmptySubsequences: false)
+            guard fields.count == 3, fields[1].isEmpty || fields[1] == "H",
+                CDKRGroupList.isValidOccurrenceSyntax(String(fields[2]))
+            else {
+                throw ChemError.parseFailed("Invalid CXSMILES R-group condition.")
+            }
+            let required: Int
+            if fields[0].isEmpty {
+                required = 0
+            } else if fields[0].hasPrefix("_R"), let value = Int(fields[0].dropFirst(2)),
+                (1...32).contains(value)
+            {
+                required = value
+            } else {
+                throw ChemError.parseFailed("Invalid CXSMILES R-group dependency.")
+            }
+            logic[number] = MoleculeRGroupLogic(
+                occurrence: String(fields[2]), requiredRGroupNumber: required,
+                restH: fields[1] == "H",
+                source: .cxsmiles)
+        }
+        state.rGroupLogic = logic
+    }
 
-        for entry in body.split(separator: ",") {
-            let parts = entry.split(separator: ":")
-            guard parts.count == 2 || parts.count == 3,
-                let atomIndex = Int(parts[0])
+    private static func parseLinkNodes(_ token: String, into state: inout CDKCxSmilesState) throws {
+        for entry in token.dropFirst(3).split(separator: ",", omittingEmptySubsequences: false) {
+            let parts = entry.split(separator: ":", omittingEmptySubsequences: false)
+            guard parts.count == 2 || parts.count == 3, let atomIndex = Int(parts[0]),
+                atomIndex >= 0
             else {
                 throw ChemError.parseFailed("Malformed CXSMILES link-node layer.")
             }
-
-            let values = parts[1].split(separator: ".").compactMap { Int($0) }
-            guard values.count >= 2 else {
+            let fields = parts[1].split(separator: ".", omittingEmptySubsequences: false)
+            let values = fields.compactMap { Int($0) }
+            guard values.count == fields.count, values.count == 2 || values.count == 4,
+                values[0] >= 1, values[1] >= values[0]
+            else {
                 throw ChemError.parseFailed("Malformed CXSMILES link-node bounds.")
             }
-
-            let bondIndices =
-                parts.count == 3
-                ? parts[2].split(separator: ".").compactMap { Int($0) }
-                : Array(values.dropFirst(2))
-            state.linkNodes.append(
-                CDKCxSmilesState.LinkNode(
-                    atomIndex: atomIndex,
-                    lowerBound: values[0],
-                    upperBound: values[1],
-                    bondIndices: bondIndices)
-            )
+            var node = CDKCxSmilesState.LinkNode(
+                atomIndex: atomIndex, lowerBound: values[0], upperBound: values[1])
+            if parts.count == 3 {
+                // Preserve the legacy Swift port's explicit bond-index variant for existing documents.
+                let raw = parts[2].split(separator: ".", omittingEmptySubsequences: false)
+                node.bondIndices = raw.compactMap { Int($0) }
+                guard node.bondIndices.count == raw.count, node.bondIndices.allSatisfy({ $0 >= 0 })
+                else {
+                    throw ChemError.parseFailed("Invalid link-node bond indices.")
+                }
+            } else {
+                node.outerAtomIndices = Array(values.dropFirst(2))
+                guard node.outerAtomIndices!.allSatisfy({ $0 >= 0 }) else {
+                    throw ChemError.parseFailed("Invalid link-node outer atoms.")
+                }
+            }
+            state.linkNodes.append(node)
         }
     }
 
@@ -1308,7 +1381,8 @@ public enum CDKCxSmilesParser {
                     && (!allowsInternalCommas
                         || startsNewLayer(
                             (index + 1) < characters.count
-                                ? String(characters[(index + 1)...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                                ? String(characters[(index + 1)...]).trimmingCharacters(
+                                    in: .whitespacesAndNewlines)
                                 : ""
                         ))
                 {
@@ -1329,7 +1403,7 @@ public enum CDKCxSmilesParser {
         guard !text.isEmpty else { return false }
         if text.hasPrefix("$") { return true }
         for prefix in [
-            "RG:", "LN:", "LO:", "f:", "r:", "ha:", "hb:",
+            "RG:", "LOG={", "LN:", "LO:", "f:", "r:", "ha:", "hb:",
             "m:", "Sg:", "SgD:", "SgH:", "c:", "t:", "ctu:",
             "lp:", "C:", "H:", "wD:", "wU:", "&", "o", "a:", "^",
         ] {
@@ -1343,7 +1417,7 @@ public enum CDKCxSmilesParser {
     private static func allowsInternalCommas(in token: String) -> Bool {
         guard !token.isEmpty else { return false }
         return [
-            "RG:", "LN:", "LO:", "f:", "r:", "ha:", "hb:",
+            "RG:", "LOG={", "LN:", "LO:", "f:", "r:", "ha:", "hb:",
             "m:", "Sg:", "SgD:", "SgH:", "c:", "t:", "ctu:",
             "lp:", "C:", "H:", "wD:", "wU:", "&", "o", "a:", "^",
         ].contains { token.hasPrefix($0) } || token == "r"
@@ -1432,7 +1506,8 @@ public enum CDKCxSmilesParser {
         switch keyword?.lowercased() {
         case "n":
             return .structureRepeatUnit
-        case "mon", "mer", "co", "xl", "mod", "mix", "f", "any", "gen", "c", "grf", "alt", "ran", "blk":
+        case "mon", "mer", "co", "xl", "mod", "mix", "f", "any", "gen", "c", "grf", "alt", "ran",
+            "blk":
             return .polymer
         default:
             return .generic
@@ -1450,6 +1525,18 @@ public enum CDKCxSmilesParser {
                 linkNode.bondIndices.compactMap { rawIndex in
                     molecule.bonds.indices.contains(rawIndex) ? molecule.bonds[rawIndex].id : nil
                 })
+
+            if let outer = linkNode.outerAtomIndices, !outer.isEmpty {
+                let center = molecule.atoms[linkNode.atomIndex].id
+                crossingBondIDs = Set(
+                    outer.compactMap { index in
+                        guard molecule.atoms.indices.contains(index) else { return nil }
+                        let id = molecule.atoms[index].id
+                        return molecule.bonds.first {
+                            ($0.a1 == center && $0.a2 == id) || ($0.a2 == center && $0.a1 == id)
+                        }?.id
+                    })
+            }
 
             if groupAtomIDs.count == 1 && crossingBondIDs.isEmpty {
                 let atomID = molecule.atoms[linkNode.atomIndex].id
@@ -1476,7 +1563,8 @@ public enum CDKCxSmilesParser {
 
                 while let atomID = queue.first {
                     queue.removeFirst()
-                    for bond in molecule.bonds(forAtom: atomID) where !crossingBondIDs.contains(bond.id) {
+                    for bond in molecule.bonds(forAtom: atomID)
+                    where !crossingBondIDs.contains(bond.id) {
                         let otherAtomID = bond.a1 == atomID ? bond.a2 : bond.a1
                         if seen.insert(otherAtomID).inserted {
                             queue.append(otherAtomID)
@@ -1593,7 +1681,9 @@ public enum CDKCxSmilesParser {
     // Minimal numeric HTML entity decoding used by CXSMILES escaped labels.
     private static func unescape(_ input: String) -> String {
         var out = input
-        while let start = out.range(of: "&#"), let semi = out[start.upperBound...].firstIndex(of: ";") {
+        while let start = out.range(of: "&#"),
+            let semi = out[start.upperBound...].firstIndex(of: ";")
+        {
             let numeric = out[start.upperBound..<semi]
             if let value = Int(numeric), let scalar = UnicodeScalar(value) {
                 out.replaceSubrange(start.lowerBound...semi, with: String(Character(scalar)))

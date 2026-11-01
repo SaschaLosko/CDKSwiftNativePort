@@ -2,8 +2,10 @@ import Foundation
 
 /// CDK-style line-oriented SMILES writer.
 public enum CDKSMILESWriter {
-    public static func write(_ molecules: [Molecule],
-                             flavor: CDKSmiFlavor = [.useAromaticSymbols, .strict]) throws -> String {
+    public static func write(
+        _ molecules: [Molecule],
+        flavor: CDKSmiFlavor = [.useAromaticSymbols, .strict]
+    ) throws -> String {
         guard !molecules.isEmpty else { throw ChemError.emptyInput }
 
         let generator = CDKSmilesGeneratorFactory.shared.newSmilesGenerator(flavor: flavor)
@@ -11,7 +13,11 @@ public enum CDKSMILESWriter {
         lines.reserveCapacity(molecules.count)
 
         for molecule in molecules {
-            let smiles = generator.create(molecule).trimmingCharacters(in: .whitespacesAndNewlines)
+            let wantsCX = flavor.contains(.cxsmiles) || !flavor.intersection(.cxAll).isEmpty
+            let encoded =
+                wantsCX
+                ? try generator.createPreservingMarkush(molecule) : generator.create(molecule)
+            let smiles = encoded.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !smiles.isEmpty else {
                 throw ChemError.parseFailed("SMILES generator produced an empty line.")
             }

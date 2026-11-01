@@ -3,7 +3,8 @@ import Foundation
 /// Reader for MDL RGfiles carrying advanced R-group logic (`M  LOG`) and definition blocks.
 public enum CDKRGFileReader {
     public static func read(text: String) throws -> CDKRGroupQuery {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
@@ -19,7 +20,8 @@ public enum CDKRGFileReader {
 
         func advance(_ expectedPrefix: String) throws {
             guard index < lines.count else {
-                throw ChemError.parseFailed("Unexpected end of RGfile while reading \(expectedPrefix).")
+                throw ChemError.parseFailed(
+                    "Unexpected end of RGfile while reading \(expectedPrefix).")
             }
             guard lines[index].trimmingCharacters(in: .whitespaces).hasPrefix(expectedPrefix) else {
                 throw ChemError.parseFailed("Expected \(expectedPrefix) while reading RGfile.")
@@ -32,7 +34,8 @@ public enum CDKRGFileReader {
         try advance("$HDR")
 
         while index < lines.count,
-              lines[index].trimmingCharacters(in: .whitespaces) != "$END HDR" {
+            lines[index].trimmingCharacters(in: .whitespaces) != "$END HDR"
+        {
             index += 1
         }
         try advance("$END HDR")
@@ -41,16 +44,20 @@ public enum CDKRGFileReader {
         let rootCTAB = try collectBlock(lines: lines, index: &index, endMarker: "$END CTAB")
         var root = try parseMolfileCTAB(rootCTAB, title: "Root structure")
         root.rGroupLogicDefinitions = parseLogicDefinitions(from: rootCTAB)
+        for number in root.rGroupLogicDefinitions.keys {
+            root.rGroupLogicDefinitions[number]?.source = .rgfile
+        }
         applyAttachmentOrderLines(from: rootCTAB, to: &root)
 
         let rootLabels = Set(root.atoms.compactMap(\.rGroupLabel)).sorted()
         var definitions: [Int: CDKRGroupList] = [:]
         for label in rootLabels {
             let logic = root.rGroupLogicDefinitions[label] ?? MoleculeRGroupLogic()
-            definitions[label] = try CDKRGroupList(rGroupNumber: label,
-                                                   restH: logic.restH,
-                                                   occurrence: logic.occurrence,
-                                                   requiredRGroupNumber: logic.requiredRGroupNumber)
+            definitions[label] = try CDKRGroupList(
+                rGroupNumber: label,
+                restH: logic.restH,
+                occurrence: logic.occurrence,
+                requiredRGroupNumber: logic.requiredRGroupNumber)
         }
 
         while index < lines.count {
@@ -66,13 +73,16 @@ public enum CDKRGFileReader {
                 throw ChemError.parseFailed("Unexpected RGfile block marker '\(line)'.")
             }
             index += 1
-            guard index < lines.count, let rGroupNumber = Int(lines[index].trimmingCharacters(in: .whitespaces)) else {
+            guard index < lines.count,
+                let rGroupNumber = Int(lines[index].trimmingCharacters(in: .whitespaces))
+            else {
                 throw ChemError.parseFailed("Missing RGfile R-group number after $RGP.")
             }
             index += 1
 
             guard definitions[rGroupNumber] != nil else {
-                throw ChemError.parseFailed("R\(rGroupNumber) is defined in $RGP but missing from root structure.")
+                throw ChemError.parseFailed(
+                    "R\(rGroupNumber) is defined in $RGP but missing from root structure.")
             }
 
             var groups = definitions[rGroupNumber]?.rGroups ?? []
@@ -86,11 +96,16 @@ public enum CDKRGFileReader {
                     throw ChemError.parseFailed("Expected $CTAB inside $RGP block.")
                 }
                 index += 1
-                let groupCTAB = try collectBlock(lines: lines, index: &index, endMarker: "$END CTAB")
+                let groupCTAB = try collectBlock(
+                    lines: lines, index: &index, endMarker: "$END CTAB")
                 let group = try parseMolfileCTAB(groupCTAB, title: "R\(rGroupNumber)")
-                groups.append(CDKRGroup(group: group,
-                                        firstAttachmentPointAtomID: attachmentPointAtomID(in: group, values: [1, 3]),
-                                        secondAttachmentPointAtomID: attachmentPointAtomID(in: group, values: [2, 3])))
+                groups.append(
+                    CDKRGroup(
+                        group: group,
+                        firstAttachmentPointAtomID: attachmentPointAtomID(
+                            in: group, values: [1, 3]),
+                        secondAttachmentPointAtomID: attachmentPointAtomID(
+                            in: group, values: [2, 3])))
             }
 
             guard var definition = definitions[rGroupNumber] else {
@@ -103,10 +118,13 @@ public enum CDKRGFileReader {
         return CDKRGroupQuery(rootStructure: root, rGroupDefinitions: definitions)
     }
 
-    private static func collectBlock(lines: [String], index: inout Int, endMarker: String) throws -> [String] {
+    private static func collectBlock(lines: [String], index: inout Int, endMarker: String) throws
+        -> [String]
+    {
         let start = index
         while index < lines.count,
-              lines[index].trimmingCharacters(in: .whitespaces) != endMarker {
+            lines[index].trimmingCharacters(in: .whitespaces) != endMarker
+        {
             index += 1
         }
         guard index < lines.count else {
@@ -122,7 +140,9 @@ public enum CDKRGFileReader {
         return try CDKMDLV2000Reader.read(lines: molfileLines)
     }
 
-    private static func parseLogicDefinitions(from ctabLines: [String]) -> [Int: MoleculeRGroupLogic] {
+    private static func parseLogicDefinitions(from ctabLines: [String]) -> [Int:
+        MoleculeRGroupLogic]
+    {
         var definitions: [Int: MoleculeRGroupLogic] = [:]
 
         for line in ctabLines {
@@ -130,29 +150,35 @@ public enum CDKRGFileReader {
             guard trimmed.hasPrefix("M  LOG") else { continue }
             let fields = trimmed.split(whereSeparator: \.isWhitespace).map(String.init)
             guard fields.count >= 6,
-                  let rGroupNumber = Int(fields[3]),
-                  let required = Int(fields[4]),
-                  let restHValue = Int(fields[5]) else {
+                let rGroupNumber = Int(fields[3]),
+                let required = Int(fields[4]),
+                let restHValue = Int(fields[5])
+            else {
                 continue
             }
-            let occurrence = fields.count > 6 ? fields.dropFirst(6).joined() : CDKRGroupList.defaultOccurrence
-            definitions[rGroupNumber] = MoleculeRGroupLogic(occurrence: occurrence,
-                                                            requiredRGroupNumber: required,
-                                                            restH: restHValue == 1)
+            let occurrence =
+                fields.count > 6 ? fields.dropFirst(6).joined() : CDKRGroupList.defaultOccurrence
+            definitions[rGroupNumber] = MoleculeRGroupLogic(
+                occurrence: occurrence,
+                requiredRGroupNumber: required,
+                restH: restHValue == 1)
         }
 
         return definitions
     }
 
-    private static func applyAttachmentOrderLines(from ctabLines: [String], to molecule: inout Molecule) {
+    private static func applyAttachmentOrderLines(
+        from ctabLines: [String], to molecule: inout Molecule
+    ) {
         for line in ctabLines {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             guard trimmed.hasPrefix("M  AAL") else { continue }
             let fields = trimmed.split(whereSeparator: \.isWhitespace).map(String.init)
             guard fields.count >= 4,
-                  let rootAtomID = Int(fields[2]),
-                  let pairCount = Int(fields[3]),
-                  let atomIndex = molecule.indexOfAtom(id: rootAtomID) else {
+                let rootAtomID = Int(fields[2]),
+                let pairCount = Int(fields[3]),
+                let atomIndex = molecule.indexOfAtom(id: rootAtomID)
+            else {
                 continue
             }
 
@@ -160,14 +186,16 @@ public enum CDKRGFileReader {
             for pairIndex in 0..<pairCount {
                 let base = 4 + pairIndex * 2
                 guard base + 1 < fields.count,
-                      let partnerID = Int(fields[base]),
-                      let order = Int(fields[base + 1]) else {
+                    let partnerID = Int(fields[base]),
+                    let order = Int(fields[base + 1])
+                else {
                     continue
                 }
                 orderedPartners.append((order, partnerID))
             }
 
-            molecule.atoms[atomIndex].ligandOrderingAtomIDs = orderedPartners
+            molecule.atoms[atomIndex].ligandOrderingAtomIDs =
+                orderedPartners
                 .sorted(by: { $0.0 < $1.0 })
                 .map(\.1)
         }

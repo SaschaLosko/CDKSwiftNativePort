@@ -39,7 +39,8 @@ extension CDKRGroupQuery {
         _ visit: (Molecule) throws -> Bool
     ) throws -> Int {
         guard maximumConfigurations > 0 else {
-            throw CDKRGroupEnumerationError.invalidQuery("The configuration limit must be positive.")
+            throw CDKRGroupEnumerationError.invalidQuery(
+                "The configuration limit must be positive.")
         }
         try Task.checkCancellation()
         let plan = try RGroupEnumerationPlan(query: self)
@@ -55,8 +56,10 @@ extension CDKRGroupQuery {
                 let required = group.definition.requiredRGroupNumber
                 if required != 0 {
                     if presence[required] == false { return false }
-                    if plan.groups.first(where: { $0.number == required })?.occurrences.allSatisfy({ $0 == 0 }) == true
-                    {
+                    if plan.groups.first(where: { $0.number == required })?.occurrences.allSatisfy({
+                        $0 == 0
+                    }
+                    ) == true {
                         return false
                     }
                 }
@@ -70,7 +73,8 @@ extension CDKRGroupQuery {
             if level == plan.groups.count {
                 guard conditionsMet() else { return }
                 guard count < maximumConfigurations else {
-                    throw CDKRGroupEnumerationError.configurationLimitExceeded(maximumConfigurations)
+                    throw CDKRGroupEnumerationError.configurationLimitExceeded(
+                        maximumConfigurations)
                 }
                 let molecule = try plan.configuration(assignments)
                 count += 1
@@ -112,7 +116,7 @@ extension CDKRGroupQuery {
     }
 }
 
-private struct RGroupEnumerationPlan {
+struct RGroupEnumerationPlan {
     struct Group {
         var number: Int
         var definition: CDKRGroupList
@@ -139,7 +143,8 @@ private struct RGroupEnumerationPlan {
             }.map(\.id))
         try Self.validateGraph(query.rootStructure)
         guard query.areSubstituentsDefined(), query.areRootAtomsDefined() else {
-            throw CDKRGroupEnumerationError.invalidQuery("Missing R-group definitions or scaffold sites.")
+            throw CDKRGroupEnumerationError.invalidQuery(
+                "Missing R-group definitions or scaffold sites.")
         }
         guard query.rGroupQueryAtoms().count <= 256 else {
             throw CDKRGroupEnumerationError.unsupportedFeature("More than 256 R-group sites.")
@@ -179,7 +184,8 @@ private struct RGroupEnumerationPlan {
             for fragment in definition.rGroups {
                 try Self.validateGraph(fragment.group)
                 guard fragment.group.atoms.allSatisfy({ $0.rGroupLabel == nil }) else {
-                    throw CDKRGroupEnumerationError.unsupportedFeature("Nested R-group definitions.")
+                    throw CDKRGroupEnumerationError.unsupportedFeature(
+                        "Nested R-group definitions.")
                 }
                 // Validate all declared attachment points, even if no configuration uses them.
                 for ordinal in 1...2 { _ = try Self.attachment(fragment, ordinal: ordinal) }
@@ -197,7 +203,9 @@ private struct RGroupEnumerationPlan {
             Set(molecule.bonds.map(\.id)).count == molecule.bonds.count,
             molecule.atoms.allSatisfy({ Set($0.ligandOrderingAtomIDs ?? []).isSubset(of: ids) }),
             molecule.bonds.allSatisfy({ Set($0.stereoReferenceAtomIDs ?? []).isSubset(of: ids) }),
-            molecule.bonds.allSatisfy({ ids.contains($0.a1) && ids.contains($0.a2) && $0.a1 != $0.a2 })
+            molecule.bonds.allSatisfy({
+                ids.contains($0.a1) && ids.contains($0.a2) && $0.a1 != $0.a2
+            })
         else {
             throw CDKRGroupEnumerationError.invalidQuery("Duplicate IDs or invalid bond endpoints.")
         }
@@ -221,7 +229,8 @@ private struct RGroupEnumerationPlan {
     /// Returns the real atom plus an optional explicit AP dummy atom.
     static func attachment(_ fragment: CDKRGroup, ordinal: Int) throws -> (atom: Int, dummy: Int?)? {
         let explicit =
-            ordinal == 1 ? fragment.firstAttachmentPointAtomID : fragment.secondAttachmentPointAtomID
+            ordinal == 1
+            ? fragment.firstAttachmentPointAtomID : fragment.secondAttachmentPointAtomID
         let candidates = fragment.group.atoms.filter {
             $0.attachmentPoint == ordinal || $0.attachmentPoint == 3
         }
@@ -270,7 +279,10 @@ private struct RGroupEnumerationPlan {
                 var dummyBonds: [Int: Bond] = [:]
                 for (ordinal, bond) in attachments[site.id, default: []].enumerated() {
                     // CDK's lenient RGfile behavior retains an unattached fragment when APO is absent.
-                    guard let attachment = try Self.attachment(chosen, ordinal: min(ordinal + 1, 2)) else { continue }
+                    guard let attachment = try Self.attachment(chosen, ordinal: min(ordinal + 1, 2))
+                    else {
+                        continue
+                    }
                     replacements[bond.id, default: [:]][site.id] = map[attachment.atom]!
                     if let dummy = attachment.dummy { dummyBonds[dummy] = bond }
                 }
@@ -279,7 +291,8 @@ private struct RGroupEnumerationPlan {
                 }
                 let offset =
                     first.map {
-                        CGPoint(x: site.position.x - $0.position.x, y: site.position.y - $0.position.y)
+                        CGPoint(
+                            x: site.position.x - $0.position.x, y: site.position.y - $0.position.y)
                     } ?? .zero
                 fragments.append(
                     Fragment(
@@ -298,19 +311,22 @@ private struct RGroupEnumerationPlan {
         result.atoms.removeAll { removedRootIDs.contains($0.id) }
         for index in result.atoms.indices {
             let id = result.atoms[index].id
-            result.atoms[index].ligandOrderingAtomIDs = result.atoms[index].ligandOrderingAtomIDs?.map {
-                rootReference($0, center: id) ?? id  // implicit H occupies the omitted ligand's position
-            }
+            result.atoms[index].ligandOrderingAtomIDs = result.atoms[index].ligandOrderingAtomIDs?
+                .map {
+                    rootReference($0, center: id) ?? id  // implicit H occupies the omitted ligand's position
+                }
         }
         result.bonds = result.bonds.compactMap { bond in
-            guard let a1 = rootEndpoint(bond.a1, bond: bond), let a2 = rootEndpoint(bond.a2, bond: bond)
+            guard let a1 = rootEndpoint(bond.a1, bond: bond),
+                let a2 = rootEndpoint(bond.a2, bond: bond)
             else { return nil }
             return Self.copyBond(
                 bond, id: bond.id, a1: a1, a2: a2,
                 mapReference: { ref in
                     if ref == bond.a1 { return a1 }
                     if ref == bond.a2 { return a2 }
-                    return rootReference(ref, center: bond.a1) ?? rootReference(ref, center: bond.a2)
+                    return rootReference(ref, center: bond.a1)
+                        ?? rootReference(ref, center: bond.a2)
                 })
         }
         for fragment in fragments {
@@ -340,14 +356,16 @@ private struct RGroupEnumerationPlan {
                     continue
                 }
                 result.bonds.append(
-                    Self.copyBond(bond, id: try nextID(&nextBondID), a1: a1, a2: a2, mapReference: reference))
+                    Self.copyBond(
+                        bond, id: try nextID(&nextBondID), a1: a1, a2: a2, mapReference: reference))
             }
         }
         for group in groups {
             for site in group.sites where assignments[site.id] == -1 {
                 for bond in attachments[site.id, default: []] {
                     let other = bond.a1 == site.id ? bond.a2 : bond.a1
-                    guard let id = rootEndpoint(other, bond: bond), let index = result.indexOfAtom(id: id)
+                    guard let id = rootEndpoint(other, bond: bond),
+                        let index = result.indexOfAtom(id: id)
                     else { continue }
                     result.atoms[index].rGroupRestH = group.definition.restH
                     if let h = result.atoms[index].explicitHydrogenCount {
@@ -369,11 +387,14 @@ private struct RGroupEnumerationPlan {
         return result
     }
 
-    static func copyBond(_ bond: Bond, id: Int, a1: Int, a2: Int, mapReference: (Int) -> Int?) -> Bond {
+    static func copyBond(_ bond: Bond, id: Int, a1: Int, a2: Int, mapReference: (Int) -> Int?)
+        -> Bond
+    {
         let references = bond.stereoReferenceAtomIDs?.compactMap(mapReference)
         let validStereo = references?.count == bond.stereoReferenceAtomIDs?.count
         return Bond(
-            id: id, externalID: bond.externalID, a1: a1, a2: a2, order: bond.order, stereo: bond.stereo,
+            id: id, externalID: bond.externalID, a1: a1, a2: a2, order: bond.order,
+            stereo: bond.stereo,
             doubleBondStereo: validStereo ? bond.doubleBondStereo : nil,
             stereoReferenceAtomIDs: validStereo ? references : nil, queryType: bond.queryType,
             topology: bond.topology,
@@ -384,10 +405,12 @@ private struct RGroupEnumerationPlan {
     static func copyAtom(_ atom: Atom, id: Int) -> Atom {
         Atom(
             id: id, externalID: atom.externalID, element: atom.element, position: atom.position,
-            zPosition: atom.zPosition, charge: atom.charge, isotopeMassNumber: atom.isotopeMassNumber,
+            zPosition: atom.zPosition, charge: atom.charge,
+            isotopeMassNumber: atom.isotopeMassNumber,
             aromatic: atom.aromatic, chirality: atom.chirality,
             explicitHydrogenCount: atom.explicitHydrogenCount,
-            queryType: atom.queryType, atomList: atom.atomList, atomListIsNegated: atom.atomListIsNegated,
+            queryType: atom.queryType, atomList: atom.atomList,
+            atomListIsNegated: atom.atomListIsNegated,
             radical: atom.radical, radicalType: atom.radicalType, atomValue: atom.atomValue,
             rGroupLabel: atom.rGroupLabel, rGroupMembership: atom.rGroupMembership,
             componentGroupID: atom.componentGroupID,
@@ -396,7 +419,8 @@ private struct RGroupEnumerationPlan {
             ringBondCount: atom.ringBondCount, attachmentPoint: atom.attachmentPoint,
             valenceOverride: atom.valenceOverride,
             cxStereoGroup: atom.cxStereoGroup, ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
-            atomClass: atom.atomClass, atomMapNumber: atom.atomMapNumber, aliasLabel: atom.aliasLabel,
+            atomClass: atom.atomClass, atomMapNumber: atom.atomMapNumber,
+            aliasLabel: atom.aliasLabel,
             properties: atom.properties, atomTypeName: atom.atomTypeName,
             maximumBondOrder: atom.maximumBondOrder,
             bondOrderSum: atom.bondOrderSum, valency: atom.valency,

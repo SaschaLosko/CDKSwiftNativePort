@@ -15,11 +15,89 @@ public final class CDKSmilesGenerator {
 
     public func create(_ molecule: Molecule) -> String {
         guard !molecule.atoms.isEmpty else { return "" }
+        if wantsCxOutput, molecule.atoms.contains(where: { $0.rGroupMembership != nil }) {
+            // A failed family conversion must never fall back to a flattened compound.
+            return (try? createPreservingMarkush(molecule)) ?? ""
+        }
         let core = createCoreSmiles(molecule)
-        guard let cxSuffix = createCxLayer(for: molecule, atomOutputOrder: core.atomOutputOrder) else {
+        guard let cxSuffix = createCxLayer(for: molecule, atomOutputOrder: core.atomOutputOrder)
+        else {
             return core.smiles
         }
         return core.smiles + cxSuffix
+    }
+
+    /// Serializes supported family semantics, throwing instead of flattening unsupported definitions.
+    public func createPreservingMarkush(_ molecule: Molecule) throws -> String {
+        guard wantsCxOutput else {
+            throw ChemError.parseFailed("Markush-preserving output requires CXSMILES flavor.")
+        }
+        guard !molecule.name.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("|") else {
+            throw ChemError.parseFailed(
+                "Uninterpreted CXSMILES extensions cannot be regenerated safely.")
+        }
+        guard molecule.atoms.contains(where: { $0.rGroupMembership != nil }) else {
+            return create(molecule)
+        }
+        let query = try CDKRGroupQueryManipulator.toRGroupQuery(molecule)
+        var root = query.rootStructure
+        var state = CDKCxSmilesState()
+        for number in query.rGroupDefinitions.keys.sorted() {
+            let definition = query.rGroupDefinitions[number]!
+            let label = "R\(number)"
+            state.rGroupOrder.append(label)
+            let site = query.rGroupQueryAtoms(number).first
+            let bonds = site.map { root.bonds(forAtom: $0.id) } ?? []
+            let ordered =
+                site?.ligandOrderingAtomIDs.map { order in
+                    order.compactMap { neighbor in
+                        bonds.first { $0.a1 == neighbor || $0.a2 == neighbor }
+                    }
+                } ?? bonds
+            state.rGroupDefinitions[label] = try definition.rGroups.map { alternative in
+                var fragment = alternative.group
+                guard fragment.atoms.allSatisfy({ $0.rGroupLabel == nil }) else {
+                    throw ChemError.parseFailed("Nested R-group CXSMILES export is not supported.")
+                }
+                for index in fragment.atoms.indices { fragment.atoms[index].rGroupMembership = nil }
+                // APO on a real atom becomes an explicit dummy attached to that atom.
+                for ordinal in 1...2 {
+                    let point =
+                        ordinal == 1
+                        ? alternative.firstAttachmentPointAtomID
+                        : alternative.secondAttachmentPointAtomID
+                    guard let point, let atom = fragment.atom(id: point), atom.element != "*" else {
+                        continue
+                    }
+                    let id = (fragment.atoms.map(\.id).max() ?? 0) + 1
+                    fragment.atoms.append(
+                        Atom(
+                            id: id, element: "*", position: atom.position, explicitHydrogenCount: 0,
+                            attachmentPoint: ordinal))
+                    fragment.bonds.append(
+                        Bond(
+                            id: (fragment.bonds.map(\.id).max() ?? 0) + 1, a1: point, a2: id,
+                            order: ordered.indices.contains(ordinal - 1)
+                                ? ordered[ordinal - 1].order : .single))
+                    if let index = fragment.atoms.firstIndex(where: { $0.id == point }) {
+                        fragment.atoms[index].attachmentPoint = nil
+                    }
+                }
+                if !ordered.isEmpty && alternative.firstAttachmentPointAtomID == nil {
+                    throw ChemError.parseFailed(
+                        "A connected R-group with missing attachment metadata cannot round-trip through CXSMILES."
+                    )
+                }
+                fragment.cxState = nil
+                return create(fragment)
+            }
+        }
+        root.cxState = state
+        root.rGroupLogicDefinitions = molecule.rGroupLogicDefinitions
+        let core = createCoreSmiles(root)
+        return core.smiles
+            + (createCxLayer(for: root, atomOutputOrder: core.atomOutputOrder, preparedFamily: true)
+                ?? "")
     }
 
     public func create(_ reaction: CDKReaction) -> String {
@@ -27,8 +105,9 @@ public final class CDKSmilesGenerator {
             .joined(separator: ".")
         let agents = reaction.agentParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(
             separator: ".")
-        let products = reaction.productParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(
-            separator: ".")
+        let products = reaction.productParticipants.map { createCoreSmiles($0.molecule).smiles }
+            .joined(
+                separator: ".")
 
         let base = reactants + ">" + agents + ">" + products
         guard wantsCxOutput, let cxState = reaction.cxState else { return base }
@@ -61,14 +140,18 @@ public final class CDKSmilesGenerator {
                 adjacency: adjacency)
 
             let componentEdges = Set(
-                bondByEdge.keys.filter { componentSet.contains($0.a) && componentSet.contains($0.b) }
+                bondByEdge.keys.filter {
+                    componentSet.contains($0.a) && componentSet.contains($0.b)
+                }
             )
             let ringEdges = componentEdges.subtracting(treeEdges)
             let ringNumbers = assignRingNumbers(to: ringEdges)
 
             var ringClosuresByAtom: [Int: [RingClosure]] = [:]
             for edge in ringEdges {
-                guard let bond = bondByEdge[edge], let ringNumber = ringNumbers[edge] else { continue }
+                guard let bond = bondByEdge[edge], let ringNumber = ringNumbers[edge] else {
+                    continue
+                }
                 let symbol = bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)
                 ringClosuresByAtom[edge.a, default: []].append(
                     RingClosure(number: ringNumber, bondSymbol: symbol, partner: edge.b)
@@ -106,7 +189,9 @@ public final class CDKSmilesGenerator {
         flavor.contains(.cxsmiles) || !flavor.intersection(.cxAll).isEmpty
     }
 
-    private func createCxLayer(for molecule: Molecule, atomOutputOrder: [Int]) -> String? {
+    private func createCxLayer(
+        for molecule: Molecule, atomOutputOrder: [Int], preparedFamily: Bool = false
+    ) -> String? {
         guard wantsCxOutput else { return nil }
 
         let atomIDs = atomOutputOrder.isEmpty ? molecule.atoms.map(\.id) : atomOutputOrder
@@ -118,6 +203,13 @@ public final class CDKSmilesGenerator {
             uniqueKeysWithValues: orderedBonds.enumerated().map { ($1.id, $0) })
 
         var state = molecule.cxState ?? CDKCxSmilesState()
+        if !preparedFamily {
+            state.rGroupDefinitions = [:]
+            state.rGroupOrder = []
+        }
+        state.rGroupLogic = molecule.rGroupLogicDefinitions.filter {
+            $0.value.source != .inferredDefault
+        }
 
         let generatedCoordinateBonds = Dictionary(
             grouping: orderedBonds.compactMap { bond -> (Int, Int)? in
@@ -229,7 +321,9 @@ public final class CDKSmilesGenerator {
         if shouldEmitPolymer || shouldEmitDataSgroups {
             var generatedSgroups: [CDKCxSmilesState.SgroupDefinition] = []
             for sgroup in molecule.sgroups
-            where sgroup.kind == .structureRepeatUnit || sgroup.kind == .polymer || sgroup.kind == .data {
+            where sgroup.kind == .structureRepeatUnit || sgroup.kind == .polymer
+                || sgroup.kind == .data
+            {
                 switch sgroup.kind {
                 case .data:
                     if shouldEmitDataSgroups {
@@ -268,8 +362,9 @@ public final class CDKSmilesGenerator {
         var layers: [String] = []
 
         if shouldEmitFragmentGroups, !state.fragmentGroups.isEmpty {
-            let groups = state.fragmentGroups.map { $0.map(String.init).joined(separator: ".") }.joined(
-                separator: ",")
+            let groups = state.fragmentGroups.map { $0.map(String.init).joined(separator: ".") }
+                .joined(
+                    separator: ",")
             layers.append("f:\(groups)")
         }
 
@@ -290,7 +385,8 @@ public final class CDKSmilesGenerator {
                 layers.append("r")
             } else {
                 if !state.racemicFragments.isEmpty {
-                    layers.append("r:" + state.racemicFragments.map(String.init).joined(separator: ","))
+                    layers.append(
+                        "r:" + state.racemicFragments.map(String.init).joined(separator: ","))
                 }
                 layers.append(contentsOf: serializeStereoGroups(state.stereoGroups))
             }
@@ -318,7 +414,9 @@ public final class CDKSmilesGenerator {
 
         if shouldEmitMulticenter, !state.positionalVariations.isEmpty {
             let entries = state.positionalVariations.keys.sorted().compactMap { key -> String? in
-                guard let values = state.positionalVariations[key], !values.isEmpty else { return nil }
+                guard let values = state.positionalVariations[key], !values.isEmpty else {
+                    return nil
+                }
                 return "\(key):" + values.map(String.init).joined(separator: ".")
             }
             if !entries.isEmpty {
@@ -366,9 +464,11 @@ public final class CDKSmilesGenerator {
                 }
             }
 
-            let hierarchyEntries = state.sgroups.enumerated().compactMap { index, sgroup -> String? in
+            let hierarchyEntries = state.sgroups.enumerated().compactMap {
+                index, sgroup -> String? in
                 guard !sgroup.childIndices.isEmpty else { return nil }
-                return "\(index):" + sgroup.childIndices.sorted().map(String.init).joined(separator: ".")
+                return "\(index):"
+                    + sgroup.childIndices.sorted().map(String.init).joined(separator: ".")
             }
             if !hierarchyEntries.isEmpty {
                 layers.append("SgH:" + hierarchyEntries.joined(separator: ","))
@@ -389,14 +489,27 @@ public final class CDKSmilesGenerator {
 
         if shouldEmitRGroups, !state.rGroupDefinitions.isEmpty {
             let orderedLabels =
-                !state.rGroupOrder.isEmpty ? state.rGroupOrder : state.rGroupDefinitions.keys.sorted()
+                !state.rGroupOrder.isEmpty
+                ? state.rGroupOrder : state.rGroupDefinitions.keys.sorted()
             let definitions = orderedLabels.compactMap { label -> String? in
-                guard let values = state.rGroupDefinitions[label], !values.isEmpty else { return nil }
+                guard let values = state.rGroupDefinitions[label], !values.isEmpty else {
+                    return nil
+                }
                 return "_\(label)=" + values.map { "{\($0)}" }.joined(separator: ",")
             }
             if !definitions.isEmpty {
                 layers.append("RG:" + definitions.joined(separator: ","))
             }
+        }
+
+        if shouldEmitRGroups, let logic = state.rGroupLogic, !logic.isEmpty {
+            let entries = logic.keys.sorted().map { number in
+                let rule = logic[number]!
+                let required =
+                    rule.requiredRGroupNumber == 0 ? "" : "_R\(rule.requiredRGroupNumber)"
+                return "_R\(number):\(required);\(rule.restH ? "H" : "");\(rule.occurrence)"
+            }
+            layers.append("LOG={" + entries.joined(separator: ".") + "}")
         }
 
         guard !layers.isEmpty else { return nil }
@@ -653,7 +766,8 @@ public final class CDKSmilesGenerator {
 
                     pending.append(.text("("))
                     pending.append(
-                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
+                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs))
+                    )
                     pending.append(.atom(id: childID, parent: atomID))
                     pending.append(.text(")"))
                 }
@@ -661,7 +775,8 @@ public final class CDKSmilesGenerator {
                 let edge = EdgeKey(atomID, mainChild)
                 if let bond = bondByEdge[edge] {
                     pending.append(
-                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)))
+                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs))
+                    )
                     pending.append(.atom(id: mainChild, parent: atomID))
                 }
 
@@ -730,6 +845,7 @@ public final class CDKSmilesGenerator {
     }
 
     private func cxAtomLabel(for atom: Atom) -> String? {
+        if atom.isUnresolvedPseudoAtom { return atom.element }
         if let attachmentPoint = atom.attachmentPoint {
             return "_AP\(attachmentPoint)"
         }
@@ -747,7 +863,7 @@ public final class CDKSmilesGenerator {
         guard !element.isEmpty, element != "*" else { return nil }
 
         let uppercase = element.uppercased()
-        if plainSymbol(for: atom) != nil {
+        if CDKMarkushStructure.elementSymbols.contains(element) {
             return nil
         }
         if uppercase == "R" || uppercase == "R#" {

@@ -69,3 +69,9 @@ R-group enumeration and its upstream regression fixtures derive from CDK 2.13:
 - Copyright (C) 2026 John Mayfield (explicit attachment-point support).
 - Licensed LGPL-2.1-or-later. The notices in `RGroupEnumeration.swift` and its
   regression tests apply to the upstream-derived portions and fixtures.
+
+M2S regression backbones (103 records) are derived from MarkushGrapher-2-Datasets,
+revision e90868cdd3b62f1fe175d9ede9e0c65485c4a96c, by Tim Strohmeyer, Lucas Morin,
+Gerhard Ingmar Meijer, Valery Weber, Ahmed Nassar and Peter W. J. Staar.
+Licensed CC BY 4.0. See the source link, licence and extraction notice in
+`Tests/CDKSwiftNativePortTests/MDL/RGroupEnumerationFixtures/M2S-ATTRIBUTION.md`.

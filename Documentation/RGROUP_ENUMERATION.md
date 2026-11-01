@@ -106,3 +106,64 @@ Release qualification: full macOS and Apple-container Ubuntu suites each ran
 tests passed on both platforms. Strict swift-format lint passed for changed Swift
 files. Evidence: `/private/tmp/cdk-rgroup-macos-full.log` and
 `/private/tmp/cdk-rgroup-linux-final.log`.
+
+
+## Finite repeat expansion and member validation (1.4.36)
+
+`CDKMarkushEnumerator.configurations(of:maximumConfigurations:maximumAtoms:)`
+and the callback-based `enumerate` expand bounded scaffold repeats before
+R-group substitution. Each `CDKMarkushConfiguration` contains the molecule and
+repeat counts in source Sgroup order. The default output limit is 1,000 and
+atom limit is 10,000. Cancellation is checked during traversal. Output limits
+are not time limits; callers should apply a cooperative cancellation deadline.
+
+Supported repeat units are connected, disjoint, head-to-tail scaffold units with
+two explicitly determined single-bond boundaries and integer counts 1–64.
+At most 16 repeat units are accepted. Ring link nodes and branches traveling
+with a link node are included. The documented CX LN outer indices are **atom**
+indices; the older port's colon-separated bond-index variant remains readable.
+Unbounded/zero counts, overlapping units, repeat units inside substituent
+alternatives, stereogenic repeat boundaries, polymers and multicenter variation
+raise explicit unsupported/invalid errors. They are not silently dropped.
+The lower-level `CDKRGroupQuery` API retains its original R-group-only contract.
+
+Every delivered configuration passes `CDKMarkushStructure.requiresSpecifiedStructure`;
+named pseudoatoms, open sites and remaining query semantics prevent delivery as
+concrete members. The original example with three R1 choices and ring repeat
+1–3 produces nine distinct members, independently checked by Standard InChI.
+This still does not interpret textual patent definitions or match families.
+
+### Rule preservation and classification
+
+CX LOG imports occurrence, dependency and REST_H rules using the published
+[Chemaxon CXSMILES syntax](https://kb.chemaxon.com/display/lts-radium/formats_chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.md).
+`MoleculeRGroupLogic.source` distinguishes recorded CX/RGfile rules, inferred
+defaults and legacy unknown provenance. The optional field preserves Codable
+compatibility. Inferred defaults are not emitted as explicit source LOG records.
+
+`CDKSmilesGenerator.createPreservingMarkush` is the throwing CX writer entry
+point for supported flat R-group families. It regenerates RG alternatives from
+the current graph, writes LOG rules and converts real-atom APO attachments to
+explicit AP dummies. It rejects nested/ambiguous or unrepresentable attachment
+metadata. The line-oriented CX writer uses this path; the legacy nonthrowing
+`create` returns an empty string on unsupported family conversion instead of a
+flattened graph. Plain SMILES remains a format without family definitions.
+The tested RGfile 2 now preserves all five alternatives, three rules and the
+identities of its twelve configurations through CXSMILES.
+
+Wildcard aliases retain pseudoatom provenance, including labels B and Y that
+look like element symbols. Actual boron, yttrium and metals remain elements.
+All 103 M2S backbones are variable before and after a CX round trip, fixing the
+12 false negatives found in the EPO starter-pack assessment. The compact fixture
+and its CC BY 4.0 attribution are in `RGroupEnumerationFixtures/m2s-backbones.json`
+and `M2S-ATTRIBUTION.md`. These backbones are not executable membership rulesets.
+
+### Qualification
+
+Full macOS and Apple-container Ubuntu suites: 613 tests each, two existing
+skips, no failures. Eight new tests cover the 103-case corpus, repeat identities,
+explicit endpoints/branches, multiple repeats, limits, cancellation, malformed
+and unsupported input, CX LOG and the assessment's rule-loss regression.
+The two preexisting explicit-LN fixtures were corrected from bond indices to
+neighboring atom indices according to the format specification.
+Evidence: `/private/tmp/atomlens-markush-members/`.
