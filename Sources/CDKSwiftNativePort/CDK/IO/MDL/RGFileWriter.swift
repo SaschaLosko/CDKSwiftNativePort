@@ -66,7 +66,16 @@ public enum CDKRGFileWriter {
 
             for rGroup in definition.rGroups {
                 lines.append("$CTAB")
-                lines.append(contentsOf: try ctabBody(for: rGroup.group))
+                var fragment = rGroup.group
+                for (ordinal, id) in [(1, rGroup.firstAttachmentPointAtomID), (2, rGroup.secondAttachmentPointAtomID)] {
+                    guard let id else { continue }
+                    guard let index = fragment.atoms.firstIndex(where: { $0.id == id }) else {
+                        throw ChemError.parseFailed("An R-group attachment refers to an absent atom.")
+                    }
+                    fragment.atoms[index].attachmentPoint =
+                        rGroup.firstAttachmentPointAtomID == rGroup.secondAttachmentPointAtomID ? 3 : ordinal
+                }
+                lines.append(contentsOf: try ctabBody(for: fragment))
                 lines.append("$END CTAB")
             }
 
@@ -94,7 +103,21 @@ public enum CDKRGFileWriter {
         guard lines.count >= 4 else {
             throw ChemError.parseFailed("Unexpected V2000 molfile while creating RGfile.")
         }
-        return Array(lines.dropFirst(3)).filter { !($0.isEmpty && $0 == lines.last) }
+        var body = Array(lines.dropFirst(3)).filter { !($0.isEmpty && $0 == lines.last) }
+        // The ordinary V2000 writer does not emit RGfile attachment records.
+        // Preserve both real-atom APO markers and explicit attachment dummies.
+        let attachments = try molecule.atoms.enumerated().compactMap { index, atom -> String? in
+            guard let point = atom.attachmentPoint else { return nil }
+            guard (1...3).contains(point) else {
+                throw ChemError.unsupported("RGfile attachment points must be 1, 2 or 3.")
+            }
+            return "M  APO  1" + formatMDLInt(index + 1, width: 4) + formatMDLInt(point, width: 4)
+        }
+        guard let end = body.lastIndex(of: "M  END") else {
+            throw ChemError.parseFailed("Missing RGfile CTAB terminator.")
+        }
+        body.insert(contentsOf: attachments, at: end)
+        return body
     }
 
     private static func logLines(for query: CDKRGroupQuery) -> [String] {

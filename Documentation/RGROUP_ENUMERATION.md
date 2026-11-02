@@ -178,3 +178,12 @@ scaffold OR stereo and explicit dummy-endpoint position variation. These feature
 are implemented above the lower-level R-group API; ambiguous multicentre bonding
 remains unsupported. `enumerateConfigurations` and its detailed assignment form
 accept `maximumAtoms` and reject oversized results before allocating fragments.
+
+### RGfile attachment export correction (1.4.39)
+
+RGfile output now writes `M  APO` for both atom-level attachment markers and the
+explicit first/second attachment IDs in `CDKRGroup`. This fixes lost connectivity
+when reopening files written by earlier versions; retaining alternative counts
+alone was insufficient evidence of a correct round trip. Regression checks compare
+actual compound membership for explicit dummy endpoints, distinct two-point
+attachments and two attachments on one atom. Other format limitations still apply.

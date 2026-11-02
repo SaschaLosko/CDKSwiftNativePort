@@ -3,6 +3,34 @@ import XCTest
 @testable import CDKSwiftNativePort
 
 final class RGFileReaderWriterTests: XCTestCase {
+    func testRGFileRoundTripPreservesDummyAndExplicitAttachmentConnectivity() throws {
+        let parser = CDKSmilesParser(flavor: .cdkDefault)
+        let family = try parser.parseSmiles("C* |$;R1$,RG:_R1={O},{N}|")
+        let imported = try CDKRGFileReader.readFlattenedMolecule(text: CDKRGFileWriter.write(family))
+        for smiles in ["CO", "CN"] {
+            XCTAssertEqual(CDKMarkushMatcher.match(try parser.parseSmiles(smiles), in: imported).verdict, .match)
+        }
+        XCTAssertEqual(CDKMarkushMatcher.match(try parser.parseSmiles("C.O"), in: imported).verdict, .noMatch)
+
+        // Attachment IDs can live on the R-group object without atom-level APO fields.
+        for (fragmentText, secondID, expected) in [("NN", 2, "CNNO"), ("N", 1, "CNO")] {
+            let root = try parser.parseSmiles("C*O |$;R1$|")
+            let fragment = try parser.parseSmiles(fragmentText)
+            let query = CDKRGroupQuery(
+                rootStructure: root,
+                rGroupDefinitions: [
+                    1: try CDKRGroupList(
+                        rGroupNumber: 1,
+                        rGroups: [
+                            CDKRGroup(
+                                group: fragment, firstAttachmentPointAtomID: 1, secondAttachmentPointAtomID: secondID)
+                        ])
+                ])
+            let restored = try CDKRGFileReader.readFlattenedMolecule(text: CDKRGFileWriter.write(query))
+            XCTAssertEqual(CDKMarkushMatcher.match(try parser.parseSmiles(expected), in: restored).verdict, .match)
+        }
+    }
+
     func testRGroupListOccurrenceValidationMatchesCDKRules() throws {
         XCTAssertTrue(CDKRGroupList.isValidOccurrenceSyntax("0,1-3"))
         XCTAssertTrue(CDKRGroupList.isValidOccurrenceSyntax("0,2"))

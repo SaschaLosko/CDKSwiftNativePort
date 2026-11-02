@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.39 — 2026-11-02
+
+- Preserve RGfile attachment-point (`M  APO`) records for real atoms and explicit
+  dummy atoms, including first/second attachments supplied on `CDKRGroup` itself.
+  Previously, writing and reopening a family could disconnect substituents or
+  leave unresolved dummy atoms. Added whole-compound membership regressions for
+  dummy, distinct two-point and shared two-point attachments.
+
 ## [Unreleased]
 
 ## [1.4.38] - 2026-11-02
