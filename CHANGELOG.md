@@ -4,7 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
-## 1.4.42 — 2026-11-02
+## 1.4.43 — 2026-11-02
+
+- Include the parser-factory overload omitted from the 1.4.42 tag because of a
+  case-sensitive Git path mismatch. Use 1.4.43; 1.4.42 cannot compile.
+
+## 1.4.42 — 2026-11-02 (superseded; incomplete tag)
 
 - Expose optional graph-only parsing through the SMILES record reader and parser
   factory. Batch search can avoid depiction generation while retaining titles,

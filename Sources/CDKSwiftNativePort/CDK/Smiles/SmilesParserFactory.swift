@@ -6,7 +6,9 @@ public final class CDKSmilesParserFactory: @unchecked Sendable {
 
     private init() {}
 
-    public func newSmilesParser(flavor: CDKSmiFlavor = .cdkDefault) -> CDKSmilesParser {
-        CDKSmilesParser(flavor: flavor)
+    public func newSmilesParser(
+        flavor: CDKSmiFlavor = .cdkDefault, generateCoordinates: Bool = true
+    ) -> CDKSmilesParser {
+        CDKSmilesParser(flavor: flavor, generateCoordinates: generateCoordinates)
     }
 }
