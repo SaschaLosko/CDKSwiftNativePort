@@ -7,7 +7,12 @@ descriptors, and IO.
 
 ## 1. Core Domain Model
 
-Defined primarily in [`Sources/CDKSwiftNativePort/Molecule.swift`](../Sources/CDKSwiftNativePort/Molecule.swift).
+Defined in [`Molecule.swift`](../Sources/CDKSwiftNativePort/Molecule.swift),
+[`Atom.swift`](../Sources/CDKSwiftNativePort/Atom.swift),
+[`Bond.swift`](../Sources/CDKSwiftNativePort/Bond.swift) and
+[`ChemistryTypes.swift`](../Sources/CDKSwiftNativePort/ChemistryTypes.swift).
+Errors live in [`ChemError.swift`](../Sources/CDKSwiftNativePort/ChemError.swift).
+These file boundaries do not change the public API.
 
 ### Primary value types
 

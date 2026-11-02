@@ -36,8 +36,8 @@ The host app or extension owns:
 
 ## Top-Level Source Layout
 
-- `Sources/CDKSwiftNativePort/Molecule.swift`
-  - shared model, graph helpers, stereochemistry, Sgroups, data fields, layout entry point
+- `Sources/CDKSwiftNativePort/{Molecule,Atom,Bond,ChemistryTypes,ChemError}.swift`
+  - molecular graph helpers, individual value types, stereochemistry/Sgroup types and errors
 - `Sources/CDKSwiftNativePort/CDK/Common`
   - identifier and molecular property services
 - `Sources/CDKSwiftNativePort/CDK/Smiles`
@@ -45,7 +45,9 @@ The host app or extension owns:
 - `Sources/CDKSwiftNativePort/CDK/InChI`
   - InChI parse/generate facades
 - `Sources/CDKSwiftNativePort/CDK/Layout`
-  - CDK-derived structure diagram generation
+  - `Depiction2DGenerator` entry point and CDK-derived structure diagram generation
+  - graph/ring perception and separate coordination, Markush, ring-system, chain,
+    ring-placement, refinement and geometry stages; these helpers remain module-internal
 - `Sources/CDKSwiftNativePort/CDK/Rendering`
   - depiction preprocessing, SVG generation, scene generation, highlight/query/Sgroup rendering
 - `Sources/CDKSwiftNativePort/CDK/IO`

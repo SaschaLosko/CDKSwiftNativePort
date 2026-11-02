@@ -6,6 +6,12 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+### Changed
+
+- Separate atom, bond, shared chemistry types and depiction entry points from the
+  molecule model. Split structure-diagram generation into graph analysis and
+  focused layout stages without changing public APIs or chemistry behavior.
+
 ### Added
 
 - Add finite `CDKMarkushMatcher` membership with match/no-match/unresolved results,
