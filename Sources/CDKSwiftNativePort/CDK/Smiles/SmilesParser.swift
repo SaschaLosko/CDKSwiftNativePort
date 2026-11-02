@@ -336,7 +336,15 @@ public final class CDKSmilesParser {
                     if !classToken.isEmpty && !known.contains(classToken.uppercased()) {
                         i = classStart
                     } else {
-                        _ = rankToken
+                        if !classToken.isEmpty {
+                            guard classToken == "TH", atCount == 1, let rank = Int(rankToken), rank == 1 || rank == 2
+                            else {
+                                throw ChemError.parseFailed(
+                                    "Unsupported atom stereo class; use CDKQueryStructure for SP, TB and OH query stereo."
+                                )
+                            }
+                            descriptor.chirality = rank == 1 ? .clockwise : .anticlockwise
+                        }
                     }
                     continue
                 }
@@ -428,7 +436,7 @@ public final class CDKSmilesParser {
             return descriptor
         }
 
-        func connectCurrentTo(_ newAtomID: Int, aromatic: Bool) {
+        func connectCurrentTo(_ newAtomID: Int) {
             guard let cur = currentAtom else {
                 currentAtom = newAtomID
                 pendingOrder = nil
@@ -439,15 +447,6 @@ public final class CDKSmilesParser {
             let order = resolveBondOrder(a1: cur, a2: newAtomID, explicit: pendingOrder)
             let stereo = (order == .single) ? (pendingDirectionalStereo ?? .none) : .none
             appendBond(cur, newAtomID, order: order, stereo: stereo)
-
-            if aromatic && order == .single && flavor.contains(.useAromaticSymbols) {
-                // Keep aromatic bracket atoms connected consistently.
-                if let idx = molecule.bonds.indices.last {
-                    if atomIsAromatic(cur) && atomIsAromatic(newAtomID) {
-                        molecule.bonds[idx].order = .aromatic
-                    }
-                }
-            }
 
             currentAtom = newAtomID
             pendingOrder = nil
@@ -556,7 +555,7 @@ public final class CDKSmilesParser {
                     unsaturated: bracket.unsaturated,
                     atomClass: bracket.atomClass,
                     atomMapNumber: bracket.atomMapNumber)
-                connectCurrentTo(newID, aromatic: bracket.aromatic)
+                connectCurrentTo(newID)
 
             default:
                 if let atom = parsePlainAtom() {
@@ -564,7 +563,7 @@ public final class CDKSmilesParser {
                         element: atom.element,
                         aromatic: atom.aromatic,
                         isotopeMass: atom.isotopeMass)
-                    connectCurrentTo(newID, aromatic: atom.aromatic)
+                    connectCurrentTo(newID)
                 } else {
                     throw ChemError.parseFailed("Unexpected token '\(ch)' in SMILES.")
                 }

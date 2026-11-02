@@ -4,6 +4,15 @@ import XCTest
 final class SmilesParserPortTests: XCTestCase {
     private let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: .cdkDefault)
 
+    func testExplicitBiarylSingleBondAndStereoClassesAreNotReinterpreted() throws {
+        let biaryl = try parser.parseSmiles("c1ccccc1-c2ccccc2")
+        XCTAssertEqual(biaryl.bonds.filter { $0.order == .single }.count, 1)
+        XCTAssertEqual(biaryl.bonds.filter { $0.order == .aromatic }.count, 12)
+        XCTAssertEqual(try parser.parseSmiles("F[C@TH2H](Cl)Br").atoms[1].chirality, .anticlockwise)
+        XCTAssertThrowsError(try parser.parseSmiles("[Pt@SP1](F)(Cl)(Br)I"))
+        XCTAssertThrowsError(try parser.parseSmiles("F[C@AL1](Cl)Br"))
+    }
+
     func testParsesSingleDoubleTripleBondOrders() throws {
         let single = try parse("C-C")
         XCTAssertEqual(single.atomCount, 2)

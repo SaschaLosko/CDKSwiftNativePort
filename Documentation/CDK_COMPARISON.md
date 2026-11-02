@@ -113,7 +113,10 @@ reproduce the original Java runtime model.
 
 The following CDK areas are still outside the package’s current parity target:
 
-- generalized SMARTS query parsing and the broader SMARTS module family
+- the remaining SMARTS module surface beyond the supported molecular query subset
+  (reaction/component grouping, extended stereo and vendor primitives); see
+  [molecular query matching](QUERY_MATCHING.md) for the implemented expressions,
+  direct variable attachments and coordination stereo
 - non-circular fingerprint families such as MACCS, PubChem, shortest-path, and
   atom-pairs fingerprints
 - force-field and 3D generation workflows

@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.41 — 2026-11-02
+
+- Add bounded molecular SMARTS parsing, composable atom/bond query expressions,
+  anchored recursion, and substructure/whole-graph matching with conservative outcomes.
+- Resolve single- and double-ended positional variation directly during matching,
+  with shared budgets, complete choice backtracking and witness mappings.
+- Add square-planar, trigonal-bipyramidal and octahedral stereo query classes,
+  relative tetrahedral groups, partial coordination conversions and a Codable
+  target/stereo sidecar. Document the supported subset and remaining extensions.
+- Preserve explicit single bonds between aromatic atoms and handle TH1/TH2
+  correctly. Reject unsupported stereo classes in the ordinary molecule reader
+  instead of interpreting them as tetrahedral; the query reader retains SP/TB/OH.
+
 ## 1.4.40 — 2026-11-02
 
 - Support zero-length repeat omission with edge validation and finite counts up

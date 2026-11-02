@@ -64,6 +64,16 @@ Licensing:
 - When redistributing binaries or modified source, ensure LGPL obligations
   (including notice and source availability requirements) are satisfied.
 
+Molecular query and coordination-stereo work follows CDK 2.13:
+- VarAttachFilter: Copyright (c) 2025 NextMove Software Ltd.
+- Expr: Copyright (c) 2018 NextMove Software.
+- QueryStereoFilter: Copyright (c) 2013 EMBL-EBI / John May; 2018 John Mayfield.
+- SquarePlanar, TrigonalBipyramidal and Octahedral permutation data and conversions:
+  Copyright (c) 2017 John Mayfield. LGPL-2.1-or-later.
+- `query-stereo-permutations.json` retains numerical carrier-ordering reference
+  data from those classes at the pinned upstream revision. No upstream source
+  runtime is required by the package or tests. See `Documentation/QUERY_MATCHING.md`.
+
 R-group enumeration and its upstream regression fixtures derive from CDK 2.13:
 - Copyright (C) 2010 Mark Rijnbeek <mark_rynbeek@users.sf.net>.
 - Copyright (C) 2026 John Mayfield (explicit attachment-point support).

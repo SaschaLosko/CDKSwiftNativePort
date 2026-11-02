@@ -19,6 +19,15 @@ app checkout, Java source, JVM, bundle identifiers, or app session logic.
 
 ## Feature Set
 
+### Molecular queries
+
+- molecular SMARTS expressions, Boolean predicates and anchored recursive queries
+- direct positional-variation matching, including variable choices at both bond ends
+- tetrahedral, geometric, square-planar, trigonal-bipyramidal and octahedral query stereo
+- conservative match/no-match/unresolved results with mappings and shared resource bounds
+
+See [query APIs, reference evidence and remaining boundaries](Documentation/QUERY_MATCHING.md).
+
 ### Finite Markush members
 
 - bounded two-ended repeat/link-node expansion combined with R-group enumeration
@@ -476,5 +485,5 @@ Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
 `enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
 configuration semantics without a Java dependency. See the [API, limits and
 Java parity evidence](Documentation/RGROUP_ENUMERATION.md). Finite repeat expansion is available through `CDKMarkushEnumerator`; the
-unreleased [membership API](Documentation/MARKUSH_MATCHING.md) is separate from
+[membership API](Documentation/MARKUSH_MATCHING.md) is separate from
 ordinary substructure search.

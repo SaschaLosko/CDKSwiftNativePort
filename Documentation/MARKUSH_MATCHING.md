@@ -3,6 +3,11 @@
 Status: available in release 1.4.38. The package is standalone and requires no
 JVM runtime.
 
+The separate [molecular query API](QUERY_MATCHING.md), available in 1.4.41,
+adds SMARTS expressions, direct positional-variation matching and coordination
+stereo. Its generic/substructure semantics do not change this API's closed finite
+family contract or silently reinterpret unsupported families as ordinary queries.
+
 ```swift
 let parser = CDKSmilesParser(flavor: .cdkDefault)
 let family = try parser.parseSmiles("C* |$;R1$,RG:_R1={O},{N}|")
