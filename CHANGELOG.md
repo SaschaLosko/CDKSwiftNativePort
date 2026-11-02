@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.44 — 2026-11-02
+
+- Add lexical alternative-local definitions with shadowing, cycle checks and
+  declaration-scope resolution; retain occurrence rules, dependencies and exclusions.
+- Expand explicit unsubstituted acyclic saturated C1–C6 alkyl/alkoxy classes with
+  all constitutional attachment isomers and conservative bounds.
+- Explain compiled alternatives through source-choice evidence, including nested
+  selections, generated fragments and omission decisions.
+- Read legacy definition drafts and write extended schema-2 drafts with an
+  older-reader review gate; reject unknown schemas and unsupported class ranges.
+- Qualify 677 tests on macOS and Ubuntu, including independent InChI identities.
+
 ## 1.4.43 — 2026-11-02
 
 - Include the parser-factory overload omitted from the 1.4.42 tag because of a

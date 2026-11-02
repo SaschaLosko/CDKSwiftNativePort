@@ -144,6 +144,11 @@ the opposite direction when a specified member can resolve missing stereo.
 
 ## Reviewed finite definitions and positional variation
 
+Release 1.4.44 adds alternative-local scopes, explicit finite alkyl/alkoxy classes
+and source-choice evidence. See [scoped finite definitions](FINITE_DEFINITIONS.md)
+for the current API, schema compatibility and boundaries. Source prose is still
+retained rather than automatically interpreted.
+
 `CDKFiniteMarkushDefinition` is a Codable sidecar retaining source identity,
 verbatim definition text, explicit fragment SMILES, excluded alternative indices,
 occurrence rules, same-scaffold dependencies and REST_H. Compilation requires

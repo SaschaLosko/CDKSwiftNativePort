@@ -5,6 +5,11 @@ standalone Swift package with a narrow, host-consumable API surface.
 
 ## Goals
 
+Complete upstream CDK feature coverage is the long-term objective. Current parity
+claims remain limited to verified surfaces. Original finite-definition and family
+reasoning extensions are documented separately from upstream-derived algorithms;
+they retain the same standalone, portable package boundary.
+
 - own chemistry implementations independently of any host application
 - expose a Swift-first chemistry core for parsing, layout, depiction, and IO
 - make the package reusable from apps, extensions, command-line tools, and tests
