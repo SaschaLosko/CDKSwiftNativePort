@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.42 — 2026-11-02
+
+- Expose optional graph-only parsing through the SMILES record reader and parser
+  factory. Batch search can avoid depiction generation while retaining titles,
+  explicit coordinates, stereochemistry, and CX family definitions. The default
+  still generates coordinates.
+
 ## 1.4.41 — 2026-11-02
 
 - Add bounded molecular SMARTS parsing, composable atom/bond query expressions,

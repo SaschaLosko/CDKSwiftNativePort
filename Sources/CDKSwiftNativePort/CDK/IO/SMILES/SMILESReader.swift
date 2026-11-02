@@ -6,9 +6,11 @@ import Foundation
 public enum CDKSMILESReader {
     public static func read(
         text: String,
-        flavor: CDKSmiFlavor = .cdkDefault
+        flavor: CDKSmiFlavor = .cdkDefault,
+        generateCoordinates: Bool = true
     ) throws -> [Molecule] {
-        let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: flavor)
+        let parser = CDKSmilesParserFactory.shared.newSmilesParser(
+            flavor: flavor, generateCoordinates: generateCoordinates)
         var molecules: [Molecule] = []
 
         for rawLine in text.components(separatedBy: .newlines) {

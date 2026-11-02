@@ -31,7 +31,7 @@ See [query APIs, reference evidence and remaining boundaries](Documentation/QUER
 ### Finite Markush members
 
 - bounded two-ended repeat/link-node expansion combined with R-group enumeration
-- unreleased: [finite compound-to-family membership](Documentation/MARKUSH_MATCHING.md)
+- [finite compound-to-family membership](Documentation/MARKUSH_MATCHING.md)
   with three verdicts, witnesses, explicit label mappings and stereo constraints
 - CXSMILES LOG and family-preserving CX output for supported flat definitions
 - unresolved-variable detection, including named pseudoatoms
