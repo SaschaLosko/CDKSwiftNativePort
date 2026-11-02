@@ -7,6 +7,7 @@ public enum CDKRGroupEnumerationError: Error, Equatable, Sendable {
     case invalidQuery(String)
     case unsupportedFeature(String)
     case configurationLimitExceeded(Int)
+    case atomLimitExceeded(Int)
 }
 
 extension Atom {
@@ -35,23 +36,23 @@ extension CDKRGroupQuery {
     /// Checks Swift task cancellation between search steps. No configurations are deduplicated.
     @discardableResult
     public func enumerateConfigurations(
-        maximumConfigurations: Int = 100_000,
+        maximumConfigurations: Int = 100_000, maximumAtoms: Int = .max,
         checkpoint: () throws -> Void = {},
         _ visit: (Molecule) throws -> Bool
     ) throws -> Int {
         try enumerateConfigurationsWithAssignments(
-            maximumConfigurations: maximumConfigurations, checkpoint: checkpoint
+            maximumConfigurations: maximumConfigurations, maximumAtoms: maximumAtoms, checkpoint: checkpoint
         ) { try visit($0.molecule) }
     }
 
     /// Streams the same configurations together with each site's substitution decision.
     @discardableResult
     public func enumerateConfigurationsWithAssignments(
-        maximumConfigurations: Int = 100_000,
+        maximumConfigurations: Int = 100_000, maximumAtoms: Int = .max,
         checkpoint: () throws -> Void = {},
         _ visit: (CDKRGroupConfiguration) throws -> Bool
     ) throws -> Int {
-        guard maximumConfigurations > 0 else {
+        guard maximumConfigurations > 0, maximumAtoms > 0 else {
             throw CDKRGroupEnumerationError.invalidQuery(
                 "The configuration limit must be positive.")
         }
@@ -91,7 +92,7 @@ extension CDKRGroupQuery {
                     throw CDKRGroupEnumerationError.configurationLimitExceeded(
                         maximumConfigurations)
                 }
-                let molecule = try plan.configuration(assignments)
+                let molecule = try plan.configuration(assignments, maximumAtoms: maximumAtoms)
                 count += 1
                 stopped = try !visit(molecule)
                 return
@@ -269,7 +270,19 @@ struct RGroupEnumerationPlan {
         return (neighbor.id, id)
     }
 
-    func configuration(_ assignments: [Int: Int]) throws -> CDKRGroupConfiguration {
+    func configuration(_ assignments: [Int: Int], maximumAtoms: Int = .max) throws -> CDKRGroupConfiguration {
+        var size = query.rootStructure.atoms.count - removedRootIDs.count
+        guard size <= maximumAtoms else { throw CDKRGroupEnumerationError.atomLimitExceeded(maximumAtoms) }
+        for group in groups {
+            for site in group.sites {
+                guard let index = assignments[site.id], index >= 0 else { continue }
+                let additional = group.definition.rGroups[index].group.atoms.filter { !Self.isDummy($0) }.count
+                guard additional <= maximumAtoms - size else {
+                    throw CDKRGroupEnumerationError.atomLimitExceeded(maximumAtoms)
+                }
+                size += additional
+            }
+        }
         var result = query.rootStructure
         var nextAtomID = result.atoms.map(\.id).max() ?? 0
         var nextBondID = result.bonds.map(\.id).max() ?? 0

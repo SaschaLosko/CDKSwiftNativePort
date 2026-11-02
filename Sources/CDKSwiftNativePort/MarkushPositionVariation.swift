@@ -10,6 +10,15 @@ struct MarkushPositionPlan {
     init(_ molecule: Molecule) throws {
         var sites: [Site] = []
         let groups = molecule.sgroups.filter { $0.kind == .extMulticenter }
+        for (index, endpoints) in molecule.cxState?.positionalVariations ?? [:] {
+            guard molecule.atoms.indices.contains(index), endpoints.allSatisfy(molecule.atoms.indices.contains),
+                groups.contains(where: {
+                    $0.atomIDs == [molecule.atoms[index].id] + endpoints.map { molecule.atoms[$0].id }
+                })
+            else {
+                throw CDKRGroupEnumerationError.invalidQuery("Inconsistent positional attachment metadata.")
+            }
+        }
         for group in groups {
             guard group.keyword == "m", let dummy = group.atomIDs.first,
                 let atom = molecule.atom(id: dummy), atom.element == "*",

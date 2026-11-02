@@ -19,9 +19,15 @@ public enum CDKMarkushStructure {
             }
             || molecule.cxState?.linkNodes.isEmpty == false
             || molecule.cxState?.positionalVariations.isEmpty == false
+            || molecule.cxState?.racemic == true
+            || molecule.cxState?.racemicFragments.isEmpty == false
+            || molecule.cxState?.stereoGroups.values.contains(where: {
+                CDKCxSmilesParser.decodeStereoGroup($0)?.kind != "abs"
+            }) == true
             || !molecule.rGroupLogicDefinitions.isEmpty
             || molecule.atoms.contains { atom in
                 !elementSymbols.contains(atom.element) || atom.isUnresolvedPseudoAtom
+                    || atom.cxStereoGroup.map { CDKCxSmilesParser.decodeStereoGroup($0)?.kind != "abs" } == true
                     || atom.queryType != nil || atom.atomList?.isEmpty == false
                     || atom.atomListIsNegated || atom.rGroupLabel != nil
                     || atom.rGroupMembership != nil

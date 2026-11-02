@@ -103,6 +103,8 @@ public enum CDKMarkushRelations {
             return result(.unresolved, failure.reason, failure.detail)
         } catch let error as CDKRGroupEnumerationError {
             switch error {
+            case .atomLimitExceeded:
+                return result(.unresolved, .atomLimit, "A generated member exceeds the atom limit.")
             case .configurationLimitExceeded:
                 return result(.unresolved, .configurationLimit, "A finite family was not exhausted.")
             case .invalidQuery(let detail): return result(.unresolved, .invalidInput, detail)

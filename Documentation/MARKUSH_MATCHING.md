@@ -1,7 +1,7 @@
 # Finite compound-to-family matching
 
-Status: implemented locally in the unreleased package line. No host application
-or Java runtime is required.
+Status: available in release 1.4.38. The package is standalone and requires no
+JVM runtime.
 
 ```swift
 let parser = CDKSmilesParser(flavor: .cdkDefault)
@@ -85,7 +85,7 @@ stereochemistry is unconstrained; the API does not enumerate every stereoisomer.
   not the literal `@`/`@@` token. Implicit hydrogen and explicit ordinary hydrogen
   references are normalized consistently. Reordered atom IDs and traversal order
   do not change the result.
-- Ordinary alkene stereo compares the referenced substituents on both ends,
+- Ordinary alkene and neutral imine stereo compare the referenced substituents on both ends,
   including reversed endpoints and swapped reference substituents. Explicit
   cis/trans references and complete SMILES directional pairs are supported.
 - Opposite declared configurations yield no-match if every compatible graph
@@ -93,7 +93,12 @@ stereochemistry is unconstrained; the API does not enumerate every stereoisomer.
   unless another permitted member gives a definite match. A known incompatible
   constraint can reject a mapping even when another constraint is unspecified.
 - Tetrahedral depiction wedges must not create alkene stereo constraints.
-- Enhanced AND/OR/racemic groups, wedge-only stereo without ordered ligands,
+- ABS tetrahedra preserve their drawn configuration. OR groups on the scaffold
+  expand by joint inversion; different groups vary independently. A two-centre
+  OR group produces two configurations, not four. The compound must specify one
+  stereoisomer. Relative groups inside alternatives require explicit scope and
+  remain unsupported. See the [RDKit enhanced stereo semantics](https://www.rdkit.org/docs/RDKit_Book.html#support-for-enhanced-stereochemistry).
+- AND/racemic mixtures, wedge-only stereo without ordered ligands,
   incomplete alkene directions and unsupported stereo types remain unresolved.
   Coordinates alone are not used to infer absolute stereochemistry.
 
@@ -112,27 +117,55 @@ Normalization and individual graph operations are not preemptible, so the
 cooperative deadline is not a hard real-time latency guarantee.
 
 The matcher streams members instead of retaining the entire expanded family.
-It compares atom attributes and connectivity with bounded graph backtracking,
-checking stereochemistry for each complete compatible mapping. A witness
-contains the generated member and repeat counts, plus a member-to-compound atom
-ID map. Suppressed ordinary hydrogen vertices are omitted from that map; it is
-not a mapping back to all source-family alternative IDs.
+Graph search checks stereo for every compatible mapping. A witness includes
+repeat counts, selected positional targets, inverted OR groups, R-site choices
+and attachment IDs. `sourceByMemberAtomID` maps each generated atom to its original
+scaffold/alternative atom, with the original site and choice for substituent atoms.
+Repeat copies can share an original atom ID. `compoundAtomIDByMemberAtomID` maps
+member atoms to the compound; suppressed ordinary H vertices are omitted.
+Alternative indices are zero-based in the compiled query, not an arbitrary source
+text numbering. Preserve the reviewed sidecar to explain excluded/nested choices.
 
-Supported families are the finite scaffold repeats and flat R-group definitions
-accepted by `CDKMarkushEnumerator`. Textual definitions, chemical classes,
-exclusions, nested variables, positional/multicenter variation, general polymers,
-radicals and coordinate bonds remain unresolved. Family overlap, containment,
-equivalence and repository search integration are separate capabilities.
+## Finite family relations
+
+`CDKMarkushRelations.compare(left, right, relation: .overlaps)` also accepts
+`.containedIn`, `.equivalent` and `.disjoint`. Results are `holds`, `doesNotHold`
+or `unresolved`. Overlap supplies a shared member; failed containment supplies an
+uncovered source member. `direction` identifies which input produced the witness.
+Equivalence checks both directions. One deadline and search-step budget covers
+all traversals; the configuration limit applies to each family enumeration.
+Partial stereo may leave containment unresolved. Existential overlap also tries
+the opposite direction when a specified member can resolve missing stereo.
+
+## Reviewed finite definitions and positional variation
+
+`CDKFiniteMarkushDefinition` is a Codable sidecar retaining source identity,
+verbatim definition text, explicit fragment SMILES, excluded alternative indices,
+occurrence rules, same-scaffold dependencies and REST_H. Compilation requires
+`reviewed == true` and no unresolved conditions. It does not translate natural
+language or expand unspecified chemical classes. Fragment SMILES start at their
+attachment atom. Nested variables expand recursively with cycle/depth, aggregate
+alternative and retained-atom bounds; replacement of that first attachment atom
+is rejected. Explicit finite choices are not a claim to cover every chemical
+class or source document.
+
+Single-bond positional variation requires an explicit unlabelled dummy endpoint,
+non-stereogenic targets with available hydrogen, and consistent metadata. Endpoint
+IDs and chosen targets are retained. Ambiguous carbon placeholders, coordination
+bonds and general multicentre bonding remain unsupported. The distinction follows
+[Chemaxon position variation](https://docs.chemaxon.com/latest/marvin_position-variation-in-marvinsketch.html).
+
+The corpus retains 103 source annotations with provenance/hashes. Five finite
+interpretations (M2S 5, 57, 72, 75, 101) are executable; the other 98 remain gated
+as unreviewed. This covers the supplied annotations, not omitted document context.
+The tests include independent positive/negative compounds, neutral imine stereo,
+nested/excluded alternatives and unresolved cases. General polymers, broad text
+classes, radicals, mixtures and arbitrary nested CX definitions remain unsupported.
 
 ## Qualification
 
-The 19 focused matching tests cover positive/negative membership, witnesses,
-CO/CN alternatives, all nine repeat-example members, source preservation,
-limits/cancellation, whole-graph and hydrogen/isotope/charge behavior, labels,
-REST_H/dependencies, malformed input and the stereochemical cases above.
-
-Full standalone macOS and Apple-container Ubuntu suites: 630 tests each, zero
-failures and zero skips. The macOS suite runs from an isolated package snapshot.
-The removed host-checkout tests are replaced by package-scoped boundary checks.
-Strict swift-format lint passes for all changed Swift files. Validation logs are
-retained outside version control in `/private/tmp/cdk-markush-matching/`.
+The release is qualified by complete macOS and Apple-container Ubuntu package
+suites (645 tests on each platform, zero failures), strict formatting and package-boundary checks. Focused regressions cover
+original-ID provenance, omission/repetition, finite relations, cancellation,
+malformed metadata, pre-allocation atom limits and reviewed-source gates. Tests
+consume attributed reference data without an upstream runtime.

@@ -36,7 +36,13 @@ struct MarkushStereoPlan {
                 throw CDKRGroupEnumerationError.unsupportedFeature(
                     "The compound must specify one stereoisomer; mixture groups are unsupported.")
             }
-            if group.kind == "or" { members[group.number, default: []].append(atom.id) }
+            if group.kind == "or" {
+                guard atom.rGroupMembership == nil else {
+                    throw CDKRGroupEnumerationError.unsupportedFeature(
+                        "Relative stereo groups inside substituent definitions require explicit scope.")
+                }
+                members[group.number, default: []].append(atom.id)
+            }
             source.atoms[index].cxStereoGroup = nil
         }
         guard members.count <= 16 else {

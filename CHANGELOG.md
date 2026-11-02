@@ -6,6 +6,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [1.4.38] - 2026-11-02
+
 ### Changed
 
 - Separate atom, bond, shared chemistry types and depiction entry points from the
@@ -15,6 +17,15 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
   full strict Swift lint passes. Preserve the official native sources unchanged.
 
 ### Added
+
+- Add bounded finite family overlap, containment, equivalence and disjointness,
+  with shared budgets, witnesses/counterexamples and original atom provenance.
+- Add reviewed finite definition sidecars, nested choices, explicit exclusions,
+  scaffold OR/ABS stereo, neutral imine stereo and explicit dummy position variation.
+- Retain the 103 M2S annotations and qualify five finite interpretations; unknown
+  source conditions, mixtures and ambiguous attachment semantics remain unresolved.
+- Check expanded and retained atom limits before allocation and preserve omission
+  and repeated-atom provenance.
 
 - Add finite `CDKMarkushMatcher` membership with match/no-match/unresolved results,
   concrete witnesses, atom mappings, traversal completeness and cooperative bounds.

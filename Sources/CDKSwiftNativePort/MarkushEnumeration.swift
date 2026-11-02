@@ -35,7 +35,15 @@ public enum CDKMarkushEnumerator {
         guard maximumConfigurations > 0, maximumAtoms > 0 else {
             throw CDKRGroupEnumerationError.invalidQuery("Limits must be positive.")
         }
+        try Task.checkCancellation()
         try checkpoint()
+        let atomIDs = Set(molecule.atoms.map(\.id))
+        guard atomIDs.count == molecule.atoms.count,
+            Set(molecule.bonds.map(\.id)).count == molecule.bonds.count,
+            molecule.bonds.allSatisfy({ $0.a1 != $0.a2 && atomIDs.contains($0.a1) && atomIDs.contains($0.a2) })
+        else {
+            throw CDKRGroupEnumerationError.invalidQuery("Atom and bond IDs must describe a valid graph.")
+        }
         let stereo = try MarkushStereoPlan(molecule)
         if stereo.hasMetadata {
             var total = 0
@@ -103,8 +111,7 @@ public enum CDKMarkushEnumerator {
                     "A generated configuration still contains unresolved variables or queries.")
             }
             guard member.atoms.count <= maximumAtoms else {
-                throw CDKRGroupEnumerationError.unsupportedFeature(
-                    "The generated member exceeds the atom limit.")
+                throw CDKRGroupEnumerationError.atomLimitExceeded(maximumAtoms)
             }
             guard count < maximumConfigurations else {
                 throw CDKRGroupEnumerationError.configurationLimitExceeded(maximumConfigurations)
@@ -146,7 +153,7 @@ public enum CDKMarkushEnumerator {
                 {
                     let query = try CDKRGroupQueryManipulator.toRGroupQuery(expanded)
                     try query.enumerateConfigurationsWithAssignments(
-                        maximumConfigurations: maximumConfigurations, checkpoint: checkpoint
+                        maximumConfigurations: maximumConfigurations, maximumAtoms: maximumAtoms, checkpoint: checkpoint
                     ) {
                         try deliver($0.molecule, counts: counts, assignments: $0.assignments, origins: origins)
                     }
@@ -179,8 +186,7 @@ private struct RepeatExpansionPlan {
             guard molecule.atoms.count <= maximumAtoms,
                 atomIDs.count <= (maximumAtoms - molecule.atoms.count) / max(1, count - 1) || count == 1
             else {
-                throw CDKRGroupEnumerationError.unsupportedFeature(
-                    "Repeat expansion exceeds the atom limit.")
+                throw CDKRGroupEnumerationError.atomLimitExceeded(maximumAtoms)
             }
             guard count > 1 else { return molecule }
             let boundaries = crossingBondIDs.compactMap { id in molecule.bonds.first { $0.id == id }
@@ -227,9 +233,6 @@ private struct RepeatExpansionPlan {
                     output.atoms.append(cloned)
                 }
                 for bond in sourceBonds {
-                    guard nextBond < Int.max else {
-                        throw CDKRGroupEnumerationError.invalidQuery("Bond IDs overflow during repetition.")
-                    }
                     guard nextBond < Int.max else {
                         throw CDKRGroupEnumerationError.invalidQuery("Bond IDs overflow during repetition.")
                     }

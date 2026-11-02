@@ -128,7 +128,8 @@ Every delivered configuration passes `CDKMarkushStructure.requiresSpecifiedStruc
 named pseudoatoms, open sites and remaining query semantics prevent delivery as
 concrete members. The original example with three R1 choices and ring repeat
 1–3 produces nine distinct members, independently checked by Standard InChI.
-This still does not interpret textual patent definitions or match families.
+This enumerator does not interpret natural-language definitions; see the reviewed
+finite-definition compiler and family relations in [MARKUSH_MATCHING.md](MARKUSH_MATCHING.md).
 
 ### Rule preservation and classification
 
@@ -164,10 +165,16 @@ and unsupported input, CX LOG and the assessment's rule-loss regression.
 The two preexisting explicit-LN fixtures were corrected from bond indices to
 neighboring atom indices according to the format specification.
 
-## Unreleased finite membership
+## Finite membership in 1.4.38
 
 `CDKMarkushMatcher` composes bounded enumeration with whole-graph and declared
 stereochemical comparison. See [membership semantics, labels and bounds](MARKUSH_MATCHING.md).
 The numeric model no longer imposes the legacy R0–R32 limit; RGfile export still
 enforces that format boundary. Explicit named-variable resolution reports its
 source-label mapping without mutating the original family.
+
+The member API now retains substitution/attachment provenance and supports bounded
+scaffold OR stereo and explicit dummy-endpoint position variation. These features
+are implemented above the lower-level R-group API; ambiguous multicentre bonding
+remains unsupported. `enumerateConfigurations` and its detailed assignment form
+accept `maximumAtoms` and reject oversized results before allocating fragments.

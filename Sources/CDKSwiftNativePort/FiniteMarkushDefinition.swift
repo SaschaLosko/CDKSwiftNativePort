@@ -54,6 +54,7 @@ public struct CDKFiniteMarkushDefinition: Codable, Sendable {
         let definitions = Dictionary(uniqueKeysWithValues: variables.map { ($0.label, $0) })
         let parser = CDKSmilesParser(flavor: .cdkDefault)
         var produced = 0
+        var retainedAtoms = 0
         func query(for input: Molecule, path: [String]) throws -> CDKRGroupQuery {
             try Task.checkCancellation()
             guard input.atoms.count <= maximumAtoms, path.count <= 16,
@@ -79,19 +80,28 @@ public struct CDKFiniteMarkushDefinition: Codable, Sendable {
                         throw CDKRGroupEnumerationError.invalidQuery("An alternative is empty.")
                     }
                     let nested = try query(for: fragment, path: path + [label])
-                    let expanded =
-                        nested.rGroupDefinitions.isEmpty
-                        ? [fragment]
-                        : try nested.getAllConfigurations(maximumConfigurations: maximumAlternatives)
-                    for member in expanded {
-                        guard member.atom(id: attachmentID) != nil,
-                            member.atoms.count <= maximumAtoms, produced < maximumAlternatives
-                        else {
+                    func retain(_ member: Molecule) throws {
+                        guard member.atom(id: attachmentID) != nil, produced < maximumAlternatives else {
                             throw CDKRGroupEnumerationError.unsupportedFeature(
                                 "Alternative expansion exceeds its limit or replaces the attachment atom.")
                         }
+                        guard member.atoms.count <= maximumAtoms - retainedAtoms else {
+                            throw CDKRGroupEnumerationError.atomLimitExceeded(maximumAtoms)
+                        }
                         produced += 1
+                        retainedAtoms += member.atoms.count
                         groups.append(.init(group: member, firstAttachmentPointAtomID: attachmentID))
+                    }
+                    if nested.rGroupDefinitions.isEmpty {
+                        try retain(fragment)
+                    } else {
+                        try nested.enumerateConfigurations(
+                            maximumConfigurations: maximumAlternatives,
+                            maximumAtoms: maximumAtoms
+                        ) { member in
+                            try retain(member)
+                            return true
+                        }
                     }
                 }
                 guard !groups.isEmpty else {
@@ -114,7 +124,11 @@ public struct CDKFiniteMarkushDefinition: Codable, Sendable {
             return .init(rootStructure: resolution.molecule, rGroupDefinitions: lists)
         }
         let input = try parser.parseSmiles(backbone)
-        let compiled = CDKRGroupQueryManipulator.toFlatMolecule(try query(for: input, path: []))
+        let compiledQuery = try query(for: input, path: [])
+        guard input.atoms.count <= maximumAtoms - retainedAtoms else {
+            throw CDKRGroupEnumerationError.atomLimitExceeded(maximumAtoms)
+        }
+        let compiled = CDKRGroupQueryManipulator.toFlatMolecule(compiledQuery)
         guard compiled.atoms.count <= maximumAtoms else {
             throw CDKRGroupEnumerationError.unsupportedFeature("Compiled definitions exceed the atom limit.")
         }
