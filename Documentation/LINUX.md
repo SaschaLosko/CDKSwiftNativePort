@@ -3,7 +3,7 @@
 This guide shows how to use `CDKSwiftNativePort` as a standalone Swift package
 on Linux.
 
-The package is headless. It does not require AtomLens, Xcode, `AppKit`,
+The package is headless. It does not require a host application, Xcode, `AppKit`,
 `UIKit`, `SwiftUI`, Quick Look, or Spotlight infrastructure.
 
 ## Verified Environment

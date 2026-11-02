@@ -25,12 +25,10 @@ Recommended Linux verification target:
 
 - Ubuntu 26.04 LTS with Swift 6.3.2
 
-If you are working in the first-party monorepo, also verify that AtomLens still
-builds against the package product:
-
-```bash
-xcodebuild -project /path/to/AtomLens.xcodeproj -scheme AtomLens -configuration Debug -sdk macosx CODE_SIGNING_ALLOWED=NO build
-```
+Validate from an isolated package checkout. Consumer integration checks belong
+in the consuming repository and are not prerequisites for running this package's
+test suite. Maintained files must remain independent of named apps or customers,
+and must contain no Java source or compiled Java artifacts.
 
 ## 2. Review the Docs Set
 

@@ -25,16 +25,20 @@ public enum CDKMarkushEnumerator {
     @discardableResult
     public static func enumerate(
         _ molecule: Molecule, maximumConfigurations: Int = 1_000, maximumAtoms: Int = 10_000,
+        checkpoint: () throws -> Void = {},
         _ visit: (CDKMarkushConfiguration) throws -> Bool
     ) throws -> Int {
         guard maximumConfigurations > 0, maximumAtoms > 0 else {
             throw CDKRGroupEnumerationError.invalidQuery("Limits must be positive.")
         }
+        try checkpoint()
+        let molecule = try CDKMarkushVariableLabels.resolve(molecule).molecule
         let repeats = try RepeatExpansionPlan(molecule)
         var count = 0
         var stopped = false
         func deliver(_ member: Molecule, counts: [Int]) throws -> Bool {
             try Task.checkCancellation()
+            try checkpoint()
             guard !CDKMarkushStructure.requiresSpecifiedStructure(member) else {
                 throw CDKRGroupEnumerationError.unsupportedFeature(
                     "A generated configuration still contains unresolved variables or queries.")
@@ -52,6 +56,7 @@ public enum CDKMarkushEnumerator {
         }
         func expand(_ index: Int, _ graph: Molecule, _ counts: [Int]) throws {
             try Task.checkCancellation()
+            try checkpoint()
             guard !stopped else { return }
             guard index < repeats.units.count else {
                 var expanded = graph
@@ -63,7 +68,9 @@ public enum CDKMarkushEnumerator {
                     || !expanded.rGroupLogicDefinitions.isEmpty
                 {
                     let query = try CDKRGroupQueryManipulator.toRGroupQuery(expanded)
-                    try query.enumerateConfigurations(maximumConfigurations: maximumConfigurations) {
+                    try query.enumerateConfigurations(
+                        maximumConfigurations: maximumConfigurations, checkpoint: checkpoint
+                    ) {
                         try deliver($0, counts: counts)
                     }
                 } else {

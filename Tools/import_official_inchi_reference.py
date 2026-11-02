@@ -47,10 +47,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default=(
-            "/Users/sascha/Development/AtomLens/"
-            "CDKSwiftNativePort/Tests/CDKSwiftNativePortTests/InChI/OfficialReference/"
-            "official_reference_cases.json"
+        default=str(
+            Path(__file__).resolve().parents[1]
+            / "Tests/CDKSwiftNativePortTests/InChI/OfficialReference/official_reference_cases.json"
         ),
         help="Output JSON path."
     )

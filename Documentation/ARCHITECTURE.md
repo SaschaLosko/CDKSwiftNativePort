@@ -5,7 +5,7 @@ standalone Swift package with a narrow, host-consumable API surface.
 
 ## Goals
 
-- keep all CDK-derived logic out of AtomLens app targets
+- own chemistry implementations independently of any host application
 - expose a Swift-first chemistry core for parsing, layout, depiction, and IO
 - make the package reusable from apps, extensions, command-line tools, and tests
 - keep host-specific UI and bundle policy outside the chemistry core
@@ -80,7 +80,7 @@ The rendering stack is split into three layers:
    - `CDKDepictionGenerator` produces SVG
    - Metal scene builders produce geometry and labels for host renderers
 3. host-owned drawing
-   - AtomLens or another host turns the generated scene into on-screen pixels
+   - a host turns the generated scene into on-screen pixels
 
 This keeps the chemistry logic package-owned while letting the app keep control
 over view hierarchy, gestures, animation, and GPU pipeline details.
@@ -89,7 +89,7 @@ over view hierarchy, gestures, animation, and GPU pipeline details.
 
 ### Forbidden inside package sources
 
-- `AtomLens` imports or symbols
+- host application imports or symbols
 - Quick Look or Spotlight implementation code
 - bundle IDs, entitlements, or app restoration logic
 - `AppKit`, `UIKit`, or `SwiftUI` dependencies
@@ -101,36 +101,23 @@ over view hierarchy, gestures, animation, and GPU pipeline details.
 - extension targets that call package APIs
 - app-specific wrappers such as document/view-model layers
 
-## Monorepo Encapsulation Model
+## Standalone Package Contract
 
-In the first-party monorepo:
+All maintained sources, documentation, tooling and tests are package-scoped.
+They must not name or depend on a particular consuming application or customer.
+There is no Java source, JVM runtime or Maven build requirement. The official
+native C InChI implementation is vendored in its own package target.
 
-- all CDK-derived implementation lives in `CDKSwiftNativePort`
-- AtomLens keeps only a thin alias layer in `AtomLens/Chemistry/CDKPortAliases.swift`
-- the AtomLens Xcode project links the local Swift package product instead of
-  compiling package source files directly
-
-That separation matters for:
-
-- App Store review clarity
-- package publishing on GitHub
-- reuse from extensions and tools
-- keeping future host apps from depending on AtomLens internals
+Consumers link the package product rather than compiling its sources directly.
+App configuration and integration tests belong in the consuming repository.
+Package tests must run from an isolated checkout without sibling projects.
 
 ## Boundary Enforcement
 
-The package test suite includes dedicated guardrails:
-
-- `PackageBoundaryTests.testSourcesContainNoAppLevelCouplingMarkers`
-  - scans package sources for AtomLens, Quick Look, Spotlight, `AppKit`, `UIKit`,
-    and `SwiftUI` coupling markers
-- `PackageBoundaryTests.testPackageManifestDoesNotDependOnAtomLensTargets`
-  - ensures `Package.swift` does not reference app targets or app-local paths
-- `PackageBoundaryTests.testWorkspaceChemistryLayerContainsOnlyAliasAdapter`
-  - prevents CDK-derived implementation from accumulating in `AtomLens/Chemistry`
-- `PackageBoundaryTests.testHostXcodeProjectUsesPackageProductInsteadOfPackageSourceFiles`
-  - verifies the host Xcode project links the package product rather than
-    compiling files from `CDKSwiftNativePort/Sources`
+- Source tests reject application UI, Quick Look and Spotlight imports.
+- Manifest tests reject external local-package paths.
+- File checks reject Java source and compiled Java artifacts in maintained files.
+- Package validation uses only this checkout and its bundled reference fixtures.
 
 ## Testing Strategy
 

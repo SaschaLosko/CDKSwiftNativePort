@@ -629,36 +629,11 @@ public enum CDKCxSmilesParser {
         for atom in source.atoms {
             nextAtomID += 1
             atomMap[atom.id] = nextAtomID
-            destination.atoms.append(
-                Atom(
-                    id: nextAtomID,
-                    element: atom.element,
-                    position: atom.position,
-                    zPosition: atom.zPosition,
-                    charge: atom.charge,
-                    isotopeMassNumber: atom.isotopeMassNumber,
-                    aromatic: atom.aromatic,
-                    chirality: atom.chirality,
-                    explicitHydrogenCount: atom.explicitHydrogenCount,
-                    queryType: atom.queryType,
-                    atomList: atom.atomList,
-                    atomListIsNegated: atom.atomListIsNegated,
-                    radical: atom.radical,
-                    radicalType: atom.radicalType,
-                    atomValue: atom.atomValue,
-                    rGroupLabel: atom.rGroupLabel,
-                    rGroupMembership: atom.rGroupMembership,
-                    componentGroupID: atom.componentGroupID,
-                    substitutionCount: atom.substitutionCount,
-                    unsaturated: atom.unsaturated,
-                    ringBondCount: atom.ringBondCount,
-                    attachmentPoint: atom.attachmentPoint,
-                    valenceOverride: atom.valenceOverride,
-                    cxStereoGroup: atom.cxStereoGroup,
-                    ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
-                    atomClass: atom.atomClass,
-                    atomMapNumber: atom.atomMapNumber)
-            )
+        }
+        for atom in source.atoms {
+            var copy = RGroupEnumerationPlan.copyAtom(atom, id: atomMap[atom.id]!)
+            copy.ligandOrderingAtomIDs = atom.ligandOrderingAtomIDs?.map { atomMap[$0] ?? $0 }
+            destination.atoms.append(copy)
         }
 
         for bond in source.bonds {
@@ -712,6 +687,7 @@ public enum CDKCxSmilesParser {
     }
 
     private static func rGroupDisplayLabel(for atom: Atom) -> String? {
+        if atom.isUnresolvedPseudoAtom { return atom.aliasLabel ?? atom.element }
         let trimmed = atom.element.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.range(of: #"^R\d*$"#, options: .regularExpression) != nil {
             return trimmed

@@ -77,7 +77,7 @@ valid fixtures 1, 2, 3, 4, 5, and 7 yield **4, 12, 8, 2, 17,820, and 20**
 configurations; fixture 6 rejects missing definitions.
 
 On 2026-11-01 the official Maven Central CDK 2.13 distribution was executed
-independently with `Scripts/RGroupParity.java`. For every configuration, the
+independently with an external reference harness. For every configuration, the
 oracle records sorted element/charge/REST_H atom entries and sorted
 endpoint-element/bond-order entries. The Swift test recomputes each complete
 histogram and its SHA-256, comparing against the compact committed
@@ -86,20 +86,17 @@ signatures are not graph-isomorphism certificates; separate Standard InChI
 checks verify aromatic substituents, both two-point attachment orders, scaffold
 and fragment stereochemistry, and flattened round trips.
 
-Recreate the oracle outside the checkout's build products:
-
-```sh
-mvn -B -f Scripts/rgroup-parity-pom.xml dependency:build-classpath \
-  -Dmdep.outputFile=/tmp/cdk-rgroup-classpath.txt
-java --class-path "$(cat /tmp/cdk-rgroup-classpath.txt)" Scripts/RGroupParity.java \
-  Tests/CDKSwiftNativePortTests/MDL/RGroupEnumerationFixtures > /tmp/cdk-rgroup-histograms.json
-```
+The repository contains no Java source or Maven build configuration. Reference
+regeneration is an external upstream-validation activity, not part of the Swift
+package build or tests. A reference harness must enumerate the six valid fixtures
+with official CDK 2.13 and reproduce the signature construction described above.
 
 For each fixture, serialize the sorted histogram as `signature<TAB>count<LF>`
 and calculate SHA-256. The raw JSON evidence is retained at
 `/private/tmp/cdk-rgroup-java/histograms.json` for this run, SHA-256
 `9b6015fb14fcdfcaed28e8e012dd8dcde1e91aa9075b3b1b53a28003e68b5109`.
-The versioned compact references, fixture bytes and oracle source permit reruns.
+The versioned compact references and fixture bytes preserve the test baseline;
+regenerating it requires a separately maintained upstream harness.
 
 Release qualification: full macOS and Apple-container Ubuntu suites each ran
 605 tests, with two existing skips and no failures. The ten dedicated enumeration
@@ -166,4 +163,11 @@ explicit endpoints/branches, multiple repeats, limits, cancellation, malformed
 and unsupported input, CX LOG and the assessment's rule-loss regression.
 The two preexisting explicit-LN fixtures were corrected from bond indices to
 neighboring atom indices according to the format specification.
-Evidence: `/private/tmp/atomlens-markush-members/`.
+
+## Unreleased finite membership
+
+`CDKMarkushMatcher` composes bounded enumeration with whole-graph and declared
+stereochemical comparison. See [membership semantics, labels and bounds](MARKUSH_MATCHING.md).
+The numeric model no longer imposes the legacy R0–R32 limit; RGfile export still
+enforces that format boundary. Explicit named-variable resolution reports its
+source-label mapping without mutating the original family.

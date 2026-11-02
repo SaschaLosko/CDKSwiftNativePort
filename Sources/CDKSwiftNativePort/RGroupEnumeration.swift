@@ -36,6 +36,7 @@ extension CDKRGroupQuery {
     @discardableResult
     public func enumerateConfigurations(
         maximumConfigurations: Int = 100_000,
+        checkpoint: () throws -> Void = {},
         _ visit: (Molecule) throws -> Bool
     ) throws -> Int {
         guard maximumConfigurations > 0 else {
@@ -43,6 +44,7 @@ extension CDKRGroupQuery {
                 "The configuration limit must be positive.")
         }
         try Task.checkCancellation()
+        try checkpoint()
         let plan = try RGroupEnumerationPlan(query: self)
         guard !plan.groups.isEmpty else { return 0 }
         guard plan.groups.allSatisfy({ !$0.occurrences.isEmpty }) else { return 0 }
@@ -69,6 +71,7 @@ extension CDKRGroupQuery {
 
         func searchGroup(_ level: Int) throws {
             try Task.checkCancellation()
+            try checkpoint()
             guard !stopped else { return }
             if level == plan.groups.count {
                 guard conditionsMet() else { return }
@@ -84,6 +87,7 @@ extension CDKRGroupQuery {
             let group = plan.groups[level]
             func searchSite(_ index: Int, _ remaining: Int) throws {
                 try Task.checkCancellation()
+                try checkpoint()
                 guard !stopped else { return }
                 let available = group.sites.count - index
                 guard remaining >= 0, remaining <= available else { return }
@@ -153,7 +157,7 @@ struct RGroupEnumerationPlan {
             uniqueKeysWithValues: query.rootStructure.atoms.enumerated().map { ($1.id, $0) })
         for number in query.rGroupDefinitions.keys.sorted() {
             let definition = query.rGroupDefinitions[number]!
-            guard (0...32).contains(number), definition.rGroupNumber == number,
+            guard number >= 0, definition.rGroupNumber == number,
                 CDKRGroupList.isValidOccurrenceSyntax(definition.occurrence),
                 definition.requiredRGroupNumber == 0
                     || query.rGroupDefinitions[definition.requiredRGroupNumber] != nil

@@ -52,8 +52,8 @@ public struct CDKRGroupList: Hashable, Codable, Sendable {
         requiredRGroupNumber: Int = 0,
         rGroups: [CDKRGroup] = []
     ) throws {
-        guard (0...32).contains(rGroupNumber) else {
-            throw ChemError.parseFailed("R-group number must be between 0 and 32.")
+        guard rGroupNumber >= 0 else {
+            throw ChemError.parseFailed("R-group number must be nonnegative.")
         }
         guard CDKRGroupList.isValidOccurrenceSyntax(occurrence) else {
             throw ChemError.parseFailed("Invalid occurrence line: \(occurrence)")
@@ -176,7 +176,7 @@ public struct CDKRGroupQuery: Hashable, Codable, Sendable {
         guard trimmed.hasPrefix("R") else { return false }
         if trimmed == "R" { return true }
         guard let value = Int(trimmed.dropFirst()) else { return false }
-        return (0...32).contains(value)
+        return value >= 0
     }
 
     public func rGroupQueryAtoms(_ rGroupNumber: Int? = nil) -> [Atom] {
@@ -347,6 +347,16 @@ public enum CDKRGroupQueryManipulator {
     }
 
     public static func toRGroupQuery(_ molecule: Molecule) throws -> CDKRGroupQuery {
+        guard Set(molecule.atoms.map(\.id)).count == molecule.atoms.count else {
+            throw ChemError.parseFailed("Duplicate atom IDs in a flattened R-group query.")
+        }
+        let atoms = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
+        for bond in molecule.bonds {
+            guard let a = atoms[bond.a1], let b = atoms[bond.a2],
+                a.rGroupMembership == b.rGroupMembership,
+                a.rGroupMembership == nil || a.componentGroupID == b.componentGroupID
+            else { throw ChemError.parseFailed("A bond crosses or leaves flattened R-group components.") }
+        }
         let rootAtomIDs = Set(
             molecule.atoms.compactMap { atom in
                 atom.rGroupMembership == nil ? atom.id : nil

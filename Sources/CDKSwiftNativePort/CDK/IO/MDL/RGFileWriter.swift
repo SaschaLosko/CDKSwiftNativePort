@@ -11,6 +11,10 @@ public enum CDKRGFileWriter {
         !query.rootStructure.atoms.isEmpty
             && !query.rGroupDefinitions.isEmpty
             && query.areRootAtomsDefined()
+            && query.rGroupDefinitions.allSatisfy { number, definition in
+                (0...32).contains(number) && definition.rGroupNumber == number
+                    && (0...32).contains(definition.requiredRGroupNumber)
+            }
     }
 
     public static func write(_ molecule: Molecule) throws -> String {
@@ -20,7 +24,7 @@ public enum CDKRGFileWriter {
     public static func write(_ query: CDKRGroupQuery) throws -> String {
         guard canWrite(query) else {
             throw ChemError.unsupported(
-                "RGfile export requires a root structure with matching R-group definitions.")
+                "RGfile export requires matching R-group definitions in the R0-R32 format domain.")
         }
 
         let timestamp = currentTimestamp()

@@ -8,6 +8,17 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Added
 
+- Add finite `CDKMarkushMatcher` membership with match/no-match/unresolved results,
+  concrete witnesses, atom mappings, traversal completeness and cooperative bounds.
+- Support numeric variables beyond R32 and explicit named-pseudoatom resolution;
+  retain the R0-R32 boundary for RGfile output.
+- Add focused tetrahedral/alkene, REST_H, repeat, variable-label and malformed-input
+  regressions. Correct CX fragment ligand-ID remapping and preserve atom properties.
+- Make package checks and documentation fully standalone, remove host-checkout
+  assumptions, and derive reference-import output paths from the package location.
+- Remove the development Java reference harness and Maven configuration; retain
+  attributed reference data without a Java source or runtime dependency.
+
 - Added additional 3D atom color palettes for host renderers: Okabe-Ito,
   Viridis, Cividis, Magma, Inferno, Plasma, ColorBrewer Set2/Dark2,
   CARTO Safe/Vivid, and Matplotlib Tab10/Tab20.
@@ -255,7 +266,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
   standalone cross-platform release, including Linux installation guidance and
   upstream CDK attribution/citations.
 - Strengthened package-boundary checks to keep package-source scanning robust on
-  Linux and to preserve the no-AtomLens-coupling contract.
+  Linux and to preserve the standalone-package contract.
 
 ## [1.2.0] - 2026-03-14
 

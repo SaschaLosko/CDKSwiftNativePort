@@ -14,15 +14,16 @@ This package exists for two reasons:
 - expose a Swift-first chemistry API that can be reused from Apple apps,
   command-line tools, and Swift on Linux
 
-The first-party consumer is AtomLens, but the package itself has no dependency
-on AtomLens modules, Quick Look targets, Spotlight targets, bundle identifiers,
-or app session logic.
+The package is self-contained. Its build and tests require no host application,
+app checkout, Java source, JVM, bundle identifiers, or app session logic.
 
 ## Feature Set
 
 ### Finite Markush members
 
 - bounded two-ended repeat/link-node expansion combined with R-group enumeration
+- unreleased: [finite compound-to-family membership](Documentation/MARKUSH_MATCHING.md)
+  with three verdicts, witnesses, explicit label mappings and stereo constraints
 - CXSMILES LOG and family-preserving CX output for supported flat definitions
 - unresolved-variable detection, including named pseudoatoms
 - [API, supported scope and regression evidence](Documentation/RGROUP_ENUMERATION.md)
@@ -122,11 +123,9 @@ The host app or tool owns:
 This boundary is enforced in tests:
 
 - package sources are scanned for forbidden host-coupling imports
-- `Package.swift` is checked for AtomLens target references
-- the monorepo host chemistry layer is checked to ensure it only contains the
-  thin alias adapter
-- the AtomLens Xcode project is checked to ensure it links the package product
-  rather than compiling package implementation files directly
+- `Package.swift` is checked for external local-package paths
+- maintained package files are checked for Java sources or compiled Java artifacts
+- host integration tests belong to their consuming projects
 
 ## Platform and Release Status
 
@@ -141,7 +140,7 @@ This boundary is enforced in tests:
   - verified on Ubuntu 26.04 LTS with Swift 6.3.2
 
 The package is headless. It does not depend on `AppKit`, `UIKit`, `SwiftUI`,
-Quick Look, Spotlight, or AtomLens internals. That makes it suitable for:
+Quick Look, Spotlight, or host application internals. That makes it suitable for:
 
 - macOS and iOS apps
 - helper tools and import/export utilities
@@ -436,13 +435,6 @@ Before publishing a GitHub release, run the same package suite on at least one
 Linux environment as well. The package has been verified on Ubuntu 26.04 LTS
 with Swift 6.3.2.
 
-If you are validating the first-party monorepo as well, also build AtomLens
-against the package product:
-
-```bash
-xcodebuild -project /path/to/AtomLens.xcodeproj -scheme AtomLens -configuration Debug -sdk macosx build
-```
-
 ## Upstream Reference and Attribution
 
 `CDKSwiftNativePort` includes code derived from and inspired by the Chemistry
@@ -483,5 +475,6 @@ entry points throw an unsupported-format error and are excluded from the format 
 Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
 `enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
 configuration semantics without a Java dependency. See the [API, limits and
-Java parity evidence](Documentation/RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
-remain separate capabilities.
+Java parity evidence](Documentation/RGROUP_ENUMERATION.md). Finite repeat expansion is available through `CDKMarkushEnumerator`; the
+unreleased [membership API](Documentation/MARKUSH_MATCHING.md) is separate from
+ordinary substructure search.

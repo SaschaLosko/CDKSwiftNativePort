@@ -57,7 +57,7 @@ The package uses `Foundation`, `CoreGraphics`, and related low-level Apple
 frameworks required for the chemistry and rendering pipeline. It does not
 depend on:
 
-- `AtomLens`
+- host application modules
 - `AppKit`
 - `UIKit`
 - `SwiftUI`
@@ -94,12 +94,12 @@ The most useful package characteristics for a macOS app today are:
 - security-scoped file handling via `CDKFileAccess`
 - a reusable chemistry core that can be shared by the app and extensions
 - scene generation that lets the host control rendering and interaction policy
-- no dependency on AtomLens or on higher-level app frameworks
+- no dependency on host applications or higher-level app frameworks
 
 ## R-group enumeration (1.4.35)
 
 Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
 `enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
 configuration semantics without a Java dependency. See the [API, limits and
-Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
-remain separate capabilities.
+Java parity evidence](RGROUP_ENUMERATION.md). Finite repeat expansion and the unreleased
+[membership API](MARKUSH_MATCHING.md) have separate documented contracts.
