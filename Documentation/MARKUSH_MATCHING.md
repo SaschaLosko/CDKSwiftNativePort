@@ -155,17 +155,20 @@ IDs and chosen targets are retained. Ambiguous carbon placeholders, coordination
 bonds and general multicentre bonding remain unsupported. The distinction follows
 [Chemaxon position variation](https://docs.chemaxon.com/latest/marvin_position-variation-in-marvinsketch.html).
 
-The corpus retains 103 source annotations with provenance/hashes. Five finite
-interpretations (M2S 5, 57, 72, 75, 101) are executable; the other 98 remain gated
-as unreviewed. This covers the supplied annotations, not omitted document context.
-The tests include independent positive/negative compounds, neutral imine stereo,
+The corpus retains 103 source annotations with provenance/hashes. Ten finite
+interpretations (M2S 5, 6, 54, 57, 69, 72, 75, 98, 99, 101) are executable.
+Six more (8, 14, 37, 66, 68, 80) have reviewed unresolved reasons; 87 remain
+unreviewed. Shared repeat labels, ring-atom replacement and omitted definitions
+are explicitly distinguished from executable independent alternatives. This covers the supplied annotations, not omitted document context.
+The tests include independent positive/negative compounds and full Standard
+InChI checks of positive witnesses, neutral imine stereo,
 nested/excluded alternatives and unresolved cases. General polymers, broad text
 classes, radicals, mixtures and arbitrary nested CX definitions remain unsupported.
 
 ## Qualification
 
 The release is qualified by complete macOS and Apple-container Ubuntu package
-suites (645 tests on each platform, zero failures), strict formatting and package-boundary checks. Focused regressions cover
+suites (650 tests on each platform, zero failures), strict formatting and package-boundary checks. Focused regressions cover
 original-ID provenance, omission/repetition, finite relations, cancellation,
 malformed metadata, pre-allocation atom limits and reviewed-source gates. Tests
 consume attributed reference data without an upstream runtime.

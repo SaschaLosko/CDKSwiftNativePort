@@ -15,11 +15,14 @@ included. These backbones test unresolved-variable detection, not membership.
 ## Reviewed definitions
 
 `m2s-definitions.json` additionally retains all 103 source annotations and OCR
-cell texts, with annotation hashes and source image identifiers. Five finite
-annotation interpretations (5, 57, 72, 75, 101) add explicit fragment choices and
+cell texts, with annotation hashes and source image identifiers. Ten finite
+annotation interpretations (5, 6, 54, 57, 69, 72, 75, 98, 99, 101) add explicit fragment choices and
 independently written membership checks. These are interpretations of the supplied
 annotation, not a validation of complete patent claims or omitted source context.
-The remaining 98 records are explicitly unreviewed and cannot be compiled.
+Six records (8, 14, 37, 66, 68, 80) carry reviewed unresolved reasons; the
+remaining 87 are explicitly unreviewed. Neither category can be compiled.
+Repeat counts of zero, bounded 5–70 ranges and independent stereo negatives are
+included. Full Standard InChI witnesses supplement membership verdict checks.
 No images or Java implementation are included. Nested variables, explicit
 exclusions, dependencies, ambiguous position placeholders and enhanced stereo
 are also covered by synthetic tests with declared semantics.

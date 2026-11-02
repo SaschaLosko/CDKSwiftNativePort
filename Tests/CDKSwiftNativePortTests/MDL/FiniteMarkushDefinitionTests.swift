@@ -3,7 +3,7 @@ import XCTest
 
 final class FiniteMarkushDefinitionTests: XCTestCase {
     private func parse(_ text: String) throws -> Molecule {
-        try CDKSmilesParser(flavor: .cdkDefault).parseSmiles(text)
+        try CDKSmilesParser(flavor: .cdkDefault, generateCoordinates: false).parseSmiles(text)
     }
     func testReviewedM2SDefinitionsAndUnresolvedSourceTerms() throws {
         struct Record: Decodable {
@@ -18,17 +18,26 @@ final class FiniteMarkushDefinitionTests: XCTestCase {
                 forResource: "m2s-definitions", withExtension: "json", subdirectory: "RGroupEnumerationFixtures"))
         let records = try JSONDecoder().decode([Record].self, from: Data(contentsOf: url))
         XCTAssertEqual(records.count, 103)
-        XCTAssertEqual(records.filter { $0.definition.reviewed }.count, 5)
+        XCTAssertEqual(records.filter { $0.definition.reviewed }.count, 16)
+        XCTAssertEqual(records.filter { $0.expectedConfigurations != nil }.count, 10)
         for record in records {
             guard let expected = record.expectedConfigurations else {
                 XCTAssertThrowsError(try record.definition.compile(), "M2S \(record.id)")
                 continue
             }
             let family = try record.definition.compile()
-            XCTAssertEqual(try CDKMarkushEnumerator.configurations(of: family).count, expected, "M2S \(record.id)")
+            let members = try CDKMarkushEnumerator.configurations(of: family)
+            XCTAssertEqual(members.count, expected, "M2S \(record.id)")
             for text in record.positiveSMILES {
                 let result = CDKMarkushMatcher.match(try parse(text), in: family)
                 XCTAssertEqual(result.verdict, .match, "M2S \(record.id): \(result.detail ?? "")")
+                // Independent C InChI canonicalization checks the full graph,
+                // isotope and stereo layers against manually specified members.
+                // Do not replace this with formula/mass signatures or the matcher.
+                let expectedInchi = try CDKInChIGenerator(molecule: parse(text)).getInchi()
+                let witness = try XCTUnwrap(result.witness, "M2S \(record.id)")
+                XCTAssertEqual(
+                    try CDKInChIGenerator(molecule: witness.configuration.molecule).getInchi(), expectedInchi)
             }
             for text in record.negativeSMILES {
                 XCTAssertEqual(

@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.40 — 2026-11-02
+
+- Support zero-length repeat omission with edge validation and finite counts up
+  to 1,000, retaining configuration, atom and cancellation limits.
+- Expand reviewed M2S evidence to ten executable and six explicitly unresolved
+  annotations, with full InChI witness and stereo checks.
+- Add optional graph-only SMILES parsing; explicit CX coordinates remain intact,
+  while the default continues to generate depictions. Definition compilation
+  uses graph-only parsing to avoid unnecessary layout work.
+- Make finite definitions equatable and reject blank provenance/labels.
+
 ## 1.4.39 — 2026-11-02
 
 - Preserve RGfile attachment-point (`M  APO`) records for real atoms and explicit

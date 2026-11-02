@@ -115,13 +115,16 @@ atom limit is 10,000. Cancellation is checked during traversal. Output limits
 are not time limits; callers should apply a cooperative cancellation deadline.
 
 Supported repeat units are connected, disjoint, head-to-tail scaffold units with
-two explicitly determined single-bond boundaries and integer counts 1–64.
+two explicitly determined single-bond boundaries and integer counts 0–1,000.
 At most 16 repeat units are accepted. Ring link nodes and branches traveling
 with a link node are included. The documented CX LN outer indices are **atom**
 indices; the older port's colon-separated bond-index variant remains readable.
-Unbounded/zero counts, overlapping units, repeat units inside substituent
+Unbounded counts, overlapping units, repeat units inside substituent
 alternatives, stereogenic repeat boundaries, polymers and multicenter variation
 raise explicit unsupported/invalid errors. They are not silently dropped.
+Zero repetitions remove the unit and join its two external endpoints; self bonds
+and duplicate edges are rejected. Configuration and atom budgets still apply
+to larger explicit ranges (including the reviewed 5–70 fixtures).
 The lower-level `CDKRGroupQuery` API retains its original R-group-only contract.
 
 Every delivered configuration passes `CDKMarkushStructure.requiresSpecifiedStructure`;

@@ -2,8 +2,8 @@ import Foundation
 
 /// A reviewed, explicit interpretation of a source. Text is retained as evidence,
 /// not automatically interpreted as chemistry. Unknown conditions block compilation.
-public struct CDKFiniteMarkushDefinition: Codable, Sendable {
-    public struct Variable: Codable, Sendable {
+public struct CDKFiniteMarkushDefinition: Codable, Equatable, Sendable {
+    public struct Variable: Codable, Equatable, Sendable {
         public var label: String
         public var sourceText: String
         /// Each SMILES starts at its attachment atom. Nested labelled variables are allowed.
@@ -47,12 +47,15 @@ public struct CDKFiniteMarkushDefinition: Codable, Sendable {
         }
         guard maximumAlternatives > 0, maximumAtoms > 0,
             Set(variables.map(\.label)).count == variables.count,
-            variables.allSatisfy({ !$0.sourceText.isEmpty && !$0.label.isEmpty })
+            variables.allSatisfy({
+                !$0.sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    && !$0.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            })
         else {
             throw CDKRGroupEnumerationError.invalidQuery("Definition labels, provenance and limits must be valid.")
         }
         let definitions = Dictionary(uniqueKeysWithValues: variables.map { ($0.label, $0) })
-        let parser = CDKSmilesParser(flavor: .cdkDefault)
+        let parser = CDKSmilesParser(flavor: .cdkDefault, generateCoordinates: false)
         var produced = 0
         var retainedAtoms = 0
         func query(for input: Molecule, path: [String]) throws -> CDKRGroupQuery {

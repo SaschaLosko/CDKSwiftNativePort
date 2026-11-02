@@ -183,6 +183,30 @@ private struct RepeatExpansionPlan {
         let range: ClosedRange<Int>
 
         func expand(_ molecule: Molecule, count: Int, maximumAtoms: Int, origins: inout [Int: Int]) throws -> Molecule {
+            if count == 0 {
+                let boundaries = crossingBondIDs.compactMap { id in molecule.bonds.first { $0.id == id } }
+                guard boundaries.count == 2 else {
+                    throw CDKRGroupEnumerationError.invalidQuery("Missing repeat boundary.")
+                }
+                let endpoints = boundaries.map { atomIDs.contains($0.a1) ? $0.a2 : $0.a1 }
+                guard endpoints[0] != endpoints[1],
+                    !molecule.bonds.contains(where: {
+                        Set([$0.a1, $0.a2]) == Set(endpoints)
+                    })
+                else {
+                    throw CDKRGroupEnumerationError.unsupportedFeature(
+                        "Omitting this repeat unit would create a self bond or duplicate bond.")
+                }
+                var output = molecule
+                output.atoms.removeAll { atomIDs.contains($0.id) }
+                output.bonds.removeAll { atomIDs.contains($0.a1) || atomIDs.contains($0.a2) }
+                output.bonds.append(
+                    RGroupEnumerationPlan.copyBond(
+                        boundaries[0], id: boundaries[0].id, a1: endpoints[0], a2: endpoints[1],
+                        mapReference: { $0 }))
+                for id in atomIDs { origins.removeValue(forKey: id) }
+                return output
+            }
             guard molecule.atoms.count <= maximumAtoms,
                 atomIDs.count <= (maximumAtoms - molecule.atoms.count) / max(1, count - 1) || count == 1
             else {
@@ -319,14 +343,14 @@ private struct RepeatExpansionPlan {
             let bounds = (group.subscriptText ?? "").split(
                 separator: "-", omittingEmptySubsequences: false)
             guard (1...2).contains(bounds.count), let lower = bounds.first.flatMap({ Int($0) }),
-                let upper = bounds.last.flatMap({ Int($0) }), lower >= 1, upper >= lower,
-                upper <= 64,
+                let upper = bounds.last.flatMap({ Int($0) }), lower >= 0, upper >= lower,
+                upper <= 1_000,
                 !ids.isEmpty, ids.isSubset(of: allIDs), seen.isDisjoint(with: ids),
                 group.childGroupIndices.isEmpty,
                 group.connectivity == nil || group.connectivity == "ht"
             else {
                 throw CDKRGroupEnumerationError.unsupportedFeature(
-                    "Repeat units require disjoint atoms, head-to-tail connectivity and explicit counts from 1 through 64."
+                    "Repeat units require disjoint atoms, head-to-tail connectivity and explicit counts from 0 through 1000."
                 )
             }
             let crossing = molecule.bonds.filter { ids.contains($0.a1) != ids.contains($0.a2) }

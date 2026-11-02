@@ -3,9 +3,12 @@ import Foundation
 /// Swift counterpart of CDK's `org.openscience.cdk.smiles.SmilesParser`.
 public final class CDKSmilesParser {
     public let flavor: CDKSmiFlavor
+    /// Disable layout for chemistry-only workloads. Explicit CX coordinates are still preserved.
+    public let generateCoordinates: Bool
 
-    public init(flavor: CDKSmiFlavor = .cdkDefault) {
+    public init(flavor: CDKSmiFlavor = .cdkDefault, generateCoordinates: Bool = true) {
         self.flavor = flavor
+        self.generateCoordinates = generateCoordinates
     }
 
     public func parseSmiles(_ smiles: String) throws -> Molecule {
@@ -19,7 +22,7 @@ public final class CDKSmilesParser {
             split.state.atomCoordinates.isEmpty
             && (!split.state.rGroupDefinitions.isEmpty || !split.state.linkNodes.isEmpty
                 || !split.state.sgroups.isEmpty || !split.state.positionalVariations.isEmpty)
-        if needsGeneratedLayout {
+        if generateCoordinates && needsGeneratedLayout {
             molecule = Depiction2DGenerator.generate(for: molecule)
             molecule.assignWedgeHashFromChiralCenters()
         }
@@ -588,9 +591,11 @@ public final class CDKSmilesParser {
         }
         try validateAromaticConstraints(in: molecule)
         annotateDirectionalDoubleBonds(in: &molecule)
-        molecule = Depiction2DGenerator.generate(for: molecule)
-        molecule.coordinatesAreGenerated = true
-        molecule.assignWedgeHashFromChiralCenters()
+        if generateCoordinates {
+            molecule = Depiction2DGenerator.generate(for: molecule)
+            molecule.coordinatesAreGenerated = true
+            molecule.assignWedgeHashFromChiralCenters()
+        }
         return molecule
     }
 

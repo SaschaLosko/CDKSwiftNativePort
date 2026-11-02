@@ -245,19 +245,37 @@
       "wherein Re is hydrogen or methyl, and e is an integer of 0",
       "to 3."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "finite interpretation of the supplied annotation; neutral depicted parent only, salts not expanded",
     "definition": {
       "sourceIdentifier": "M2S:6:US9550902_23.png",
-      "backbone": "*C(C)(C)CC |$Re;;;;;$,Sg:n:4:e:ht:::,|",
-      "reviewed": false,
-      "unresolvedConditions": [
-        "Re:hydrogen<n>methyl<ns>e:0-3"
-      ],
-      "variables": []
+      "backbone": "*C(C)(C)CC |$Re;;;;;$,Sg:n:4:0-3:ht:::,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "Re",
+          "sourceText": "hydrogen or methyl",
+          "alternatives": [
+            "[H]",
+            "C"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
     },
-    "expectedConfigurations": null,
-    "positiveSMILES": [],
-    "negativeSMILES": []
+    "expectedConfigurations": 8,
+    "positiveSMILES": [
+      "CC(C)C",
+      "CC(C)(C)C",
+      "CC(C)CCCC",
+      "CC(C)(C)CCCC"
+    ],
+    "negativeSMILES": [
+      "CC",
+      "CC(C)CCCCC"
+    ]
   },
   {
     "id": 7,
@@ -309,13 +327,13 @@
       "R and R1 are as described hereinabove; and",
       "L is halogen or sulfonate;"
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "reviewed unresolved: Definitions for R and R1 refer to omitted preceding text.",
     "definition": {
       "sourceIdentifier": "M2S:8:WO2002010163A1_23.png",
       "backbone": "*C(=O)C(*)* |$R;;;;L;R1$,|",
-      "reviewed": false,
+      "reviewed": true,
       "unresolvedConditions": [
-        "R:described hereinabove<ns>R1:described hereinabove<ns>L:halogen<n>sulfonate"
+        "Definitions for R and R1 refer to omitted preceding text."
       ],
       "variables": []
     },
@@ -510,13 +528,13 @@
       "O(CH2)nO",
       "wherein R is methyl and n is 4, 5 or 6."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "reviewed unresolved: Both repeat units use the same n; their counts must be correlated, which the independent repeat model cannot express.",
     "definition": {
       "sourceIdentifier": "M2S:14:EP1337602B1_14.png",
       "backbone": "*C1=C(OC(=O)C2=CC=C(OCOCC3(C)COC3)C=C2)C=CC(OC(=O)C2=CC=C(OCOC3(C)COC3)C=C2)=C1 |$R;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:32:n:ht:::,Sg:n:11:n:ht:::,|",
-      "reviewed": false,
+      "reviewed": true,
       "unresolvedConditions": [
-        "R:methyl<ns>n:4-6"
+        "Both repeat units use the same n; their counts must be correlated, which the independent repeat model cannot express."
       ],
       "variables": []
     },
@@ -1326,13 +1344,13 @@
       ",",
       ","
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "reviewed unresolved: X replaces a two-connected ring atom (CH or N); the sidecar substituent attachment model cannot encode this atom replacement.",
     "definition": {
       "sourceIdentifier": "M2S:37:WO2020146194A1_22_c.png",
       "backbone": "*C1=NO*=C1C(=O)N[C@H](C1=CN2N=CC(C(*)N3C[C@@H](C(F)(F)F)NC3=O)=CC2=N1)C1CCC(F)(F)CC1 |$R1;;;;X;;;;;;;;;;;;;R2;;;;;;;;;;;;;;;;;;;;;$,|",
-      "reviewed": false,
+      "reviewed": true,
       "unresolvedConditions": [
-        "X:CH<n>N<ns>R1:-CH3<n>-CH2F<n>-CHF2<n>-CF3<n>-CH2CH3<n>-CH2CF3<n>-CH(CH3)2<n>-CH2CHF2<n>-CH2CH2F<n>-CF(CH3)2<n>-CF2CH3<n>-OCH3<ns>R2:-H<n>-CH2OCH3"
+        "X replaces a two-connected ring atom (CH or N); the sidecar substituent attachment model cannot encode this atom replacement."
       ],
       "variables": []
     },
@@ -1930,19 +1948,47 @@
       "and",
       "Y is -CN."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "finite interpretation of the supplied annotation; neutral depicted parent only, salts not expanded",
     "definition": {
       "sourceIdentifier": "M2S:54:US8362048B2_131_c1.png",
       "backbone": "*C1=CC(C2=NC(C3=C4CC[C@H](*)C4=CC=C3)=NO2)=CC=C1OC(C)C |$Y;;;;;;;;;;;;X;;;;;;;;;;;;;$,|",
-      "reviewed": false,
-      "unresolvedConditions": [
-        "X:NH2<n>NHC(=O)CH3<n>NHCH2COOH<ns>Y:CN"
-      ],
-      "variables": []
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "X",
+          "sourceText": "NH2, NHC(=O)CH3 or NHCH2COOH",
+          "alternatives": [
+            "N",
+            "NC(=O)C",
+            "NCC(=O)O"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        },
+        {
+          "label": "Y",
+          "sourceText": "CN",
+          "alternatives": [
+            "C#N"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
     },
-    "expectedConfigurations": null,
-    "positiveSMILES": [],
-    "negativeSMILES": []
+    "expectedConfigurations": 3,
+    "positiveSMILES": [
+      "N#CC1=CC(C2=NC(C3=C4CC[C@H](N)C4=CC=C3)=NO2)=CC=C1OC(C)C",
+      "N#CC1=CC(C2=NC(C3=C4CC[C@H](NC(=O)C)C4=CC=C3)=NO2)=CC=C1OC(C)C",
+      "N#CC1=CC(C2=NC(C3=C4CC[C@H](NCC(=O)O)C4=CC=C3)=NO2)=CC=C1OC(C)C"
+    ],
+    "negativeSMILES": [
+      "N#CC1=CC(C2=NC(C3=C4CC[C@H](NC)C4=CC=C3)=NO2)=CC=C1OC(C)C",
+      "N#CC1=CC(C2=NC(C3=C4CC[C@@H](N)C4=CC=C3)=NO2)=CC=C1OC(C)C"
+    ]
   },
   {
     "id": 55,
@@ -2438,13 +2484,13 @@
       "least one of R3 to R10 represents an alkyl group which",
       "may have a branch."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "reviewed unresolved: Electron donating/withdrawing groups and open alkyl classes are not finite alternatives; at least one R3-R10 must be alkyl.",
     "definition": {
       "sourceIdentifier": "M2S:66:US20200050122A1_18_c1.png",
       "backbone": "*C1=C(*)C(*)=C(/C=C/C2=C(*)C(*)=C(*)C(*)=C2*)C(*)=C1* |$R1;;;R3;;R5;;;;;;R10;;R8;;R2;;R7;;R9;;R6;;R4$,|",
-      "reviewed": false,
+      "reviewed": true,
       "unresolvedConditions": [
-        "R1:an electron donating group<ns>R2:an electron withdrawing group<ns>R3:a hydrogen atom<n>an alkyl group<ns>R4:a hydrogen atom<n>an alkyl group<ns>R5:a hydrogen atom<n>an alkyl group<ns>R6:a hydrogen atom<n>an alkyl group<ns>R7:a hydrogen atom<n>an alkyl group<ns>R8:a hydrogen atom<n>an alkyl group<ns>R9:a hydrogen atom<n>an alkyl group<ns>R10:a hydrogen atom<n>an alkyl group"
+        "Electron donating/withdrawing groups and open alkyl classes are not finite alternatives; at least one R3-R10 must be alkyl."
       ],
       "variables": []
     },
@@ -2510,13 +2556,13 @@
       "aryl moieties; and/or",
       "form a cycle between R2/R3 and/or R1/R4."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "reviewed unresolved: Open substituent classes and optional ring closure between variable pairs are not finite independent substitutions.",
     "definition": {
       "sourceIdentifier": "M2S:68:US20210102027A1_13_c1.png",
       "backbone": "*/N=C(/*)N(*)* |$R2;;;R1;;R4;R3$,|",
-      "reviewed": false,
+      "reviewed": true,
       "unresolvedConditions": [
-        "R1:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R2:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R3:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R4:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl"
+        "Open substituent classes and optional ring closure between variable pairs are not finite independent substitutions."
       ],
       "variables": []
     },
@@ -2539,19 +2585,27 @@
       "n",
       "wherein n is 0, 1, 2, 3, 4, or 5."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "finite interpretation of the supplied annotation; neutral depicted parent only, salts not expanded",
     "definition": {
       "sourceIdentifier": "M2S:69:US20210283300A9_9_c.png",
-      "backbone": "C=C(C)C(=O)OC(=O)CC(=O)OC(=O)C(=C)C |Sg:n:8:n:ht:::,|",
-      "reviewed": false,
-      "unresolvedConditions": [
-        "n:0-5"
-      ],
+      "backbone": "C=C(C)C(=O)OC(=O)CC(=O)OC(=O)C(=C)C |Sg:n:8:0-5:ht:::,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
       "variables": []
     },
-    "expectedConfigurations": null,
-    "positiveSMILES": [],
-    "negativeSMILES": []
+    "expectedConfigurations": 6,
+    "positiveSMILES": [
+      "C=C(C)C(=O)OC(=O)C(=O)OC(=O)C(=C)C",
+      "C=C(C)C(=O)OC(=O)CC(=O)OC(=O)C(=C)C",
+      "C=C(C)C(=O)OC(=O)CCC(=O)OC(=O)C(=C)C",
+      "C=C(C)C(=O)OC(=O)CCCC(=O)OC(=O)C(=C)C",
+      "C=C(C)C(=O)OC(=O)CCCCC(=O)OC(=O)C(=C)C",
+      "C=C(C)C(=O)OC(=O)CCCCCC(=O)OC(=O)C(=C)C"
+    ],
+    "negativeSMILES": [
+      "C=C(C)C(=O)OC(=O)CCCCCCC(=O)OC(=O)C(=C)C",
+      "CC"
+    ]
   },
   {
     "id": 70,
@@ -2992,13 +3046,13 @@
       "wherein m is 1 to 3; n is 1 to 3; and Q is hydrogen, methyl,",
       "phenyl, phenoxymethyl."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "reviewed unresolved: The scaffold label OG has no definition in the supplied annotation.",
     "definition": {
       "sourceIdentifier": "M2S:80:US9056043B2_12.png",
       "backbone": "*C(*)COCCCCOC |$OG;;Q;;;;;;;;$,,,Sg:n:9,8,7,6,5:n:ht:::,Sg:n:4,3,1,2:m:ht:::,|",
-      "reviewed": false,
+      "reviewed": true,
       "unresolvedConditions": [
-        "m:1-3<ns>n:1-3<ns>Q:hydrogen<n>methyl<n>phenyl<n>phenoxymethyl"
+        "The scaffold label OG has no definition in the supplied annotation."
       ],
       "variables": []
     },
@@ -3660,19 +3714,23 @@
       "n",
       "wherein n is 5 to 70."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "finite repeat interpretation; unspecified stereochemistry retained; explicit range 5-70",
     "definition": {
       "sourceIdentifier": "M2S:98:US20200332046A1_34.png",
-      "backbone": "C=C(C)C(=O)OCCNC(=O)OCC(C)OC(=O)NCCOC(=O)C(=C)C |Sg:n:11,12,13,14:n:ht:::,|",
-      "reviewed": false,
-      "unresolvedConditions": [
-        "n:5-70"
-      ],
+      "backbone": "C=C(C)C(=O)OCCNC(=O)OCC(C)OC(=O)NCCOC(=O)C(=C)C |Sg:n:11,12,13,14:5-70:ht:::,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
       "variables": []
     },
-    "expectedConfigurations": null,
-    "positiveSMILES": [],
-    "negativeSMILES": []
+    "expectedConfigurations": 66,
+    "positiveSMILES": [
+      "C=C(C)C(=O)OCCNC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)NCCOC(=O)C(=C)C",
+      "C=C(C)C(=O)OCCNC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)NCCOC(=O)C(=C)C"
+    ],
+    "negativeSMILES": [
+      "C=C(C)C(=O)OCCNC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)NCCOC(=O)C(=C)C",
+      "C=C(C)C(=O)OCCNC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)NCCOC(=O)C(=C)C"
+    ]
   },
   {
     "id": 99,
@@ -3699,19 +3757,23 @@
       "n",
       "wherein n is 5 to 70 or 5 to 40."
     ],
-    "scope": "unresolved; source terms and omitted context require interpretation",
+    "scope": "finite repeat interpretation; unspecified stereochemistry retained; union of 5-70 and 5-40 is 5-70",
     "definition": {
       "sourceIdentifier": "M2S:99:US20200332046A1_34_2.png",
-      "backbone": "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C |Sg:n:23,24,25,26:n:ht:::,|",
-      "reviewed": false,
-      "unresolvedConditions": [
-        "n:5-70<n>5-40"
-      ],
+      "backbone": "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C |Sg:n:23,24,25,26:5-70:ht:::,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
       "variables": []
     },
-    "expectedConfigurations": null,
-    "positiveSMILES": [],
-    "negativeSMILES": []
+    "expectedConfigurations": 66,
+    "positiveSMILES": [
+      "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C",
+      "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C"
+    ],
+    "negativeSMILES": [
+      "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C",
+      "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C"
+    ]
   },
   {
     "id": 100,
