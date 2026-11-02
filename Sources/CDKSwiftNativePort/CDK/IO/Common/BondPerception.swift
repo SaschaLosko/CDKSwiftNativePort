@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 enum CDKBondPerception {
@@ -45,10 +45,12 @@ enum CDKBondPerception {
 
                 let threshold = bondThreshold(symbolA: symbolA, symbolB: symbolB)
                 if distance <= threshold {
-                    candidates.append(Candidate(a1: a.id,
-                                                a2: b.id,
-                                                distance: distance,
-                                                threshold: threshold))
+                    candidates.append(
+                        Candidate(
+                            a1: a.id,
+                            a2: b.id,
+                            distance: distance,
+                            threshold: threshold))
                 }
             }
         }
@@ -86,11 +88,13 @@ enum CDKBondPerception {
                 continue
             }
 
-            bonds.append(Bond(id: nextBondID,
-                              a1: candidate.a1,
-                              a2: candidate.a2,
-                              order: .single,
-                              stereo: .none))
+            bonds.append(
+                Bond(
+                    id: nextBondID,
+                    a1: candidate.a1,
+                    a2: candidate.a2,
+                    order: .single,
+                    stereo: .none))
             nextBondID += 1
             occupiedPairs.insert(pair)
             valenceLoad[candidate.a1, default: 0] += 1
@@ -186,6 +190,6 @@ enum CDKBondPerception {
         "CA": 1.76,
         "FE": 1.24,
         "ZN": 1.22,
-        "CU": 1.32
+        "CU": 1.32,
     ]
 }

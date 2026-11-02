@@ -4,26 +4,26 @@ import XCTest
 final class RXNReaderPortTests: XCTestCase {
     func testParsesBasicV2000ReactionBlock() throws {
         let text = """
-        $RXN
-        DemoReaction
-          CDKSwiftNativePort
+            $RXN
+            DemoReaction
+              CDKSwiftNativePort
 
-          1  1
-        $MOL
-        Reactant
-          CDK
+              1  1
+            $MOL
+            Reactant
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        $MOL
-        Product
-          CDK
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            $MOL
+            Product
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        """
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            """
 
         let molecules = try CDKRXNReader.read(text: text)
         XCTAssertEqual(molecules.count, 2)
@@ -45,26 +45,26 @@ final class RXNReaderPortTests: XCTestCase {
 
     func testParsesAtomMapsInsideReactionParticipants() throws {
         let text = """
-        $RXN
-        MappedReaction
-          CDKSwiftNativePort
+            $RXN
+            MappedReaction
+              CDKSwiftNativePort
 
-          1  1
-        $MOL
-        Reactant
-          CDK
+              1  1
+            $MOL
+            Reactant
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  7  0  0
-        M  END
-        $MOL
-        Product
-          CDK
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  7  0  0
+            M  END
+            $MOL
+            Product
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  7  0  0
-        M  END
-        """
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  7  0  0
+            M  END
+            """
 
         let reaction = try CDKRXNReader.readReaction(text: text)
         XCTAssertEqual(reaction.reactants.first?.atoms.first?.atomMapNumber, 7)
@@ -73,33 +73,33 @@ final class RXNReaderPortTests: XCTestCase {
 
     func testParsesParticipantRolesAndOptionalStoichiometryFromMolHeaders() throws {
         let text = """
-        $RXN
-        StoichReaction
-          CDKSwiftNativePort
+            $RXN
+            StoichReaction
+              CDKSwiftNativePort
 
-          1  1  1
-        $MOL 2
-        Reactant
-          CDK
+              1  1  1
+            $MOL 2
+            Reactant
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        $MOL
-        Product
-          CDK
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            $MOL
+            Product
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            1.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        $MOL STOICH 0.5
-        Agent
-          CDK
+              1  0  0  0  0  0            999 V2000
+                1.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            $MOL STOICH 0.5
+            Agent
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            2.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        """
+              1  0  0  0  0  0            999 V2000
+                2.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            """
 
         let reaction = try CDKRXNReader.readReaction(text: text)
         XCTAssertEqual(reaction.reactantParticipants.count, 1)
@@ -119,57 +119,57 @@ final class RXNReaderPortTests: XCTestCase {
 
     func testParsesV3000ReactionBlockWithAgents() throws {
         let text = """
-        $RXN V3000
-        DemoV3000
-          CDKSwiftNativePort
+            $RXN V3000
+            DemoV3000
+              CDKSwiftNativePort
 
-        M  V30 COUNTS 2 1 2
-        M  V30 BEGIN REACTANT
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 2 1 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C 0.0 0.0 0.0 1
-        M  V30 2 O 1.0 0.0 0.0 2
-        M  V30 END ATOM
-        M  V30 BEGIN BOND
-        M  V30 1 1 1 2
-        M  V30 END BOND
-        M  V30 END CTAB
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 1 0 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 Cl 0.0 0.0 0.0 0
-        M  V30 END ATOM
-        M  V30 END CTAB
-        M  V30 END REACTANT
-        M  V30 BEGIN PRODUCT
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 2 1 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C 0.0 0.0 0.0 1
-        M  V30 2 N 1.0 0.0 0.0 2
-        M  V30 END ATOM
-        M  V30 BEGIN BOND
-        M  V30 1 2 1 2
-        M  V30 END BOND
-        M  V30 END CTAB
-        M  V30 END PRODUCT
-        M  V30 BEGIN AGENT
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 1 0 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 Al 0.0 0.0 0.0 0 CHG=3
-        M  V30 END ATOM
-        M  V30 END CTAB
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 1 0 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 Cl 0.0 0.0 0.0 0 CHG=-1
-        M  V30 END ATOM
-        M  V30 END CTAB
-        M  V30 END AGENT
-        M  END
-        """
+            M  V30 COUNTS 2 1 2
+            M  V30 BEGIN REACTANT
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 2 1 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 C 0.0 0.0 0.0 1
+            M  V30 2 O 1.0 0.0 0.0 2
+            M  V30 END ATOM
+            M  V30 BEGIN BOND
+            M  V30 1 1 1 2
+            M  V30 END BOND
+            M  V30 END CTAB
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 1 0 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 Cl 0.0 0.0 0.0 0
+            M  V30 END ATOM
+            M  V30 END CTAB
+            M  V30 END REACTANT
+            M  V30 BEGIN PRODUCT
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 2 1 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 C 0.0 0.0 0.0 1
+            M  V30 2 N 1.0 0.0 0.0 2
+            M  V30 END ATOM
+            M  V30 BEGIN BOND
+            M  V30 1 2 1 2
+            M  V30 END BOND
+            M  V30 END CTAB
+            M  V30 END PRODUCT
+            M  V30 BEGIN AGENT
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 1 0 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 Al 0.0 0.0 0.0 0 CHG=3
+            M  V30 END ATOM
+            M  V30 END CTAB
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 1 0 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 Cl 0.0 0.0 0.0 0 CHG=-1
+            M  V30 END ATOM
+            M  V30 END CTAB
+            M  V30 END AGENT
+            M  END
+            """
 
         let reaction = try CDKRXNReader.readReaction(text: text)
         XCTAssertEqual(reaction.name, "DemoV3000")
@@ -183,7 +183,8 @@ final class RXNReaderPortTests: XCTestCase {
     }
 
     func testRelaxedModeInfersAgentsFromExtraEntitiesWhenCountsOmitThem() throws {
-        let text = try loadUpstreamReactionFixture(named: "ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn")
+        let text = try loadUpstreamReactionFixture(
+            named: "ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn")
 
         let reaction = try CDKRXNReader.readReaction(text: text, options: .init(mode: .relaxed))
 
@@ -193,22 +194,26 @@ final class RXNReaderPortTests: XCTestCase {
     }
 
     func testStrictModeRejectsAgentCountExtension() throws {
-        let text = try loadUpstreamReactionFixture(named: "ethylesterification_countsLineHasAgents_countsLineMatchesMolfiles.rxn")
+        let text = try loadUpstreamReactionFixture(
+            named: "ethylesterification_countsLineHasAgents_countsLineMatchesMolfiles.rxn")
 
         XCTAssertThrowsError(try CDKRXNReader.readReaction(text: text, options: .init(mode: .strict))) { error in
-            XCTAssertTrue(error.localizedDescription.contains(
-                "RXN files uses agent count extension. This is not supported in mode STRICT"
-            ))
+            XCTAssertTrue(
+                error.localizedDescription.contains(
+                    "RXN files uses agent count extension. This is not supported in mode STRICT"
+                ))
         }
     }
 
     func testStrictModeRejectsExtraEntitiesWhenCountsOmitAgents() throws {
-        let text = try loadUpstreamReactionFixture(named: "ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn")
+        let text = try loadUpstreamReactionFixture(
+            named: "ethylesterification_countsLineHasNoAgents_countsLineMismatchMolfiles.rxn")
 
         XCTAssertThrowsError(try CDKRXNReader.readReaction(text: text, options: .init(mode: .strict))) { error in
-            XCTAssertTrue(error.localizedDescription.contains(
-                "Agents are not supported in mode STRICT. Found 5 molecular entities, but there are only 4 molecular entities declared on the counts line."
-            ))
+            XCTAssertTrue(
+                error.localizedDescription.contains(
+                    "Agents are not supported in mode STRICT. Found 5 molecular entities, but there are only 4 molecular entities declared on the counts line."
+                ))
         }
     }
 

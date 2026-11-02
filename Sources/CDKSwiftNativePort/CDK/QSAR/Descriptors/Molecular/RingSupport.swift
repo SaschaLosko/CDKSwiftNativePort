@@ -59,7 +59,9 @@ enum CDKDescriptorRingSupport {
         guard !heavyAtomIDs.isEmpty else { return [] }
 
         let heavyBonds = molecule.bonds.filter { heavyAtomIDs.contains($0.a1) && heavyAtomIDs.contains($0.a2) }
-        let cycleRank = max(0, heavyBonds.count - heavyAtomIDs.count + CDKDescriptorSupport.heavyAtomConnectedComponentCount(in: molecule))
+        let cycleRank = max(
+            0,
+            heavyBonds.count - heavyAtomIDs.count + CDKDescriptorSupport.heavyAtomConnectedComponentCount(in: molecule))
         guard cycleRank > 0 else { return [] }
 
         let adjacency = heavyAdjacency(in: molecule, heavyAtomIDs: heavyAtomIDs)
@@ -76,7 +78,8 @@ enum CDKDescriptorRingSupport {
                 guard let left = paths[bond.a1], let right = paths[bond.a2] else { continue }
                 var commonCount = 0
                 while commonCount < min(left.count, right.count),
-                      left[commonCount] == right[commonCount] {
+                    left[commonCount] == right[commonCount]
+                {
                     commonCount += 1
                 }
                 // Remove the shared root-to-ancestor path. Tree edges yield
@@ -114,8 +117,10 @@ enum CDKDescriptorRingSupport {
         return selected
     }
 
-    private static func heavyAdjacency(in molecule: Molecule,
-                                       heavyAtomIDs: Set<Int>) -> [Int: [(neighbor: Int, bondID: Int)]] {
+    private static func heavyAdjacency(
+        in molecule: Molecule,
+        heavyAtomIDs: Set<Int>
+    ) -> [Int: [(neighbor: Int, bondID: Int)]] {
         var adjacency: [Int: [(neighbor: Int, bondID: Int)]] = [:]
         for atomID in heavyAtomIDs {
             adjacency[atomID] = []
@@ -132,8 +137,10 @@ enum CDKDescriptorRingSupport {
         }
     }
 
-    private static func shortestPaths(from root: Int,
-                                      adjacency: [Int: [(neighbor: Int, bondID: Int)]]) -> [Int: [Int]] {
+    private static func shortestPaths(
+        from root: Int,
+        adjacency: [Int: [(neighbor: Int, bondID: Int)]]
+    ) -> [Int: [Int]] {
         var paths = [root: [root]]
         var queue = [root]
         var cursor = 0

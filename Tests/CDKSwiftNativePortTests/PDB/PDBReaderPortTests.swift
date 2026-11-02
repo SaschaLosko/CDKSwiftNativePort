@@ -4,12 +4,12 @@ import XCTest
 final class PDBReaderPortTests: XCTestCase {
     func testReadsPDBWithConectBonds() throws {
         let text = """
-        HEADER    TEST LIGAND
-        ATOM      1  C1  LIG A   1       0.000   0.000   0.000  1.00  0.00           C
-        ATOM      2  O1  LIG A   1       1.220   0.000   0.000  1.00  0.00           O
-        CONECT    1    2
-        END
-        """
+            HEADER    TEST LIGAND
+            ATOM      1  C1  LIG A   1       0.000   0.000   0.000  1.00  0.00           C
+            ATOM      2  O1  LIG A   1       1.220   0.000   0.000  1.00  0.00           O
+            CONECT    1    2
+            END
+            """
 
         let molecules = try CDKPDBReader.read(text: text)
         XCTAssertEqual(molecules.count, 1)
@@ -22,17 +22,17 @@ final class PDBReaderPortTests: XCTestCase {
 
     func testReadsPDBZCoordinatesAndUsesThemFor3DScene() throws {
         let text = """
-        HEADER    TEST 3D LIGAND
-        MODEL        1
-        ATOM      1  N   LIG A   1      -6.778  -1.424   4.200  1.00  0.00           N
-        ATOM      2  CA  LIG A   1      -6.878  -0.708   2.896  1.00  0.00           C
-        ATOM      3  C   LIG A   1      -5.557  -0.840   2.138  1.00  0.00           C
-        ENDMDL
-        MODEL        2
-        ATOM      1  N   LIG A   1       9.000   9.000   9.000  1.00  0.00           N
-        ENDMDL
-        END
-        """
+            HEADER    TEST 3D LIGAND
+            MODEL        1
+            ATOM      1  N   LIG A   1      -6.778  -1.424   4.200  1.00  0.00           N
+            ATOM      2  CA  LIG A   1      -6.878  -0.708   2.896  1.00  0.00           C
+            ATOM      3  C   LIG A   1      -5.557  -0.840   2.138  1.00  0.00           C
+            ENDMDL
+            MODEL        2
+            ATOM      1  N   LIG A   1       9.000   9.000   9.000  1.00  0.00           N
+            ENDMDL
+            END
+            """
 
         let molecule = try XCTUnwrap(CDKPDBReader.read(text: text).first)
 
@@ -55,7 +55,7 @@ final class PDBReaderPortTests: XCTestCase {
                 Atom(id: 2, element: "O", position: CGPoint(x: 0.10, y: -0.25), zPosition: -1.50),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
             ])
 
         let text = try CDKPDBWriter.write([molecule])
@@ -67,10 +67,10 @@ final class PDBReaderPortTests: XCTestCase {
 
     func testInfersBondsWithoutConect() throws {
         let text = """
-        ATOM      1  C1  LIG A   1       0.000   0.000   0.000  1.00  0.00           C
-        ATOM      2  C2  LIG A   1       1.450   0.000   0.000  1.00  0.00           C
-        END
-        """
+            ATOM      1  C1  LIG A   1       0.000   0.000   0.000  1.00  0.00           C
+            ATOM      2  C2  LIG A   1       1.450   0.000   0.000  1.00  0.00           C
+            END
+            """
 
         let molecules = try CDKPDBReader.read(text: text)
         XCTAssertEqual(molecules.count, 1)

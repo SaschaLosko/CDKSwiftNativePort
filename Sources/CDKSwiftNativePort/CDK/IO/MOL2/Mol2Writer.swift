@@ -16,9 +16,10 @@ public enum CDKMol2Writer {
         }
 
         let atoms = molecule.atoms.sorted { $0.id < $1.id }
-        let atomSerialByID = Dictionary(uniqueKeysWithValues: atoms.enumerated().map { (idx, atom) in
-            (atom.id, idx + 1)
-        })
+        let atomSerialByID = Dictionary(
+            uniqueKeysWithValues: atoms.enumerated().map { (idx, atom) in
+                (atom.id, idx + 1)
+            })
 
         let bonds = molecule.bonds.sorted { lhs, rhs in
             if lhs.a1 != rhs.a1 { return lhs.a1 < rhs.a1 }
@@ -41,15 +42,17 @@ public enum CDKMol2Writer {
             let serial = atomSerialByID[atom.id] ?? atom.id
             let atomName = "\(CDKDescriptorSupport.canonicalElementSymbol(atom.element))\(serial)"
             let type = atomType(for: atom, in: molecule)
-            lines.append(String(format: "%7d %-8@ %10.4f %10.4f %10.4f %-8@ %3d MOL %8.4f",
-                                serial,
-                                atomName as NSString,
-                                Double(atom.position.x),
-                                Double(atom.position.y),
-                                atom.zPosition ?? 0.0,
-                                type as NSString,
-                                1,
-                                Double(atom.charge)))
+            lines.append(
+                String(
+                    format: "%7d %-8@ %10.4f %10.4f %10.4f %-8@ %3d MOL %8.4f",
+                    serial,
+                    atomName as NSString,
+                    Double(atom.position.x),
+                    Double(atom.position.y),
+                    atom.zPosition ?? 0.0,
+                    type as NSString,
+                    1,
+                    Double(atom.charge)))
         }
 
         lines.append("@<TRIPOS>BOND")
@@ -57,11 +60,13 @@ public enum CDKMol2Writer {
             guard let a1 = atomSerialByID[bond.a1], let a2 = atomSerialByID[bond.a2] else {
                 throw ChemError.parseFailed("Cannot write MOL2: bond references an unknown atom ID.")
             }
-            lines.append(String(format: "%6d %4d %4d %@",
-                                idx + 1,
-                                a1,
-                                a2,
-                                bondType(for: bond) as NSString))
+            lines.append(
+                String(
+                    format: "%6d %4d %4d %@",
+                    idx + 1,
+                    a1,
+                    a2,
+                    bondType(for: bond) as NSString))
         }
 
         return lines.joined(separator: "\n") + "\n"

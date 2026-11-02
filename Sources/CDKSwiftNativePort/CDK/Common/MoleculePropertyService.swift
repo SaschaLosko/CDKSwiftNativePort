@@ -9,13 +9,15 @@ public struct CDKRuleOfFiveResult: Equatable {
     public let evaluatedCriteriaCount: Int
     public let isCompliant: Bool?
 
-    public init(molecularWeight: Double,
-                hBondDonorCount: Int,
-                hBondAcceptorCount: Int,
-                xlogP: Double?,
-                violations: Int,
-                evaluatedCriteriaCount: Int,
-                isCompliant: Bool?) {
+    public init(
+        molecularWeight: Double,
+        hBondDonorCount: Int,
+        hBondAcceptorCount: Int,
+        xlogP: Double?,
+        violations: Int,
+        evaluatedCriteriaCount: Int,
+        isCompliant: Bool?
+    ) {
         self.molecularWeight = molecularWeight
         self.hBondDonorCount = hBondDonorCount
         self.hBondAcceptorCount = hBondAcceptorCount
@@ -49,18 +51,20 @@ public struct CDKMolecularProperties: Equatable {
     public let ringCount: Int
     public let ruleOfFive: CDKRuleOfFiveResult
 
-    public init(formula: String,
-                molecularWeight: Double,
-                molarMass: Double,
-                monoisotopicMass: Double,
-                heavyAtomCount: Int,
-                hBondDonorCount: Int,
-                hBondAcceptorCount: Int,
-                tpsa: Double,
-                vanDerWaalsVolume: Double?,
-                rotatableBondCount: Int,
-                ringCount: Int,
-                ruleOfFive: CDKRuleOfFiveResult) {
+    public init(
+        formula: String,
+        molecularWeight: Double,
+        molarMass: Double,
+        monoisotopicMass: Double,
+        heavyAtomCount: Int,
+        hBondDonorCount: Int,
+        hBondAcceptorCount: Int,
+        tpsa: Double,
+        vanDerWaalsVolume: Double?,
+        rotatableBondCount: Int,
+        ringCount: Int,
+        ruleOfFive: CDKRuleOfFiveResult
+    ) {
         self.formula = formula
         self.molecularWeight = molecularWeight
         self.molarMass = molarMass
@@ -82,16 +86,19 @@ public enum CDKRuleOfFiveDescriptor {
         let donors = CDKHBondDonorCountDescriptor.calculate(for: molecule)
         let acceptors = CDKHBondAcceptorCountDescriptor.calculate(for: molecule)
         let resolvedXlogP = xlogP ?? CDKXLogPDescriptor.calculate(for: molecule)
-        return evaluate(molecularWeight: molecularWeight,
-                        hBondDonorCount: donors,
-                        hBondAcceptorCount: acceptors,
-                        xlogP: resolvedXlogP)
+        return evaluate(
+            molecularWeight: molecularWeight,
+            hBondDonorCount: donors,
+            hBondAcceptorCount: acceptors,
+            xlogP: resolvedXlogP)
     }
 
-    public static func evaluate(molecularWeight: Double,
-                                hBondDonorCount: Int,
-                                hBondAcceptorCount: Int,
-                                xlogP: Double? = nil) -> CDKRuleOfFiveResult {
+    public static func evaluate(
+        molecularWeight: Double,
+        hBondDonorCount: Int,
+        hBondAcceptorCount: Int,
+        xlogP: Double? = nil
+    ) -> CDKRuleOfFiveResult {
         var violations = 0
         if molecularWeight > 500.0 { violations += 1 }
         if hBondDonorCount > 5 { violations += 1 }
@@ -101,13 +108,14 @@ public enum CDKRuleOfFiveDescriptor {
         let criteriaCount = xlogP == nil ? 3 : 4
         let isCompliant = xlogP == nil ? nil : (violations <= 1)
 
-        return CDKRuleOfFiveResult(molecularWeight: molecularWeight,
-                                   hBondDonorCount: hBondDonorCount,
-                                   hBondAcceptorCount: hBondAcceptorCount,
-                                   xlogP: xlogP,
-                                   violations: violations,
-                                   evaluatedCriteriaCount: criteriaCount,
-                                   isCompliant: isCompliant)
+        return CDKRuleOfFiveResult(
+            molecularWeight: molecularWeight,
+            hBondDonorCount: hBondDonorCount,
+            hBondAcceptorCount: hBondAcceptorCount,
+            xlogP: xlogP,
+            violations: violations,
+            evaluatedCriteriaCount: criteriaCount,
+            isCompliant: isCompliant)
     }
 }
 
@@ -124,22 +132,24 @@ public enum CDKMoleculePropertyService {
         let rotatableBondCount = CDKRotatableBondsCountDescriptor.calculate(for: molecule)
         let ringCount = CDKRingCountDescriptor.calculate(for: molecule)
         let resolvedXlogP = xlogP ?? CDKXLogPDescriptor.calculate(for: molecule)
-        let ruleOfFive = CDKRuleOfFiveDescriptor.evaluate(molecularWeight: molecularWeight,
-                                                          hBondDonorCount: hBondDonorCount,
-                                                          hBondAcceptorCount: hBondAcceptorCount,
-                                                          xlogP: resolvedXlogP)
+        let ruleOfFive = CDKRuleOfFiveDescriptor.evaluate(
+            molecularWeight: molecularWeight,
+            hBondDonorCount: hBondDonorCount,
+            hBondAcceptorCount: hBondAcceptorCount,
+            xlogP: resolvedXlogP)
 
-        return CDKMolecularProperties(formula: formula,
-                                      molecularWeight: molecularWeight,
-                                      molarMass: molecularWeight,
-                                      monoisotopicMass: monoisotopicMass,
-                                      heavyAtomCount: heavyAtomCount,
-                                      hBondDonorCount: hBondDonorCount,
-                                      hBondAcceptorCount: hBondAcceptorCount,
-                                      tpsa: tpsa,
-                                      vanDerWaalsVolume: vanDerWaalsVolume,
-                                      rotatableBondCount: rotatableBondCount,
-                                      ringCount: ringCount,
-                                      ruleOfFive: ruleOfFive)
+        return CDKMolecularProperties(
+            formula: formula,
+            molecularWeight: molecularWeight,
+            molarMass: molecularWeight,
+            monoisotopicMass: monoisotopicMass,
+            heavyAtomCount: heavyAtomCount,
+            hBondDonorCount: hBondDonorCount,
+            hBondAcceptorCount: hBondAcceptorCount,
+            tpsa: tpsa,
+            vanDerWaalsVolume: vanDerWaalsVolume,
+            rotatableBondCount: rotatableBondCount,
+            ringCount: ringCount,
+            ruleOfFive: ruleOfFive)
     }
 }

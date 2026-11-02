@@ -5,9 +5,11 @@ public struct CDKFileImporterFormat: Hashable, Sendable {
     public let fileExtensions: [String]
     public let utiIdentifiers: [String]
 
-    public init(displayName: String,
-                fileExtensions: [String],
-                utiIdentifiers: [String]) {
+    public init(
+        displayName: String,
+        fileExtensions: [String],
+        utiIdentifiers: [String]
+    ) {
         self.displayName = displayName
         self.fileExtensions = fileExtensions
         self.utiIdentifiers = utiIdentifiers
@@ -17,48 +19,62 @@ public struct CDKFileImporterFormat: Hashable, Sendable {
 /// Unified file importer dispatch for CDKSwiftNativePort-backed formats.
 public enum CDKFileImporter {
     public static let formats: [CDKFileImporterFormat] = [
-        CDKFileImporterFormat(displayName: "MDL Molfile",
-                              fileExtensions: ["mol"],
-                              utiIdentifiers: ["chemical/x-mdl-molfile", "net.sourceforge.openbabel.mdl"]),
-        CDKFileImporterFormat(displayName: "MDL RGfile",
-                              fileExtensions: ["rgf"],
-                              utiIdentifiers: ["chemical/x-mdl-rgfile"]),
-        CDKFileImporterFormat(displayName: "MDL SDFile",
-                              fileExtensions: ["sdf", "sd"],
-                              utiIdentifiers: ["chemical/x-mdl-sdfile", "net.sourceforge.openbabel.mdl"]),
-        CDKFileImporterFormat(displayName: "CXSMILES",
-                              fileExtensions: ["cxsmiles"],
-                              utiIdentifiers: []),
-        CDKFileImporterFormat(displayName: "SMILES",
-                              fileExtensions: ["smi", "smiles", "ism", "can"],
-                              utiIdentifiers: ["chemical/x-daylight-smiles", "chemical/x-smiles"]),
-        CDKFileImporterFormat(displayName: "Reaction SMILES",
-                              fileExtensions: ["rsmi"],
-                              utiIdentifiers: ["chemical/x-reaction-smiles"]),
-        CDKFileImporterFormat(displayName: "RInChI",
-                              fileExtensions: ["rinchi"],
-                              utiIdentifiers: ["chemical/x-rinchi"]),
-        CDKFileImporterFormat(displayName: "InChI",
-                              fileExtensions: ["inchi", "ich"],
-                              utiIdentifiers: ["chemical/x-inchi"]),
-        CDKFileImporterFormat(displayName: "Tripos MOL2",
-                              fileExtensions: ["mol2"],
-                              utiIdentifiers: ["chemical/x-mol2"]),
-        CDKFileImporterFormat(displayName: "Protein Data Bank",
-                              fileExtensions: ["pdb", "ent"],
-                              utiIdentifiers: ["chemical/x-pdb"]),
-        CDKFileImporterFormat(displayName: "XYZ Coordinates",
-                              fileExtensions: ["xyz"],
-                              utiIdentifiers: ["chemical/x-xyz"]),
-        CDKFileImporterFormat(displayName: "Chemical Markup Language",
-                              fileExtensions: ["cml"],
-                              utiIdentifiers: ["chemical/x-cml"]),
-        CDKFileImporterFormat(displayName: "MDL RXN",
-                              fileExtensions: ["rxn"],
-                              utiIdentifiers: ["chemical/x-mdl-rxnfile"]),
-        CDKFileImporterFormat(displayName: "MDL RDF",
-                              fileExtensions: ["rdf"],
-                              utiIdentifiers: ["chemical/x-mdl-rdfile"])
+        CDKFileImporterFormat(
+            displayName: "MDL Molfile",
+            fileExtensions: ["mol"],
+            utiIdentifiers: ["chemical/x-mdl-molfile", "net.sourceforge.openbabel.mdl"]),
+        CDKFileImporterFormat(
+            displayName: "MDL RGfile",
+            fileExtensions: ["rgf"],
+            utiIdentifiers: ["chemical/x-mdl-rgfile"]),
+        CDKFileImporterFormat(
+            displayName: "MDL SDFile",
+            fileExtensions: ["sdf", "sd"],
+            utiIdentifiers: ["chemical/x-mdl-sdfile", "net.sourceforge.openbabel.mdl"]),
+        CDKFileImporterFormat(
+            displayName: "CXSMILES",
+            fileExtensions: ["cxsmiles"],
+            utiIdentifiers: []),
+        CDKFileImporterFormat(
+            displayName: "SMILES",
+            fileExtensions: ["smi", "smiles", "ism", "can"],
+            utiIdentifiers: ["chemical/x-daylight-smiles", "chemical/x-smiles"]),
+        CDKFileImporterFormat(
+            displayName: "Reaction SMILES",
+            fileExtensions: ["rsmi"],
+            utiIdentifiers: ["chemical/x-reaction-smiles"]),
+        CDKFileImporterFormat(
+            displayName: "RInChI",
+            fileExtensions: ["rinchi"],
+            utiIdentifiers: ["chemical/x-rinchi"]),
+        CDKFileImporterFormat(
+            displayName: "InChI",
+            fileExtensions: ["inchi", "ich"],
+            utiIdentifiers: ["chemical/x-inchi"]),
+        CDKFileImporterFormat(
+            displayName: "Tripos MOL2",
+            fileExtensions: ["mol2"],
+            utiIdentifiers: ["chemical/x-mol2"]),
+        CDKFileImporterFormat(
+            displayName: "Protein Data Bank",
+            fileExtensions: ["pdb", "ent"],
+            utiIdentifiers: ["chemical/x-pdb"]),
+        CDKFileImporterFormat(
+            displayName: "XYZ Coordinates",
+            fileExtensions: ["xyz"],
+            utiIdentifiers: ["chemical/x-xyz"]),
+        CDKFileImporterFormat(
+            displayName: "Chemical Markup Language",
+            fileExtensions: ["cml"],
+            utiIdentifiers: ["chemical/x-cml"]),
+        CDKFileImporterFormat(
+            displayName: "MDL RXN",
+            fileExtensions: ["rxn"],
+            utiIdentifiers: ["chemical/x-mdl-rxnfile"]),
+        CDKFileImporterFormat(
+            displayName: "MDL RDF",
+            fileExtensions: ["rdf"],
+            utiIdentifiers: ["chemical/x-mdl-rdfile"]),
     ]
 
     public static var supportedFileExtensions: [String] {
@@ -73,8 +89,10 @@ public enum CDKFileImporter {
         supportedFileExtensions.contains(fileExtension.lowercased()) || fileExtension.lowercased() == "txt"
     }
 
-    public static func preferredInputFormat(forFileExtension ext: String,
-                                            text: String? = nil) -> ChemFormat {
+    public static func preferredInputFormat(
+        forFileExtension ext: String,
+        text: String? = nil
+    ) -> ChemFormat {
         let lower = ext.lowercased()
         if ["smi", "smiles", "ism", "can", "cxsmiles"].contains(lower) {
             return .smiles
@@ -94,34 +112,44 @@ public enum CDKFileImporter {
         return .sdf
     }
 
-    public static func readMolecules(from url: URL,
-                                     coordinateAccess: Bool = true) throws -> [Molecule] {
+    public static func readMolecules(
+        from url: URL,
+        coordinateAccess: Bool = true
+    ) throws -> [Molecule] {
         let ext = url.pathExtension.lowercased()
         let text = try decodeText(from: url, coordinateAccess: coordinateAccess)
         return try readMolecules(text: text, fileExtension: ext)
     }
 
-    public static func readReaction(from url: URL,
-                                    coordinateAccess: Bool = true) throws -> CDKReaction {
+    public static func readReaction(
+        from url: URL,
+        coordinateAccess: Bool = true
+    ) throws -> CDKReaction {
         let ext = url.pathExtension.lowercased()
         let text = try decodeText(from: url, coordinateAccess: coordinateAccess)
         return try readReaction(text: text, fileExtension: ext)
     }
 
-    public static func readReactionHierarchy(from url: URL,
-                                             coordinateAccess: Bool = true) throws -> CDKReactionHierarchy {
+    public static func readReactionHierarchy(
+        from url: URL,
+        coordinateAccess: Bool = true
+    ) throws -> CDKReactionHierarchy {
         let ext = url.pathExtension.lowercased()
         let text = try decodeText(from: url, coordinateAccess: coordinateAccess)
         return try readReactionHierarchy(text: text, fileExtension: ext)
     }
 
-    public static func readReactionSet(from url: URL,
-                                       coordinateAccess: Bool = true) throws -> CDKReactionSet {
+    public static func readReactionSet(
+        from url: URL,
+        coordinateAccess: Bool = true
+    ) throws -> CDKReactionSet {
         try readReactionHierarchy(from: url, coordinateAccess: coordinateAccess).asSet
     }
 
-    public static func readMolecules(text: String,
-                                     fileExtension: String?) throws -> [Molecule] {
+    public static func readMolecules(
+        text: String,
+        fileExtension: String?
+    ) throws -> [Molecule] {
         let ext = (fileExtension ?? "").lowercased()
 
         switch ext {
@@ -164,8 +192,10 @@ public enum CDKFileImporter {
         }
     }
 
-    public static func readReaction(text: String,
-                                    fileExtension: String?) throws -> CDKReaction {
+    public static func readReaction(
+        text: String,
+        fileExtension: String?
+    ) throws -> CDKReaction {
         let ext = (fileExtension ?? "").lowercased()
 
         switch ext {
@@ -188,8 +218,10 @@ public enum CDKFileImporter {
         }
     }
 
-    public static func readReactionHierarchy(text: String,
-                                             fileExtension: String?) throws -> CDKReactionHierarchy {
+    public static func readReactionHierarchy(
+        text: String,
+        fileExtension: String?
+    ) throws -> CDKReactionHierarchy {
         let ext = (fileExtension ?? "").lowercased()
 
         switch ext {
@@ -210,8 +242,10 @@ public enum CDKFileImporter {
         }
     }
 
-    public static func readReactionSet(text: String,
-                                       fileExtension: String?) throws -> CDKReactionSet {
+    public static func readReactionSet(
+        text: String,
+        fileExtension: String?
+    ) throws -> CDKReactionSet {
         try readReactionHierarchy(text: text, fileExtension: fileExtension).asSet
     }
 
@@ -252,7 +286,7 @@ public enum CDKFileImporter {
             ("MDL", { [try CDKMDLReader.read(text: text)] }),
             ("SMILES", { try CDKSMILESReader.read(text: text) }),
             ("InChI", { try CDKInChIReader.read(text: text) }),
-            ("XYZ", { try CDKXYZReader.read(text: text) })
+            ("XYZ", { try CDKXYZReader.read(text: text) }),
         ]
 
         for (_, parser) in parsers {
@@ -343,11 +377,14 @@ public enum CDKFileImporter {
         return .set(CDKReactionSet(reactions: reactions))
     }
 
-    private static func decodeText(from url: URL,
-                                   coordinateAccess: Bool = true) throws -> String {
-        try CDKFileAccess.decodeText(from: url,
-                                     preferredEncodings: [.utf8],
-                                     coordinateAccess: coordinateAccess)
+    private static func decodeText(
+        from url: URL,
+        coordinateAccess: Bool = true
+    ) throws -> String {
+        try CDKFileAccess.decodeText(
+            from: url,
+            preferredEncodings: [.utf8],
+            coordinateAccess: coordinateAccess)
     }
 
     private static func firstMeaningfulLine(in text: String) -> String? {

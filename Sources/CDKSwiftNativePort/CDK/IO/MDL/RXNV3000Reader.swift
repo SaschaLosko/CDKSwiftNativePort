@@ -18,7 +18,8 @@ public enum CDKRXNV3000Reader {
     }
 
     public static func readReactions(text: String) throws -> [CDKReaction] {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
@@ -51,33 +52,39 @@ public enum CDKRXNV3000Reader {
         let counts = parseCounts(line: lines[countsIndex])
 
         var lineIndex = countsIndex + 1
-        let reactants = try parseSection(named: "REACTANT",
-                                         lines: lines,
-                                         lineIndex: &lineIndex,
-                                         expectedCount: counts.reactants,
-                                         reactionName: reactionName,
-                                         reactionIndex: reactionIndex)
-        let products = try parseSection(named: "PRODUCT",
-                                        lines: lines,
-                                        lineIndex: &lineIndex,
-                                        expectedCount: counts.products,
-                                        reactionName: reactionName,
-                                        reactionIndex: reactionIndex)
-        let agents = try parseSection(named: "AGENT",
-                                      lines: lines,
-                                      lineIndex: &lineIndex,
-                                      expectedCount: counts.agents,
-                                      reactionName: reactionName,
-                                      reactionIndex: reactionIndex)
+        let reactants = try parseSection(
+            named: "REACTANT",
+            lines: lines,
+            lineIndex: &lineIndex,
+            expectedCount: counts.reactants,
+            reactionName: reactionName,
+            reactionIndex: reactionIndex)
+        let products = try parseSection(
+            named: "PRODUCT",
+            lines: lines,
+            lineIndex: &lineIndex,
+            expectedCount: counts.products,
+            reactionName: reactionName,
+            reactionIndex: reactionIndex)
+        let agents = try parseSection(
+            named: "AGENT",
+            lines: lines,
+            lineIndex: &lineIndex,
+            expectedCount: counts.agents,
+            reactionName: reactionName,
+            reactionIndex: reactionIndex)
 
-        return CDKReaction(reactantParticipants: reactants.map { CDKReactionParticipant(molecule: $0, role: .reactant) },
-                           agentParticipants: agents.map { CDKReactionParticipant(molecule: $0, role: .agent) },
-                           productParticipants: products.map { CDKReactionParticipant(molecule: $0, role: .product) },
-                           name: reactionName.isEmpty ? nil : reactionName)
+        return CDKReaction(
+            reactantParticipants: reactants.map { CDKReactionParticipant(molecule: $0, role: .reactant) },
+            agentParticipants: agents.map { CDKReactionParticipant(molecule: $0, role: .agent) },
+            productParticipants: products.map { CDKReactionParticipant(molecule: $0, role: .product) },
+            name: reactionName.isEmpty ? nil : reactionName)
     }
 
     private static func countsLineIndex(in lines: [String]) throws -> Int {
-        if let index = lines.firstIndex(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().hasPrefix("M  V30 COUNTS") }) {
+        if let index = lines.firstIndex(where: {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().hasPrefix("M  V30 COUNTS")
+        }) {
             return index
         }
         throw ChemError.parseFailed("RXN V3000 block is missing an M  V30 COUNTS line.")
@@ -95,18 +102,22 @@ public enum CDKRXNV3000Reader {
         return (max(0, numeric[0]), max(0, numeric[1]), max(0, numeric.count > 2 ? numeric[2] : 0))
     }
 
-    private static func parseSection(named sectionName: String,
-                                     lines: [String],
-                                     lineIndex: inout Int,
-                                     expectedCount: Int,
-                                     reactionName: String,
-                                     reactionIndex: Int) throws -> [Molecule] {
+    private static func parseSection(
+        named sectionName: String,
+        lines: [String],
+        lineIndex: inout Int,
+        expectedCount: Int,
+        reactionName: String,
+        reactionIndex: Int
+    ) throws -> [Molecule] {
         let beginToken = "M  V30 BEGIN \(sectionName)"
         let endToken = "M  V30 END \(sectionName)"
 
-        guard let beginIndex = lines[lineIndex...].firstIndex(where: {
-            $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == beginToken
-        }) else {
+        guard
+            let beginIndex = lines[lineIndex...].firstIndex(where: {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == beginToken
+            })
+        else {
             return []
         }
 
@@ -121,16 +132,20 @@ public enum CDKRXNV3000Reader {
             }
             if trimmed == "M  V30 BEGIN CTAB" {
                 let ctabLines = try captureCTAB(lines: lines, lineIndex: &lineIndex)
-                var molecule = try parseMolecule(fromCTABLines: ctabLines,
-                                                 name: roleName(sectionName,
-                                                                ordinal: molecules.count + 1,
-                                                                reactionName: reactionName,
-                                                                reactionIndex: reactionIndex))
-                if molecule.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || molecule.name == "Molecule" {
-                    molecule.name = roleName(sectionName,
-                                             ordinal: molecules.count + 1,
-                                             reactionName: reactionName,
-                                             reactionIndex: reactionIndex)
+                var molecule = try parseMolecule(
+                    fromCTABLines: ctabLines,
+                    name: roleName(
+                        sectionName,
+                        ordinal: molecules.count + 1,
+                        reactionName: reactionName,
+                        reactionIndex: reactionIndex))
+                if molecule.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || molecule.name == "Molecule"
+                {
+                    molecule.name = roleName(
+                        sectionName,
+                        ordinal: molecules.count + 1,
+                        reactionName: reactionName,
+                        reactionIndex: reactionIndex)
                 }
                 molecules.append(molecule)
                 continue
@@ -169,19 +184,22 @@ public enum CDKRXNV3000Reader {
     }
 
     private static func parseMolecule(fromCTABLines ctabLines: [String], name: String) throws -> Molecule {
-        let molfileLines = [
-            name,
-            "  CDKSwiftNativePort",
-            "",
-            "  0  0  0     0  0            999 V3000"
-        ] + ctabLines + ["M  END"]
+        let molfileLines =
+            [
+                name,
+                "  CDKSwiftNativePort",
+                "",
+                "  0  0  0     0  0            999 V3000",
+            ] + ctabLines + ["M  END"]
         return try CDKMDLReader.read(lines: molfileLines)
     }
 
-    private static func roleName(_ sectionName: String,
-                                 ordinal: Int,
-                                 reactionName: String,
-                                 reactionIndex: Int) -> String {
+    private static func roleName(
+        _ sectionName: String,
+        ordinal: Int,
+        reactionName: String,
+        reactionIndex: Int
+    ) -> String {
         let normalizedSection = sectionName.capitalized
         let base = reactionName.isEmpty ? "RXN \(reactionIndex)" : reactionName
         return "\(base) \(normalizedSection) \(ordinal)"

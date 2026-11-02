@@ -69,7 +69,8 @@ enum CDKSDFDataFieldParser {
         guard trimmed.hasPrefix(">") else { return nil }
 
         if let openAngle = trimmed.firstIndex(of: "<"),
-           let closeAngle = trimmed[trimmed.index(after: openAngle)...].firstIndex(of: ">") {
+            let closeAngle = trimmed[trimmed.index(after: openAngle)...].firstIndex(of: ">")
+        {
             let fieldName = String(trimmed[trimmed.index(after: openAngle)..<closeAngle])
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             return fieldName.isEmpty ? nil : fieldName

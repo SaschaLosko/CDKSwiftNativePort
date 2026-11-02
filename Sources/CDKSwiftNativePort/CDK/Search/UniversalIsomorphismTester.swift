@@ -78,7 +78,8 @@ private struct MCISMatcher {
             uniqueKeysWithValues: second.atoms.enumerated().map { ($0.element.id, $0.offset) })
         let firstBondByAtomPair = Self.makeBondLookup(first.bonds, atomIndexByID: firstAtomIndexByID)
         let secondBondByAtomPair = Self.makeBondLookup(second.bonds, atomIndexByID: secondAtomIndexByID)
-        let firstDegreeByIndex = Self.makeDegreeLookup(first.atoms, bonds: first.bonds, atomIndexByID: firstAtomIndexByID)
+        let firstDegreeByIndex = Self.makeDegreeLookup(
+            first.atoms, bonds: first.bonds, atomIndexByID: firstAtomIndexByID)
 
         self.first = first
         self.second = second

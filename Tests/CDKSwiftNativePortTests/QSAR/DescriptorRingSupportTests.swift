@@ -4,8 +4,10 @@ import XCTest
 final class DescriptorRingSupportTests: XCTestCase {
     // The former edge-shortest-path candidate set has only four cycles for
     // this rank-five graph, which triggered exhaustive 24-atom enumeration.
-    private let deficientEdges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5),
-                                  (0, 2), (2, 5), (1, 4), (0, 4), (3, 5)]
+    private let deficientEdges = [
+        (0, 1), (1, 2), (2, 3), (3, 4), (4, 5),
+        (0, 2), (2, 5), (1, 4), (0, 4), (3, 5),
+    ]
 
     func testDeficientShortestEdgeCandidatesProduceCompleteMinimumBasis() {
         let molecule = makeMolecule(atomCount: 6, edges: deficientEdges)
@@ -41,9 +43,10 @@ final class DescriptorRingSupportTests: XCTestCase {
             let basis = CDKDescriptorRingSupport.smallestRingBasis(in: molecule)
             // Exhaustive enumeration is deliberately confined to five vertices.
             let cycles = molecule.simpleCycles(maxSize: 5).map { atoms in
-                Set(atoms.indices.compactMap { index in
-                    molecule.bond(between: atoms[index], and: atoms[(index + 1) % atoms.count])?.id
-                })
+                Set(
+                    atoms.indices.compactMap { index in
+                        molecule.bond(between: atoms[index], and: atoms[(index + 1) % atoms.count])?.id
+                    })
             }
             let oracle = independentCycles(cycles.sorted { $0.count < $1.count })
             XCTAssertEqual(basis.count, oracle.count, "graph mask \(mask)")
@@ -61,8 +64,10 @@ final class DescriptorRingSupportTests: XCTestCase {
         XCTAssertFalse(basis.flatMap(\.atoms).contains(30))
     }
 
-    private func assertValidIndependentBasis(_ basis: [CDKDescriptorRingSupport.Cycle], in molecule: Molecule,
-                                            file: StaticString = #filePath, line: UInt = #line) {
+    private func assertValidIndependentBasis(
+        _ basis: [CDKDescriptorRingSupport.Cycle], in molecule: Molecule,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
         XCTAssertEqual(independentCycles(basis.map(\.bondIDs)).count, basis.count, file: file, line: line)
         for cycle in basis {
             XCTAssertEqual(Set(cycle.atoms).count, cycle.size, file: file, line: line)
@@ -90,9 +95,10 @@ final class DescriptorRingSupportTests: XCTestCase {
     }
 
     private func makeMolecule(atomCount: Int, edges: [(Int, Int)]) -> Molecule {
-        Molecule(atoms: (0..<atomCount).map { Atom(id: $0, element: "C", position: .zero) },
-                 bonds: edges.enumerated().map { id, edge in
-                     Bond(id: id, a1: edge.0, a2: edge.1, order: .single)
-                 })
+        Molecule(
+            atoms: (0..<atomCount).map { Atom(id: $0, element: "C", position: .zero) },
+            bonds: edges.enumerated().map { id, edge in
+                Bond(id: id, a1: edge.0, a2: edge.1, order: .single)
+            })
     }
 }

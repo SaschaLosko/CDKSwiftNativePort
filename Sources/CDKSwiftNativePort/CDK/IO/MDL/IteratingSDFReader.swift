@@ -4,8 +4,10 @@ public struct CDKIteratingSDFReaderOptions {
     public var skipInvalidRecords: Bool
     public var forceReadAs3DCoordinates: Bool
 
-    public init(skipInvalidRecords: Bool = true,
-                forceReadAs3DCoordinates: Bool = false) {
+    public init(
+        skipInvalidRecords: Bool = true,
+        forceReadAs3DCoordinates: Bool = false
+    ) {
         self.skipInvalidRecords = skipInvalidRecords
         self.forceReadAs3DCoordinates = forceReadAs3DCoordinates
     }
@@ -13,15 +15,20 @@ public struct CDKIteratingSDFReaderOptions {
 
 public enum CDKIteratingSDFReader {
 
-    public static func readFile(url: URL,
-                                options: CDKIteratingSDFReaderOptions = CDKIteratingSDFReaderOptions()) throws -> [Molecule] {
+    public static func readFile(
+        url: URL,
+        options: CDKIteratingSDFReaderOptions = CDKIteratingSDFReaderOptions()
+    ) throws -> [Molecule] {
         let text = try CDKFileAccess.decodeText(from: url, preferredEncodings: [.utf8, .isoLatin1])
         return try read(text: text, options: options)
     }
 
-    public static func read(text: String,
-                            options: CDKIteratingSDFReaderOptions = CDKIteratingSDFReaderOptions()) throws -> [Molecule] {
-        let normalized = text
+    public static func read(
+        text: String,
+        options: CDKIteratingSDFReaderOptions = CDKIteratingSDFReaderOptions()
+    ) throws -> [Molecule] {
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
 

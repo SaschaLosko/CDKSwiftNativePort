@@ -28,7 +28,8 @@ public enum CDKRInChIReader {
             let (rinchiToken, optionalName) = split(line: line)
             let parser = CDKRInChIToReaction(rinchi: rinchiToken)
             guard parser.getStatus() != .error,
-                  var reaction = parser.getReaction() else {
+                var reaction = parser.getReaction()
+            else {
                 let message = parser.getMessages().joined(separator: " ")
                 throw ChemError.parseFailed(message.isEmpty ? "Unable to parse RInChI reaction." : message)
             }

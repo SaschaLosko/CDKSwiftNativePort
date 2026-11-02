@@ -40,7 +40,7 @@ final class Metal3DSceneBuilderTests: XCTestCase {
                 Atom(id: 2, element: "C", position: CGPoint(x: 0.7, y: 0.0)),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
             ])
 
         let scene = CDKMetal3DSceneBuilder.build(molecule: molecule)
@@ -131,7 +131,7 @@ final class Metal3DSceneBuilderTests: XCTestCase {
                 Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+                Bond(id: 1, a1: 1, a2: 2, order: .triple)
             ])
         let rendererModel = CDKRenderer3DModel(
             atomRadiusScale: 0.50,
@@ -157,7 +157,7 @@ final class Metal3DSceneBuilderTests: XCTestCase {
                 Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+                Bond(id: 1, a1: 1, a2: 2, order: .triple)
             ])
         let rendererModel = CDKRenderer3DModel(
             atomRadiusScale: 0.01,
@@ -189,7 +189,7 @@ final class Metal3DSceneBuilderTests: XCTestCase {
                 Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+                Bond(id: 1, a1: 1, a2: 2, order: .triple)
             ])
         let rendererModel = CDKRenderer3DModel(
             bondRadius: 0.20,
@@ -220,7 +220,7 @@ final class Metal3DSceneBuilderTests: XCTestCase {
                 Atom(id: 2, element: "Cl", position: CGPoint(x: 1.5, y: 0.0), zPosition: 0.0),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .single),
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
             ])
 
         let jmolScene = CDKMetal3DSceneBuilder.build(
@@ -260,7 +260,7 @@ final class Metal3DSceneBuilderTests: XCTestCase {
                 Atom(id: 2, element: "O", position: CGPoint(x: 1.1, y: 0.0), zPosition: 0.0),
             ],
             bonds: [
-                Bond(id: 1, a1: 1, a2: 2, order: .triple),
+                Bond(id: 1, a1: 1, a2: 2, order: .triple)
             ])
 
         XCTAssertEqual(CDK3DAtomColorPalette.allCases.count, 14)

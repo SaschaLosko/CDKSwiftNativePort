@@ -3,9 +3,11 @@ import Foundation
 enum CDKSDFDataFieldSupport {
     static let maxDataLineLength = 200
 
-    static func serializeDataFields(for molecule: Molecule,
-                                    acceptedFieldNames: Set<String>? = nil,
-                                    truncateLongValues: Bool = false) -> String {
+    static func serializeDataFields(
+        for molecule: Molecule,
+        acceptedFieldNames: Set<String>? = nil,
+        truncateLongValues: Bool = false
+    ) -> String {
         var lines: [String] = []
 
         for fieldName in molecule.orderedDataFieldNames {
@@ -34,14 +36,18 @@ enum CDKSDFDataFieldSupport {
     }
 
     private static func sanitizeHeaderFieldName(_ fieldName: String) -> String {
-        fieldName.replacingOccurrences(of: "[-<>.=% ]",
-                                       with: "_",
-                                       options: .regularExpression)
+        fieldName.replacingOccurrences(
+            of: "[-<>.=% ]",
+            with: "_",
+            options: .regularExpression)
     }
 
-    private static func normalizedValueLines(_ value: String,
-                                             truncateLongValues: Bool) -> [String] {
-        let normalized = value
+    private static func normalizedValueLines(
+        _ value: String,
+        truncateLongValues: Bool
+    ) -> [String] {
+        let normalized =
+            value
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
 

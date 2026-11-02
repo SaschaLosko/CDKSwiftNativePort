@@ -4,9 +4,9 @@ import XCTest
 final class InChIReaderPortTests: XCTestCase {
     func testReadsMultipleInChILinesWithNames() throws {
         let text = """
-        InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3 ethanol
-        InChI=1S/CH4/h1H4 methane
-        """
+            InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3 ethanol
+            InChI=1S/CH4/h1H4 methane
+            """
 
         let molecules = try CDKInChIReader.read(text: text)
         XCTAssertEqual(molecules.count, 2)
@@ -18,10 +18,10 @@ final class InChIReaderPortTests: XCTestCase {
 
     func testIgnoresBlankAndCommentLines() throws {
         let text = """
-        # comment
-        // comment
-        InChI=1S/H2O/h1H2 water
-        """
+            # comment
+            // comment
+            InChI=1S/H2O/h1H2 water
+            """
 
         let molecules = try CDKInChIReader.read(text: text)
         XCTAssertEqual(molecules.count, 1)

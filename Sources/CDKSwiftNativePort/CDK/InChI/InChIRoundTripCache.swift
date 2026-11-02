@@ -6,7 +6,8 @@ enum CDKInChIRoundTripCache {
 
     static func cachedSource(for molecule: Molecule) -> String? {
         guard let source = molecule.dataFields[sourceKey]?.first,
-              molecule.dataFields[signatureKey]?.first == signature(for: molecule) else {
+            molecule.dataFields[signatureKey]?.first == signature(for: molecule)
+        else {
             return nil
         }
         let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)

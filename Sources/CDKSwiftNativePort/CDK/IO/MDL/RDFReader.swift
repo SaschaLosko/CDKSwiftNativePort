@@ -11,7 +11,8 @@ public enum CDKRDFReader {
     }
 
     public static func readReactions(text: String) throws -> [CDKReaction] {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")

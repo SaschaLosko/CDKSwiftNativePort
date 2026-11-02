@@ -10,24 +10,29 @@ public struct CDKReactionSet: Equatable {
         members.flatMap(\.flattenedReactions)
     }
 
-    public init(id: String? = nil,
-                name: String? = nil,
-                members: [CDKReactionSetMember],
-                properties: [String: String] = [:]) {
+    public init(
+        id: String? = nil,
+        name: String? = nil,
+        members: [CDKReactionSetMember],
+        properties: [String: String] = [:]
+    ) {
         self.id = id
         self.name = name
         self.members = members
         self.properties = properties
     }
 
-    public init(reactions: [CDKReaction],
-                id: String? = nil,
-                name: String? = nil,
-                properties: [String: String] = [:]) {
-        self.init(id: id,
-                  name: name,
-                  members: reactions.map(CDKReactionSetMember.reaction),
-                  properties: properties)
+    public init(
+        reactions: [CDKReaction],
+        id: String? = nil,
+        name: String? = nil,
+        properties: [String: String] = [:]
+    ) {
+        self.init(
+            id: id,
+            name: name,
+            members: reactions.map(CDKReactionSetMember.reaction),
+            properties: properties)
     }
 }
 
@@ -64,11 +69,13 @@ public struct CDKReactionList: Equatable {
         entries.flatMap(\.flattenedReactions)
     }
 
-    public init(id: String? = nil,
-                name: String? = nil,
-                entries: [CDKReactionListEntry],
-                properties: [String: String] = [:],
-                isStepList: Bool = false) {
+    public init(
+        id: String? = nil,
+        name: String? = nil,
+        entries: [CDKReactionListEntry],
+        properties: [String: String] = [:],
+        isStepList: Bool = false
+    ) {
         self.id = id
         self.name = name
         self.entries = entries
@@ -76,16 +83,19 @@ public struct CDKReactionList: Equatable {
         self.isStepList = isStepList
     }
 
-    public init(id: String? = nil,
-                name: String? = nil,
-                reactions: [CDKReaction],
-                properties: [String: String] = [:],
-                isStepList: Bool = false) {
-        self.init(id: id,
-                  name: name,
-                  entries: reactions.map(CDKReactionListEntry.reaction),
-                  properties: properties,
-                  isStepList: isStepList)
+    public init(
+        id: String? = nil,
+        name: String? = nil,
+        reactions: [CDKReaction],
+        properties: [String: String] = [:],
+        isStepList: Bool = false
+    ) {
+        self.init(
+            id: id,
+            name: name,
+            entries: reactions.map(CDKReactionListEntry.reaction),
+            properties: properties,
+            isStepList: isStepList)
     }
 }
 
@@ -116,10 +126,12 @@ public struct CDKReactionScheme: Equatable {
         entries.flatMap(\.flattenedReactions)
     }
 
-    public init(id: String? = nil,
-                name: String? = nil,
-                entries: [CDKReactionSchemeEntry],
-                properties: [String: String] = [:]) {
+    public init(
+        id: String? = nil,
+        name: String? = nil,
+        entries: [CDKReactionSchemeEntry],
+        properties: [String: String] = [:]
+    ) {
         self.id = id
         self.name = name
         self.entries = entries

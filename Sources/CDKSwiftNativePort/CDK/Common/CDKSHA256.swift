@@ -1,7 +1,7 @@
 enum CDKSHA256 {
     private static let initialState: [UInt32] = [
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
     ]
 
     private static let roundConstants: [UInt32] = [
@@ -20,7 +20,7 @@ enum CDKSHA256 {
         0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
         0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
         0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
     ]
 
     static func hash(bytes: [UInt8]) -> [UInt8] {
@@ -48,19 +48,17 @@ enum CDKSHA256 {
             for wordIndex in 0..<16 {
                 let offset = chunkStart + wordIndex * 4
                 schedule[wordIndex] =
-                    (UInt32(message[offset]) << 24) |
-                    (UInt32(message[offset + 1]) << 16) |
-                    (UInt32(message[offset + 2]) << 8) |
-                    UInt32(message[offset + 3])
+                    (UInt32(message[offset]) << 24) | (UInt32(message[offset + 1]) << 16)
+                    | (UInt32(message[offset + 2]) << 8) | UInt32(message[offset + 3])
             }
 
             for wordIndex in 16..<64 {
-                let s0 = rotateRight(schedule[wordIndex - 15], by: 7) ^
-                    rotateRight(schedule[wordIndex - 15], by: 18) ^
-                    (schedule[wordIndex - 15] >> 3)
-                let s1 = rotateRight(schedule[wordIndex - 2], by: 17) ^
-                    rotateRight(schedule[wordIndex - 2], by: 19) ^
-                    (schedule[wordIndex - 2] >> 10)
+                let s0 =
+                    rotateRight(schedule[wordIndex - 15], by: 7) ^ rotateRight(schedule[wordIndex - 15], by: 18)
+                    ^ (schedule[wordIndex - 15] >> 3)
+                let s1 =
+                    rotateRight(schedule[wordIndex - 2], by: 17) ^ rotateRight(schedule[wordIndex - 2], by: 19)
+                    ^ (schedule[wordIndex - 2] >> 10)
                 schedule[wordIndex] = schedule[wordIndex - 16] &+ s0 &+ schedule[wordIndex - 7] &+ s1
             }
 

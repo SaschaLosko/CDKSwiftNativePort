@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 import XCTest
 @testable import CDKSwiftNativePort
@@ -10,21 +10,23 @@ final class RenderingStyleOptionsTests: XCTestCase {
 
     func testMetalSceneUsesElementColorsForLabels() throws {
         let molecule = try smilesParser.parseSmiles("CO")
-        let style = RenderStyle(showCarbons: true,
-                                showImplicitHydrogens: false,
-                                showAtomIDs: false,
-                                atomColoringMode: .cdk2D,
-                                colorBondsByAtom: false,
-                                aromaticDisplayMode: .innerLine,
-                                bondWidth: 2.0,
-                                fontSize: 14,
-                                padding: 24)
+        let style = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .cdk2D,
+            colorBondsByAtom: false,
+            aromaticDisplayMode: .innerLine,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
 
-        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                        style: style,
-                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
-                                                        zoom: 1.0,
-                                                        pan: .zero)
+        let scene = CDKMetalDepictionSceneBuilder.build(
+            molecule: molecule,
+            style: style,
+            canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+            zoom: 1.0,
+            pan: .zero)
 
         let oxygenLabel = try XCTUnwrap(scene.labels.first(where: { $0.text.hasPrefix("O") }))
         let carbonLabel = try XCTUnwrap(scene.labels.first(where: { $0.text.hasPrefix("C") }))
@@ -35,21 +37,23 @@ final class RenderingStyleOptionsTests: XCTestCase {
 
     func testMetalSceneColorsBondsWhenEnabled() throws {
         let molecule = try smilesParser.parseSmiles("CO")
-        let style = RenderStyle(showCarbons: true,
-                                showImplicitHydrogens: false,
-                                showAtomIDs: false,
-                                atomColoringMode: .cdk2D,
-                                colorBondsByAtom: true,
-                                aromaticDisplayMode: .innerLine,
-                                bondWidth: 2.0,
-                                fontSize: 14,
-                                padding: 24)
+        let style = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .cdk2D,
+            colorBondsByAtom: true,
+            aromaticDisplayMode: .innerLine,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
 
-        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                        style: style,
-                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
-                                                        zoom: 1.0,
-                                                        pan: .zero)
+        let scene = CDKMetalDepictionSceneBuilder.build(
+            molecule: molecule,
+            style: style,
+            canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+            zoom: 1.0,
+            pan: .zero)
 
         let anyBond = try XCTUnwrap(scene.bondSegments.first)
         XCTAssertNotEqual(anyBond.color, CDKRenderColor.ink)
@@ -57,80 +61,91 @@ final class RenderingStyleOptionsTests: XCTestCase {
 
     func testAromaticCircleModeAddsAdditionalGeometry() throws {
         let molecule = try smilesParser.parseSmiles("c1ccccc1")
-        let baseStyle = RenderStyle(showCarbons: true,
-                                    showImplicitHydrogens: false,
-                                    showAtomIDs: false,
-                                    atomColoringMode: .monochrome,
-                                    colorBondsByAtom: false,
-                                    aromaticDisplayMode: .innerLine,
-                                    bondWidth: 2.0,
-                                    fontSize: 14,
-                                    padding: 24)
-        let circleStyle = RenderStyle(showCarbons: true,
-                                      showImplicitHydrogens: false,
-                                      showAtomIDs: false,
-                                      atomColoringMode: .monochrome,
-                                      colorBondsByAtom: false,
-                                      aromaticDisplayMode: .circle,
-                                      bondWidth: 2.0,
-                                      fontSize: 14,
-                                      padding: 24)
+        let baseStyle = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .monochrome,
+            colorBondsByAtom: false,
+            aromaticDisplayMode: .innerLine,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
+        let circleStyle = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .monochrome,
+            colorBondsByAtom: false,
+            aromaticDisplayMode: .circle,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
 
-        let innerScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                             style: baseStyle,
-                                                             canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
-                                                             zoom: 1.0,
-                                                             pan: .zero)
-        let circleScene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                              style: circleStyle,
-                                                              canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
-                                                              zoom: 1.0,
-                                                              pan: .zero)
+        let innerScene = CDKMetalDepictionSceneBuilder.build(
+            molecule: molecule,
+            style: baseStyle,
+            canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+            zoom: 1.0,
+            pan: .zero)
+        let circleScene = CDKMetalDepictionSceneBuilder.build(
+            molecule: molecule,
+            style: circleStyle,
+            canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+            zoom: 1.0,
+            pan: .zero)
 
         XCTAssertGreaterThan(circleScene.bondSegments.count, innerScene.bondSegments.count + 20)
     }
 
     func testAromaticCircleModeSuppressesKekuleAlternatingDoubleLines() throws {
         let molecule = try smilesParser.parseSmiles("C1=CC=CC=C1")
-        let style = RenderStyle(showCarbons: true,
-                                showImplicitHydrogens: false,
-                                showAtomIDs: false,
-                                atomColoringMode: .monochrome,
-                                colorBondsByAtom: false,
-                                aromaticDisplayMode: .circle,
-                                bondWidth: 2.0,
-                                fontSize: 14,
-                                padding: 24)
+        let style = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .monochrome,
+            colorBondsByAtom: false,
+            aromaticDisplayMode: .circle,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
 
-        let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                        style: style,
-                                                        canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
-                                                        zoom: 1.0,
-                                                        pan: .zero)
+        let scene = CDKMetalDepictionSceneBuilder.build(
+            molecule: molecule,
+            style: style,
+            canvasRect: CGRect(x: 0, y: 0, width: 480, height: 320),
+            zoom: 1.0,
+            pan: .zero)
 
         let longStraightSegments = scene.bondSegments.filter { segment in
             hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y) > 30
         }
 
-        XCTAssertEqual(longStraightSegments.count, 6, "Circle mode should use one perimeter line per aromatic edge, not a circle plus Kekule double bonds.")
+        XCTAssertEqual(
+            longStraightSegments.count, 6,
+            "Circle mode should use one perimeter line per aromatic edge, not a circle plus Kekule double bonds.")
     }
 
     func testSVGContainsCircleAndElementColorWhenEnabled() throws {
         let molecule = try smilesParser.parseSmiles("c1ccccc1O")
-        let style = RenderStyle(showCarbons: true,
-                                showImplicitHydrogens: false,
-                                showAtomIDs: false,
-                                atomColoringMode: .cdk2D,
-                                colorBondsByAtom: true,
-                                aromaticDisplayMode: .circle,
-                                bondWidth: 2.0,
-                                fontSize: 14,
-                                padding: 24)
+        let style = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .cdk2D,
+            colorBondsByAtom: true,
+            aromaticDisplayMode: .circle,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
 
-        let svg = CDKDepictionGenerator.toSVG(molecule: molecule,
-                                              style: style,
-                                              canvasSize: CGSize(width: 600, height: 400))
-        let oxygenColorHex = CDKRenderingStyleResolver
+        let svg = CDKDepictionGenerator.toSVG(
+            molecule: molecule,
+            style: style,
+            canvasSize: CGSize(width: 600, height: 400))
+        let oxygenColorHex =
+            CDKRenderingStyleResolver
             .atomColor(for: Atom(id: -1, element: "O", position: .zero), style: style)
             .svgHexRGB()
 
@@ -141,15 +156,16 @@ final class RenderingStyleOptionsTests: XCTestCase {
     func testAtomMapHighlightModeUsesMapPalette() {
         let atom = Atom(id: 1, element: "C", position: .zero, atomMapNumber: 17)
         let unmapped = Atom(id: 2, element: "C", position: .zero, atomMapNumber: nil)
-        let style = RenderStyle(showCarbons: true,
-                                showImplicitHydrogens: false,
-                                showAtomIDs: false,
-                                atomColoringMode: .atomMapHighlight,
-                                colorBondsByAtom: true,
-                                aromaticDisplayMode: .innerLine,
-                                bondWidth: 2.0,
-                                fontSize: 14,
-                                padding: 24)
+        let style = RenderStyle(
+            showCarbons: true,
+            showImplicitHydrogens: false,
+            showAtomIDs: false,
+            atomColoringMode: .atomMapHighlight,
+            colorBondsByAtom: true,
+            aromaticDisplayMode: .innerLine,
+            bondWidth: 2.0,
+            fontSize: 14,
+            padding: 24)
 
         let mappedColor = CDKRenderingStyleResolver.atomColor(for: atom, style: style)
         let unmappedColor = CDKRenderingStyleResolver.atomColor(for: unmapped, style: style)

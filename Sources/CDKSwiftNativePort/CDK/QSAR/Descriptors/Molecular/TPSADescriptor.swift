@@ -6,14 +6,17 @@ import Foundation
 /// and accepts molecules with either implicit or explicit hydrogens.
 public enum CDKTPSADescriptor {
     public static func calculate(for molecule: Molecule, checkAromaticity: Bool = false) -> Double {
-        let aromaticBondIDs = CDKDescriptorRingSupport.aromaticBondIDs(in: molecule,
-                                                                       perceiveAromaticity: checkAromaticity)
+        let aromaticBondIDs = CDKDescriptorRingSupport.aromaticBondIDs(
+            in: molecule,
+            perceiveAromaticity: checkAromaticity)
 
         var tpsa = 0.0
         for atom in molecule.atoms {
             let symbol = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
             let uppercasedSymbol = symbol.uppercased()
-            guard uppercasedSymbol == "N" || uppercasedSymbol == "O" || uppercasedSymbol == "S" || uppercasedSymbol == "P" else {
+            guard
+                uppercasedSymbol == "N" || uppercasedSymbol == "O" || uppercasedSymbol == "S" || uppercasedSymbol == "P"
+            else {
                 continue
             }
 
@@ -48,10 +51,8 @@ public enum CDKTPSADescriptor {
             singleBondCount += implicitHydrogenCount
 
             let bondOrderSum =
-                Double(singleBondCount) +
-                (Double(doubleBondCount) * 2.0) +
-                (Double(tripleBondCount) * 3.0) +
-                (Double(aromaticBondCount) * 1.5)
+                Double(singleBondCount) + (Double(doubleBondCount) * 2.0) + (Double(tripleBondCount) * 3.0)
+                + (Double(aromaticBondCount) * 1.5)
 
             var maxBondOrder = 0.0
             if singleBondCount > 0 { maxBondOrder = 1.0 }
@@ -59,35 +60,39 @@ public enum CDKTPSADescriptor {
             if doubleBondCount > 0 { maxBondOrder = 2.0 }
             if tripleBondCount > 0 { maxBondOrder = 3.0 }
 
-            let isInThreeMemberedRing = CDKDescriptorRingSupport.hasThreeMemberedRing(containing: atom.id, in: molecule) ? 1 : 0
-            let profile = makeProfile(symbol: symbol,
-                                      maxBondOrder: maxBondOrder,
-                                      bondOrderSum: bondOrderSum,
-                                      numberOfNeighbors: numberOfNeighbors,
-                                      hydrogenCount: hydrogenCount,
-                                      formalCharge: atom.charge,
-                                      aromaticBondCount: aromaticBondCount,
-                                      isInThreeMemberedRing: isInThreeMemberedRing,
-                                      singleBondCount: singleBondCount,
-                                      doubleBondCount: doubleBondCount,
-                                      tripleBondCount: tripleBondCount)
+            let isInThreeMemberedRing =
+                CDKDescriptorRingSupport.hasThreeMemberedRing(containing: atom.id, in: molecule) ? 1 : 0
+            let profile = makeProfile(
+                symbol: symbol,
+                maxBondOrder: maxBondOrder,
+                bondOrderSum: bondOrderSum,
+                numberOfNeighbors: numberOfNeighbors,
+                hydrogenCount: hydrogenCount,
+                formalCharge: atom.charge,
+                aromaticBondCount: aromaticBondCount,
+                isInThreeMemberedRing: isInThreeMemberedRing,
+                singleBondCount: singleBondCount,
+                doubleBondCount: doubleBondCount,
+                tripleBondCount: tripleBondCount)
             tpsa += contributionsByProfile[profile] ?? 0.0
         }
 
         return tpsa
     }
 
-    private static func makeProfile(symbol: String,
-                                    maxBondOrder: Double,
-                                    bondOrderSum: Double,
-                                    numberOfNeighbors: Int,
-                                    hydrogenCount: Int,
-                                    formalCharge: Int,
-                                    aromaticBondCount: Int,
-                                    isInThreeMemberedRing: Int,
-                                    singleBondCount: Int,
-                                    doubleBondCount: Int,
-                                    tripleBondCount: Int) -> String {
+    private static func makeProfile(
+        symbol: String,
+        maxBondOrder: Double,
+        bondOrderSum: Double,
+        numberOfNeighbors: Int,
+        hydrogenCount: Int,
+        formalCharge: Int,
+        aromaticBondCount: Int,
+        isInThreeMemberedRing: Int,
+        singleBondCount: Int,
+        doubleBondCount: Int,
+        tripleBondCount: Int
+    ) -> String {
         "\(symbol)+\(formatted(maxBondOrder))+\(formatted(bondOrderSum))+\(numberOfNeighbors)+\(hydrogenCount)+\(formalCharge)+\(aromaticBondCount)+\(isInThreeMemberedRing)+\(singleBondCount)+\(doubleBondCount)+\(tripleBondCount)"
     }
 
@@ -139,6 +144,6 @@ public enum CDKTPSADescriptor {
         "P+1.0+3.0+3+0+0+0+0+3+0+0": 13.59,
         "P+2.0+3.0+3+0+0+0+0+1+1+0": 34.14,
         "P+2.0+5.0+4+0+0+0+0+3+1+0": 9.81,
-        "P+2.0+5.0+4+1+0+0+0+3+1+0": 23.47
+        "P+2.0+5.0+4+1+0+0+0+3+1+0": 23.47,
     ]
 }

@@ -1,5 +1,5 @@
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 import Foundation
 
@@ -17,32 +17,39 @@ struct CDKSgroupBracketAnnotation: Hashable {
 }
 
 enum CDKSgroupRendering {
-    static func bracketAnnotations(molecule: Molecule,
-                                   positionsByAtomID: [Int: CGPoint],
-                                   transformPoint: ((CGPoint) -> CGPoint)? = nil,
-                                   fontSize: CGFloat,
-                                   bondWidth: CGFloat) -> [CDKSgroupBracketAnnotation] {
+    static func bracketAnnotations(
+        molecule: Molecule,
+        positionsByAtomID: [Int: CGPoint],
+        transformPoint: ((CGPoint) -> CGPoint)? = nil,
+        fontSize: CGFloat,
+        bondWidth: CGFloat
+    ) -> [CDKSgroupBracketAnnotation] {
         molecule.sgroups.compactMap { sgroup in
             guard shouldRenderBracket(for: sgroup) else { return nil }
-            guard let geometry = bracketGeometry(for: sgroup,
-                                                molecule: molecule,
-                                                positionsByAtomID: positionsByAtomID,
-                                                transformPoint: transformPoint,
-                                                fontSize: fontSize,
-                                                bondWidth: bondWidth) else {
+            guard
+                let geometry = bracketGeometry(
+                    for: sgroup,
+                    molecule: molecule,
+                    positionsByAtomID: positionsByAtomID,
+                    transformPoint: transformPoint,
+                    fontSize: fontSize,
+                    bondWidth: bondWidth)
+            else {
                 return nil
             }
             let descriptor = displayDescriptor(for: sgroup, in: molecule)
             if descriptor.subscriptText == nil,
-               descriptor.superscriptText == nil,
-               geometry.segments.isEmpty {
+                descriptor.superscriptText == nil,
+                geometry.segments.isEmpty
+            {
                 return nil
             }
-            return CDKSgroupBracketAnnotation(segments: geometry.segments,
-                                              subscriptText: descriptor.subscriptText,
-                                              subscriptPosition: geometry.subscriptPosition,
-                                              superscriptText: descriptor.superscriptText,
-                                              superscriptPosition: geometry.superscriptPosition)
+            return CDKSgroupBracketAnnotation(
+                segments: geometry.segments,
+                subscriptText: descriptor.subscriptText,
+                subscriptPosition: geometry.subscriptPosition,
+                superscriptText: descriptor.superscriptText,
+                superscriptPosition: geometry.superscriptPosition)
         }
     }
 
@@ -73,12 +80,14 @@ enum CDKSgroupRendering {
         }
     }
 
-    private static func bracketGeometry(for sgroup: MoleculeSgroup,
-                                        molecule: Molecule,
-                                        positionsByAtomID: [Int: CGPoint],
-                                        transformPoint: ((CGPoint) -> CGPoint)?,
-                                        fontSize: CGFloat,
-                                        bondWidth: CGFloat) -> AnnotationGeometry? {
+    private static func bracketGeometry(
+        for sgroup: MoleculeSgroup,
+        molecule: Molecule,
+        positionsByAtomID: [Int: CGPoint],
+        transformPoint: ((CGPoint) -> CGPoint)?,
+        fontSize: CGFloat,
+        bondWidth: CGFloat
+    ) -> AnnotationGeometry? {
         let points = sgroup.atomIDs.compactMap { positionsByAtomID[$0] }
         guard !points.isEmpty else { return nil }
         let groupBounds = bounds(of: points)
@@ -88,14 +97,16 @@ enum CDKSgroupRendering {
 
         if sgroup.brackets.count >= 2, let transformPoint {
             let transformedBrackets = sgroup.brackets.map { bracket in
-                MoleculeSgroupBracket(firstPoint: transformPoint(bracket.firstPoint),
-                                      secondPoint: transformPoint(bracket.secondPoint))
+                MoleculeSgroupBracket(
+                    firstPoint: transformPoint(bracket.firstPoint),
+                    secondPoint: transformPoint(bracket.secondPoint))
             }
             bracketSegments = transformedBrackets.flatMap { bracket in
-                bracketSegmentsForBracket(bracket,
-                                          groupCenter: CGPoint(x: groupBounds.midX, y: groupBounds.midY),
-                                          fontSize: fontSize,
-                                          bondWidth: bondWidth)
+                bracketSegmentsForBracket(
+                    bracket,
+                    groupCenter: CGPoint(x: groupBounds.midX, y: groupBounds.midY),
+                    fontSize: fontSize,
+                    bondWidth: bondWidth)
             }
             let ordered = transformedBrackets.sorted { lhs, rhs in
                 ((lhs.firstPoint.x + lhs.secondPoint.x) * 0.5) < ((rhs.firstPoint.x + rhs.secondPoint.x) * 0.5)
@@ -119,19 +130,22 @@ enum CDKSgroupRendering {
                 CDKBracketSegment(from: leftBottom, to: CGPoint(x: leftBottom.x + inset, y: leftBottom.y)),
                 CDKBracketSegment(from: rightTop, to: rightBottom),
                 CDKBracketSegment(from: rightTop, to: CGPoint(x: rightTop.x - inset, y: rightTop.y)),
-                CDKBracketSegment(from: rightBottom, to: CGPoint(x: rightBottom.x - inset, y: rightBottom.y))
+                CDKBracketSegment(from: rightBottom, to: CGPoint(x: rightBottom.x - inset, y: rightBottom.y)),
             ]
             rightMid = midpoint(rightTop, rightBottom)
         }
 
-        let subscriptPosition = CGPoint(x: rightMid.x + max(fontSize * 0.38, 6),
-                                        y: groupBounds.maxY + max(fontSize * 0.70, 10))
-        let superscriptPosition = CGPoint(x: rightMid.x + max(fontSize * 0.30, 5),
-                                          y: groupBounds.minY - max(fontSize * 0.68, 10))
+        let subscriptPosition = CGPoint(
+            x: rightMid.x + max(fontSize * 0.38, 6),
+            y: groupBounds.maxY + max(fontSize * 0.70, 10))
+        let superscriptPosition = CGPoint(
+            x: rightMid.x + max(fontSize * 0.30, 5),
+            y: groupBounds.minY - max(fontSize * 0.68, 10))
 
-        return AnnotationGeometry(segments: bracketSegments,
-                                  subscriptPosition: subscriptPosition,
-                                  superscriptPosition: superscriptPosition)
+        return AnnotationGeometry(
+            segments: bracketSegments,
+            subscriptPosition: subscriptPosition,
+            superscriptPosition: superscriptPosition)
     }
 
     private static func displayDescriptor(for sgroup: MoleculeSgroup, in molecule: Molecule) -> DisplayDescriptor {
@@ -174,9 +188,11 @@ enum CDKSgroupRendering {
         case "MOD":
             return DisplayDescriptor(subscriptText: "mod", superscriptText: nil)
         case "MIX":
-            return DisplayDescriptor(subscriptText: "mix", superscriptText: childDataSuperscript(for: sgroup, in: molecule))
+            return DisplayDescriptor(
+                subscriptText: "mix", superscriptText: childDataSuperscript(for: sgroup, in: molecule))
         case "FOR", "F":
-            return DisplayDescriptor(subscriptText: "f", superscriptText: childDataSuperscript(for: sgroup, in: molecule))
+            return DisplayDescriptor(
+                subscriptText: "f", superscriptText: childDataSuperscript(for: sgroup, in: molecule))
         case "COM", "C":
             let componentLabel: String
             if let componentNumber = sgroup.componentNumber, componentNumber > 0 {
@@ -184,18 +200,22 @@ enum CDKSgroupRendering {
             } else {
                 componentLabel = "c"
             }
-            return DisplayDescriptor(subscriptText: componentLabel, superscriptText: childDataSuperscript(for: sgroup, in: molecule))
+            return DisplayDescriptor(
+                subscriptText: componentLabel, superscriptText: childDataSuperscript(for: sgroup, in: molecule))
         case "MUL":
-            return DisplayDescriptor(subscriptText: normalizedText(defaultSubscript),
-                                     superscriptText: nil)
+            return DisplayDescriptor(
+                subscriptText: normalizedText(defaultSubscript),
+                superscriptText: nil)
         case "ANY":
             return DisplayDescriptor(subscriptText: "any", superscriptText: nil)
         case "GEN":
-            return DisplayDescriptor(subscriptText: normalizedText(defaultSubscript) ?? "gen",
-                                     superscriptText: nil)
+            return DisplayDescriptor(
+                subscriptText: normalizedText(defaultSubscript) ?? "gen",
+                superscriptText: nil)
         default:
-            return DisplayDescriptor(subscriptText: normalizedText(defaultSubscript),
-                                     superscriptText: normalizedText(connectivity))
+            return DisplayDescriptor(
+                subscriptText: normalizedText(defaultSubscript),
+                superscriptText: normalizedText(connectivity))
         }
     }
 
@@ -214,10 +234,12 @@ enum CDKSgroupRendering {
         return nil
     }
 
-    private static func bracketSegmentsForBracket(_ bracket: MoleculeSgroupBracket,
-                                                  groupCenter: CGPoint,
-                                                  fontSize: CGFloat,
-                                                  bondWidth: CGFloat) -> [CDKBracketSegment] {
+    private static func bracketSegmentsForBracket(
+        _ bracket: MoleculeSgroupBracket,
+        groupCenter: CGPoint,
+        fontSize: CGFloat,
+        bondWidth: CGFloat
+    ) -> [CDKBracketSegment] {
         let start = bracket.firstPoint
         let end = bracket.secondPoint
         let midpoint = midpoint(start, end)
@@ -233,7 +255,7 @@ enum CDKSgroupRendering {
         return [
             CDKBracketSegment(from: start, to: end),
             CDKBracketSegment(from: start, to: firstInset),
-            CDKBracketSegment(from: end, to: secondInset)
+            CDKBracketSegment(from: end, to: secondInset),
         ]
     }
 

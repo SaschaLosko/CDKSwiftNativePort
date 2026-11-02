@@ -70,7 +70,8 @@ final class SmilesReactionParserPortTests: XCTestCase {
 
     // Mirrors CxSmilesParserTest.loadRacComponentsWithFragGrouping grouping aspect.
     func testReactionCxFragmentGroupingAgents() throws {
-        let reaction = try parser.parseReactionSmiles("c1ccccc1[C@H](O)C>[Na+].[Cl-]>CC[C@H](O)[C@H](O)CCCCCC |f:1.2,r:3|")
+        let reaction = try parser.parseReactionSmiles(
+            "c1ccccc1[C@H](O)C>[Na+].[Cl-]>CC[C@H](O)[C@H](O)CCCCCC |f:1.2,r:3|")
         XCTAssertEqual(reaction.reactantCount, 1)
         XCTAssertEqual(reaction.agentCount, 1)
         XCTAssertEqual(reaction.productCount, 1)
@@ -93,7 +94,9 @@ final class SmilesReactionParserPortTests: XCTestCase {
     }
 
     func testReactionFragmentGroupingReactantsMatchesCDKCounts() throws {
-        let reaction = try parser.parseReactionSmiles("CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O.[Al+3].[Cl-].[Cl-].[Cl-]>[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1 |f:2.3.4.5|")
+        let reaction = try parser.parseReactionSmiles(
+            "CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O.[Al+3].[Cl-].[Cl-].[Cl-]>[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1 |f:2.3.4.5|"
+        )
 
         XCTAssertEqual(reaction.reactantCount, 3)
         XCTAssertEqual(reaction.agentCount, 1)
@@ -101,7 +104,9 @@ final class SmilesReactionParserPortTests: XCTestCase {
     }
 
     func testReactionFragmentGroupingProductsMatchesCDKCounts() throws {
-        let reaction = try parser.parseReactionSmiles("CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O>[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1.[Al+3].[Cl-].[Cl-].[Cl-] |f:3.4.5.6|")
+        let reaction = try parser.parseReactionSmiles(
+            "CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O>[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1.[Al+3].[Cl-].[Cl-].[Cl-] |f:3.4.5.6|"
+        )
 
         XCTAssertEqual(reaction.reactantCount, 2)
         XCTAssertEqual(reaction.agentCount, 1)
@@ -109,7 +114,9 @@ final class SmilesReactionParserPortTests: XCTestCase {
     }
 
     func testReactionInvalidFragmentGroupingFallsBackToUngroupedComponents() throws {
-        let reaction = try parser.parseReactionSmiles("CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O.[Al+3].[Cl-].[Cl-].[Cl-]>[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1 |f:2.3.4.5,4.6|")
+        let reaction = try parser.parseReactionSmiles(
+            "CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O.[Al+3].[Cl-].[Cl-].[Cl-]>[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1 |f:2.3.4.5,4.6|"
+        )
 
         XCTAssertEqual(reaction.reactantCount, 6)
         XCTAssertEqual(reaction.agentCount, 1)
@@ -117,12 +124,16 @@ final class SmilesReactionParserPortTests: XCTestCase {
     }
 
     func testReactionEmptyCxLayerPreservesExplicitEmptyTitle() throws {
-        let reaction = try parser.parseReactionSmiles("CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O>[Al+3].[Cl-].[Cl-].[Cl-].[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1 ||")
+        let reaction = try parser.parseReactionSmiles(
+            "CC1=NC2=C(O)C=CC=C2C=C1.CC(Cl)=O>[Al+3].[Cl-].[Cl-].[Cl-].[O-][N+](=O)C1=CC=CC=C1>CC(=O)C1=C2C=CC(C)=NC2=C(O)C=C1 ||"
+        )
         XCTAssertEqual(reaction.name, "")
     }
 
     func testReactionParsesGenericMarkushCxWithoutFailure() throws {
-        let reaction = try parser.parseReactionSmiles("C1=CC(=CC=C1)C(CC(N)=O)=O.*C>C1(=CC=CC=C1)N.C*.C1=CC(=CC=C1)C=2C=C(C3=C(N2)C=CC=C3)O.C*.C*> |$;;;;;;;;;;;;R22;;;;;;;;;;;;;;;;;;;;;;;;;;;;;R22$,f:0.1,2.3,4.5.6,m:13:0.1.2.3.4.5,21:14.15.16.17.18.19,40:23.24.25.26.27.28,42:29.30.31.32.33.34.35.36.37.38|")
+        let reaction = try parser.parseReactionSmiles(
+            "C1=CC(=CC=C1)C(CC(N)=O)=O.*C>C1(=CC=CC=C1)N.C*.C1=CC(=CC=C1)C=2C=C(C3=C(N2)C=CC=C3)O.C*.C*> |$;;;;;;;;;;;;R22;;;;;;;;;;;;;;;;;;;;;;;;;;;;;R22$,f:0.1,2.3,4.5.6,m:13:0.1.2.3.4.5,21:14.15.16.17.18.19,40:23.24.25.26.27.28,42:29.30.31.32.33.34.35.36.37.38|"
+        )
 
         XCTAssertFalse(reaction.participants.isEmpty)
         XCTAssertFalse(reaction.cxState?.positionalVariations.isEmpty ?? true)

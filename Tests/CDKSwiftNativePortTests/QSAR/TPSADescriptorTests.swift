@@ -21,16 +21,19 @@ final class TPSADescriptorTests: XCTestCase {
         XCTAssertTrue(value.isFinite)
     }
 
-    private func assertTPSA(_ smiles: String,
-                            expected: Double,
-                            tolerance: Double = 0.01,
-                            file: StaticString = #filePath,
-                            line: UInt = #line) throws {
+    private func assertTPSA(
+        _ smiles: String,
+        expected: Double,
+        tolerance: Double = 0.01,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
         let molecule = try parser.parseSmiles(smiles)
         let observed = CDKTPSADescriptor.calculate(for: molecule, checkAromaticity: true)
-        XCTAssertEqual(observed, expected, accuracy: tolerance,
-                       "SMILES \(smiles) expected TPSA \(expected), got \(observed)",
-                       file: file,
-                       line: line)
+        XCTAssertEqual(
+            observed, expected, accuracy: tolerance,
+            "SMILES \(smiles) expected TPSA \(expected), got \(observed)",
+            file: file,
+            line: line)
     }
 }

@@ -16,8 +16,9 @@ final class SDFWriterPortTests: XCTestCase {
     func testAlwaysV3000WritesAllRecordsAsV3000() throws {
         let molecules = [singleCarbon(name: "small"), singleCarbon(name: "second")]
 
-        let text = try CDKSDFWriter.write(molecules,
-                                          options: CDKSDFWriterOptions(alwaysV3000: true))
+        let text = try CDKSDFWriter.write(
+            molecules,
+            options: CDKSDFWriterOptions(alwaysV3000: true))
 
         XCTAssertFalse(text.contains("V2000"))
         XCTAssertEqual(text.components(separatedBy: "V3000").count - 1, 2)
@@ -37,8 +38,9 @@ final class SDFWriterPortTests: XCTestCase {
         molecule.appendDataFieldValue("a", named: "one")
         molecule.appendDataFieldValue("b", named: "two")
 
-        let text = try CDKSDFWriter.write(molecule,
-                                          options: CDKSDFWriterOptions(writeDataFields: false))
+        let text = try CDKSDFWriter.write(
+            molecule,
+            options: CDKSDFWriterOptions(writeDataFields: false))
 
         XCTAssertFalse(text.contains("> <one>"))
         XCTAssertFalse(text.contains("> <two>"))
@@ -49,8 +51,9 @@ final class SDFWriterPortTests: XCTestCase {
         molecule.appendDataFieldValue("a", named: "one")
         molecule.appendDataFieldValue("b", named: "two")
 
-        let text = try CDKSDFWriter.write(molecule,
-                                          options: CDKSDFWriterOptions(acceptedDataFieldNames: ["one"]))
+        let text = try CDKSDFWriter.write(
+            molecule,
+            options: CDKSDFWriterOptions(acceptedDataFieldNames: ["one"]))
 
         XCTAssertTrue(text.contains("> <one>"))
         XCTAssertFalse(text.contains("> <two>"))
@@ -60,15 +63,16 @@ final class SDFWriterPortTests: XCTestCase {
         var molecule = singleCarbon(name: "Tagged")
         molecule.appendDataFieldValue(String(repeating: "x", count: 250), named: "MyLongField")
 
-        let text = try CDKSDFWriter.write(molecule,
-                                          options: CDKSDFWriterOptions(truncateLongDataFields: true))
+        let text = try CDKSDFWriter.write(
+            molecule,
+            options: CDKSDFWriterOptions(truncateLongDataFields: true))
 
-        let longLine = text
+        let longLine =
+            text
             .components(separatedBy: "\n")
             .first {
-                !$0.isEmpty &&
-                $0.allSatisfy(\.isASCII) &&
-                $0.trimmingCharacters(in: .whitespacesAndNewlines).allSatisfy { $0 == "x" }
+                !$0.isEmpty && $0.allSatisfy(\.isASCII)
+                    && $0.trimmingCharacters(in: .whitespacesAndNewlines).allSatisfy { $0 == "x" }
             }
 
         XCTAssertEqual(longLine?.count, 200)
@@ -78,10 +82,13 @@ final class SDFWriterPortTests: XCTestCase {
     func testUsesProgramNameInHeadersForV2000AndV3000Records() throws {
         let molecules = [singleCarbon(name: "small"), longCarbonChain(count: 1000, name: "large")]
 
-        let text = try CDKSDFWriter.write(molecules,
-                                          options: CDKSDFWriterOptions(programName: "Bioclipse"))
+        let text = try CDKSDFWriter.write(
+            molecules,
+            options: CDKSDFWriterOptions(programName: "Bioclipse"))
 
-        let records = text.components(separatedBy: "$$$$\n").filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        let records = text.components(separatedBy: "$$$$\n").filter {
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
         XCTAssertEqual(records.count, 2)
         XCTAssertTrue(records.allSatisfy { $0.contains("  Bioclip") })
     }
@@ -105,9 +112,10 @@ final class SDFWriterPortTests: XCTestCase {
     }
 
     private func singleCarbon(name: String) -> Molecule {
-        Molecule(name: name,
-                 atoms: [Atom(id: 1, element: "C", position: .zero)],
-                 bonds: [])
+        Molecule(
+            name: name,
+            atoms: [Atom(id: 1, element: "C", position: .zero)],
+            bonds: [])
     }
 
     private func longCarbonChain(count: Int, name: String) -> Molecule {
@@ -117,14 +125,18 @@ final class SDFWriterPortTests: XCTestCase {
         bonds.reserveCapacity(max(0, count - 1))
 
         for index in 0..<count {
-            atoms.append(Atom(id: index + 1,
-                              element: "C",
-                              position: CGPoint(x: Double(index) * 1.4, y: 0)))
+            atoms.append(
+                Atom(
+                    id: index + 1,
+                    element: "C",
+                    position: CGPoint(x: Double(index) * 1.4, y: 0)))
             if index > 0 {
-                bonds.append(Bond(id: index,
-                                  a1: index,
-                                  a2: index + 1,
-                                  order: .single))
+                bonds.append(
+                    Bond(
+                        id: index,
+                        a1: index,
+                        a2: index + 1,
+                        order: .single))
             }
         }
 

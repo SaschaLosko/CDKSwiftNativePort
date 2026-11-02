@@ -56,14 +56,14 @@ final class ChemFileImporterTests: XCTestCase {
 
     func testDispatchesMol2ByExtension() throws {
         let text = """
-        @<TRIPOS>MOLECULE
-        Test
-         1 0 0 0 0
-        SMALL
-        NO_CHARGES
-        @<TRIPOS>ATOM
-             1 C1 0.0 0.0 0.0 C.3 1 T 0.0
-        """
+            @<TRIPOS>MOLECULE
+            Test
+             1 0 0 0 0
+            SMALL
+            NO_CHARGES
+            @<TRIPOS>ATOM
+                 1 C1 0.0 0.0 0.0 C.3 1 T 0.0
+            """
 
         let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "mol2")
         XCTAssertEqual(molecules.count, 1)
@@ -74,10 +74,10 @@ final class ChemFileImporterTests: XCTestCase {
         let temporaryDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let fileURL = temporaryDirectory.appendingPathComponent("cdk_file_importer_test.xyz")
         let text = """
-        1
-        argon
-        Ar 0.0 0.0 0.0
-        """
+            1
+            argon
+            Ar 0.0 0.0 0.0
+            """
         try text.write(to: fileURL, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: fileURL) }
 
@@ -88,26 +88,26 @@ final class ChemFileImporterTests: XCTestCase {
 
     func testReadsReactionByExtension() throws {
         let text = """
-        $RXN
-        ImporterReaction
-          CDKSwiftNativePort
+            $RXN
+            ImporterReaction
+              CDKSwiftNativePort
 
-          1  1
-        $MOL
-        Reactant
-          CDK
+              1  1
+            $MOL
+            Reactant
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        $MOL
-        Product
-          CDK
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            $MOL
+            Product
+              CDK
 
-          1  0  0  0  0  0            999 V2000
-            0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-        M  END
-        """
+              1  0  0  0  0  0            999 V2000
+                0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+            M  END
+            """
 
         let reaction = try CDKFileImporter.readReaction(text: text, fileExtension: "rxn")
         XCTAssertEqual(reaction.reactantCount, 1)
@@ -129,9 +129,9 @@ final class ChemFileImporterTests: XCTestCase {
 
     func testReadsMultiRecordReactionSmilesAsReactionSet() throws {
         let text = """
-        CCO>O>CC=O
-        CC=O>>CCO
-        """
+            CCO>O>CC=O
+            CC=O>>CCO
+            """
 
         let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "rsmi")
         let hierarchy = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: "rsmi")
@@ -165,9 +165,9 @@ final class ChemFileImporterTests: XCTestCase {
 
     func testReadsMultiRecordRInChIAsReactionSet() throws {
         let text = """
-        RInChI=1.00.1S/C7H13BrN2O2/c1-3-7(8,4-2)5(11)10-6(9)12<>C7H14N2O2/c1-3-5(4-2)6(10)9-7(8)11/d+
-        RInChI=1.00.1S/C4H4O2/c1-2-3-4(5)6<>C4H5IO2/c1-3(5)2-4(6)7/d+
-        """
+            RInChI=1.00.1S/C7H13BrN2O2/c1-3-7(8,4-2)5(11)10-6(9)12<>C7H14N2O2/c1-3-5(4-2)6(10)9-7(8)11/d+
+            RInChI=1.00.1S/C4H4O2/c1-2-3-4(5)6<>C4H5IO2/c1-3(5)2-4(6)7/d+
+            """
 
         let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "rinchi")
         let hierarchy = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: "rinchi")
@@ -187,10 +187,10 @@ final class ChemFileImporterTests: XCTestCase {
 
     func testAutoDetectsRInChIFromPlainTextIgnoringAuxInfoLines() throws {
         let text = """
-        RInChI=1.00.1S/C4H4O2/c1-2-3-4(5)6<>C4H5IO2/c1-3(5)2-4(6)7/d+
-        RAuxInfo=1.00.1/unused
-        Long-RInChIKey=unused
-        """
+            RInChI=1.00.1S/C4H4O2/c1-2-3-4(5)6<>C4H5IO2/c1-3(5)2-4(6)7/d+
+            RAuxInfo=1.00.1/unused
+            Long-RInChIKey=unused
+            """
 
         let reaction = try CDKFileImporter.readReaction(text: text, fileExtension: "txt")
         XCTAssertEqual(reaction.reactantCount, 1)
@@ -200,37 +200,37 @@ final class ChemFileImporterTests: XCTestCase {
 
     func testReadsV3000ReactionByExtension() throws {
         let text = """
-        $RXN V3000
-        ImporterV3000
-          CDKSwiftNativePort
+            $RXN V3000
+            ImporterV3000
+              CDKSwiftNativePort
 
-        M  V30 COUNTS 1 1 1
-        M  V30 BEGIN REACTANT
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 1 0 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C 0.0 0.0 0.0 1
-        M  V30 END ATOM
-        M  V30 END CTAB
-        M  V30 END REACTANT
-        M  V30 BEGIN PRODUCT
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 1 0 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 O 0.0 0.0 0.0 1
-        M  V30 END ATOM
-        M  V30 END CTAB
-        M  V30 END PRODUCT
-        M  V30 BEGIN AGENT
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 1 0 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 N 0.0 0.0 0.0 0
-        M  V30 END ATOM
-        M  V30 END CTAB
-        M  V30 END AGENT
-        M  END
-        """
+            M  V30 COUNTS 1 1 1
+            M  V30 BEGIN REACTANT
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 1 0 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 C 0.0 0.0 0.0 1
+            M  V30 END ATOM
+            M  V30 END CTAB
+            M  V30 END REACTANT
+            M  V30 BEGIN PRODUCT
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 1 0 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 O 0.0 0.0 0.0 1
+            M  V30 END ATOM
+            M  V30 END CTAB
+            M  V30 END PRODUCT
+            M  V30 BEGIN AGENT
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 1 0 0 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 N 0.0 0.0 0.0 0
+            M  V30 END ATOM
+            M  V30 END CTAB
+            M  V30 END AGENT
+            M  END
+            """
 
         let reaction = try CDKFileImporter.readReaction(text: text, fileExtension: "rxn")
         XCTAssertEqual(reaction.name, "ImporterV3000")
@@ -240,10 +240,12 @@ final class ChemFileImporterTests: XCTestCase {
     }
 
     func testReadsReactionCMLByCMLExtension() throws {
-        let reaction = try CDKFileImporter.readReaction(text: CMLReactionFixtures.reactionWithProperties,
-                                                        fileExtension: "cml")
-        let hierarchy = try CDKFileImporter.readReactionHierarchy(text: CMLReactionFixtures.reactionWithProperties,
-                                                                  fileExtension: "cml")
+        let reaction = try CDKFileImporter.readReaction(
+            text: CMLReactionFixtures.reactionWithProperties,
+            fileExtension: "cml")
+        let hierarchy = try CDKFileImporter.readReactionHierarchy(
+            text: CMLReactionFixtures.reactionWithProperties,
+            fileExtension: "cml")
 
         XCTAssertEqual(reaction.id, "reaction.2")
         XCTAssertEqual(reaction.reactantCount, 1)
@@ -254,15 +256,17 @@ final class ChemFileImporterTests: XCTestCase {
         }
         XCTAssertEqual(hierarchyList.reactions.map(\.id), ["reaction.2"])
 
-        let molecules = try CDKFileImporter.readMolecules(text: CMLReactionFixtures.reactionWithProperties,
-                                                          fileExtension: "cml")
+        let molecules = try CDKFileImporter.readMolecules(
+            text: CMLReactionFixtures.reactionWithProperties,
+            fileExtension: "cml")
         XCTAssertEqual(molecules.count, 2)
         XCTAssertEqual(molecules.map(\.externalID), ["react", "product"])
     }
 
     func testReadsReactionHierarchyPreservingSchemeShape() throws {
-        let hierarchy = try CDKFileImporter.readReactionHierarchy(text: CMLReactionFixtures.reactionSchemeStepList,
-                                                                  fileExtension: "cml")
+        let hierarchy = try CDKFileImporter.readReactionHierarchy(
+            text: CMLReactionFixtures.reactionSchemeStepList,
+            fileExtension: "cml")
 
         guard case .scheme(let scheme) = hierarchy else {
             return XCTFail("Expected reaction scheme hierarchy root.")
@@ -275,15 +279,17 @@ final class ChemFileImporterTests: XCTestCase {
     }
 
     func testAutoDetectsReactionCMLFromPlainText() throws {
-        let reaction = try CDKFileImporter.readReaction(text: CMLReactionFixtures.fragmentReaction,
-                                                        fileExtension: "txt")
+        let reaction = try CDKFileImporter.readReaction(
+            text: CMLReactionFixtures.fragmentReaction,
+            fileExtension: "txt")
         XCTAssertEqual(reaction.reactantCount, 1)
         XCTAssertEqual(reaction.productCount, 1)
         XCTAssertEqual(reaction.agentCount, 1)
     }
 
     func testReadsMappedReactionSmilesByRSMIExtension() throws {
-        let text = "[CH3:1][C:2](=[O:3])[CH2:4][S:5][CH2:6][CH:7]=[CH2:8].[CH3:9][CH:10]([NH2:11])[CH:12]([OH:13])[CH:14]=[CH2:15]>>[CH3:1][C:2](=[O:3])[CH2:4][S:5][CH2:6][CH:7]=[CH:14][CH:12]([CH:10]([CH3:9])[NH2:11])[OH:13]"
+        let text =
+            "[CH3:1][C:2](=[O:3])[CH2:4][S:5][CH2:6][CH:7]=[CH2:8].[CH3:9][CH:10]([NH2:11])[CH:12]([OH:13])[CH:14]=[CH2:15]>>[CH3:1][C:2](=[O:3])[CH2:4][S:5][CH2:6][CH:7]=[CH:14][CH:12]([CH:10]([CH3:9])[NH2:11])[OH:13]"
 
         let molecules = try CDKFileImporter.readMolecules(text: text, fileExtension: "rsmi")
         XCTAssertEqual(molecules.count, 3)

@@ -5,8 +5,10 @@ public enum CDKReactionSchemeManipulator {
         getAllAtomContainers(scheme, accumulatingInto: [])
     }
 
-    public static func getAllAtomContainers(_ scheme: CDKReactionScheme,
-                                            accumulatingInto molecules: [Molecule]) -> [Molecule] {
+    public static func getAllAtomContainers(
+        _ scheme: CDKReactionScheme,
+        accumulatingInto molecules: [Molecule]
+    ) -> [Molecule] {
         var collected = molecules
         appendMolecules(from: scheme, into: &collected)
         return collected
@@ -19,10 +21,11 @@ public enum CDKReactionSchemeManipulator {
     }
 
     public static func getAllReactions(_ scheme: CDKReactionScheme) -> CDKReactionSet {
-        CDKReactionSet(id: scheme.id,
-                       name: scheme.name,
-                       members: scheme.flattenedReactions.map(CDKReactionSetMember.reaction),
-                       properties: scheme.properties)
+        CDKReactionSet(
+            id: scheme.id,
+            name: scheme.name,
+            members: scheme.flattenedReactions.map(CDKReactionSetMember.reaction),
+            properties: scheme.properties)
     }
 
     public static func createReactionScheme(_ reactionSet: CDKReactionSet) -> CDKReactionScheme {
@@ -38,10 +41,11 @@ public enum CDKReactionSchemeManipulator {
             }
         }
 
-        return CDKReactionScheme(id: reactionSet.id,
-                                 name: reactionSet.name,
-                                 entries: entries,
-                                 properties: reactionSet.properties)
+        return CDKReactionScheme(
+            id: reactionSet.id,
+            name: reactionSet.name,
+            entries: entries,
+            properties: reactionSet.properties)
     }
 
     public static func extractTopReactions(_ scheme: CDKReactionScheme) -> CDKReactionSet {
@@ -50,9 +54,11 @@ public enum CDKReactionSchemeManipulator {
         return CDKReactionSet(reactions: top)
     }
 
-    public static func getAtomContainerSet(originMol: Molecule,
-                                           finalMol: Molecule,
-                                           reactionScheme: CDKReactionScheme) -> [[Molecule]] {
+    public static func getAtomContainerSet(
+        originMol: Molecule,
+        finalMol: Molecule,
+        reactionScheme: CDKReactionScheme
+    ) -> [[Molecule]] {
         let reactions = reactionScheme.flattenedReactions
         guard reactions.contains(where: { $0.reactants.contains(originMol) }) else { return [] }
 
@@ -159,8 +165,10 @@ public enum CDKReactionSchemeManipulator {
         }
     }
 
-    private static func buildScheme(after reaction: CDKReaction,
-                                    in reactions: [CDKReaction]) -> CDKReactionScheme {
+    private static func buildScheme(
+        after reaction: CDKReaction,
+        in reactions: [CDKReaction]
+    ) -> CDKReactionScheme {
         let direct = directSubsequents(of: reaction, in: reactions)
         guard !direct.isEmpty else {
             return CDKReactionScheme(entries: [])
@@ -177,8 +185,10 @@ public enum CDKReactionSchemeManipulator {
         return CDKReactionScheme(entries: entries)
     }
 
-    private static func directPrecursors(of reaction: CDKReaction,
-                                         in reactions: [CDKReaction]) -> [CDKReaction] {
+    private static func directPrecursors(
+        of reaction: CDKReaction,
+        in reactions: [CDKReaction]
+    ) -> [CDKReaction] {
         reactions.filter { candidate in
             guard candidate != reaction else { return false }
             return candidate.products.contains { product in
@@ -187,8 +197,10 @@ public enum CDKReactionSchemeManipulator {
         }
     }
 
-    private static func directSubsequents(of reaction: CDKReaction,
-                                          in reactions: [CDKReaction]) -> [CDKReaction] {
+    private static func directSubsequents(
+        of reaction: CDKReaction,
+        in reactions: [CDKReaction]
+    ) -> [CDKReaction] {
         reactions.filter { candidate in
             guard candidate != reaction else { return false }
             return candidate.reactants.contains { reactant in

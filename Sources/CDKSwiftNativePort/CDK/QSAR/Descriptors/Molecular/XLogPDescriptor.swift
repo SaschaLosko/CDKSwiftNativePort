@@ -8,9 +8,11 @@ import Foundation
 ///   implicit hydrogens into virtual nodes, matching CDK's "explicit H required"
 ///   execution model.
 public enum CDKXLogPDescriptor {
-    public static func calculate(for molecule: Molecule,
-                                 checkAromaticity: Bool = true,
-                                 salicylFlag: Bool = false) -> Double? {
+    public static func calculate(
+        for molecule: Molecule,
+        checkAromaticity: Bool = true,
+        salicylFlag: Bool = false
+    ) -> Double? {
         guard !molecule.atoms.isEmpty else { return nil }
         let context = XLogPContext(molecule: molecule, checkAromaticity: checkAromaticity)
         return context.calculate(salicylFlag: salicylFlag)
@@ -75,11 +77,12 @@ private struct XLogPContext {
         for atom in molecule.atoms {
             let canonical = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
             let aromatic = aromaticAtomIDs.contains(atom.id)
-            builtNodes[atom.id] = Node(id: atom.id,
-                                       symbol: canonical,
-                                       charge: atom.charge,
-                                       aromatic: aromatic,
-                                       isVirtualHydrogen: false)
+            builtNodes[atom.id] = Node(
+                id: atom.id,
+                symbol: canonical,
+                charge: atom.charge,
+                aromatic: aromatic,
+                isVirtualHydrogen: false)
             order.append(atom.id)
             adjacency[atom.id] = adjacency[atom.id] ?? []
         }
@@ -100,11 +103,12 @@ private struct XLogPContext {
                 let virtualID = nextVirtualID
                 nextVirtualID -= 1
 
-                builtNodes[virtualID] = Node(id: virtualID,
-                                             symbol: "H",
-                                             charge: 0,
-                                             aromatic: false,
-                                             isVirtualHydrogen: true)
+                builtNodes[virtualID] = Node(
+                    id: virtualID,
+                    symbol: "H",
+                    charge: 0,
+                    aromatic: false,
+                    isVirtualHydrogen: true)
                 order.append(virtualID)
 
                 adjacency[virtualID] = [atom.id]
@@ -375,7 +379,9 @@ private struct XLogPContext {
                         }
                     } else if bondCount == 3 {
                         if hsCount == 0 {
-                            if isAtomAromatic(atomID) || (ringContains(atomID) && smallestRingSize(atomID) > 3 && piSystemsCount(atomID) >= 1) {
+                            if isAtomAromatic(atomID)
+                                || (ringContains(atomID) && smallestRingSize(atomID) > 3 && piSystemsCount(atomID) >= 1)
+                            {
                                 if atomTypeXCount(atomID) == 0 {
                                     xlogP += 0.881
                                 } else {
@@ -393,7 +399,10 @@ private struct XLogPContext {
                             }
                         } else if hsCount == 1 {
                             if atomTypeXCount(atomID) == 0 {
-                                if isAtomAromatic(atomID) || (ringContains(atomID) && smallestRingSize(atomID) > 3 && piSystemsCount(atomID) >= 2) {
+                                if isAtomAromatic(atomID)
+                                    || (ringContains(atomID) && smallestRingSize(atomID) > 3
+                                        && piSystemsCount(atomID) >= 2)
+                                {
                                     xlogP += 0.545
                                     hBondDonors.append(atomID)
                                 } else {
@@ -438,7 +447,9 @@ private struct XLogPContext {
                     if !presenceOfHydroxy(atomID) {
                         hBondAcceptors.append(atomID)
                     }
-                } else if (bondCount == 1 && hsCount == 0 && (presenceOfNitro(atomID) || presenceOfCarbonyl(atomID) == 1)) || presenceOfSulfat(atomID) {
+                } else if (bondCount == 1 && hsCount == 0
+                    && (presenceOfNitro(atomID) || presenceOfCarbonyl(atomID) == 1)) || presenceOfSulfat(atomID)
+                {
                     xlogP -= 0.399
                     if !presenceOfHydroxy(atomID) {
                         hBondAcceptors.append(atomID)
@@ -667,8 +678,9 @@ private struct XLogPContext {
         neighbors(of: atomID).reduce(0) { partial, neighbor in
             let symbol = canonicalSymbol(neighbor).uppercased()
             guard (symbol == "N" || symbol == "O"),
-                  !isInAromaticRing(neighbor),
-                  bondOrder(atomID, neighbor) != .double else {
+                !isInAromaticRing(neighbor),
+                bondOrder(atomID, neighbor) != .double
+            else {
                 return partial
             }
             return partial + 1
@@ -703,7 +715,8 @@ private struct XLogPContext {
     private func doubleBondedCarbonsCount(_ atomID: Int) -> Int {
         neighbors(of: atomID).reduce(0) { partial, neighbor in
             guard canonicalSymbol(neighbor).uppercased() == "C",
-                  bondOrder(atomID, neighbor) == .double else {
+                bondOrder(atomID, neighbor) == .double
+            else {
                 return partial
             }
             return partial + 1
@@ -747,8 +760,9 @@ private struct XLogPContext {
     private func doubleBondedNitrogensCount(_ atomID: Int) -> Int {
         neighbors(of: atomID).reduce(0) { partial, neighbor in
             guard canonicalSymbol(neighbor).uppercased() == "N",
-                  !isAtomAromatic(neighbor),
-                  bondOrder(atomID, neighbor) == .double else {
+                !isAtomAromatic(neighbor),
+                bondOrder(atomID, neighbor) == .double
+            else {
                 return partial
             }
             return partial + 1
@@ -925,7 +939,8 @@ private struct XLogPContext {
     }
 
     private func hasTerminalAcidOxygen(_ atomID: Int) -> Bool {
-        for oxygen in neighbors(of: atomID) where canonicalSymbol(oxygen).uppercased() == "O" && bondOrder(atomID, oxygen) == .single {
+        for oxygen in neighbors(of: atomID)
+        where canonicalSymbol(oxygen).uppercased() == "O" && bondOrder(atomID, oxygen) == .single {
             let bonds = connectedBondsCount(oxygen)
             let hs = hydrogenCount(oxygen)
             let q = charge(oxygen)
@@ -978,7 +993,9 @@ private struct XLogPContext {
             guard hasCarbonylOxygen(carbonylCarbon) else { continue }
             guard hasTerminalAcidOxygen(carbonylCarbon) else { continue }
 
-            let aromaticAttachment = neighbors(of: carbonylCarbon).first { canonicalSymbol($0).uppercased() == "C" && isAtomAromatic($0) }
+            let aromaticAttachment = neighbors(of: carbonylCarbon).first {
+                canonicalSymbol($0).uppercased() == "C" && isAtomAromatic($0)
+            }
             guard let aromaticAttachment else { continue }
 
             for cycle in aromaticCycles where cycle.contains(aromaticAttachment) {
@@ -996,12 +1013,10 @@ private struct XLogPContext {
 
     private func hasOrthoOxygenPair() -> Bool {
         for carbonA in nodeOrder
-        where canonicalSymbol(carbonA).uppercased() == "C" &&
-            isInAromaticRing(carbonA) {
+        where canonicalSymbol(carbonA).uppercased() == "C" && isInAromaticRing(carbonA) {
             guard hasOxygenSubstituent(on: carbonA) else { continue }
             for carbonB in neighbors(of: carbonA)
-            where canonicalSymbol(carbonB).uppercased() == "C" &&
-                isInAromaticRing(carbonB) {
+            where canonicalSymbol(carbonB).uppercased() == "C" && isInAromaticRing(carbonB) {
                 if hasOxygenSubstituent(on: carbonB) {
                     return true
                 }
@@ -1020,7 +1035,8 @@ private struct XLogPContext {
     }
 
     private func hasHydroxySubstituent(on carbonID: Int, excluding cycle: [Int]) -> Bool {
-        for oxygen in neighbors(of: carbonID) where !cycle.contains(oxygen) && canonicalSymbol(oxygen).uppercased() == "O" {
+        for oxygen in neighbors(of: carbonID)
+        where !cycle.contains(oxygen) && canonicalSymbol(oxygen).uppercased() == "O" {
             if bondOrder(carbonID, oxygen) == .single, hydrogenCount(oxygen) >= 1 {
                 return true
             }
@@ -1030,7 +1046,8 @@ private struct XLogPContext {
 
     private func areAdjacentInCycle(a: Int, b: Int, cycle: [Int]) -> Bool {
         guard let idxA = cycle.firstIndex(of: a),
-              let idxB = cycle.firstIndex(of: b) else {
+            let idxB = cycle.firstIndex(of: b)
+        else {
             return false
         }
         let n = cycle.count
@@ -1039,8 +1056,9 @@ private struct XLogPContext {
 
     private func isBondInRing(_ a: Int, _ b: Int) -> Bool {
         guard let nodeA = nodes[a], let nodeB = nodes[b],
-              !nodeA.isVirtualHydrogen, !nodeB.isVirtualHydrogen,
-              let sourceBond = sourceMolecule.bond(between: a, and: b) else {
+            !nodeA.isVirtualHydrogen, !nodeB.isVirtualHydrogen,
+            let sourceBond = sourceMolecule.bond(between: a, and: b)
+        else {
             return false
         }
         return CDKDescriptorSupport.isBondInRing(sourceBond, in: sourceMolecule)

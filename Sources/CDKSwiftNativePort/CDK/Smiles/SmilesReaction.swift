@@ -84,14 +84,16 @@ public struct CDKReaction: Equatable {
         reactantParticipants + agentParticipants + productParticipants
     }
 
-    public init(reactants: [Molecule],
-                agents: [Molecule],
-                products: [Molecule],
-                id: String? = nil,
-                direction: CDKReactionDirection = .forward,
-                name: String? = nil,
-                properties: [String: String] = [:],
-                cxState: CDKCxSmilesState? = nil) {
+    public init(
+        reactants: [Molecule],
+        agents: [Molecule],
+        products: [Molecule],
+        id: String? = nil,
+        direction: CDKReactionDirection = .forward,
+        name: String? = nil,
+        properties: [String: String] = [:],
+        cxState: CDKCxSmilesState? = nil
+    ) {
         self.id = id
         self.reactantParticipants = reactants.map { molecule in
             CDKReactionParticipant(molecule: molecule, role: .reactant)
@@ -108,14 +110,16 @@ public struct CDKReaction: Equatable {
         self.cxState = cxState
     }
 
-    public init(reactantParticipants: [CDKReactionParticipant],
-                agentParticipants: [CDKReactionParticipant],
-                productParticipants: [CDKReactionParticipant],
-                id: String? = nil,
-                direction: CDKReactionDirection = .forward,
-                name: String? = nil,
-                properties: [String: String] = [:],
-                cxState: CDKCxSmilesState? = nil) {
+    public init(
+        reactantParticipants: [CDKReactionParticipant],
+        agentParticipants: [CDKReactionParticipant],
+        productParticipants: [CDKReactionParticipant],
+        id: String? = nil,
+        direction: CDKReactionDirection = .forward,
+        name: String? = nil,
+        properties: [String: String] = [:],
+        cxState: CDKCxSmilesState? = nil
+    ) {
         self.id = id
         self.reactantParticipants = Self.normalizedParticipants(reactantParticipants, role: .reactant)
         self.agentParticipants = Self.normalizedParticipants(agentParticipants, role: .agent)
@@ -126,18 +130,23 @@ public struct CDKReaction: Equatable {
         self.cxState = cxState
     }
 
-    public init(participants: [CDKReactionParticipant],
-                id: String? = nil,
-                direction: CDKReactionDirection = .forward,
-                name: String? = nil,
-                properties: [String: String] = [:],
-                cxState: CDKCxSmilesState? = nil) {
+    public init(
+        participants: [CDKReactionParticipant],
+        id: String? = nil,
+        direction: CDKReactionDirection = .forward,
+        name: String? = nil,
+        properties: [String: String] = [:],
+        cxState: CDKCxSmilesState? = nil
+    ) {
         self.id = id
-        self.reactantParticipants = participants
+        self.reactantParticipants =
+            participants
             .filter { $0.role == .reactant }
-        self.agentParticipants = participants
+        self.agentParticipants =
+            participants
             .filter { $0.role == .agent }
-        self.productParticipants = participants
+        self.productParticipants =
+            participants
             .filter { $0.role == .product }
         self.direction = direction
         self.name = name
@@ -145,12 +154,15 @@ public struct CDKReaction: Equatable {
         self.cxState = cxState
     }
 
-    private static func normalizedParticipants(_ participants: [CDKReactionParticipant],
-                                               role: CDKReactionRole) -> [CDKReactionParticipant] {
+    private static func normalizedParticipants(
+        _ participants: [CDKReactionParticipant],
+        role: CDKReactionRole
+    ) -> [CDKReactionParticipant] {
         participants.map { participant in
-            CDKReactionParticipant(molecule: participant.molecule,
-                                   role: role,
-                                   stoichiometry: participant.stoichiometry)
+            CDKReactionParticipant(
+                molecule: participant.molecule,
+                role: role,
+                stoichiometry: participant.stoichiometry)
         }
     }
 }

@@ -1,6 +1,6 @@
 import XCTest
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 @testable import CDKSwiftNativePort
 

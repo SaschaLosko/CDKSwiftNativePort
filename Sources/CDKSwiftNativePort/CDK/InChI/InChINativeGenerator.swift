@@ -43,9 +43,11 @@ enum CDKInChINativeGenerator {
             return max(lhs.a1, lhs.a2) < max(rhs.a1, rhs.a2)
         }
 
-        let numbering = sortedAtoms.isEmpty ? "" : sortedAtoms.enumerated().map { "\($0.offset + 1)" }.joined(separator: ",")
+        let numbering =
+            sortedAtoms.isEmpty ? "" : sortedAtoms.enumerated().map { "\($0.offset + 1)" }.joined(separator: ",")
         let atomIndexByID = Dictionary(uniqueKeysWithValues: sortedAtoms.enumerated().map { ($1.id, $0 + 1) })
-        let atomPayload = sortedAtoms
+        let atomPayload =
+            sortedAtoms
             .map { atom in
                 var token = atom.element
                 if let isotope = atom.isotopeMassNumber {
@@ -59,7 +61,8 @@ enum CDKInChINativeGenerator {
                 return token
             }
             .joined()
-        let bondPayload = sortedBonds
+        let bondPayload =
+            sortedBonds
             .map { bond in
                 let order: String
                 switch bond.order {

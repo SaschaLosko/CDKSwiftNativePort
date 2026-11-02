@@ -23,7 +23,8 @@ public enum CDKCMLWriter {
             let atoms = molecule.atoms.sorted { $0.id < $1.id }
             for atom in atoms {
                 let pseudoLabel = pseudoLabel(for: atom)
-                let elementType = pseudoLabel == nil
+                let elementType =
+                    pseudoLabel == nil
                     ? normalizedElementType(for: atom)
                     : "Du"
 
@@ -31,7 +32,7 @@ public enum CDKCMLWriter {
                     "id=\"a\(atom.id)\"",
                     "elementType=\"\(xmlEsc(elementType))\"",
                     "x2=\"\(fmt(Double(atom.position.x)))\"",
-                    "y2=\"\(fmt(Double(atom.position.y)))\""
+                    "y2=\"\(fmt(Double(atom.position.y)))\"",
                 ]
                 if has3D {
                     attrs.append("x3=\"\(fmt(Double(atom.position.x)))\"")
@@ -85,13 +86,14 @@ public enum CDKCMLWriter {
                     childLines.append("        <bondType dictRef=\"cdk:aromaticBond\" />")
                 }
                 if let stereo = cmlBondStereo(for: bond.stereo) {
-                    childLines.append("        <bondStereo dictRef=\"\(stereo.dictRef)\">\(stereo.content)</bondStereo>")
+                    childLines.append(
+                        "        <bondStereo dictRef=\"\(stereo.dictRef)\">\(stereo.content)</bondStereo>")
                 }
 
                 let attrs = [
                     "id=\"b\(idxBond + 1)\"",
                     "atomRefs2=\"a\(bond.a1) a\(bond.a2)\"",
-                    "order=\"\(order)\""
+                    "order=\"\(order)\"",
                 ]
 
                 if childLines.isEmpty {
@@ -140,7 +142,8 @@ public enum CDKCMLWriter {
 
     private static func pseudoLabel(for atom: Atom) -> String? {
         if let alias = atom.aliasLabel?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !alias.isEmpty {
+            !alias.isEmpty
+        {
             return alias
         }
 

@@ -1,8 +1,10 @@
 import Foundation
 
 public enum CDKMolecularFormulaDescriptor {
-    public static func calculate(for molecule: Molecule,
-                                 includeImplicitHydrogens: Bool = true) -> String {
+    public static func calculate(
+        for molecule: Molecule,
+        includeImplicitHydrogens: Bool = true
+    ) -> String {
         var composition: [String: Int] = [:]
 
         for atom in molecule.atoms {

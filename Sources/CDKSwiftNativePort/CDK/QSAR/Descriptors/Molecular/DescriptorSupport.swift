@@ -78,9 +78,10 @@ enum CDKDescriptorSupport {
     }
 
     static func heavyAtomIDs(in molecule: Molecule) -> Set<Int> {
-        Set(molecule.atoms.compactMap { atom in
-            canonicalElementSymbol(atom.element).uppercased() == "H" ? nil : atom.id
-        })
+        Set(
+            molecule.atoms.compactMap { atom in
+                canonicalElementSymbol(atom.element).uppercased() == "H" ? nil : atom.id
+            })
     }
 
     static func heavyAtomConnectedComponentCount(in molecule: Molecule) -> Int {
@@ -94,7 +95,8 @@ enum CDKDescriptorSupport {
             var stack = [seed]
             seen.insert(seed)
             while let current = stack.popLast() {
-                for neighbor in molecule.neighbors(of: current) where heavyIDs.contains(neighbor) && !seen.contains(neighbor) {
+                for neighbor in molecule.neighbors(of: current)
+                where heavyIDs.contains(neighbor) && !seen.contains(neighbor) {
                     seen.insert(neighbor)
                     stack.append(neighbor)
                 }
@@ -108,10 +110,12 @@ enum CDKDescriptorSupport {
         return hasPath(from: bond.a1, to: bond.a2, in: molecule, excludingBondID: bond.id)
     }
 
-    private static func hasPath(from source: Int,
-                                to target: Int,
-                                in molecule: Molecule,
-                                excludingBondID: Int) -> Bool {
+    private static func hasPath(
+        from source: Int,
+        to target: Int,
+        in molecule: Molecule,
+        excludingBondID: Int
+    ) -> Bool {
         var seen: Set<Int> = [source]
         var stack: [Int] = [source]
 
@@ -148,7 +152,8 @@ enum CDKDescriptorSupport {
 
         guard molecule.bond(between: carbonID, and: nitrogenID)?.id == bond.id else { return false }
 
-        for carbonBond in molecule.bonds(forAtom: carbonID) where carbonBond.id != bond.id && carbonBond.order == .double {
+        for carbonBond in molecule.bonds(forAtom: carbonID)
+        where carbonBond.id != bond.id && carbonBond.order == .double {
             let neighborID = carbonBond.a1 == carbonID ? carbonBond.a2 : carbonBond.a1
             guard let neighbor = molecule.atom(id: neighborID) else { continue }
             let neighborSymbol = canonicalElementSymbol(neighbor.element).uppercased()
@@ -260,7 +265,7 @@ enum CDKDescriptorSupport {
         "AU": 196.966569,
         "HG": 200.59,
         "PB": 207.2,
-        "BI": 208.9804
+        "BI": 208.9804,
     ]
 
     private static let monoisotopicMassByElement: [String: Double] = [
@@ -288,6 +293,6 @@ enum CDKDescriptorSupport {
         "PT": 194.9647917,
         "AU": 196.96656879,
         "HG": 201.9706434,
-        "PB": 207.9766525
+        "PB": 207.9766525,
     ]
 }

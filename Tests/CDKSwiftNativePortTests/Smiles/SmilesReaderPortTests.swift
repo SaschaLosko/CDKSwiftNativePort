@@ -4,9 +4,9 @@ import XCTest
 final class SmilesReaderPortTests: XCTestCase {
     func testReadsMultipleSmilesLinesWithNames() throws {
         let text = """
-        CCO ethanol
-        c1ccccc1 benzene
-        """
+            CCO ethanol
+            c1ccccc1 benzene
+            """
 
         let molecules = try CDKSMILESReader.read(text: text)
         XCTAssertEqual(molecules.count, 2)
@@ -19,10 +19,10 @@ final class SmilesReaderPortTests: XCTestCase {
     func testIgnoresBlankAndCommentLines() throws {
         let text = """
 
-        # comment
-        // another comment
-        C
-        """
+            # comment
+            // another comment
+            C
+            """
 
         let molecules = try CDKSMILESReader.read(text: text)
         XCTAssertEqual(molecules.count, 1)
@@ -45,9 +45,9 @@ final class SmilesReaderPortTests: XCTestCase {
     func testThrowsOnNoMolecules() {
         let text = """
 
-        # comment
-        // comment
-        """
+            # comment
+            // comment
+            """
 
         XCTAssertThrowsError(try CDKSMILESReader.read(text: text))
     }

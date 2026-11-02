@@ -1,5 +1,5 @@
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 import Foundation
 
@@ -35,10 +35,11 @@ public struct CDKRenderColor: Hashable, Sendable {
 
     public func mixed(with other: CDKRenderColor, ratio: CGFloat = 0.5) -> CDKRenderColor {
         let t = ratio.clamped(to: 0...1)
-        return CDKRenderColor(red: red * (1 - t) + other.red * t,
-                              green: green * (1 - t) + other.green * t,
-                              blue: blue * (1 - t) + other.blue * t,
-                              alpha: alpha * (1 - t) + other.alpha * t)
+        return CDKRenderColor(
+            red: red * (1 - t) + other.red * t,
+            green: green * (1 - t) + other.green * t,
+            blue: blue * (1 - t) + other.blue * t,
+            alpha: alpha * (1 - t) + other.alpha * t)
     }
 
     public func svgHexRGB() -> String {
@@ -51,9 +52,10 @@ public struct CDKRenderColor: Hashable, Sendable {
     public static let ink = CDKRenderColor(red: 0.07, green: 0.07, blue: 0.09)
     public static let aromaticInk = CDKRenderColor(red: 0.14, green: 0.14, blue: 0.16)
     public static let grid = CDKRenderColor(red: 0.50, green: 0.50, blue: 0.54)
-    public static let selectionHighlight = CDKRenderColor(red: 0x49 / 255.0,
-                                                          green: 0xDF / 255.0,
-                                                          blue: 0xFF / 255.0)
+    public static let selectionHighlight = CDKRenderColor(
+        red: 0x49 / 255.0,
+        green: 0xDF / 255.0,
+        blue: 0xFF / 255.0)
     public static let outerGlowHighlight = CDKRenderColor(red: 0.99, green: 0.82, blue: 0.32)
 }
 
@@ -62,9 +64,11 @@ public enum CDKRenderingStyleResolver {
         style.highlightStyle == .colored
     }
 
-    public static func atomColor(for atom: Atom,
-                                 style: RenderStyle,
-                                 highlightedAtomIDs: Set<Int> = []) -> CDKRenderColor {
+    public static func atomColor(
+        for atom: Atom,
+        style: RenderStyle,
+        highlightedAtomIDs: Set<Int> = []
+    ) -> CDKRenderColor {
         if usesColoredHighlights(style: style), highlightedAtomIDs.contains(atom.id) {
             return .selectionHighlight
         }
@@ -81,10 +85,12 @@ public enum CDKRenderingStyleResolver {
         }
     }
 
-    public static func bondColor(for bond: Bond,
-                                 molecule: Molecule,
-                                 style: RenderStyle,
-                                 highlightedBondIDs: Set<Int> = []) -> CDKRenderColor {
+    public static func bondColor(
+        for bond: Bond,
+        molecule: Molecule,
+        style: RenderStyle,
+        highlightedBondIDs: Set<Int> = []
+    ) -> CDKRenderColor {
         if usesColoredHighlights(style: style), highlightedBondIDs.contains(bond.id) {
             return .selectionHighlight
         }
@@ -93,7 +99,8 @@ public enum CDKRenderingStyleResolver {
             return bond.order == .aromatic ? .aromaticInk : .ink
         }
         guard let a1 = molecule.atoms.first(where: { $0.id == bond.a1 }),
-              let a2 = molecule.atoms.first(where: { $0.id == bond.a2 }) else {
+            let a2 = molecule.atoms.first(where: { $0.id == bond.a2 })
+        else {
             return bond.order == .aromatic ? .aromaticInk : .ink
         }
         let c1 = atomColor(for: a1, style: style)
@@ -101,18 +108,22 @@ public enum CDKRenderingStyleResolver {
         return c1.mixed(with: c2, ratio: 0.5)
     }
 
-    public static func aromaticRingColor(atomIDs: [Int],
-                                         molecule: Molecule,
-                                         style: RenderStyle,
-                                         highlightedBondIDs: Set<Int> = []) -> CDKRenderColor {
+    public static func aromaticRingColor(
+        atomIDs: [Int],
+        molecule: Molecule,
+        style: RenderStyle,
+        highlightedBondIDs: Set<Int> = []
+    ) -> CDKRenderColor {
         if usesColoredHighlights(style: style),
-           atomIDs.count >= 3,
-           !highlightedBondIDs.isEmpty {
+            atomIDs.count >= 3,
+            !highlightedBondIDs.isEmpty
+        {
             for index in 0..<atomIDs.count {
                 let atom1 = atomIDs[index]
                 let atom2 = atomIDs[(index + 1) % atomIDs.count]
                 if let bond = molecule.bond(between: atom1, and: atom2),
-                   highlightedBondIDs.contains(bond.id) {
+                    highlightedBondIDs.contains(bond.id)
+                {
                     return .selectionHighlight
                 }
             }
@@ -129,10 +140,11 @@ public enum CDKRenderingStyleResolver {
             (r: acc.r + color.red, g: acc.g + color.green, b: acc.b + color.blue, a: acc.a + color.alpha)
         }
         let count = CGFloat(colors.count)
-        return CDKRenderColor(red: sum.r / count,
-                              green: sum.g / count,
-                              blue: sum.b / count,
-                              alpha: sum.a / count)
+        return CDKRenderColor(
+            red: sum.r / count,
+            green: sum.g / count,
+            blue: sum.b / count,
+            alpha: sum.a / count)
     }
 
     private static func cdk2DPaletteColor(symbol: String) -> CDKRenderColor {
@@ -186,7 +198,7 @@ public enum CDKRenderingStyleResolver {
             CDKRenderColor(red: 0.87, green: 0.35, blue: 0.60),
             CDKRenderColor(red: 0.53, green: 0.39, blue: 0.24),
             CDKRenderColor(red: 0.18, green: 0.55, blue: 0.47),
-            CDKRenderColor(red: 0.38, green: 0.38, blue: 0.92)
+            CDKRenderColor(red: 0.38, green: 0.38, blue: 0.92),
         ]
         let idx = abs(mapNumber) % palette.count
         return palette[idx]

@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 public enum CDKHighlightStyle: String, CaseIterable, Hashable {
@@ -26,20 +26,22 @@ public struct RenderStyle: Hashable {
     public var stereoAttenuation: CGFloat = 1.0
     public var hashedStereoAttenuation: CGFloat = 1.0
 
-    public init(showCarbons: Bool = false,
-                showImplicitHydrogens: Bool = true,
-                showExplicitHydrogens: Bool = false,
-                showAtomIDs: Bool = false,
-                showAtomMapNumbers: Bool = false,
-                atomColoringMode: CDKAtomColoringMode = .monochrome,
-                highlightStyle: CDKHighlightStyle = .colored,
-                colorBondsByAtom: Bool = false,
-                aromaticDisplayMode: CDKAromaticDisplayMode = .innerLine,
-                bondWidth: CGFloat = 1.95,
-                fontSize: CGFloat = 21.0,
-                padding: CGFloat = 24.0,
-                stereoAttenuation: CGFloat = 1.0,
-                hashedStereoAttenuation: CGFloat = 1.0) {
+    public init(
+        showCarbons: Bool = false,
+        showImplicitHydrogens: Bool = true,
+        showExplicitHydrogens: Bool = false,
+        showAtomIDs: Bool = false,
+        showAtomMapNumbers: Bool = false,
+        atomColoringMode: CDKAtomColoringMode = .monochrome,
+        highlightStyle: CDKHighlightStyle = .colored,
+        colorBondsByAtom: Bool = false,
+        aromaticDisplayMode: CDKAromaticDisplayMode = .innerLine,
+        bondWidth: CGFloat = 1.95,
+        fontSize: CGFloat = 21.0,
+        padding: CGFloat = 24.0,
+        stereoAttenuation: CGFloat = 1.0,
+        hashedStereoAttenuation: CGFloat = 1.0
+    ) {
         self.showCarbons = showCarbons
         self.showImplicitHydrogens = showImplicitHydrogens
         self.showExplicitHydrogens = showExplicitHydrogens

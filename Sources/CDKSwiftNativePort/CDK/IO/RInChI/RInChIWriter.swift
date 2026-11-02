@@ -12,7 +12,8 @@ public enum CDKRInChIWriter {
             let generator = CDKRInChIGenerator().generate(reaction)
             let rinchi = generator.getRInChI()?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if rinchi.isEmpty {
-                let message = generator.getMessages().joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                let message = generator.getMessages().joined(separator: " ").trimmingCharacters(
+                    in: .whitespacesAndNewlines)
                 if message.isEmpty {
                     throw ChemError.parseFailed("RInChI generator produced an empty line.")
                 }

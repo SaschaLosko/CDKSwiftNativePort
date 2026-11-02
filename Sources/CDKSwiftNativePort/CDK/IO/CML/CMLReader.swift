@@ -1,9 +1,9 @@
 import Foundation
 #if canImport(FoundationXML)
-import FoundationXML
+    import FoundationXML
 #endif
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 /// CDK-style CML reader supporting common atomArray/bondArray variants emitted by CDK and other toolkits.
@@ -83,17 +83,20 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
     private var textCaptures: [TextCapture] = []
     private var generatedAtomCounter = 1
 
-    func parser(_ parser: XMLParser,
-                didStartElement elementName: String,
-                namespaceURI: String?,
-                qualifiedName qName: String?,
-                attributes attributeDict: [String: String] = [:]) {
+    func parser(
+        _ parser: XMLParser,
+        didStartElement elementName: String,
+        namespaceURI: String?,
+        qualifiedName qName: String?,
+        attributes attributeDict: [String: String] = [:]
+    ) {
         let lower = localName(elementName).lowercased()
 
         switch lower {
         case "molecule":
-            let molecule = PendingMolecule(id: attributeDict["id"],
-                                           title: attributeDict["title"] ?? attributeDict["name"])
+            let molecule = PendingMolecule(
+                id: attributeDict["id"],
+                title: attributeDict["title"] ?? attributeDict["name"])
             moleculeStack.append(molecule)
 
         case "atom":
@@ -134,10 +137,12 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         textCaptures[textCaptures.count - 1].text.append(string)
     }
 
-    func parser(_ parser: XMLParser,
-                didEndElement elementName: String,
-                namespaceURI: String?,
-                qualifiedName qName: String?) {
+    func parser(
+        _ parser: XMLParser,
+        didEndElement elementName: String,
+        namespaceURI: String?,
+        qualifiedName qName: String?
+    ) {
         let lower = localName(elementName).lowercased()
 
         switch lower {
@@ -178,7 +183,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         for (idx, source) in pending.enumerated() {
             let fallbackName = "CML Molecule \(idx + 1)"
             let name = source.title?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let moleculeName = (name?.isEmpty == false) ? name! : (source.id?.isEmpty == false ? source.id! : fallbackName)
+            let moleculeName =
+                (name?.isEmpty == false) ? name! : (source.id?.isEmpty == false ? source.id! : fallbackName)
 
             var atoms: [Atom] = []
             var atomIDByXMLID: [String: Int] = [:]
@@ -190,17 +196,19 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
 
             for (atomIndex, atomSource) in source.atoms.enumerated() {
                 let atomID = atomIndex + 1
-                atoms.append(Atom(id: atomID,
-                                  element: atomSource.element,
-                                  position: atomSource.position,
-                                  zPosition: atomSource.zPosition,
-                                  charge: atomSource.charge,
-                                  isotopeMassNumber: atomSource.isotope,
-                                  aromatic: atomSource.aromatic,
-                                  chirality: atomSource.chirality,
-                                  explicitHydrogenCount: atomSource.hydrogenCount,
-                                  ligandOrderingAtomIDs: atomSource.ligandOrderingRefs?.compactMap { atomIDByXMLID[$0] },
-                                  aliasLabel: atomSource.aliasLabel))
+                atoms.append(
+                    Atom(
+                        id: atomID,
+                        element: atomSource.element,
+                        position: atomSource.position,
+                        zPosition: atomSource.zPosition,
+                        charge: atomSource.charge,
+                        isotopeMassNumber: atomSource.isotope,
+                        aromatic: atomSource.aromatic,
+                        chirality: atomSource.chirality,
+                        explicitHydrogenCount: atomSource.hydrogenCount,
+                        ligandOrderingAtomIDs: atomSource.ligandOrderingRefs?.compactMap { atomIDByXMLID[$0] },
+                        aliasLabel: atomSource.aliasLabel))
             }
 
             var bonds: [Bond] = []
@@ -208,19 +216,22 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             var nextBondID = 1
             for bondSource in source.bonds {
                 guard let a1 = atomIDByXMLID[bondSource.refA],
-                      let a2 = atomIDByXMLID[bondSource.refB],
-                      a1 != a2 else {
+                    let a2 = atomIDByXMLID[bondSource.refB],
+                    a1 != a2
+                else {
                     continue
                 }
-                bonds.append(Bond(id: nextBondID,
-                                  a1: a1,
-                                  a2: a2,
-                                  order: bondSource.order,
-                                  stereo: bondSource.stereo,
-                                  doubleBondStereo: bondSource.doubleBondStereo,
-                                  stereoReferenceAtomIDs: bondSource.stereoReferenceAtomRefs?.compactMap {
-                                      atomIDByXMLID[$0]
-                                  }))
+                bonds.append(
+                    Bond(
+                        id: nextBondID,
+                        a1: a1,
+                        a2: a2,
+                        order: bondSource.order,
+                        stereo: bondSource.stereo,
+                        doubleBondStereo: bondSource.doubleBondStereo,
+                        stereoReferenceAtomIDs: bondSource.stereoReferenceAtomRefs?.compactMap {
+                            atomIDByXMLID[$0]
+                        }))
                 if bondSource.aromatic || bondSource.order == .aromatic {
                     aromaticIDs.insert(a1)
                     aromaticIDs.insert(a2)
@@ -271,7 +282,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         let charge = Int(attributes["formalCharge"] ?? "") ?? 0
         let isotope = Int(attributes["isotopeNumber"] ?? "")
         let hydrogenCount = Int(attributes["hydrogenCount"] ?? "")
-        let aromatic = isTruthy(attributes["aromatic"])
+        let aromatic =
+            isTruthy(attributes["aromatic"])
             || (attributes["atomType"] ?? "").lowercased().contains(".ar")
 
         let aliasLabel: String?
@@ -281,17 +293,18 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             aliasLabel = title
         }
 
-        return PendingAtom(xmlID: xmlID,
-                           element: element,
-                           position: coords.position,
-                           zPosition: coords.zPosition,
-                           charge: charge,
-                           isotope: isotope,
-                           hydrogenCount: hydrogenCount,
-                           aromatic: aromatic,
-                           aliasLabel: aliasLabel,
-                           chirality: .none,
-                           ligandOrderingRefs: nil)
+        return PendingAtom(
+            xmlID: xmlID,
+            element: element,
+            position: coords.position,
+            zPosition: coords.zPosition,
+            charge: charge,
+            isotope: isotope,
+            hydrogenCount: hydrogenCount,
+            aromatic: aromatic,
+            aliasLabel: aliasLabel,
+            chirality: .none,
+            ligandOrderingRefs: nil)
     }
 
     private func makeBond(attributes: [String: String]) -> PendingBond? {
@@ -309,14 +322,15 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         guard refs.count >= 2 else { return nil }
         let rawOrder = attributes["order"]
         let order = mapBondOrder(rawOrder)
-        return PendingBond(refA: refs[0],
-                           refB: refs[1],
-                           order: order,
-                           stereo: .none,
-                           doubleBondStereo: nil,
-                           stereoReferenceAtomRefs: nil,
-                           aromatic: order == .aromatic || isTruthy(attributes["aromatic"]),
-                           hadExplicitOrder: rawOrder?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+        return PendingBond(
+            refA: refs[0],
+            refB: refs[1],
+            order: order,
+            stereo: .none,
+            doubleBondStereo: nil,
+            stereoReferenceAtomRefs: nil,
+            aromatic: order == .aromatic || isTruthy(attributes["aromatic"]),
+            hadExplicitOrder: rawOrder?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
     }
 
     private func applyVectorAtomArray(attributes: [String: String], to molecule: PendingMolecule) {
@@ -345,26 +359,29 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             }
 
             let rawElement = idx < elementTypes.count ? elementTypes[idx] : "C"
-            let coords = coordinates(at: idx,
-                                     xy2: xy2,
-                                     xyz3: xyz3,
-                                     x2: x2,
-                                     y2: y2,
-                                     x3: x3,
-                                     y3: y3,
-                                     z3: z3)
+            let coords = coordinates(
+                at: idx,
+                xy2: xy2,
+                xyz3: xyz3,
+                x2: x2,
+                y2: y2,
+                x3: x3,
+                y3: y3,
+                z3: z3)
 
-            molecule.atoms.append(PendingAtom(xmlID: xmlID,
-                                              element: normalizedElement(rawElement, aliasLabel: nil),
-                                              position: coords.position,
-                                              zPosition: coords.zPosition,
-                                              charge: idx < charges.count ? charges[idx] : 0,
-                                              isotope: idx < isotopes.count ? isotopes[idx] : nil,
-                                              hydrogenCount: idx < hydrogens.count ? hydrogens[idx] : nil,
-                                              aromatic: idx < aromaticFlags.count ? aromaticFlags[idx] : false,
-                                              aliasLabel: nil,
-                                              chirality: .none,
-                                              ligandOrderingRefs: nil))
+            molecule.atoms.append(
+                PendingAtom(
+                    xmlID: xmlID,
+                    element: normalizedElement(rawElement, aliasLabel: nil),
+                    position: coords.position,
+                    zPosition: coords.zPosition,
+                    charge: idx < charges.count ? charges[idx] : 0,
+                    isotope: idx < isotopes.count ? isotopes[idx] : nil,
+                    hydrogenCount: idx < hydrogens.count ? hydrogens[idx] : nil,
+                    aromatic: idx < aromaticFlags.count ? aromaticFlags[idx] : false,
+                    aliasLabel: nil,
+                    chirality: .none,
+                    ligandOrderingRefs: nil))
         }
     }
 
@@ -380,14 +397,16 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             for idx in 0..<count {
                 let rawOrder = idx < orders.count ? orders[idx] : nil
                 let order = mapBondOrder(rawOrder)
-                molecule.bonds.append(PendingBond(refA: refs1[idx],
-                                                  refB: refs2[idx],
-                                                  order: order,
-                                                  stereo: .none,
-                                                  doubleBondStereo: nil,
-                                                  stereoReferenceAtomRefs: nil,
-                                                  aromatic: order == .aromatic,
-                                                  hadExplicitOrder: rawOrder?.isEmpty == false))
+                molecule.bonds.append(
+                    PendingBond(
+                        refA: refs1[idx],
+                        refB: refs2[idx],
+                        order: order,
+                        stereo: .none,
+                        doubleBondStereo: nil,
+                        stereoReferenceAtomRefs: nil,
+                        aromatic: order == .aromatic,
+                        hadExplicitOrder: rawOrder?.isEmpty == false))
             }
             return
         }
@@ -401,14 +420,16 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             while idx + 1 < tokens.count {
                 let rawOrder = pairIndex < orders.count ? orders[pairIndex] : nil
                 let order = mapBondOrder(rawOrder)
-                molecule.bonds.append(PendingBond(refA: tokens[idx],
-                                                  refB: tokens[idx + 1],
-                                                  order: order,
-                                                  stereo: .none,
-                                                  doubleBondStereo: nil,
-                                                  stereoReferenceAtomRefs: nil,
-                                                  aromatic: order == .aromatic,
-                                                  hadExplicitOrder: rawOrder?.isEmpty == false))
+                molecule.bonds.append(
+                    PendingBond(
+                        refA: tokens[idx],
+                        refB: tokens[idx + 1],
+                        order: order,
+                        stereo: .none,
+                        doubleBondStereo: nil,
+                        stereoReferenceAtomRefs: nil,
+                        aromatic: order == .aromatic,
+                        hadExplicitOrder: rawOrder?.isEmpty == false))
                 pairIndex += 1
                 idx += 2
             }
@@ -473,7 +494,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         if let refs = capture.attributes["atomRefs4"]?
             .split(whereSeparator: \.isWhitespace)
             .map(String.init),
-           refs.count == 4 {
+            refs.count == 4
+        {
             currentAtom?.ligandOrderingRefs = refs
         }
     }
@@ -591,14 +613,16 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
         return ParsedCoordinates(position: CGPoint(x: x, y: y), zPosition: z3)
     }
 
-    private func coordinates(at index: Int,
-                             xy2: [(Double, Double)],
-                             xyz3: [(Double, Double, Double)],
-                             x2: [Double],
-                             y2: [Double],
-                             x3: [Double],
-                             y3: [Double],
-                             z3: [Double]) -> ParsedCoordinates {
+    private func coordinates(
+        at index: Int,
+        xy2: [(Double, Double)],
+        xyz3: [(Double, Double, Double)],
+        x2: [Double],
+        y2: [Double],
+        x3: [Double],
+        y3: [Double],
+        z3: [Double]
+    ) -> ParsedCoordinates {
         if index < xyz3.count {
             let triplet = xyz3[index]
             return ParsedCoordinates(position: CGPoint(x: triplet.0, y: triplet.1), zPosition: triplet.2)
@@ -643,11 +667,13 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
 
     private func scalarBuiltin(_ attributes: [String: String]) -> String? {
         if let builtin = attributes["builtin"]?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-           !builtin.isEmpty {
+            !builtin.isEmpty
+        {
             return builtin
         }
         if let dictRef = normalizedDictRef(attributes["dictRef"]),
-           dictRef.hasPrefix("cml:") {
+            dictRef.hasPrefix("cml:")
+        {
             return String(dictRef.dropFirst(4))
         }
         return normalizedDictRef(attributes["dictRef"])
@@ -666,7 +692,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
 
     private func parseBondStereo(attributes: [String: String], text: String) -> BondStereo? {
         if let dictRef = attributes["dictRef"],
-           let stereo = bondStereoTokenToValue(String(dictRef.split(separator: ":").last ?? "")) {
+            let stereo = bondStereoTokenToValue(String(dictRef.split(separator: ":").last ?? ""))
+        {
             return stereo
         }
         return bondStereoTokenToValue(text)

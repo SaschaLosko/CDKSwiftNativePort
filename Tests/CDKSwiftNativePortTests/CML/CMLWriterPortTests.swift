@@ -1,31 +1,33 @@
 import Foundation
 import XCTest
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 @testable import CDKSwiftNativePort
 
 final class CMLWriterPortTests: XCTestCase {
     func testWritesHydrogenCountFromImplicitAndExplicitHydrogens() throws {
-        let molecule = Molecule(name: "Methane",
-                                atoms: [
-                                    Atom(id: 1, element: "C", position: .zero, explicitHydrogenCount: 3),
-                                    Atom(id: 2, element: "H", position: CGPoint(x: 1, y: 0))
-                                ],
-                                bonds: [
-                                    Bond(id: 1, a1: 1, a2: 2, order: .single)
-                                ])
+        let molecule = Molecule(
+            name: "Methane",
+            atoms: [
+                Atom(id: 1, element: "C", position: .zero, explicitHydrogenCount: 3),
+                Atom(id: 2, element: "H", position: CGPoint(x: 1, y: 0)),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single)
+            ])
 
         let text = try CDKCMLWriter.write([molecule])
         XCTAssertTrue(text.contains("hydrogenCount=\"4\""))
     }
 
     func testOmitsZeroFormalChargeAndWritesIsotopeNumber() throws {
-        let molecule = Molecule(name: "Carbon-13",
-                                atoms: [
-                                    Atom(id: 1, element: "C", position: .zero, charge: 0, isotopeMassNumber: 13)
-                                ],
-                                bonds: [])
+        let molecule = Molecule(
+            name: "Carbon-13",
+            atoms: [
+                Atom(id: 1, element: "C", position: .zero, charge: 0, isotopeMassNumber: 13)
+            ],
+            bonds: [])
 
         let text = try CDKCMLWriter.write([molecule])
         XCTAssertTrue(text.contains("isotopeNumber=\"13\""))
@@ -33,11 +35,12 @@ final class CMLWriterPortTests: XCTestCase {
     }
 
     func testWrites2DAnd3DCoordinatesWhenZPresent() throws {
-        let molecule = Molecule(name: "3D",
-                                atoms: [
-                                    Atom(id: 1, element: "N", position: CGPoint(x: 1.3, y: 1.4), zPosition: 0.9)
-                                ],
-                                bonds: [])
+        let molecule = Molecule(
+            name: "3D",
+            atoms: [
+                Atom(id: 1, element: "N", position: CGPoint(x: 1.3, y: 1.4), zPosition: 0.9)
+            ],
+            bonds: [])
 
         let text = try CDKCMLWriter.write([molecule])
         XCTAssertTrue(text.contains("x2=\"1.30000\""))
@@ -48,14 +51,15 @@ final class CMLWriterPortTests: XCTestCase {
     }
 
     func testWritesBondStereoAndPseudoAtomRoundTrip() throws {
-        let molecule = Molecule(name: "Pseudo",
-                                atoms: [
-                                    Atom(id: 1, element: "R", position: CGPoint(x: 0, y: 0), zPosition: 0.1, aliasLabel: "Glu55"),
-                                    Atom(id: 2, element: "O", position: CGPoint(x: 1.2, y: 0.0), zPosition: 0.3)
-                                ],
-                                bonds: [
-                                    Bond(id: 1, a1: 1, a2: 2, order: .single, stereo: .up)
-                                ])
+        let molecule = Molecule(
+            name: "Pseudo",
+            atoms: [
+                Atom(id: 1, element: "R", position: CGPoint(x: 0, y: 0), zPosition: 0.1, aliasLabel: "Glu55"),
+                Atom(id: 2, element: "O", position: CGPoint(x: 1.2, y: 0.0), zPosition: 0.3),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .single, stereo: .up)
+            ])
 
         let text = try CDKCMLWriter.write([molecule])
         XCTAssertTrue(text.contains("elementType=\"Du\""))
@@ -70,14 +74,15 @@ final class CMLWriterPortTests: XCTestCase {
     }
 
     func testWritesAromaticBondDecorationAndRoundTrips() throws {
-        let molecule = Molecule(name: "Aromatic",
-                                atoms: [
-                                    Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0), aromatic: true),
-                                    Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0), aromatic: true)
-                                ],
-                                bonds: [
-                                    Bond(id: 1, a1: 1, a2: 2, order: .aromatic)
-                                ])
+        let molecule = Molecule(
+            name: "Aromatic",
+            atoms: [
+                Atom(id: 1, element: "C", position: CGPoint(x: 0, y: 0), aromatic: true),
+                Atom(id: 2, element: "C", position: CGPoint(x: 1.4, y: 0), aromatic: true),
+            ],
+            bonds: [
+                Bond(id: 1, a1: 1, a2: 2, order: .aromatic)
+            ])
 
         let text = try CDKCMLWriter.write([molecule])
         XCTAssertTrue(text.contains("order=\"A\""))
@@ -91,12 +96,14 @@ final class CMLWriterPortTests: XCTestCase {
     }
 
     func testWritesMultipleMoleculesAndRoundTrips() throws {
-        let first = Molecule(name: "First",
-                             atoms: [Atom(id: 1, element: "C", position: .zero)],
-                             bonds: [])
-        let second = Molecule(name: "Second",
-                              atoms: [Atom(id: 1, element: "O", position: CGPoint(x: 1, y: 0))],
-                              bonds: [])
+        let first = Molecule(
+            name: "First",
+            atoms: [Atom(id: 1, element: "C", position: .zero)],
+            bonds: [])
+        let second = Molecule(
+            name: "Second",
+            atoms: [Atom(id: 1, element: "O", position: CGPoint(x: 1, y: 0))],
+            bonds: [])
 
         let text = try CDKCMLWriter.write([first, second])
         XCTAssertEqual(text.components(separatedBy: "<molecule ").count - 1, 2)

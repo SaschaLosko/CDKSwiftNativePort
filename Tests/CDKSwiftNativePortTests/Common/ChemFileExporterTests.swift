@@ -24,11 +24,13 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testFormatsIncludeV3000MolfileExport() {
-        XCTAssertTrue(CDKFileExporter.formats.contains(where: { $0.format == .molV3000 && $0.displayName.contains("V3000") }))
+        XCTAssertTrue(
+            CDKFileExporter.formats.contains(where: { $0.format == .molV3000 && $0.displayName.contains("V3000") }))
     }
 
     func testFormatsIncludeRGfileExport() {
-        XCTAssertTrue(CDKFileExporter.formats.contains(where: { $0.format == .rgfile && $0.fileExtensions.contains("rgf") }))
+        XCTAssertTrue(
+            CDKFileExporter.formats.contains(where: { $0.format == .rgfile && $0.fileExtensions.contains("rgf") }))
     }
 
     func testWritesMolAndRoundTrips() throws {
@@ -108,8 +110,9 @@ final class ChemFileExporterTests: XCTestCase {
         molecule.appendDataFieldValue("b", named: "two")
 
         var exportOptions = CDKFileExportOptions()
-        exportOptions.sdfOptions = CDKSDFWriterOptions(acceptedDataFieldNames: ["one"],
-                                                       programName: "Bioclipse")
+        exportOptions.sdfOptions = CDKSDFWriterOptions(
+            acceptedDataFieldNames: ["one"],
+            programName: "Bioclipse")
 
         let text = try CDKFileExporter.write(molecule: molecule, as: .sdf, options: exportOptions)
 
@@ -225,11 +228,12 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testWritesReactionCMLAndRoundTrips() throws {
-        let reaction = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
-                                   agents: [],
-                                   products: [try referenceMolecule(name: "Product")],
-                                   id: "cml-rxn-1",
-                                   properties: ["Ka": "3"])
+        let reaction = CDKReaction(
+            reactants: [try referenceMolecule(name: "Reactant")],
+            agents: [],
+            products: [try referenceMolecule(name: "Product")],
+            id: "cml-rxn-1",
+            properties: ["Ka": "3"])
 
         let text = try CDKFileExporter.write(reaction: reaction, as: .cml)
         let parsed = try CDKCMLReactionReader.readReaction(text: text)
@@ -241,11 +245,12 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testWritesRInChIAndRoundTrips() throws {
-        let reaction = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
-                                   agents: [],
-                                   products: [try referenceMolecule(name: "Product")],
-                                   direction: .forward,
-                                   name: "hydration")
+        let reaction = CDKReaction(
+            reactants: [try referenceMolecule(name: "Reactant")],
+            agents: [],
+            products: [try referenceMolecule(name: "Product")],
+            direction: .forward,
+            name: "hydration")
 
         let text = try CDKFileExporter.write(reaction: reaction, as: .rinchi)
         let parsed = try CDKFileImporter.readReaction(text: text, fileExtension: "rinchi")
@@ -259,14 +264,16 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testWritesMultipleReactionsAsMultiLineRInChI() throws {
-        let first = CDKReaction(reactants: [try referenceMolecule(name: "A")],
-                                agents: [],
-                                products: [try referenceMolecule(name: "B")],
-                                direction: .forward)
-        let second = CDKReaction(reactants: [try referenceMolecule(name: "B")],
-                                 agents: [],
-                                 products: [try referenceMolecule(name: "C")],
-                                 direction: .forward)
+        let first = CDKReaction(
+            reactants: [try referenceMolecule(name: "A")],
+            agents: [],
+            products: [try referenceMolecule(name: "B")],
+            direction: .forward)
+        let second = CDKReaction(
+            reactants: [try referenceMolecule(name: "B")],
+            agents: [],
+            products: [try referenceMolecule(name: "C")],
+            direction: .forward)
 
         let text = try CDKFileExporter.write(reactions: [first, second], as: .rinchi)
         let parsed = try CDKFileImporter.readReactionHierarchy(text: text, fileExtension: "rinchi")
@@ -279,10 +286,11 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testWritesV3000RXNWhenRequestedAndRoundTrips() throws {
-        let reaction = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
-                                   agents: [try referenceMolecule(name: "Agent")],
-                                   products: [try referenceMolecule(name: "Product")],
-                                   name: "V3000 Reaction")
+        let reaction = CDKReaction(
+            reactants: [try referenceMolecule(name: "Reactant")],
+            agents: [try referenceMolecule(name: "Agent")],
+            products: [try referenceMolecule(name: "Product")],
+            name: "V3000 Reaction")
         var options = CDKFileExportOptions()
         options.rxnOptions = CDKRXNWriter.Options(alwaysV3000: true)
 
@@ -298,14 +306,16 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testWritesMultipleReactionsAsConcatenatedRXNBlocks() throws {
-        let first = CDKReaction(reactants: [try referenceMolecule(name: "A")],
-                                agents: [],
-                                products: [try referenceMolecule(name: "B")],
-                                name: "First")
-        let second = CDKReaction(reactants: [try referenceMolecule(name: "B")],
-                                 agents: [],
-                                 products: [try referenceMolecule(name: "C")],
-                                 name: "Second")
+        let first = CDKReaction(
+            reactants: [try referenceMolecule(name: "A")],
+            agents: [],
+            products: [try referenceMolecule(name: "B")],
+            name: "First")
+        let second = CDKReaction(
+            reactants: [try referenceMolecule(name: "B")],
+            agents: [],
+            products: [try referenceMolecule(name: "C")],
+            name: "Second")
 
         let text = try CDKFileExporter.write(reactions: [first, second], as: .rxn)
         let parsed = try CDKRXNReader.readReactions(text: text)
@@ -315,20 +325,25 @@ final class ChemFileExporterTests: XCTestCase {
     }
 
     func testWritesReactionSchemeAsCMLAndRoundTripsHierarchy() throws {
-        let first = CDKReaction(reactants: [try referenceMolecule(name: "Reactant")],
-                                agents: [],
-                                products: [try referenceMolecule(name: "Intermediate")],
-                                id: "r1")
-        let second = CDKReaction(reactants: [try referenceMolecule(name: "Intermediate")],
-                                 agents: [],
-                                 products: [try referenceMolecule(name: "Product")],
-                                 id: "r2")
-        let scheme = CDKReactionScheme(id: "rs0",
-                                       entries: [
-                                        .list(CDKReactionList(id: "rsl1",
-                                                              reactions: [first, second],
-                                                              isStepList: true))
-                                       ])
+        let first = CDKReaction(
+            reactants: [try referenceMolecule(name: "Reactant")],
+            agents: [],
+            products: [try referenceMolecule(name: "Intermediate")],
+            id: "r1")
+        let second = CDKReaction(
+            reactants: [try referenceMolecule(name: "Intermediate")],
+            agents: [],
+            products: [try referenceMolecule(name: "Product")],
+            id: "r2")
+        let scheme = CDKReactionScheme(
+            id: "rs0",
+            entries: [
+                .list(
+                    CDKReactionList(
+                        id: "rsl1",
+                        reactions: [first, second],
+                        isStepList: true))
+            ])
 
         let text = try CDKFileExporter.write(reactionScheme: scheme, as: .cml)
         let parsed = try CDKCMLReactionReader.readHierarchy(text: text)
@@ -380,7 +395,7 @@ final class ChemFileExporterTests: XCTestCase {
             name: "3D",
             atoms: [
                 Atom(id: 1, element: "C", position: CGPoint(x: -1.25, y: 0.50), zPosition: 2.75),
-                Atom(id: 2, element: "O", position: CGPoint(x: 0.10, y: -0.25), zPosition: -1.50)
+                Atom(id: 2, element: "O", position: CGPoint(x: 0.10, y: -0.25), zPosition: -1.50),
             ],
             bonds: [
                 Bond(id: 1, a1: 1, a2: 2, order: .single)

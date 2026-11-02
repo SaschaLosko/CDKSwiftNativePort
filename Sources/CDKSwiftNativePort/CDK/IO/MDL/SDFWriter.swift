@@ -7,11 +7,13 @@ public struct CDKSDFWriterOptions {
     public var truncateLongDataFields: Bool
     public var programName: String?
 
-    public init(alwaysV3000: Bool = false,
-                writeDataFields: Bool = true,
-                acceptedDataFieldNames: Set<String>? = nil,
-                truncateLongDataFields: Bool = false,
-                programName: String? = nil) {
+    public init(
+        alwaysV3000: Bool = false,
+        writeDataFields: Bool = true,
+        acceptedDataFieldNames: Set<String>? = nil,
+        truncateLongDataFields: Bool = false,
+        programName: String? = nil
+    ) {
         self.alwaysV3000 = alwaysV3000
         self.writeDataFields = writeDataFields
         self.acceptedDataFieldNames = acceptedDataFieldNames
@@ -22,13 +24,17 @@ public struct CDKSDFWriterOptions {
 
 /// CDK-style SDFile writer built on the V2000 mol writer.
 public enum CDKSDFWriter {
-    public static func write(_ molecule: Molecule,
-                             options: CDKSDFWriterOptions = CDKSDFWriterOptions()) throws -> String {
+    public static func write(
+        _ molecule: Molecule,
+        options: CDKSDFWriterOptions = CDKSDFWriterOptions()
+    ) throws -> String {
         try write([molecule], options: options)
     }
 
-    public static func write(_ molecules: [Molecule],
-                             options: CDKSDFWriterOptions = CDKSDFWriterOptions()) throws -> String {
+    public static func write(
+        _ molecules: [Molecule],
+        options: CDKSDFWriterOptions = CDKSDFWriterOptions()
+    ) throws -> String {
         guard !molecules.isEmpty else { throw ChemError.emptyInput }
 
         var chunks: [String] = []
@@ -36,12 +42,15 @@ public enum CDKSDFWriter {
         for molecule in molecules {
             let mol = try molfileRecord(for: molecule, options: options)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
-            let dataFields = options.writeDataFields
-                ? CDKSDFDataFieldSupport.serializeDataFields(for: molecule,
-                                                             acceptedFieldNames: options.acceptedDataFieldNames,
-                                                             truncateLongValues: options.truncateLongDataFields)
+            let dataFields =
+                options.writeDataFields
+                ? CDKSDFDataFieldSupport.serializeDataFields(
+                    for: molecule,
+                    acceptedFieldNames: options.acceptedDataFieldNames,
+                    truncateLongValues: options.truncateLongDataFields)
                 : ""
-            let chunk = dataFields.isEmpty
+            let chunk =
+                dataFields.isEmpty
                 ? "\(mol)\n$$$$"
                 : "\(mol)\n\(dataFields)\n$$$$"
             chunks.append(chunk)
@@ -50,20 +59,27 @@ public enum CDKSDFWriter {
         return chunks.joined(separator: "\n") + "\n"
     }
 
-    private static func molfileRecord(for molecule: Molecule,
-                                      options: CDKSDFWriterOptions) throws -> String {
+    private static func molfileRecord(
+        for molecule: Molecule,
+        options: CDKSDFWriterOptions
+    ) throws -> String {
         if shouldWriteV3000(for: molecule, options: options) {
-            return try CDKMDLV3000Writer.write(molecule,
-                                               options: CDKMDLV3000Writer.Options(programName: options.programName,
-                                                                                  includeDataFields: false))
+            return try CDKMDLV3000Writer.write(
+                molecule,
+                options: CDKMDLV3000Writer.Options(
+                    programName: options.programName,
+                    includeDataFields: false))
         }
 
-        return try CDKMDLV2000Writer.write(molecule,
-                                           options: CDKMDLV2000Writer.Options(programName: options.programName))
+        return try CDKMDLV2000Writer.write(
+            molecule,
+            options: CDKMDLV2000Writer.Options(programName: options.programName))
     }
 
-    private static func shouldWriteV3000(for molecule: Molecule,
-                                         options: CDKSDFWriterOptions) -> Bool {
+    private static func shouldWriteV3000(
+        for molecule: Molecule,
+        options: CDKSDFWriterOptions
+    ) -> Bool {
         if options.alwaysV3000 { return true }
         if molecule.atomCount > 999 || molecule.bondCount > 999 { return true }
 

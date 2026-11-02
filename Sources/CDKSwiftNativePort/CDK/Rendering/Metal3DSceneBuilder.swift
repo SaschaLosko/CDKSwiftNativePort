@@ -1,5 +1,5 @@
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 import Foundation
 
@@ -213,15 +213,17 @@ public enum CDKMetal3DSceneBuilder {
         rendererModel: CDKRenderer3DModel = CDKRenderer3DModel()
     ) -> CDKMetal3DScene {
         let hasExplicit3DCoordinates = CDKModelBuilder3D.hasMeaningful3DCoordinates(molecule)
-        let sceneMolecule = hasExplicit3DCoordinates
+        let sceneMolecule =
+            hasExplicit3DCoordinates
             ? molecule
             : CDKModelBuilder3D.generate3DCoordinates(molecule: molecule)
         let style = RenderStyle(
             atomColoringMode: rendererModel.atomColoringMode,
             colorBondsByAtom: rendererModel.colorBondsByAtom)
-        let atomPoints = Dictionary(uniqueKeysWithValues: sceneMolecule.atoms.map { atom in
-            (atom.id, point3D(for: atom))
-        })
+        let atomPoints = Dictionary(
+            uniqueKeysWithValues: sceneMolecule.atoms.map { atom in
+                (atom.id, point3D(for: atom))
+            })
 
         let atoms: [CDKMetal3DScene.AtomSphere] =
             rendererModel.representationMode == .stick
@@ -240,7 +242,8 @@ public enum CDKMetal3DSceneBuilder {
         case .ballAndStick, .stick:
             bonds = sceneMolecule.bonds.compactMap { bond -> CDKMetal3DScene.BondCylinder? in
                 guard let from = atomPoints[bond.a1],
-                      let to = atomPoints[bond.a2] else {
+                    let to = atomPoints[bond.a2]
+                else {
                     return nil
                 }
                 let bondRadius =
@@ -301,11 +304,12 @@ public enum CDKMetal3DSceneBuilder {
 
     private static func boundingBox(points: [CDKPoint3D]) -> CDK3DBoundingBox? {
         guard var minX = points.first?.x,
-              var minY = points.first?.y,
-              var minZ = points.first?.z,
-              var maxX = points.first?.x,
-              var maxY = points.first?.y,
-              var maxZ = points.first?.z else {
+            var minY = points.first?.y,
+            var minZ = points.first?.z,
+            var maxX = points.first?.x,
+            var maxY = points.first?.y,
+            var maxZ = points.first?.z
+        else {
             return nil
         }
         for point in points.dropFirst() {
@@ -341,9 +345,10 @@ public enum CDKMetal3DSceneBuilder {
         style: RenderStyle
     ) -> CDKRenderColor {
         guard rendererModel.colorBondsByAtom,
-              rendererModel.atomColoringMode != .monochrome,
-              let a1 = molecule.atoms.first(where: { $0.id == bond.a1 }),
-              let a2 = molecule.atoms.first(where: { $0.id == bond.a2 }) else {
+            rendererModel.atomColoringMode != .monochrome,
+            let a1 = molecule.atoms.first(where: { $0.id == bond.a1 }),
+            let a2 = molecule.atoms.first(where: { $0.id == bond.a2 })
+        else {
             return bond.order == .aromatic ? .aromaticInk : .ink
         }
         let c1 = atomColor(for: a1, rendererModel: rendererModel, style: style)
@@ -385,9 +390,12 @@ public enum CDKMetal3DSceneBuilder {
         }
     }
 
-    private static func categoricalPaletteColor(for symbol: String, palette: [UInt32], fallback: UInt32) -> CDKRenderColor {
+    private static func categoricalPaletteColor(for symbol: String, palette: [UInt32], fallback: UInt32)
+        -> CDKRenderColor
+    {
         guard !palette.isEmpty,
-              let elementIndex = elementOrder.firstIndex(of: symbol) else {
+            let elementIndex = elementOrder.firstIndex(of: symbol)
+        else {
             return color(hex: fallback)
         }
         return color(hex: palette[elementIndex % palette.count])

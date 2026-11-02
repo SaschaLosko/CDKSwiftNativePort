@@ -1,19 +1,21 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 /// CDK-style TRIPOS MOL2 reader.
 public enum CDKMol2Reader {
     public static func read(text: String) throws -> [Molecule] {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
 
         let marker = "@<TRIPOS>MOLECULE"
         var starts: [Int] = []
-        for (idx, line) in lines.enumerated() where line.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == marker {
+        for (idx, line) in lines.enumerated()
+        where line.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == marker {
             starts.append(idx)
         }
 
@@ -69,10 +71,11 @@ public enum CDKMol2Reader {
             if section == "@<TRIPOS>ATOM" {
                 let parts = trimmed.split(whereSeparator: \.isWhitespace).map(String.init)
                 guard parts.count >= 6,
-                      let sourceID = Int(parts[0]),
-                      let x = Double(parts[2]),
-                      let y = Double(parts[3]),
-                      let z = Double(parts[4]) else {
+                    let sourceID = Int(parts[0]),
+                    let x = Double(parts[2]),
+                    let y = Double(parts[3]),
+                    let z = Double(parts[4])
+                else {
                     continue
                 }
 
@@ -88,12 +91,13 @@ public enum CDKMol2Reader {
                     charge = 0
                 }
 
-                let atom = Atom(id: nextAtomID,
-                                element: symbol,
-                                position: CGPoint(x: x, y: y),
-                                zPosition: z,
-                                charge: charge,
-                                aromatic: aromatic)
+                let atom = Atom(
+                    id: nextAtomID,
+                    element: symbol,
+                    position: CGPoint(x: x, y: y),
+                    zPosition: z,
+                    charge: charge,
+                    aromatic: aromatic)
                 pendingAtoms.append(PendingAtom(sourceID: sourceID, atom: atom))
                 sourceToAtomID[sourceID] = nextAtomID
                 nextAtomID += 1
@@ -103,10 +107,11 @@ public enum CDKMol2Reader {
             if section == "@<TRIPOS>BOND" {
                 let parts = trimmed.split(whereSeparator: \.isWhitespace).map(String.init)
                 guard parts.count >= 4,
-                      let sourceA = Int(parts[1]),
-                      let sourceB = Int(parts[2]),
-                      let a1 = sourceToAtomID[sourceA],
-                      let a2 = sourceToAtomID[sourceB] else {
+                    let sourceA = Int(parts[1]),
+                    let sourceB = Int(parts[2]),
+                    let a1 = sourceToAtomID[sourceA],
+                    let a2 = sourceToAtomID[sourceB]
+                else {
                     continue
                 }
 
@@ -123,11 +128,13 @@ public enum CDKMol2Reader {
                     order = .single
                 }
 
-                bonds.append(Bond(id: nextBondID,
-                                  a1: a1,
-                                  a2: a2,
-                                  order: order,
-                                  stereo: .none))
+                bonds.append(
+                    Bond(
+                        id: nextBondID,
+                        a1: a1,
+                        a2: a2,
+                        order: order,
+                        stereo: .none))
                 nextBondID += 1
             }
         }
@@ -172,7 +179,7 @@ public enum CDKMol2Reader {
         if uppercase.isEmpty { return "C" }
 
         let twoLetterElements: Set<String> = [
-            "CL", "BR", "SI", "NA", "MG", "AL", "CA", "FE", "ZN", "CU", "SE", "LI", "BE", "NE", "AR"
+            "CL", "BR", "SI", "NA", "MG", "AL", "CA", "FE", "ZN", "CU", "SE", "LI", "BE", "NE", "AR",
         ]
         if uppercase.count >= 2 {
             let two = String(uppercase.prefix(2))

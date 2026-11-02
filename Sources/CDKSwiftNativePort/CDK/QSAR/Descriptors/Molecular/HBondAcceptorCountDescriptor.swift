@@ -10,7 +10,8 @@ public enum CDKHBondAcceptorCountDescriptor {
             switch element {
             case "N":
                 let aromaticDonorNitrogen = atom.aromatic && hydrogenCount > 0
-                isAcceptor = atom.charge <= 0 && !aromaticDonorNitrogen && !isAmideLikeNitrogen(atomID: atom.id, in: molecule)
+                isAcceptor =
+                    atom.charge <= 0 && !aromaticDonorNitrogen && !isAmideLikeNitrogen(atomID: atom.id, in: molecule)
             case "O":
                 isAcceptor = atom.charge <= 0
             case "S":

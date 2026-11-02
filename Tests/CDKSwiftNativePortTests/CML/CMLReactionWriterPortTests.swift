@@ -1,16 +1,17 @@
 import Foundation
 import XCTest
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 @testable import CDKSwiftNativePort
 
 final class CMLReactionWriterPortTests: XCTestCase {
     func testWritesReactionCustomizationLikeCDK() throws {
-        let reaction = CDKReaction(reactants: [Molecule(name: "react", externalID: "react")],
-                                   agents: [Molecule(name: "agent", externalID: "agent")],
-                                   products: [Molecule(name: "product", externalID: "product")],
-                                   id: "reaction1")
+        let reaction = CDKReaction(
+            reactants: [Molecule(name: "react", externalID: "react")],
+            agents: [Molecule(name: "agent", externalID: "agent")],
+            products: [Molecule(name: "product", externalID: "product")],
+            id: "reaction1")
 
         let text = try CDKCMLReactionWriter.write(reaction)
 
@@ -21,9 +22,10 @@ final class CMLReactionWriterPortTests: XCTestCase {
     }
 
     func testWritesReactionProperties() throws {
-        let reaction = CDKReaction(reactants: [], agents: [], products: [],
-                                   id: "r1",
-                                   properties: ["blabla": "blabla2"])
+        let reaction = CDKReaction(
+            reactants: [], agents: [], products: [],
+            id: "r1",
+            properties: ["blabla": "blabla2"])
 
         let text = try CDKCMLReactionWriter.write(reaction)
         XCTAssertTrue(text.contains("<scalar dictRef=\"cdk:reactionProperty\" title=\"blabla\""))
@@ -31,22 +33,26 @@ final class CMLReactionWriterPortTests: XCTestCase {
     }
 
     func testRoundTripsReaction() throws {
-        let reactant = Molecule(name: "Reactant",
-                                externalID: "react",
-                                atoms: [Atom(id: 1, externalID: "a1", element: "C", position: .zero)],
-                                bonds: [])
-        let product = Molecule(name: "Product",
-                               externalID: "product",
-                               atoms: [Atom(id: 1, externalID: "a2", element: "R", position: CGPoint(x: 1, y: 0), aliasLabel: "R")],
-                               bonds: [])
-        let agent = Molecule(name: "Water",
-                             externalID: "water",
-                             atoms: [Atom(id: 1, externalID: "a3", element: "H", position: CGPoint(x: 2, y: 0))],
-                             bonds: [])
-        let reaction = CDKReaction(reactants: [reactant],
-                                   agents: [agent],
-                                   products: [product],
-                                   id: "reaction.1")
+        let reactant = Molecule(
+            name: "Reactant",
+            externalID: "react",
+            atoms: [Atom(id: 1, externalID: "a1", element: "C", position: .zero)],
+            bonds: [])
+        let product = Molecule(
+            name: "Product",
+            externalID: "product",
+            atoms: [Atom(id: 1, externalID: "a2", element: "R", position: CGPoint(x: 1, y: 0), aliasLabel: "R")],
+            bonds: [])
+        let agent = Molecule(
+            name: "Water",
+            externalID: "water",
+            atoms: [Atom(id: 1, externalID: "a3", element: "H", position: CGPoint(x: 2, y: 0))],
+            bonds: [])
+        let reaction = CDKReaction(
+            reactants: [reactant],
+            agents: [agent],
+            products: [product],
+            id: "reaction.1")
 
         let text = try CDKCMLReactionWriter.write(reaction)
         let roundTripped = try CDKCMLReactionReader.readReaction(text: text)
@@ -62,14 +68,16 @@ final class CMLReactionWriterPortTests: XCTestCase {
     }
 
     func testWritesReactionListAndRoundTrips() throws {
-        let first = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
-                                agents: [],
-                                products: [Molecule(name: "B", externalID: "B")],
-                                id: "r1")
-        let second = CDKReaction(reactants: [Molecule(name: "B", externalID: "B")],
-                                 agents: [],
-                                 products: [Molecule(name: "C", externalID: "C")],
-                                 id: "r2")
+        let first = CDKReaction(
+            reactants: [Molecule(name: "A", externalID: "A")],
+            agents: [],
+            products: [Molecule(name: "B", externalID: "B")],
+            id: "r1")
+        let second = CDKReaction(
+            reactants: [Molecule(name: "B", externalID: "B")],
+            agents: [],
+            products: [Molecule(name: "C", externalID: "C")],
+            id: "r2")
 
         let text = try CDKCMLReactionWriter.write([first, second])
         let roundTripped = try CDKCMLReactionReader.readReactions(text: text)
@@ -80,27 +88,35 @@ final class CMLReactionWriterPortTests: XCTestCase {
     }
 
     func testWritesReactionSchemeAndRoundTripsHierarchy() throws {
-        let first = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
-                                agents: [],
-                                products: [Molecule(name: "B", externalID: "B")],
-                                id: "r1")
-        let second = CDKReaction(reactants: [Molecule(name: "B", externalID: "B")],
-                                 agents: [],
-                                 products: [Molecule(name: "C", externalID: "C")],
-                                 id: "r2")
-        let third = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
-                                agents: [],
-                                products: [Molecule(name: "D", externalID: "D")],
-                                id: "r3")
+        let first = CDKReaction(
+            reactants: [Molecule(name: "A", externalID: "A")],
+            agents: [],
+            products: [Molecule(name: "B", externalID: "B")],
+            id: "r1")
+        let second = CDKReaction(
+            reactants: [Molecule(name: "B", externalID: "B")],
+            agents: [],
+            products: [Molecule(name: "C", externalID: "C")],
+            id: "r2")
+        let third = CDKReaction(
+            reactants: [Molecule(name: "A", externalID: "A")],
+            agents: [],
+            products: [Molecule(name: "D", externalID: "D")],
+            id: "r3")
 
-        let scheme = CDKReactionScheme(id: "rs0",
-                                       entries: [
-                                        .scheme(CDKReactionScheme(id: "rs1",
-                                                                  entries: [.reaction(first), .reaction(second)])),
-                                        .list(CDKReactionList(id: "rsl1",
-                                                              reactions: [third],
-                                                              isStepList: true))
-                                       ])
+        let scheme = CDKReactionScheme(
+            id: "rs0",
+            entries: [
+                .scheme(
+                    CDKReactionScheme(
+                        id: "rs1",
+                        entries: [.reaction(first), .reaction(second)])),
+                .list(
+                    CDKReactionList(
+                        id: "rsl1",
+                        reactions: [third],
+                        isStepList: true)),
+            ])
 
         let text = try CDKCMLReactionWriter.write(scheme)
         let hierarchy = try CDKCMLReactionReader.readHierarchy(text: text)
@@ -118,26 +134,32 @@ final class CMLReactionWriterPortTests: XCTestCase {
     }
 
     func testWritesStepListContainingNestedSchemeAndRoundTripsHierarchy() throws {
-        let branchA = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
-                                  agents: [],
-                                  products: [Molecule(name: "B", externalID: "B")],
-                                  id: "r1")
-        let branchB = CDKReaction(reactants: [Molecule(name: "B", externalID: "B")],
-                                  agents: [],
-                                  products: [Molecule(name: "C", externalID: "C")],
-                                  id: "r2")
-        let finalReaction = CDKReaction(reactants: [Molecule(name: "A", externalID: "A")],
-                                        agents: [],
-                                        products: [Molecule(name: "D", externalID: "D")],
-                                        id: "r3")
+        let branchA = CDKReaction(
+            reactants: [Molecule(name: "A", externalID: "A")],
+            agents: [],
+            products: [Molecule(name: "B", externalID: "B")],
+            id: "r1")
+        let branchB = CDKReaction(
+            reactants: [Molecule(name: "B", externalID: "B")],
+            agents: [],
+            products: [Molecule(name: "C", externalID: "C")],
+            id: "r2")
+        let finalReaction = CDKReaction(
+            reactants: [Molecule(name: "A", externalID: "A")],
+            agents: [],
+            products: [Molecule(name: "D", externalID: "D")],
+            id: "r3")
 
-        let stepList = CDKReactionList(id: "rsl-branch",
-                                       entries: [
-                                        .scheme(CDKReactionScheme(id: "rs-branch",
-                                                                  entries: [.reaction(branchA), .reaction(branchB)])),
-                                        .reaction(finalReaction)
-                                       ],
-                                       isStepList: true)
+        let stepList = CDKReactionList(
+            id: "rsl-branch",
+            entries: [
+                .scheme(
+                    CDKReactionScheme(
+                        id: "rs-branch",
+                        entries: [.reaction(branchA), .reaction(branchB)])),
+                .reaction(finalReaction),
+            ],
+            isStepList: true)
 
         let text = try CDKCMLReactionWriter.write(stepList)
         let parsedList = try CDKCMLReactionReader.readReactionList(text: text)

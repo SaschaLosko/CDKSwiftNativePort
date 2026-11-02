@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 public struct CDKModelBuilder3DOptions: Hashable, Sendable {
@@ -53,9 +53,10 @@ public enum CDKModelBuilder3D {
         let graph = MolecularGraph(molecule: molecule)
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
         let scale = averageBondScale(molecule: molecule, options: options)
-        let componentCenters = Dictionary(uniqueKeysWithValues: graph.connectedComponents().map { component in
-            (component, centroid(for: component, atoms: atomByID))
-        })
+        let componentCenters = Dictionary(
+            uniqueKeysWithValues: graph.connectedComponents().map { component in
+                (component, centroid(for: component, atoms: atomByID))
+            })
         var zByAtomID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, atomZ($0)) })
 
         applyRingPuckering(
@@ -352,7 +353,9 @@ private extension CDKModelBuilder3D {
         let atomByID = Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0) })
         for atom in molecule.atoms {
             let neighbors = graph.neighbors(of: atom.id)
-            guard neighbors.count >= 3, likelyTetrahedral(atom: atom, molecule: molecule, graph: graph) else { continue }
+            guard neighbors.count >= 3, likelyTetrahedral(atom: atom, molecule: molecule, graph: graph) else {
+                continue
+            }
             let sortedNeighbors = neighbors.sorted { lhs, rhs in
                 angle(from: atom.id, to: lhs, atomByID: atomByID) < angle(from: atom.id, to: rhs, atomByID: atomByID)
             }
@@ -430,8 +433,12 @@ private extension CDKModelBuilder3D {
             }
             guard neighbors.count >= 3 else { continue }
             let firstSign: Double = atom.chirality == .clockwise ? 1 : -1
-            addDepth(firstSign * options.stereoDepth, to: neighbors[0], zByAtomID: &zByAtomID, tolerance: options.coordinateTolerance)
-            addDepth(-firstSign * options.stereoDepth, to: neighbors[1], zByAtomID: &zByAtomID, tolerance: options.coordinateTolerance)
+            addDepth(
+                firstSign * options.stereoDepth, to: neighbors[0], zByAtomID: &zByAtomID,
+                tolerance: options.coordinateTolerance)
+            addDepth(
+                -firstSign * options.stereoDepth, to: neighbors[1], zByAtomID: &zByAtomID,
+                tolerance: options.coordinateTolerance)
         }
     }
 

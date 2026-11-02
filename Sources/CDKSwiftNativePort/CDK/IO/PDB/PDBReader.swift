@@ -1,12 +1,13 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 /// CDK-style PDB reader (ATOM/HETATM + CONECT).
 public enum CDKPDBReader {
     public static func read(text: String) throws -> [Molecule] {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
@@ -56,21 +57,29 @@ public enum CDKPDBReader {
             }
 
             if recordName == "ATOM" || recordName == "HETATM" {
-                guard let serial = Int(field(in: line, start: 6, length: 5).trimmingCharacters(in: .whitespacesAndNewlines)),
-                      let x = Double(field(in: line, start: 30, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)),
-                      let y = Double(field(in: line, start: 38, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)),
-                      let z = Double(field(in: line, start: 46, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)) else {
+                guard
+                    let serial = Int(
+                        field(in: line, start: 6, length: 5).trimmingCharacters(in: .whitespacesAndNewlines)),
+                    let x = Double(
+                        field(in: line, start: 30, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)),
+                    let y = Double(
+                        field(in: line, start: 38, length: 8).trimmingCharacters(in: .whitespacesAndNewlines)),
+                    let z = Double(
+                        field(in: line, start: 46, length: 8).trimmingCharacters(in: .whitespacesAndNewlines))
+                else {
                     continue
                 }
 
-                let explicitElement = field(in: line, start: 76, length: 2).trimmingCharacters(in: .whitespacesAndNewlines)
+                let explicitElement = field(in: line, start: 76, length: 2).trimmingCharacters(
+                    in: .whitespacesAndNewlines)
                 let atomName = field(in: line, start: 12, length: 4)
                 let symbol = normalizeElementSymbol(explicitElement, atomName: atomName)
 
-                let atom = Atom(id: nextAtomID,
-                                element: symbol,
-                                position: CGPoint(x: x, y: y),
-                                zPosition: z)
+                let atom = Atom(
+                    id: nextAtomID,
+                    element: symbol,
+                    position: CGPoint(x: x, y: y),
+                    zPosition: z)
                 atomRecords.append((serial: serial, atom: atom))
                 serialToAtomID[serial] = nextAtomID
                 nextAtomID += 1
@@ -79,24 +88,28 @@ public enum CDKPDBReader {
 
             if recordName == "CONECT" {
                 let parts = line.split(whereSeparator: \.isWhitespace).map(String.init)
-                guard parts.count >= 3, let sourceSerial = Int(parts[1]), let sourceID = serialToAtomID[sourceSerial] else {
+                guard parts.count >= 3, let sourceSerial = Int(parts[1]), let sourceID = serialToAtomID[sourceSerial]
+                else {
                     continue
                 }
 
                 for targetToken in parts.dropFirst(2) {
                     guard let targetSerial = Int(targetToken),
-                          let targetID = serialToAtomID[targetSerial],
-                          targetID != sourceID else {
+                        let targetID = serialToAtomID[targetSerial],
+                        targetID != sourceID
+                    else {
                         continue
                     }
                     let key = canonicalPair(sourceID, targetID)
                     if bondPairs.contains(key) { continue }
                     bondPairs.insert(key)
-                    bonds.append(Bond(id: bonds.count + 1,
-                                      a1: sourceID,
-                                      a2: targetID,
-                                      order: .single,
-                                      stereo: .none))
+                    bonds.append(
+                        Bond(
+                            id: bonds.count + 1,
+                            a1: sourceID,
+                            a2: targetID,
+                            order: .single,
+                            stereo: .none))
                 }
             }
         }
@@ -132,7 +145,8 @@ public enum CDKPDBReader {
             return CDKDescriptorSupport.canonicalElementSymbol(explicitTrimmed)
         }
 
-        let lettersOnly = atomName
+        let lettersOnly =
+            atomName
             .filter { $0.isLetter }
             .uppercased()
 
@@ -144,7 +158,7 @@ public enum CDKPDBReader {
             "MO", "RU", "RH", "PD", "AG", "CD", "IN", "SN", "SB", "TE",
             "XE", "CS", "BA", "LA", "CE", "PR", "ND", "SM", "EU", "GD",
             "TB", "DY", "HO", "ER", "TM", "YB", "LU", "HF", "TA", "RE",
-            "OS", "IR", "PT", "AU", "HG", "TL", "PB", "BI"
+            "OS", "IR", "PT", "AU", "HG", "TL", "PB", "BI",
         ]
 
         if lettersOnly.count >= 2 {
@@ -160,7 +174,10 @@ public enum CDKPDBReader {
     private static func field(in line: String, start: Int, length: Int) -> String {
         guard start < line.count else { return "" }
         let lower = line.index(line.startIndex, offsetBy: max(0, start))
-        let upper = line.index(lower, offsetBy: min(length, line.distance(from: lower, to: line.endIndex)), limitedBy: line.endIndex) ?? line.endIndex
+        let upper =
+            line.index(
+                lower, offsetBy: min(length, line.distance(from: lower, to: line.endIndex)), limitedBy: line.endIndex)
+            ?? line.endIndex
         return String(line[lower..<upper])
     }
 

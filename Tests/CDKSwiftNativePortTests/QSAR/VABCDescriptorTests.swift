@@ -27,19 +27,23 @@ final class VABCDescriptorTests: XCTestCase {
         try assertVABC("Nc1ncnc2n(CCOCP(=O)(O)O)cnc12", expected: 199.84)
     }
 
-    private func assertVABC(_ smiles: String,
-                            expected: Double,
-                            tolerance: Double = 0.01,
-                            file: StaticString = #filePath,
-                            line: UInt = #line) throws {
+    private func assertVABC(
+        _ smiles: String,
+        expected: Double,
+        tolerance: Double = 0.01,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
         let molecule = try parser.parseSmiles(smiles)
-        let observed = try XCTUnwrap(CDKVABCDescriptor.calculate(for: molecule),
-                                     "Expected VABC value for \(smiles)",
-                                     file: file,
-                                     line: line)
-        XCTAssertEqual(observed, expected, accuracy: tolerance,
-                       "SMILES \(smiles) expected VABC \(expected), got \(observed)",
-                       file: file,
-                       line: line)
+        let observed = try XCTUnwrap(
+            CDKVABCDescriptor.calculate(for: molecule),
+            "Expected VABC value for \(smiles)",
+            file: file,
+            line: line)
+        XCTAssertEqual(
+            observed, expected, accuracy: tolerance,
+            "SMILES \(smiles) expected VABC \(expected), got \(observed)",
+            file: file,
+            line: line)
     }
 }

@@ -1,12 +1,13 @@
 import Foundation
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 /// CDK-style XYZ reader for one or more XYZ blocks in a single text stream.
 public enum CDKXYZReader {
     public static func read(text: String) throws -> [Molecule] {
-        let normalized = text
+        let normalized =
+            text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
@@ -16,7 +17,8 @@ public enum CDKXYZReader {
 
         while lineIndex < lines.count {
             while lineIndex < lines.count,
-                  lines[lineIndex].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                lines[lineIndex].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            {
                 lineIndex += 1
             }
             guard lineIndex < lines.count else { break }
@@ -42,9 +44,11 @@ public enum CDKXYZReader {
                 }
 
                 let moleculeName = comment.trimmingCharacters(in: .whitespacesAndNewlines)
-                molecules.append(try makeMolecule(name: moleculeName,
-                                                  atomLines: atomLines,
-                                                  fallbackName: "XYZ Molecule \(molecules.count + 1)"))
+                molecules.append(
+                    try makeMolecule(
+                        name: moleculeName,
+                        atomLines: atomLines,
+                        fallbackName: "XYZ Molecule \(molecules.count + 1)"))
                 lineIndex = scan
                 continue
             }
@@ -54,9 +58,11 @@ public enum CDKXYZReader {
             guard !atomLines.isEmpty else {
                 throw ChemError.emptyInput
             }
-            molecules.append(try makeMolecule(name: "",
-                                              atomLines: atomLines,
-                                              fallbackName: "XYZ Molecule"))
+            molecules.append(
+                try makeMolecule(
+                    name: "",
+                    atomLines: atomLines,
+                    fallbackName: "XYZ Molecule"))
             break
         }
 
@@ -64,9 +70,11 @@ public enum CDKXYZReader {
         return molecules
     }
 
-    private static func makeMolecule(name: String,
-                                     atomLines: [String],
-                                     fallbackName: String) throws -> Molecule {
+    private static func makeMolecule(
+        name: String,
+        atomLines: [String],
+        fallbackName: String
+    ) throws -> Molecule {
         var atoms: [Atom] = []
         atoms.reserveCapacity(atomLines.count)
 
@@ -77,9 +85,10 @@ public enum CDKXYZReader {
             atoms.append(parsed)
         }
 
-        var molecule = Molecule(name: name.isEmpty ? fallbackName : name,
-                                atoms: atoms,
-                                bonds: CDKBondPerception.inferSingleBonds(for: atoms))
+        var molecule = Molecule(
+            name: name.isEmpty ? fallbackName : name,
+            atoms: atoms,
+            bonds: CDKBondPerception.inferSingleBonds(for: atoms))
 
         if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
             molecule = Depiction2DGenerator.generate(for: molecule)
@@ -116,10 +125,11 @@ public enum CDKXYZReader {
         }
 
         let symbol = normalizeElementSymbol(from: symbolToken)
-        return Atom(id: atomID,
-                    element: symbol,
-                    position: CGPoint(x: x, y: y),
-                    zPosition: z)
+        return Atom(
+            id: atomID,
+            element: symbol,
+            position: CGPoint(x: x, y: y),
+            zPosition: z)
     }
 
     private static func normalizeElementSymbol(from raw: String) -> String {

@@ -1,9 +1,9 @@
 import Foundation
 #if canImport(FoundationXML)
-import FoundationXML
+    import FoundationXML
 #endif
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 
 public enum CDKCMLReactionReader {
@@ -192,46 +192,65 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private var generatedAtomCounter = 1
     private var formulaDepth = 0
 
-    func parser(_ parser: XMLParser,
-                didStartElement elementName: String,
-                namespaceURI: String?,
-                qualifiedName qName: String?,
-                attributes attributeDict: [String: String] = [:]) {
+    func parser(
+        _ parser: XMLParser,
+        didStartElement elementName: String,
+        namespaceURI: String?,
+        qualifiedName qName: String?,
+        attributes attributeDict: [String: String] = [:]
+    ) {
         let lower = localName(elementName).lowercased()
 
         switch lower {
         case "reaction":
-            reactionStack.append(PendingReaction(id: normalizedLabel(attributeDict["id"]),
-                                                 name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"])))
+            reactionStack.append(
+                PendingReaction(
+                    id: normalizedLabel(attributeDict["id"]),
+                    name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"])))
 
         case "reactionlist":
-            containerStack.append(.list(PendingReactionList(id: normalizedLabel(attributeDict["id"]),
-                                                            name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]),
-                                                            isStepList: false)))
+            containerStack.append(
+                .list(
+                    PendingReactionList(
+                        id: normalizedLabel(attributeDict["id"]),
+                        name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]),
+                        isStepList: false)))
 
         case "reactionsteplist":
-            containerStack.append(.list(PendingReactionList(id: normalizedLabel(attributeDict["id"]),
-                                                            name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]),
-                                                            isStepList: true)))
+            containerStack.append(
+                .list(
+                    PendingReactionList(
+                        id: normalizedLabel(attributeDict["id"]),
+                        name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]),
+                        isStepList: true)))
 
         case "reactionscheme":
-            containerStack.append(.scheme(PendingReactionScheme(id: normalizedLabel(attributeDict["id"]),
-                                                                name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]))))
+            containerStack.append(
+                .scheme(
+                    PendingReactionScheme(
+                        id: normalizedLabel(attributeDict["id"]),
+                        name: normalizedLabel(attributeDict["title"] ?? attributeDict["name"]))))
 
         case "reactant":
             ensureCurrentReaction()
-            participantStack.append(PendingParticipant(role: .reactant,
-                                                      molecule: participantSeedMolecule(attributes: attributeDict)))
+            participantStack.append(
+                PendingParticipant(
+                    role: .reactant,
+                    molecule: participantSeedMolecule(attributes: attributeDict)))
 
         case "product":
             ensureCurrentReaction()
-            participantStack.append(PendingParticipant(role: .product,
-                                                      molecule: participantSeedMolecule(attributes: attributeDict)))
+            participantStack.append(
+                PendingParticipant(
+                    role: .product,
+                    molecule: participantSeedMolecule(attributes: attributeDict)))
 
         case "substance":
             ensureCurrentReaction()
-            participantStack.append(PendingParticipant(role: .agent,
-                                                      molecule: participantSeedMolecule(attributes: attributeDict)))
+            participantStack.append(
+                PendingParticipant(
+                    role: .agent,
+                    molecule: participantSeedMolecule(attributes: attributeDict)))
 
         case "molecule":
             let molecule = resolveMolecule(attributes: attributeDict)
@@ -273,36 +292,46 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
         case "bondstereo":
             if currentBond != nil {
-                textCaptures.append(TextCapture(elementName: lower,
-                                                attributes: attributeDict,
-                                                context: .bond,
-                                                text: ""))
+                textCaptures.append(
+                    TextCapture(
+                        elementName: lower,
+                        attributes: attributeDict,
+                        context: .bond,
+                        text: ""))
             }
 
         case "label":
             if currentAtom != nil {
-                textCaptures.append(TextCapture(elementName: lower,
-                                                attributes: attributeDict,
-                                                context: .atom,
-                                                text: ""))
+                textCaptures.append(
+                    TextCapture(
+                        elementName: lower,
+                        attributes: attributeDict,
+                        context: .atom,
+                        text: ""))
             }
 
         case "scalar", "string", "float", "integer":
             if currentAtom != nil {
-                textCaptures.append(TextCapture(elementName: lower,
-                                                attributes: attributeDict,
-                                                context: .atom,
-                                                text: ""))
+                textCaptures.append(
+                    TextCapture(
+                        elementName: lower,
+                        attributes: attributeDict,
+                        context: .atom,
+                        text: ""))
             } else if currentBond != nil {
-                textCaptures.append(TextCapture(elementName: lower,
-                                                attributes: attributeDict,
-                                                context: .bond,
-                                                text: ""))
+                textCaptures.append(
+                    TextCapture(
+                        elementName: lower,
+                        attributes: attributeDict,
+                        context: .bond,
+                        text: ""))
             } else if !reactionStack.isEmpty || !containerStack.isEmpty {
-                textCaptures.append(TextCapture(elementName: lower,
-                                                attributes: attributeDict,
-                                                context: .reaction,
-                                                text: ""))
+                textCaptures.append(
+                    TextCapture(
+                        elementName: lower,
+                        attributes: attributeDict,
+                        context: .reaction,
+                        text: ""))
             }
 
         default:
@@ -315,10 +344,12 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         textCaptures[textCaptures.count - 1].text.append(string)
     }
 
-    func parser(_ parser: XMLParser,
-                didEndElement elementName: String,
-                namespaceURI: String?,
-                qualifiedName qName: String?) {
+    func parser(
+        _ parser: XMLParser,
+        didEndElement elementName: String,
+        namespaceURI: String?,
+        qualifiedName qName: String?
+    ) {
         let lower = localName(elementName).lowercased()
 
         switch lower {
@@ -394,51 +425,59 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
     private func buildReaction(from pending: PendingReaction, index: Int) -> CDKReaction {
         let reactants = pending.reactants.enumerated().map {
-            buildMolecule(from: $0.element,
-                          allowEmpty: true,
-                          fallbackName: "Reactant \($0.offset + 1)")
+            buildMolecule(
+                from: $0.element,
+                allowEmpty: true,
+                fallbackName: "Reactant \($0.offset + 1)")
         }
         let products = pending.products.enumerated().map {
-            buildMolecule(from: $0.element,
-                          allowEmpty: true,
-                          fallbackName: "Product \($0.offset + 1)")
+            buildMolecule(
+                from: $0.element,
+                allowEmpty: true,
+                fallbackName: "Product \($0.offset + 1)")
         }
         let agents = pending.agents.enumerated().map {
-            buildMolecule(from: $0.element,
-                          allowEmpty: true,
-                          fallbackName: "Agent \($0.offset + 1)")
+            buildMolecule(
+                from: $0.element,
+                allowEmpty: true,
+                fallbackName: "Agent \($0.offset + 1)")
         }
-        return CDKReaction(reactants: reactants,
-                           agents: agents,
-                           products: products,
-                           id: pending.id,
-                           name: pending.name,
-                           properties: pending.properties)
+        return CDKReaction(
+            reactants: reactants,
+            agents: agents,
+            products: products,
+            id: pending.id,
+            name: pending.name,
+            properties: pending.properties)
     }
 
     private func buildReactionList(from pending: PendingReactionList) -> CDKReactionList {
         let entries = pending.entries.enumerated().map { offset, entry in
             buildReactionListEntry(entry, defaultIndex: offset + 1)
         }
-        return CDKReactionList(id: pending.id,
-                               name: pending.name,
-                               entries: entries,
-                               properties: pending.properties,
-                               isStepList: pending.isStepList)
+        return CDKReactionList(
+            id: pending.id,
+            name: pending.name,
+            entries: entries,
+            properties: pending.properties,
+            isStepList: pending.isStepList)
     }
 
     private func buildReactionScheme(from pending: PendingReactionScheme) -> CDKReactionScheme {
         let entries = pending.entries.enumerated().map { offset, entry in
             buildReactionSchemeEntry(entry, defaultIndex: offset + 1)
         }
-        return CDKReactionScheme(id: pending.id,
-                                 name: pending.name,
-                                 entries: entries,
-                                 properties: pending.properties)
+        return CDKReactionScheme(
+            id: pending.id,
+            name: pending.name,
+            entries: entries,
+            properties: pending.properties)
     }
 
-    private func buildReactionListEntry(_ entry: PendingHierarchyNode,
-                                        defaultIndex: Int) -> CDKReactionListEntry {
+    private func buildReactionListEntry(
+        _ entry: PendingHierarchyNode,
+        defaultIndex: Int
+    ) -> CDKReactionListEntry {
         switch entry {
         case .reaction(let reaction):
             return .reaction(buildReaction(from: reaction, index: defaultIndex))
@@ -449,8 +488,10 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         }
     }
 
-    private func buildReactionSchemeEntry(_ entry: PendingHierarchyNode,
-                                          defaultIndex: Int) -> CDKReactionSchemeEntry {
+    private func buildReactionSchemeEntry(
+        _ entry: PendingHierarchyNode,
+        defaultIndex: Int
+    ) -> CDKReactionSchemeEntry {
         switch entry {
         case .reaction(let reaction):
             return .reaction(buildReaction(from: reaction, index: defaultIndex))
@@ -461,11 +502,14 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         }
     }
 
-    private func buildMolecule(from source: PendingMolecule,
-                               allowEmpty: Bool,
-                               fallbackName: String) -> Molecule {
+    private func buildMolecule(
+        from source: PendingMolecule,
+        allowEmpty: Bool,
+        fallbackName: String
+    ) -> Molecule {
         let preferredName = source.title?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let moleculeName = (preferredName?.isEmpty == false)
+        let moleculeName =
+            (preferredName?.isEmpty == false)
             ? preferredName!
             : (source.id?.isEmpty == false ? source.id! : fallbackName)
 
@@ -476,16 +520,18 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         for (atomIndex, atomSource) in source.atoms.enumerated() {
             let atomID = atomIndex + 1
             atomIDByXMLID[atomSource.xmlID] = atomID
-            atoms.append(Atom(id: atomID,
-                              externalID: atomSource.xmlID,
-                              element: atomSource.element,
-                              position: atomSource.position,
-                              zPosition: atomSource.zPosition,
-                              charge: atomSource.charge,
-                              isotopeMassNumber: atomSource.isotope,
-                              aromatic: atomSource.aromatic,
-                              explicitHydrogenCount: atomSource.hydrogenCount,
-                              aliasLabel: atomSource.aliasLabel))
+            atoms.append(
+                Atom(
+                    id: atomID,
+                    externalID: atomSource.xmlID,
+                    element: atomSource.element,
+                    position: atomSource.position,
+                    zPosition: atomSource.zPosition,
+                    charge: atomSource.charge,
+                    isotopeMassNumber: atomSource.isotope,
+                    aromatic: atomSource.aromatic,
+                    explicitHydrogenCount: atomSource.hydrogenCount,
+                    aliasLabel: atomSource.aliasLabel))
         }
 
         var bonds: [Bond] = []
@@ -493,16 +539,19 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var nextBondID = 1
         for bondSource in source.bonds {
             guard let a1 = atomIDByXMLID[bondSource.refA],
-                  let a2 = atomIDByXMLID[bondSource.refB],
-                  a1 != a2 else {
+                let a2 = atomIDByXMLID[bondSource.refB],
+                a1 != a2
+            else {
                 continue
             }
-            bonds.append(Bond(id: nextBondID,
-                              externalID: bondSource.xmlID,
-                              a1: a1,
-                              a2: a2,
-                              order: bondSource.order,
-                              stereo: bondSource.stereo))
+            bonds.append(
+                Bond(
+                    id: nextBondID,
+                    externalID: bondSource.xmlID,
+                    a1: a1,
+                    a2: a2,
+                    order: bondSource.order,
+                    stereo: bondSource.stereo))
             if bondSource.aromatic || bondSource.order == .aromatic {
                 aromaticAtomIDs.insert(a1)
                 aromaticAtomIDs.insert(a2)
@@ -518,17 +567,19 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             atoms[index].aromatic = true
         }
 
-        var molecule = Molecule(name: moleculeName,
-                                externalID: source.id,
-                                atoms: atoms,
-                                bonds: bonds)
+        var molecule = Molecule(
+            name: moleculeName,
+            externalID: source.id,
+            atoms: atoms,
+            bonds: bonds)
         for formula in source.formulaValues {
             molecule.appendDataFieldValue(formula, named: "Formula")
         }
 
         if !atoms.isEmpty,
-           let box = molecule.boundingBox(),
-           box.width <= 0.0001 && box.height <= 0.0001 {
+            let box = molecule.boundingBox(),
+            box.width <= 0.0001 && box.height <= 0.0001
+        {
             molecule = Depiction2DGenerator.generate(for: molecule)
         }
 
@@ -668,7 +719,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         let charge = Int(attributes["formalCharge"] ?? "") ?? 0
         let isotope = Int(attributes["isotopeNumber"] ?? "")
         let hydrogenCount = Int(attributes["hydrogenCount"] ?? "")
-        let aromatic = isTruthy(attributes["aromatic"])
+        let aromatic =
+            isTruthy(attributes["aromatic"])
             || (attributes["atomType"] ?? "").lowercased().contains(".ar")
 
         let aliasLabel: String?
@@ -678,15 +730,16 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             aliasLabel = title
         }
 
-        return PendingAtom(xmlID: xmlID,
-                           element: element,
-                           position: coords.position,
-                           zPosition: coords.zPosition,
-                           charge: charge,
-                           isotope: isotope,
-                           hydrogenCount: hydrogenCount,
-                           aromatic: aromatic,
-                           aliasLabel: aliasLabel)
+        return PendingAtom(
+            xmlID: xmlID,
+            element: element,
+            position: coords.position,
+            zPosition: coords.zPosition,
+            charge: charge,
+            isotope: isotope,
+            hydrogenCount: hydrogenCount,
+            aromatic: aromatic,
+            aliasLabel: aliasLabel)
     }
 
     private func makeBond(attributes: [String: String]) -> PendingBond? {
@@ -704,13 +757,14 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         guard refs.count >= 2 else { return nil }
         let rawOrder = attributes["order"]
         let order = mapBondOrder(rawOrder)
-        return PendingBond(xmlID: normalizedLabel(attributes["id"]),
-                           refA: refs[0],
-                           refB: refs[1],
-                           order: order,
-                           stereo: .none,
-                           aromatic: order == .aromatic || isTruthy(attributes["aromatic"]),
-                           hadExplicitOrder: rawOrder?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+        return PendingBond(
+            xmlID: normalizedLabel(attributes["id"]),
+            refA: refs[0],
+            refB: refs[1],
+            order: order,
+            stereo: .none,
+            aromatic: order == .aromatic || isTruthy(attributes["aromatic"]),
+            hadExplicitOrder: rawOrder?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
     }
 
     private func upsert(atom: PendingAtom, into molecule: PendingMolecule) {
@@ -723,7 +777,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
     private func upsert(bond: PendingBond, into molecule: PendingMolecule) {
         if let xmlID = bond.xmlID,
-           let existingIndex = molecule.bonds.firstIndex(where: { $0.xmlID == xmlID }) {
+            let existingIndex = molecule.bonds.firstIndex(where: { $0.xmlID == xmlID })
+        {
             molecule.bonds[existingIndex] = bond
             return
         }
@@ -762,24 +817,27 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             }
 
             let rawElement = idx < elementTypes.count ? elementTypes[idx] : "C"
-            let coords = coordinates(at: idx,
-                                     xy2: xy2,
-                                     xyz3: xyz3,
-                                     x2: x2,
-                                     y2: y2,
-                                     x3: x3,
-                                     y3: y3,
-                                     z3: z3)
+            let coords = coordinates(
+                at: idx,
+                xy2: xy2,
+                xyz3: xyz3,
+                x2: x2,
+                y2: y2,
+                x3: x3,
+                y3: y3,
+                z3: z3)
 
-            molecule.atoms.append(PendingAtom(xmlID: xmlID,
-                                              element: normalizedElement(rawElement, aliasLabel: nil),
-                                              position: coords.position,
-                                              zPosition: coords.zPosition,
-                                              charge: idx < charges.count ? charges[idx] : 0,
-                                              isotope: idx < isotopes.count ? isotopes[idx] : nil,
-                                              hydrogenCount: idx < hydrogens.count ? hydrogens[idx] : nil,
-                                              aromatic: idx < aromaticFlags.count ? aromaticFlags[idx] : false,
-                                              aliasLabel: nil))
+            molecule.atoms.append(
+                PendingAtom(
+                    xmlID: xmlID,
+                    element: normalizedElement(rawElement, aliasLabel: nil),
+                    position: coords.position,
+                    zPosition: coords.zPosition,
+                    charge: idx < charges.count ? charges[idx] : 0,
+                    isotope: idx < isotopes.count ? isotopes[idx] : nil,
+                    hydrogenCount: idx < hydrogens.count ? hydrogens[idx] : nil,
+                    aromatic: idx < aromaticFlags.count ? aromaticFlags[idx] : false,
+                    aliasLabel: nil))
         }
     }
 
@@ -796,13 +854,15 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             for idx in 0..<count {
                 let rawOrder = idx < orders.count ? orders[idx] : nil
                 let order = mapBondOrder(rawOrder)
-                molecule.bonds.append(PendingBond(xmlID: idx < ids.count ? ids[idx] : nil,
-                                                  refA: refs1[idx],
-                                                  refB: refs2[idx],
-                                                  order: order,
-                                                  stereo: .none,
-                                                  aromatic: order == .aromatic,
-                                                  hadExplicitOrder: rawOrder?.isEmpty == false))
+                molecule.bonds.append(
+                    PendingBond(
+                        xmlID: idx < ids.count ? ids[idx] : nil,
+                        refA: refs1[idx],
+                        refB: refs2[idx],
+                        order: order,
+                        stereo: .none,
+                        aromatic: order == .aromatic,
+                        hadExplicitOrder: rawOrder?.isEmpty == false))
             }
             return
         }
@@ -816,13 +876,15 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             while idx + 1 < tokens.count {
                 let rawOrder = pairIndex < orders.count ? orders[pairIndex] : nil
                 let order = mapBondOrder(rawOrder)
-                molecule.bonds.append(PendingBond(xmlID: pairIndex < ids.count ? ids[pairIndex] : nil,
-                                                  refA: tokens[idx],
-                                                  refB: tokens[idx + 1],
-                                                  order: order,
-                                                  stereo: .none,
-                                                  aromatic: order == .aromatic,
-                                                  hadExplicitOrder: rawOrder?.isEmpty == false))
+                molecule.bonds.append(
+                    PendingBond(
+                        xmlID: pairIndex < ids.count ? ids[pairIndex] : nil,
+                        refA: tokens[idx],
+                        refB: tokens[idx + 1],
+                        order: order,
+                        stereo: .none,
+                        aromatic: order == .aromatic,
+                        hadExplicitOrder: rawOrder?.isEmpty == false))
                 pairIndex += 1
                 idx += 2
             }
@@ -1019,14 +1081,16 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         return ParsedCoordinates(position: CGPoint(x: x, y: y), zPosition: z3)
     }
 
-    private func coordinates(at index: Int,
-                             xy2: [(Double, Double)],
-                             xyz3: [(Double, Double, Double)],
-                             x2: [Double],
-                             y2: [Double],
-                             x3: [Double],
-                             y3: [Double],
-                             z3: [Double]) -> ParsedCoordinates {
+    private func coordinates(
+        at index: Int,
+        xy2: [(Double, Double)],
+        xyz3: [(Double, Double, Double)],
+        x2: [Double],
+        y2: [Double],
+        x3: [Double],
+        y3: [Double],
+        z3: [Double]
+    ) -> ParsedCoordinates {
         if index < xyz3.count {
             let triplet = xyz3[index]
             return ParsedCoordinates(position: CGPoint(x: triplet.0, y: triplet.1), zPosition: triplet.2)
@@ -1068,11 +1132,13 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
     private func scalarBuiltin(_ attributes: [String: String]) -> String? {
         if let builtin = attributes["builtin"]?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-           !builtin.isEmpty {
+            !builtin.isEmpty
+        {
             return builtin
         }
         if let dictRef = normalizedDictRef(attributes["dictRef"]),
-           dictRef.hasPrefix("cml:") {
+            dictRef.hasPrefix("cml:")
+        {
             return String(dictRef.dropFirst(4))
         }
         return normalizedDictRef(attributes["dictRef"])
@@ -1091,7 +1157,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
     private func parseBondStereo(attributes: [String: String], text: String) -> BondStereo? {
         if let dictRef = attributes["dictRef"],
-           let stereo = bondStereoTokenToValue(String(dictRef.split(separator: ":").last ?? "")) {
+            let stereo = bondStereoTokenToValue(String(dictRef.split(separator: ":").last ?? ""))
+        {
             return stereo
         }
         return bondStereoTokenToValue(text)

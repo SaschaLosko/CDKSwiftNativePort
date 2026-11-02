@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 @testable import CDKSwiftNativePort
 
@@ -48,8 +48,9 @@ final class MDLV2000ReaderPortTests: XCTestCase {
 
         XCTAssertEqual(atom.chirality, .clockwise)
         XCTAssertEqual(atom.valenceOverride, 0)
-        XCTAssertEqual(atom.cxStereoGroup,
-                       CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0))
+        XCTAssertEqual(
+            atom.cxStereoGroup,
+            CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0))
     }
 
     func testParsesQueryBondsAndBondTopology() throws {
@@ -106,131 +107,131 @@ final class MDLV2000ReaderPortTests: XCTestCase {
     }
 
     private let ethanolMol = """
-Ethanol
-CDKSwiftNativePort
+        Ethanol
+        CDKSwiftNativePort
 
-  3  2  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    2.9000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0  0  0  0
-  2  3  1  0  0  0  0
-M  END
-"""
+          3  2  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            2.9000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0  0  0  0
+          2  3  1  0  0  0  0
+        M  END
+        """
 
     private let emptyMol = """
-Empty
-CDKSwiftNativePort
+        Empty
+        CDKSwiftNativePort
 
-  0  0  0  0  0  0            999 V2000
-M  END
-"""
+          0  0  0  0  0  0            999 V2000
+        M  END
+        """
 
     private let aliasAndValueMol = """
-AliasAndValue
-CDKSwiftNativePort
+        AliasAndValue
+        CDKSwiftNativePort
 
-  2  1  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0  0  0  0
-A    1
-Phenyl
-V    2 Carbon note
-M  END
-"""
+          2  1  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0  0  0  0
+        A    1
+        Phenyl
+        V    2 Carbon note
+        M  END
+        """
 
     private let isotopeMol = """
-Isotopes
-CDKSwiftNativePort
+        Isotopes
+        CDKSwiftNativePort
 
-  3  0  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 D   0  0  0  0  0  0  0  0  0  0  0  0
-    1.5000    0.0000    0.0000 T   0  0  0  0  0  0  0  0  0  0  0  0
-    3.0000    0.0000    0.0000 C   1  0  0  0  0  0  0  0  0  0  0  0
-M  END
-"""
+          3  0  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 D   0  0  0  0  0  0  0  0  0  0  0  0
+            1.5000    0.0000    0.0000 T   0  0  0  0  0  0  0  0  0  0  0  0
+            3.0000    0.0000    0.0000 C   1  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+        """
 
     private let parityMol = """
-Parity
-CDKSwiftNativePort
+        Parity
+        CDKSwiftNativePort
 
-  1  0  0  0  1  0            999 V2000
-    0.0000    0.0000    0.0000 C   0  0  1  0  0 15  0  0  0  0  0  0
-M  END
-"""
+          1  0  0  0  1  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  1  0  0 15  0  0  0  0  0  0
+        M  END
+        """
 
     private let queryBondMol = """
-QueryBond
-CDKSwiftNativePort
+        QueryBond
+        CDKSwiftNativePort
 
-  3  2  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  5  0  0  1  0
-  2  3  8  4  0  2  0
-M  END
-"""
+          3  2  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            3.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  5  0  0  1  0
+          2  3  8  4  0  2  0
+        M  END
+        """
 
     private let atomListMol = """
-AtomList
-CDKSwiftNativePort
+        AtomList
+        CDKSwiftNativePort
 
-  1  0  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
-  1 T    2   6   7
-M  ALS   1  2 T C N
-M  END
-"""
+          1  0  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+          1 T    2   6   7
+        M  ALS   1  2 T C N
+        M  END
+        """
 
     private let additionalMRecordsMol = """
-AdditionalMRecords
-CDKSwiftNativePort
+        AdditionalMRecords
+        CDKSwiftNativePort
 
-  1  0  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
-M  RAD  1   1   2
-M  RGP  1   1   7
-M  APO  1   1   3
-M  SUB  1   1   2
-M  UNS  1   1   1
-M  RBC  1   1   0
-M  END
-"""
+          1  0  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+        M  RAD  1   1   2
+        M  RGP  1   1   7
+        M  APO  1   1   3
+        M  SUB  1   1   2
+        M  UNS  1   1   1
+        M  RBC  1   1   0
+        M  END
+        """
 
     private let sgroupMol = """
-Sgroup
-CDKSwiftNativePort
+        Sgroup
+        CDKSwiftNativePort
 
-  2  1  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.5000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0  0  0  0
-M  STY  2   1 SRU   2 DAT
-M  SAL   1  2   1   2
-M  SBL   1  1   1
-M  SMT   1 n
-M  SCN  1   1 HT
-M  SDI   1  4   -1.0000   -1.0000   -1.0000    1.0000
-M  SBT  1   1   1
-M  SAL   2  1   2
-M  SBL   2  1   1
-M  SDT   2 FIELD
-M  SED   2 Atom data
-M  END
-"""
+          2  1  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.5000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0  0  0  0
+        M  STY  2   1 SRU   2 DAT
+        M  SAL   1  2   1   2
+        M  SBL   1  1   1
+        M  SMT   1 n
+        M  SCN  1   1 HT
+        M  SDI   1  4   -1.0000   -1.0000   -1.0000    1.0000
+        M  SBT  1   1   1
+        M  SAL   2  1   2
+        M  SBL   2  1   1
+        M  SDT   2 FIELD
+        M  SED   2 Atom data
+        M  END
+        """
 
     private let zeroCoordinateMol = """
-ZeroCoordinates
-CDKSwiftNativePort
+        ZeroCoordinates
+        CDKSwiftNativePort
 
-  3  2  0  0  0  0            999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0  0  0  0
-  2  3  1  0  0  0  0
-M  END
-"""
+          3  2  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0  0  0  0
+          2  3  1  0  0  0  0
+        M  END
+        """
 }

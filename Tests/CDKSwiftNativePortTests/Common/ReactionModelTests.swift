@@ -26,9 +26,10 @@ final class ReactionModelTests: XCTestCase {
             stoichiometry: 3.0
         )
 
-        let reaction = CDKReaction(reactantParticipants: [participant],
-                                   agentParticipants: [],
-                                   productParticipants: [])
+        let reaction = CDKReaction(
+            reactantParticipants: [participant],
+            agentParticipants: [],
+            productParticipants: [])
 
         XCTAssertEqual(reaction.reactantParticipants.count, 1)
         XCTAssertEqual(reaction.reactantParticipants.first?.role, .reactant)
@@ -38,9 +39,10 @@ final class ReactionModelTests: XCTestCase {
 
     func testFlatParticipantInitializerGroupsByRole() throws {
         let participants = [
-            CDKReactionParticipant(molecule: makeMolecule(name: "R", element: "C"), role: .reactant, stoichiometry: 1.5),
+            CDKReactionParticipant(
+                molecule: makeMolecule(name: "R", element: "C"), role: .reactant, stoichiometry: 1.5),
             CDKReactionParticipant(molecule: makeMolecule(name: "A", element: "N"), role: .agent, stoichiometry: nil),
-            CDKReactionParticipant(molecule: makeMolecule(name: "P", element: "O"), role: .product, stoichiometry: 2.0)
+            CDKReactionParticipant(molecule: makeMolecule(name: "P", element: "O"), role: .product, stoichiometry: 2.0),
         ]
 
         let reaction = CDKReaction(participants: participants)
@@ -56,22 +58,26 @@ final class ReactionModelTests: XCTestCase {
     }
 
     func testReactionHierarchyFlattensNestedSchemeEntries() {
-        let first = CDKReaction(reactants: [makeMolecule(name: "A", element: "C")],
-                                agents: [],
-                                products: [makeMolecule(name: "B", element: "N")],
-                                id: "r1")
-        let second = CDKReaction(reactants: [makeMolecule(name: "B", element: "N")],
-                                 agents: [],
-                                 products: [makeMolecule(name: "C", element: "O")],
-                                 id: "r2")
-        let stepList = CDKReactionList(id: "steps",
-                                       reactions: [second],
-                                       isStepList: true)
-        let scheme = CDKReactionScheme(id: "scheme",
-                                       entries: [
-                                        .reaction(first),
-                                        .list(stepList)
-                                       ])
+        let first = CDKReaction(
+            reactants: [makeMolecule(name: "A", element: "C")],
+            agents: [],
+            products: [makeMolecule(name: "B", element: "N")],
+            id: "r1")
+        let second = CDKReaction(
+            reactants: [makeMolecule(name: "B", element: "N")],
+            agents: [],
+            products: [makeMolecule(name: "C", element: "O")],
+            id: "r2")
+        let stepList = CDKReactionList(
+            id: "steps",
+            reactions: [second],
+            isStepList: true)
+        let scheme = CDKReactionScheme(
+            id: "scheme",
+            entries: [
+                .reaction(first),
+                .list(stepList),
+            ])
 
         XCTAssertEqual(scheme.flattenedReactions.map(\.id), ["r1", "r2"])
 
@@ -81,21 +87,26 @@ final class ReactionModelTests: XCTestCase {
     }
 
     func testReactionListFlattensNestedEntriesWhileKeepingEntryTopology() {
-        let first = CDKReaction(reactants: [makeMolecule(name: "A", element: "C")],
-                                agents: [],
-                                products: [makeMolecule(name: "B", element: "N")],
-                                id: "r1")
-        let second = CDKReaction(reactants: [makeMolecule(name: "B", element: "N")],
-                                 agents: [],
-                                 products: [makeMolecule(name: "C", element: "O")],
-                                 id: "r2")
-        let list = CDKReactionList(id: "steps",
-                                   entries: [
-                                    .scheme(CDKReactionScheme(id: "branch",
-                                                              entries: [.reaction(first)])),
-                                    .reaction(second)
-                                   ],
-                                   isStepList: true)
+        let first = CDKReaction(
+            reactants: [makeMolecule(name: "A", element: "C")],
+            agents: [],
+            products: [makeMolecule(name: "B", element: "N")],
+            id: "r1")
+        let second = CDKReaction(
+            reactants: [makeMolecule(name: "B", element: "N")],
+            agents: [],
+            products: [makeMolecule(name: "C", element: "O")],
+            id: "r2")
+        let list = CDKReactionList(
+            id: "steps",
+            entries: [
+                .scheme(
+                    CDKReactionScheme(
+                        id: "branch",
+                        entries: [.reaction(first)])),
+                .reaction(second),
+            ],
+            isStepList: true)
 
         XCTAssertEqual(list.entries.count, 2)
         XCTAssertEqual(list.reactions.map(\.id), ["r1", "r2"])
@@ -103,8 +114,9 @@ final class ReactionModelTests: XCTestCase {
     }
 
     private func makeMolecule(name: String, element: String) -> Molecule {
-        Molecule(name: name,
-                 atoms: [Atom(id: 1, element: element, position: .zero)],
-                 bonds: [])
+        Molecule(
+            name: name,
+            atoms: [Atom(id: 1, element: element, position: .zero)],
+            bonds: [])
     }
 }

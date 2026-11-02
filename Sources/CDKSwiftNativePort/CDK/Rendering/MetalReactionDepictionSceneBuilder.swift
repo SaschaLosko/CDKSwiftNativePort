@@ -1,5 +1,5 @@
 #if canImport(CoreGraphics)
-import CoreGraphics
+    import CoreGraphics
 #endif
 import Foundation
 
@@ -15,24 +15,27 @@ public struct CDKReactionParticipantSelection: Equatable, Hashable, Codable, Sen
 
 /// Metal scene builder for CDK-like 2D reaction depictions.
 public enum CDKMetalReactionDepictionSceneBuilder {
-    public static func build(reaction: CDKReaction,
-                             style: RenderStyle,
-                             canvasRect: CGRect,
-                             zoom: CGFloat,
-                             pan: CGSize,
-                             rotationDegrees: CGFloat = 0,
-                             highlightedParticipant: CDKReactionParticipantSelection? = nil,
-                             withOuterGlowHighlight: Bool = true) -> CDKMetalDepictionScene {
+    public static func build(
+        reaction: CDKReaction,
+        style: RenderStyle,
+        canvasRect: CGRect,
+        zoom: CGFloat,
+        pan: CGSize,
+        rotationDegrees: CGFloat = 0,
+        highlightedParticipant: CDKReactionParticipantSelection? = nil,
+        withOuterGlowHighlight: Bool = true
+    ) -> CDKMetalDepictionScene {
         guard canvasRect.width > 1, canvasRect.height > 1 else {
             return CDKMetalDepictionScene(gridSegments: [], bondSegments: [], labels: [])
         }
 
         let gridSegments: [CDKMetalDepictionScene.LineSegment] = []
         let pad = style.padding
-        let available = CGRect(x: canvasRect.minX + pad,
-                               y: canvasRect.minY + pad,
-                               width: max(1, canvasRect.width - 2 * pad),
-                               height: max(1, canvasRect.height - 2 * pad))
+        let available = CGRect(
+            x: canvasRect.minX + pad,
+            y: canvasRect.minY + pad,
+            width: max(1, canvasRect.width - 2 * pad),
+            height: max(1, canvasRect.height - 2 * pad))
 
         var reactants = reaction.reactants.map { CDKReactionParticipantLayoutRefiner.recomputeIfLowQuality($0) }
         let products = reaction.products.map { CDKReactionParticipantLayoutRefiner.recomputeIfLowQuality($0) }
@@ -52,37 +55,43 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             return CDKMetalDepictionScene(gridSegments: gridSegments, bondSegments: [], labels: [])
         }
 
-        let activeHighlight = validatedHighlight(highlightedParticipant,
-                                                 reactantCount: reactants.count,
-                                                 agentCount: agents.count,
-                                                 productCount: products.count)
+        let activeHighlight = validatedHighlight(
+            highlightedParticipant,
+            reactantCount: reactants.count,
+            agentCount: agents.count,
+            productCount: products.count)
 
         // CDK-like reaction depictions keep labels comparatively compact, even if the
         // single-molecule depiction style uses a very large default atom font.
         let participantMolecules = reactants + agents + products
-        let reactionStyle = compactReactionStyle(base: style,
-                                                 participants: participantMolecules,
-                                                 in: available)
+        let reactionStyle = compactReactionStyle(
+            base: style,
+            participants: participantMolecules,
+            in: available)
 
         let mainRegion = available
-        let splitRegions = reactionSideRegions(in: mainRegion,
-                                               reactants: reactants,
-                                               products: products,
-                                               preferredArrowGap: preferredArrowGap(for: agents,
-                                                                                   in: mainRegion,
-                                                                                   style: reactionStyle))
+        let splitRegions = reactionSideRegions(
+            in: mainRegion,
+            reactants: reactants,
+            products: products,
+            preferredArrowGap: preferredArrowGap(
+                for: agents,
+                in: mainRegion,
+                style: reactionStyle))
         let arrowGap = splitRegions.arrowGap
         let leftRegion = splitRegions.leftRegion
         let rightRegion = splitRegions.rightRegion
-        let agentRegion = agentRegion(in: mainRegion,
-                                      splitRegions: splitRegions,
-                                      agentCount: agents.count)
+        let agentRegion = agentRegion(
+            in: mainRegion,
+            splitRegions: splitRegions,
+            agentCount: agents.count)
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
         let agentLayout = layoutBoxes(for: agents, in: agentRegion, style: reactionStyle)
-        let participantScale = sharedParticipantScale(for: [reactantLayout, productLayout, agentLayout],
-                                                       style: reactionStyle)
+        let participantScale = sharedParticipantScale(
+            for: [reactantLayout, productLayout, agentLayout],
+            style: reactionStyle)
 
         var baseBondSegments: [CDKMetalDepictionScene.LineSegment] = []
         baseBondSegments.reserveCapacity((reactants.count + products.count + agents.count) * 32)
@@ -98,99 +107,110 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         func mergeMolecule(_ molecule: Molecule, into rect: CGRect, highlighted: Bool) {
-            let renderRect = participantCanvasRect(for: molecule,
-                                                   in: rect,
-                                                   style: reactionStyle,
-                                                   sharedScale: participantScale)
-            let scene = CDKMetalDepictionSceneBuilder.build(molecule: molecule,
-                                                            style: reactionStyle,
-                                                            canvasRect: renderRect,
-                                                            zoom: 1.0,
-                                                            pan: .zero,
-                                                            rotationDegrees: 0)
+            let renderRect = participantCanvasRect(
+                for: molecule,
+                in: rect,
+                style: reactionStyle,
+                sharedScale: participantScale)
+            let scene = CDKMetalDepictionSceneBuilder.build(
+                molecule: molecule,
+                style: reactionStyle,
+                canvasRect: renderRect,
+                zoom: 1.0,
+                pan: .zero,
+                rotationDegrees: 0)
             let glowColor = CDKRenderColor.outerGlowHighlight.withAlpha(0.92)
             for box in scene.backgroundBoxes {
                 baseBackgroundBoxes.append(box)
             }
             for segment in scene.bondSegments {
                 if highlighted {
-                    let glowWidth = max(segment.width * 2.45,
-                                        segment.width + max(1.8, reactionStyle.bondWidth * 1.95))
+                    let glowWidth = max(
+                        segment.width * 2.45,
+                        segment.width + max(1.8, reactionStyle.bondWidth * 1.95))
                     let glowOpacity = (0.16 + (segment.opacity * 0.26)).clamped(to: 0.16...0.44)
                     baseBondSegments.append(
-                        CDKMetalDepictionScene.LineSegment(from: segment.from,
-                                                           to: segment.to,
-                                                           width: glowWidth,
-                                                           opacity: glowOpacity,
-                                                           color: glowColor)
+                        CDKMetalDepictionScene.LineSegment(
+                            from: segment.from,
+                            to: segment.to,
+                            width: glowWidth,
+                            opacity: glowOpacity,
+                            color: glowColor)
                     )
                 }
                 baseBondSegments.append(
-                    CDKMetalDepictionScene.LineSegment(from: segment.from,
-                                                       to: segment.to,
-                                                       width: segment.width,
-                                                       opacity: segment.opacity,
-                                                       color: segment.color)
+                    CDKMetalDepictionScene.LineSegment(
+                        from: segment.from,
+                        to: segment.to,
+                        width: segment.width,
+                        opacity: segment.opacity,
+                        color: segment.color)
                 )
             }
             for label in scene.labels {
                 if highlighted {
                     nextLabelID += 1
                     baseLabels.append(
-                        CDKMetalDepictionScene.AtomLabel(id: nextLabelID,
-                                                         text: label.text,
-                                                         position: label.position,
-                                                         fontSize: max(7.2, label.fontSize),
-                                                         aromatic: false,
-                                                         color: CDKRenderColor.outerGlowHighlight.withAlpha(0.92),
-                                                         italicized: label.italicized,
-                                                         drawsBackground: false,
-                                                         usesGlowOverlay: true,
-                                                         suppressesMatchedBackground: true)
+                        CDKMetalDepictionScene.AtomLabel(
+                            id: nextLabelID,
+                            text: label.text,
+                            position: label.position,
+                            fontSize: max(7.2, label.fontSize),
+                            aromatic: false,
+                            color: CDKRenderColor.outerGlowHighlight.withAlpha(0.92),
+                            italicized: label.italicized,
+                            drawsBackground: false,
+                            usesGlowOverlay: true,
+                            suppressesMatchedBackground: true)
                     )
                 }
                 nextLabelID += 1
                 baseLabels.append(
-                    CDKMetalDepictionScene.AtomLabel(id: nextLabelID,
-                                                     text: label.text,
-                                                     position: label.position,
-                                                     fontSize: max(7.2, label.fontSize),
-                                                     aromatic: label.aromatic,
-                                                     color: label.color,
-                                                     italicized: label.italicized,
-                                                     drawsBackground: label.drawsBackground,
-                                                     usesGlowOverlay: label.usesGlowOverlay,
-                                                     suppressesMatchedBackground: label.suppressesMatchedBackground)
+                    CDKMetalDepictionScene.AtomLabel(
+                        id: nextLabelID,
+                        text: label.text,
+                        position: label.position,
+                        fontSize: max(7.2, label.fontSize),
+                        aromatic: label.aromatic,
+                        color: label.color,
+                        italicized: label.italicized,
+                        drawsBackground: label.drawsBackground,
+                        usesGlowOverlay: label.usesGlowOverlay,
+                        suppressesMatchedBackground: label.suppressesMatchedBackground)
                 )
             }
         }
 
         for (index, item) in reactantLayout.items.enumerated() {
-            mergeMolecule(item.molecule,
-                          into: item.rect,
-                          highlighted: shouldGlow(role: .reactant, index: index))
+            mergeMolecule(
+                item.molecule,
+                into: item.rect,
+                highlighted: shouldGlow(role: .reactant, index: index))
         }
         for (index, item) in productLayout.items.enumerated() {
-            mergeMolecule(item.molecule,
-                          into: item.rect,
-                          highlighted: shouldGlow(role: .product, index: index))
+            mergeMolecule(
+                item.molecule,
+                into: item.rect,
+                highlighted: shouldGlow(role: .product, index: index))
         }
         for (index, item) in agentLayout.items.enumerated() {
-            mergeMolecule(item.molecule,
-                          into: item.rect,
-                          highlighted: shouldGlow(role: .agent, index: index))
+            mergeMolecule(
+                item.molecule,
+                into: item.rect,
+                highlighted: shouldGlow(role: .agent, index: index))
         }
 
         let symbolFontSize = min(12, max(9, reactionStyle.fontSize * 0.66))
         for point in reactantLayout.plusPositions + productLayout.plusPositions + agentLayout.plusPositions {
             nextLabelID += 1
             baseLabels.append(
-                CDKMetalDepictionScene.AtomLabel(id: nextLabelID,
-                                                 text: "+",
-                                                 position: point,
-                                                 fontSize: symbolFontSize,
-                                                 aromatic: false,
-                                                 color: .ink)
+                CDKMetalDepictionScene.AtomLabel(
+                    id: nextLabelID,
+                    text: "+",
+                    position: point,
+                    fontSize: symbolFontSize,
+                    aromatic: false,
+                    color: .ink)
             )
         }
 
@@ -205,29 +225,32 @@ public enum CDKMetalReactionDepictionSceneBuilder {
 
         let arrowWidth = max(1.0, reactionStyle.bondWidth * 0.94)
         baseBondSegments.append(
-            CDKMetalDepictionScene.LineSegment(from: arrowStart,
-                                               to: arrowEnd,
-                                               width: arrowWidth,
-                                               opacity: 0.95,
-                                               color: .ink)
+            CDKMetalDepictionScene.LineSegment(
+                from: arrowStart,
+                to: arrowEnd,
+                width: arrowWidth,
+                opacity: 0.95,
+                color: .ink)
         )
 
         let headLength = max(11, reactionStyle.fontSize * 0.54)
         let headHalf = headLength * 0.36
         let headBack = CGPoint(x: arrowEnd.x - headLength, y: arrowEnd.y)
         baseBondSegments.append(
-            CDKMetalDepictionScene.LineSegment(from: CGPoint(x: headBack.x, y: headBack.y - headHalf),
-                                               to: arrowEnd,
-                                               width: arrowWidth,
-                                               opacity: 0.95,
-                                               color: .ink)
+            CDKMetalDepictionScene.LineSegment(
+                from: CGPoint(x: headBack.x, y: headBack.y - headHalf),
+                to: arrowEnd,
+                width: arrowWidth,
+                opacity: 0.95,
+                color: .ink)
         )
         baseBondSegments.append(
-            CDKMetalDepictionScene.LineSegment(from: CGPoint(x: headBack.x, y: headBack.y + headHalf),
-                                               to: arrowEnd,
-                                               width: arrowWidth,
-                                               opacity: 0.95,
-                                               color: .ink)
+            CDKMetalDepictionScene.LineSegment(
+                from: CGPoint(x: headBack.x, y: headBack.y + headHalf),
+                to: arrowEnd,
+                width: arrowWidth,
+                opacity: 0.95,
+                color: .ink)
         )
 
         let viewportCenter = CGPoint(x: canvasRect.midX, y: canvasRect.midY)
@@ -239,8 +262,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         func applyViewportTransform(_ point: CGPoint) -> CGPoint {
             let rx = point.x - viewportCenter.x
             let ry = point.y - viewportCenter.y
-            let rotated = CGPoint(x: (rx * rotationCos) - (ry * rotationSin) + viewportCenter.x,
-                                  y: (rx * rotationSin) + (ry * rotationCos) + viewportCenter.y)
+            let rotated = CGPoint(
+                x: (rx * rotationCos) - (ry * rotationSin) + viewportCenter.x,
+                y: (rx * rotationSin) + (ry * rotationCos) + viewportCenter.y)
             let zx = (rotated.x - viewportCenter.x) * zoom + viewportCenter.x + pan.width
             let zy = (rotated.y - viewportCenter.y) * zoom + viewportCenter.y + pan.height
             return CGPoint(x: zx, y: zy)
@@ -256,51 +280,58 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let reactionAutoFitScale = min(1.85, min(reactionFitScaleX, reactionFitScaleY))
 
         let transformedBonds = baseBondSegments.map { segment in
-            CDKMetalDepictionScene.LineSegment(from: applyViewportTransform(segment.from),
-                                               to: applyViewportTransform(segment.to),
-                                               width: max(0.75, segment.width * zoom * reactionAutoFitScale),
-                                               opacity: segment.opacity,
-                                               color: segment.color)
+            CDKMetalDepictionScene.LineSegment(
+                from: applyViewportTransform(segment.from),
+                to: applyViewportTransform(segment.to),
+                width: max(0.75, segment.width * zoom * reactionAutoFitScale),
+                opacity: segment.opacity,
+                color: segment.color)
         }
         let transformedBoxes = baseBackgroundBoxes.map { box in
             let minPoint = applyViewportTransform(CGPoint(x: box.rect.minX, y: box.rect.minY))
             let maxPoint = applyViewportTransform(CGPoint(x: box.rect.maxX, y: box.rect.maxY))
-            let rect = CGRect(x: min(minPoint.x, maxPoint.x),
-                              y: min(minPoint.y, maxPoint.y),
-                              width: abs(maxPoint.x - minPoint.x),
-                              height: abs(maxPoint.y - minPoint.y))
-            return CDKMetalDepictionScene.BackgroundBox(rect: rect,
-                                                        cornerRadius: max(2.0, box.cornerRadius * zoom * reactionAutoFitScale),
-                                                        color: box.color,
-                                                        opacity: box.opacity)
+            let rect = CGRect(
+                x: min(minPoint.x, maxPoint.x),
+                y: min(minPoint.y, maxPoint.y),
+                width: abs(maxPoint.x - minPoint.x),
+                height: abs(maxPoint.y - minPoint.y))
+            return CDKMetalDepictionScene.BackgroundBox(
+                rect: rect,
+                cornerRadius: max(2.0, box.cornerRadius * zoom * reactionAutoFitScale),
+                color: box.color,
+                opacity: box.opacity)
         }
         let transformedLabels = baseLabels.map { label in
-            CDKMetalDepictionScene.AtomLabel(id: label.id,
-                                             text: label.text,
-                                             position: applyViewportTransform(label.position),
-                                             fontSize: (label.fontSize * zoom * reactionAutoFitScale).clamped(to: 7.0...16.0),
-                                             aromatic: label.aromatic,
-                                             color: label.color,
-                                             italicized: label.italicized,
-                                             drawsBackground: label.drawsBackground,
-                                             usesGlowOverlay: label.usesGlowOverlay,
-                                             suppressesMatchedBackground: label.suppressesMatchedBackground)
+            CDKMetalDepictionScene.AtomLabel(
+                id: label.id,
+                text: label.text,
+                position: applyViewportTransform(label.position),
+                fontSize: (label.fontSize * zoom * reactionAutoFitScale).clamped(to: 7.0...16.0),
+                aromatic: label.aromatic,
+                color: label.color,
+                italicized: label.italicized,
+                drawsBackground: label.drawsBackground,
+                usesGlowOverlay: label.usesGlowOverlay,
+                suppressesMatchedBackground: label.suppressesMatchedBackground)
         }
 
-        return CDKMetalDepictionScene(gridSegments: gridSegments,
-                                      backgroundBoxes: transformedBoxes,
-                                      bondSegments: transformedBonds,
-                                      labels: transformedLabels)
+        return CDKMetalDepictionScene(
+            gridSegments: gridSegments,
+            backgroundBoxes: transformedBoxes,
+            bondSegments: transformedBonds,
+            labels: transformedLabels)
     }
 
-    public static func participant(at point: CGPoint,
-                                   in reaction: CDKReaction,
-                                   style: RenderStyle,
-                                   canvasRect: CGRect,
-                                   zoom: CGFloat,
-                                   pan: CGSize,
-                                   rotationDegrees: CGFloat = 0,
-                                   hitSlop: CGFloat = 12) -> CDKReactionParticipantSelection? {
+    public static func participant(
+        at point: CGPoint,
+        in reaction: CDKReaction,
+        style: RenderStyle,
+        canvasRect: CGRect,
+        zoom: CGFloat,
+        pan: CGSize,
+        rotationDegrees: CGFloat = 0,
+        hitSlop: CGFloat = 12
+    ) -> CDKReactionParticipantSelection? {
         guard canvasRect.width > 1, canvasRect.height > 1 else {
             return nil
         }
@@ -324,54 +355,66 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         let pad = style.padding
-        let available = CGRect(x: canvasRect.minX + pad,
-                               y: canvasRect.minY + pad,
-                               width: max(1, canvasRect.width - 2 * pad),
-                               height: max(1, canvasRect.height - 2 * pad))
-        let reactionStyle = compactReactionStyle(base: style,
-                                                 participants: reactants + agents + products,
-                                                 in: available)
+        let available = CGRect(
+            x: canvasRect.minX + pad,
+            y: canvasRect.minY + pad,
+            width: max(1, canvasRect.width - 2 * pad),
+            height: max(1, canvasRect.height - 2 * pad))
+        let reactionStyle = compactReactionStyle(
+            base: style,
+            participants: reactants + agents + products,
+            in: available)
 
         let mainRegion = available
-        let splitRegions = reactionSideRegions(in: mainRegion,
-                                               reactants: reactants,
-                                               products: products,
-                                               preferredArrowGap: preferredArrowGap(for: agents,
-                                                                                   in: mainRegion,
-                                                                                   style: reactionStyle))
+        let splitRegions = reactionSideRegions(
+            in: mainRegion,
+            reactants: reactants,
+            products: products,
+            preferredArrowGap: preferredArrowGap(
+                for: agents,
+                in: mainRegion,
+                style: reactionStyle))
         let leftRegion = splitRegions.leftRegion
         let rightRegion = splitRegions.rightRegion
-        let agentRegion = agentRegion(in: mainRegion,
-                                      splitRegions: splitRegions,
-                                      agentCount: agents.count)
+        let agentRegion = agentRegion(
+            in: mainRegion,
+            splitRegions: splitRegions,
+            agentCount: agents.count)
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
         let agentLayout = layoutBoxes(for: agents, in: agentRegion, style: reactionStyle)
 
-        let untransformedPoint = inverseViewportTransform(point,
-                                                          canvasRect: canvasRect,
-                                                          zoom: zoom,
-                                                          pan: pan,
-                                                          rotationDegrees: rotationDegrees)
+        let untransformedPoint = inverseViewportTransform(
+            point,
+            canvasRect: canvasRect,
+            zoom: zoom,
+            pan: pan,
+            rotationDegrees: rotationDegrees)
         let baseSlop = max(2, hitSlop / max(0.25, abs(zoom)))
 
-        if let selection = hitTestParticipant(in: reactantLayout.items,
-                                              role: .reactant,
-                                              point: untransformedPoint,
-                                              slop: baseSlop) {
+        if let selection = hitTestParticipant(
+            in: reactantLayout.items,
+            role: .reactant,
+            point: untransformedPoint,
+            slop: baseSlop)
+        {
             return selection
         }
-        if let selection = hitTestParticipant(in: agentLayout.items,
-                                              role: .agent,
-                                              point: untransformedPoint,
-                                              slop: baseSlop) {
+        if let selection = hitTestParticipant(
+            in: agentLayout.items,
+            role: .agent,
+            point: untransformedPoint,
+            slop: baseSlop)
+        {
             return selection
         }
-        if let selection = hitTestParticipant(in: productLayout.items,
-                                              role: .product,
-                                              point: untransformedPoint,
-                                              slop: baseSlop) {
+        if let selection = hitTestParticipant(
+            in: productLayout.items,
+            role: .product,
+            point: untransformedPoint,
+            slop: baseSlop)
+        {
             return selection
         }
         return nil
@@ -393,12 +436,15 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let arrowGap: CGFloat
     }
 
-    private static func sharedParticipantScale(for layouts: [MoleculeBoxLayout],
-                                               style: RenderStyle) -> CGFloat? {
+    private static func sharedParticipantScale(
+        for layouts: [MoleculeBoxLayout],
+        style: RenderStyle
+    ) -> CGFloat? {
         let candidates = layouts.flatMap(\.items).compactMap { item in
-            participantScaleCandidate(for: item.molecule,
-                                      in: item.rect,
-                                      style: style)
+            participantScaleCandidate(
+                for: item.molecule,
+                in: item.rect,
+                style: style)
         }
         guard !candidates.isEmpty else {
             return nil
@@ -406,9 +452,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return candidates.min()
     }
 
-    private static func participantScaleCandidate(for molecule: Molecule,
-                                                  in rect: CGRect,
-                                                  style: RenderStyle) -> CGFloat? {
+    private static func participantScaleCandidate(
+        for molecule: Molecule,
+        in rect: CGRect,
+        style: RenderStyle
+    ) -> CGFloat? {
         guard let box = molecule.boundingBox() else {
             return nil
         }
@@ -429,14 +477,17 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return candidates.min()
     }
 
-    private static func participantCanvasRect(for molecule: Molecule,
-                                              in rect: CGRect,
-                                              style: RenderStyle,
-                                              sharedScale: CGFloat?) -> CGRect {
+    private static func participantCanvasRect(
+        for molecule: Molecule,
+        in rect: CGRect,
+        style: RenderStyle,
+        sharedScale: CGFloat?
+    ) -> CGRect {
         guard let sharedScale,
-              sharedScale.isFinite,
-              sharedScale > 0,
-              let box = molecule.boundingBox() else {
+            sharedScale.isFinite,
+            sharedScale > 0,
+            let box = molecule.boundingBox()
+        else {
             return rect
         }
 
@@ -446,13 +497,16 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let width = max(1, contentWidth + (2 * style.padding))
         let height = max(1, contentHeight + (2 * style.padding))
 
-        return CGRect(x: rect.midX - (width * 0.5),
-                      y: rect.midY - (height * 0.5),
-                      width: width,
-                      height: height)
+        return CGRect(
+            x: rect.midX - (width * 0.5),
+            y: rect.midY - (height * 0.5),
+            width: width,
+            height: height)
     }
 
-    private static func layoutBoxes(for molecules: [Molecule], in region: CGRect, style: RenderStyle) -> MoleculeBoxLayout {
+    private static func layoutBoxes(for molecules: [Molecule], in region: CGRect, style: RenderStyle)
+        -> MoleculeBoxLayout
+    {
         guard !molecules.isEmpty else {
             return MoleculeBoxLayout(items: [], plusPositions: [])
         }
@@ -469,10 +523,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
 
         let rawWeights = molecules.map { preferredWidthWeight(for: $0) }
         if shouldWrapParticipants(molecules, in: region, style: style) {
-            return wrappedLayoutBoxes(for: molecules,
-                                      weights: rawWeights,
-                                      in: region,
-                                      style: style)
+            return wrappedLayoutBoxes(
+                for: molecules,
+                weights: rawWeights,
+                in: region,
+                style: style)
         }
         let weightSum = max(0.0001, rawWeights.reduce(0, +))
         let minimumWidth = min(max(38, availableWidth * 0.08), availableWidth / CGFloat(count))
@@ -488,10 +543,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             let weightedShare = rawWeights[idx] / weightSum
             let proposedWidth = minimumWidth + (remainderWidth * weightedShare)
             let width = min(proposedWidth, region.maxX - x)
-            let rect = CGRect(x: x,
-                              y: itemY,
-                              width: max(1, width),
-                              height: itemHeight)
+            let rect = CGRect(
+                x: x,
+                y: itemY,
+                width: max(1, width),
+                height: itemHeight)
             items.append(MoleculeBoxLayout.Item(molecule: molecules[idx], rect: rect))
             x = rect.maxX
             if idx < molecules.count - 1 {
@@ -504,10 +560,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return MoleculeBoxLayout(items: items, plusPositions: plusPositions)
     }
 
-    private static func wrappedLayoutBoxes(for molecules: [Molecule],
-                                           weights: [CGFloat],
-                                           in region: CGRect,
-                                           style: RenderStyle) -> MoleculeBoxLayout {
+    private static func wrappedLayoutBoxes(
+        for molecules: [Molecule],
+        weights: [CGFloat],
+        in region: CGRect,
+        style: RenderStyle
+    ) -> MoleculeBoxLayout {
         let rowAssignments = balancedRowAssignments(for: weights, maxRows: min(2, molecules.count))
         let rowCount = max(1, rowAssignments.count)
         let rowGap = max(14, style.fontSize * 0.72)
@@ -532,8 +590,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             } else {
                 availableRowWidth = baseAvailableRowWidth
             }
-            let minimumWidth = min(max(54, availableRowWidth * 0.16),
-                                   availableRowWidth / CGFloat(max(1, rowIndices.count)))
+            let minimumWidth = min(
+                max(54, availableRowWidth * 0.16),
+                availableRowWidth / CGFloat(max(1, rowIndices.count)))
             let remainderWidth = max(0, availableRowWidth - (minimumWidth * CGFloat(rowIndices.count)))
             var widths = rowIndices.enumerated().map { offset, idx in
                 minimumWidth + (remainderWidth * (dampedWeights[offset] / rowWeightSum))
@@ -560,10 +619,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
 
             for (offset, idx) in rowIndices.enumerated() {
                 let width = widths[offset]
-                let rect = CGRect(x: x,
-                                  y: y,
-                                  width: max(1, width),
-                                  height: innerHeight)
+                let rect = CGRect(
+                    x: x,
+                    y: y,
+                    width: max(1, width),
+                    height: innerHeight)
                 items.append(MoleculeBoxLayout.Item(molecule: molecules[idx], rect: rect))
                 x = rect.maxX + rowSpacing
             }
@@ -574,15 +634,19 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return MoleculeBoxLayout(items: items, plusPositions: [])
     }
 
-    private static func shouldWrapParticipants(_ molecules: [Molecule],
-                                               in region: CGRect,
-                                               style: RenderStyle) -> Bool {
+    private static func shouldWrapParticipants(
+        _ molecules: [Molecule],
+        in region: CGRect,
+        style: RenderStyle
+    ) -> Bool {
         guard molecules.count >= 3 else { return false }
         return region.height >= max(132, style.fontSize * 8.5)
     }
 
-    private static func balancedRowAssignments(for weights: [CGFloat],
-                                               maxRows: Int) -> [[Int]] {
+    private static func balancedRowAssignments(
+        for weights: [CGFloat],
+        maxRows: Int
+    ) -> [[Int]] {
         let count = weights.count
         guard count > 0 else { return [] }
         guard maxRows > 1, count > 1 else {
@@ -618,9 +682,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return [Array(0..<count)]
     }
 
-    private static func agentRegion(in mainRegion: CGRect,
-                                    splitRegions: ReactionSideRegions,
-                                    agentCount: Int) -> CGRect {
+    private static func agentRegion(
+        in mainRegion: CGRect,
+        splitRegions: ReactionSideRegions,
+        agentCount: Int
+    ) -> CGRect {
         guard agentCount > 0 else {
             return .zero
         }
@@ -630,15 +696,18 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let preferredHeight = min(max(52, mainRegion.height * 0.18), 116)
         let top = max(mainRegion.minY, arrowY - preferredHeight - sectionSpacing)
         let height = max(1, min(preferredHeight, arrowY - sectionSpacing - top))
-        return CGRect(x: splitRegions.leftRegion.maxX,
-                      y: top,
-                      width: max(1, splitRegions.arrowGap),
-                      height: height)
+        return CGRect(
+            x: splitRegions.leftRegion.maxX,
+            y: top,
+            width: max(1, splitRegions.arrowGap),
+            height: height)
     }
 
-    private static func preferredArrowGap(for agents: [Molecule],
-                                          in mainRegion: CGRect,
-                                          style: RenderStyle) -> CGFloat? {
+    private static func preferredArrowGap(
+        for agents: [Molecule],
+        in mainRegion: CGRect,
+        style: RenderStyle
+    ) -> CGFloat? {
         guard !agents.isEmpty else {
             return nil
         }
@@ -652,10 +721,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return separatorSpace + (agentDemand * unitWidth)
     }
 
-    private static func reactionSideRegions(in mainRegion: CGRect,
-                                            reactants: [Molecule],
-                                            products: [Molecule],
-                                            preferredArrowGap: CGFloat? = nil) -> ReactionSideRegions {
+    private static func reactionSideRegions(
+        in mainRegion: CGRect,
+        reactants: [Molecule],
+        products: [Molecule],
+        preferredArrowGap: CGFloat? = nil
+    ) -> ReactionSideRegions {
         let baseArrowGap = max(56, min(120, mainRegion.width * 0.16))
         let maximumArrowGap = max(1, mainRegion.width * 0.46)
         let arrowGap = min(max(baseArrowGap, preferredArrowGap ?? baseArrowGap), maximumArrowGap)
@@ -677,30 +748,36 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let leftWidth = sideWidth * leftShare
         let rightWidth = sideWidth - leftWidth
 
-        let leftRegion = CGRect(x: mainRegion.minX,
-                                y: mainRegion.minY,
-                                width: max(1, leftWidth),
-                                height: mainRegion.height)
-        let rightRegion = CGRect(x: leftRegion.maxX + arrowGap,
-                                 y: mainRegion.minY,
-                                 width: max(1, rightWidth),
-                                 height: mainRegion.height)
-        return ReactionSideRegions(leftRegion: leftRegion,
-                                   rightRegion: rightRegion,
-                                   arrowGap: arrowGap)
+        let leftRegion = CGRect(
+            x: mainRegion.minX,
+            y: mainRegion.minY,
+            width: max(1, leftWidth),
+            height: mainRegion.height)
+        let rightRegion = CGRect(
+            x: leftRegion.maxX + arrowGap,
+            y: mainRegion.minY,
+            width: max(1, rightWidth),
+            height: mainRegion.height)
+        return ReactionSideRegions(
+            leftRegion: leftRegion,
+            rightRegion: rightRegion,
+            arrowGap: arrowGap)
     }
 
-    private static func inverseViewportTransform(_ point: CGPoint,
-                                                 canvasRect: CGRect,
-                                                 zoom: CGFloat,
-                                                 pan: CGSize,
-                                                 rotationDegrees: CGFloat) -> CGPoint {
+    private static func inverseViewportTransform(
+        _ point: CGPoint,
+        canvasRect: CGRect,
+        zoom: CGFloat,
+        pan: CGSize,
+        rotationDegrees: CGFloat
+    ) -> CGPoint {
         let viewportCenter = CGPoint(x: canvasRect.midX, y: canvasRect.midY)
         let safeZoom = max(0.0001, abs(zoom))
 
         let dePanned = CGPoint(x: point.x - pan.width, y: point.y - pan.height)
-        let scaled = CGPoint(x: ((dePanned.x - viewportCenter.x) / safeZoom) + viewportCenter.x,
-                             y: ((dePanned.y - viewportCenter.y) / safeZoom) + viewportCenter.y)
+        let scaled = CGPoint(
+            x: ((dePanned.x - viewportCenter.x) / safeZoom) + viewportCenter.x,
+            y: ((dePanned.y - viewportCenter.y) / safeZoom) + viewportCenter.y)
 
         let normalizedRotation = rotationDegrees.truncatingRemainder(dividingBy: 360)
         let radians = normalizedRotation * (.pi / 180)
@@ -708,14 +785,17 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let s = sin(radians)
         let rx = scaled.x - viewportCenter.x
         let ry = scaled.y - viewportCenter.y
-        return CGPoint(x: (rx * c) + (ry * s) + viewportCenter.x,
-                       y: (-rx * s) + (ry * c) + viewportCenter.y)
+        return CGPoint(
+            x: (rx * c) + (ry * s) + viewportCenter.x,
+            y: (-rx * s) + (ry * c) + viewportCenter.y)
     }
 
-    private static func hitTestParticipant(in items: [MoleculeBoxLayout.Item],
-                                           role: CDKReactionRole,
-                                           point: CGPoint,
-                                           slop: CGFloat) -> CDKReactionParticipantSelection? {
+    private static func hitTestParticipant(
+        in items: [MoleculeBoxLayout.Item],
+        role: CDKReactionRole,
+        point: CGPoint,
+        slop: CGFloat
+    ) -> CDKReactionParticipantSelection? {
         var best: (index: Int, distance: CGFloat)?
         for (index, item) in items.enumerated() {
             let expanded = item.rect.insetBy(dx: -slop, dy: -slop)
@@ -756,9 +836,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return hypot(dx, dy)
     }
 
-    private static func compactReactionStyle(base style: RenderStyle,
-                                             participants: [Molecule],
-                                             in available: CGRect) -> RenderStyle {
+    private static func compactReactionStyle(
+        base style: RenderStyle,
+        participants: [Molecule],
+        in available: CGRect
+    ) -> RenderStyle {
         var compact = style
         let participantCount = max(1, participants.count)
         let totalAtoms = max(1, participants.reduce(0) { $0 + $1.atomCount })
@@ -811,9 +893,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
 
         let rows = balancedRowAssignments(for: weights, maxRows: 2)
         let rowMax = rows.reduce(CGFloat.zero) { partial, row in
-            max(partial, row.reduce(CGFloat.zero) { subtotal, idx in
-                subtotal + weights[idx]
-            })
+            max(
+                partial,
+                row.reduce(CGFloat.zero) { subtotal, idx in
+                    subtotal + weights[idx]
+                })
         }
         return max(1, rowMax)
     }
@@ -826,8 +910,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             let height = max(0.0001, box.height)
             for atom in molecule.atoms {
                 guard let mapNo = atom.atomMapNumber, mapNo > 0 else { continue }
-                let normalized = CGPoint(x: (atom.position.x - box.minX) / width,
-                                         y: (atom.position.y - box.minY) / height)
+                let normalized = CGPoint(
+                    x: (atom.position.x - box.minX) / width,
+                    y: (atom.position.y - box.minY) / height)
                 pointsByMap[mapNo, default: []].append(normalized)
             }
         }
@@ -841,16 +926,19 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             let sy = values.reduce(CGFloat.zero) { partial, point in
                 partial + point.y
             }
-            out[mapNo] = CGPoint(x: sx / CGFloat(values.count),
-                                 y: sy / CGFloat(values.count))
+            out[mapNo] = CGPoint(
+                x: sx / CGFloat(values.count),
+                y: sy / CGFloat(values.count))
         }
         return out
     }
 
-    private static func validatedHighlight(_ selection: CDKReactionParticipantSelection?,
-                                           reactantCount: Int,
-                                           agentCount: Int,
-                                           productCount: Int) -> CDKReactionParticipantSelection? {
+    private static func validatedHighlight(
+        _ selection: CDKReactionParticipantSelection?,
+        reactantCount: Int,
+        agentCount: Int,
+        productCount: Int
+    ) -> CDKReactionParticipantSelection? {
         guard let selection, selection.index >= 0 else { return nil }
         switch selection.role {
         case .reactant where selection.index < reactantCount:
@@ -887,8 +975,8 @@ enum CDKReactionParticipantLayoutRefiner {
         let regeneratedPenalty = qualityPenalty(for: regenerated)
 
         let keepRegenerated =
-            regeneratedPenalty <= (originalPenalty * requiredImprovementFactor) ||
-            regeneratedPenalty <= (originalPenalty - requiredAbsoluteImprovement)
+            regeneratedPenalty <= (originalPenalty * requiredImprovementFactor)
+            || regeneratedPenalty <= (originalPenalty - requiredAbsoluteImprovement)
 
         let coarse = keepRegenerated ? regenerated : molecule
         let result = orientForReactionPresentation(coarse)
@@ -910,9 +998,10 @@ enum CDKReactionParticipantLayoutRefiner {
 
     // Backward-compatible shim for tests/callers still providing x-only templates.
     static func reorientForMapTemplate(_ molecule: Molecule, mapXTemplate: [Int: CGFloat]) -> Molecule {
-        let mapTemplate = Dictionary(uniqueKeysWithValues: mapXTemplate.map { key, value in
-            (key, CGPoint(x: value, y: 0.5))
-        })
+        let mapTemplate = Dictionary(
+            uniqueKeysWithValues: mapXTemplate.map { key, value in
+                (key, CGPoint(x: value, y: 0.5))
+            })
         return reorientForMapTemplate(molecule, mapTemplate: mapTemplate)
     }
 
@@ -937,10 +1026,11 @@ enum CDKReactionParticipantLayoutRefiner {
 
         var penalty: CGFloat = 0
 
-        let variance = bondLengths.reduce(0) { partial, value in
-            let delta = value - meanBondLength
-            return partial + (delta * delta)
-        } / CGFloat(bondLengths.count)
+        let variance =
+            bondLengths.reduce(0) { partial, value in
+                let delta = value - meanBondLength
+                return partial + (delta * delta)
+            } / CGFloat(bondLengths.count)
         let stdDev = sqrt(max(0, variance))
         let coefficientOfVariation = stdDev / max(0.000_1, meanBondLength)
         penalty += max(0, coefficientOfVariation - 0.22) * 300
@@ -1006,8 +1096,10 @@ enum CDKReactionParticipantLayoutRefiner {
         return penalty
     }
 
-    private static func orientForReactionPresentation(_ molecule: Molecule,
-                                                      mapTemplate: [Int: CGPoint]? = nil) -> Molecule {
+    private static func orientForReactionPresentation(
+        _ molecule: Molecule,
+        mapTemplate: [Int: CGPoint]? = nil
+    ) -> Molecule {
         guard molecule.atomCount > 1, let baseBox = molecule.boundingBox() else {
             return molecule
         }
@@ -1029,14 +1121,14 @@ enum CDKReactionParticipantLayoutRefiner {
             OrientationCandidate(rotationRadians: 0, mirrorX: false),
             OrientationCandidate(rotationRadians: .pi / 2, mirrorX: false),
             OrientationCandidate(rotationRadians: -.pi / 2, mirrorX: false),
-            OrientationCandidate(rotationRadians: .pi, mirrorX: false)
+            OrientationCandidate(rotationRadians: .pi, mirrorX: false),
         ]
         if hasUsefulMaps || hasTemplate {
             candidates.append(contentsOf: [
                 OrientationCandidate(rotationRadians: 0, mirrorX: true),
                 OrientationCandidate(rotationRadians: .pi / 2, mirrorX: true),
                 OrientationCandidate(rotationRadians: -.pi / 2, mirrorX: true),
-                OrientationCandidate(rotationRadians: .pi, mirrorX: true)
+                OrientationCandidate(rotationRadians: .pi, mirrorX: true),
             ])
         }
 
@@ -1054,20 +1146,23 @@ enum CDKReactionParticipantLayoutRefiner {
         }
 
         var best = molecule
-        var bestScore = scoreOrientation(molecule,
-                                         mappedPairs: mappedPairs,
-                                         hasUsefulMaps: hasUsefulMaps,
-                                         mapTemplate: mapTemplate)
+        var bestScore = scoreOrientation(
+            molecule,
+            mappedPairs: mappedPairs,
+            hasUsefulMaps: hasUsefulMaps,
+            mapTemplate: mapTemplate)
 
         for candidate in candidates {
-            let transformed = applyOrientationTransform(molecule,
-                                                        around: center,
-                                                        rotationRadians: candidate.rotationRadians,
-                                                        mirrorX: candidate.mirrorX)
-            let score = scoreOrientation(transformed,
-                                         mappedPairs: mappedPairs,
-                                         hasUsefulMaps: hasUsefulMaps,
-                                         mapTemplate: mapTemplate)
+            let transformed = applyOrientationTransform(
+                molecule,
+                around: center,
+                rotationRadians: candidate.rotationRadians,
+                mirrorX: candidate.mirrorX)
+            let score = scoreOrientation(
+                transformed,
+                mappedPairs: mappedPairs,
+                hasUsefulMaps: hasUsefulMaps,
+                mapTemplate: mapTemplate)
             if score > bestScore {
                 bestScore = score
                 best = transformed
@@ -1077,10 +1172,12 @@ enum CDKReactionParticipantLayoutRefiner {
         return best
     }
 
-    private static func applyOrientationTransform(_ molecule: Molecule,
-                                                  around center: CGPoint,
-                                                  rotationRadians: CGFloat,
-                                                  mirrorX: Bool) -> Molecule {
+    private static func applyOrientationTransform(
+        _ molecule: Molecule,
+        around center: CGPoint,
+        rotationRadians: CGFloat,
+        mirrorX: Bool
+    ) -> Molecule {
         let c = cos(rotationRadians)
         let s = sin(rotationRadians)
 
@@ -1102,10 +1199,12 @@ enum CDKReactionParticipantLayoutRefiner {
         return out
     }
 
-    private static func scoreOrientation(_ molecule: Molecule,
-                                         mappedPairs: [(map: Int, id: Int)],
-                                         hasUsefulMaps: Bool,
-                                         mapTemplate: [Int: CGPoint]?) -> CGFloat {
+    private static func scoreOrientation(
+        _ molecule: Molecule,
+        mappedPairs: [(map: Int, id: Int)],
+        hasUsefulMaps: Bool,
+        mapTemplate: [Int: CGPoint]?
+    ) -> CGFloat {
         guard let box = molecule.boundingBox() else {
             return -.greatestFiniteMagnitude
         }
@@ -1130,9 +1229,11 @@ enum CDKReactionParticipantLayoutRefiner {
                 // Positive map-number progression left->right is easier to read in reaction depictions.
                 score += (correlation * 12.0)
             }
-            if let templateScore = mapTemplateAlignmentScore(molecule,
-                                                             mappedPairs: mappedPairs,
-                                                             mapTemplate: mapTemplate) {
+            if let templateScore = mapTemplateAlignmentScore(
+                molecule,
+                mappedPairs: mappedPairs,
+                mapTemplate: mapTemplate)
+            {
                 // Prefer reactant/agent orientation that aligns with product-side mapped atom progression.
                 // X carries stronger weight for reaction left-to-right readability; Y helps
                 // avoid mirrored/rotated placements that look geometrically "off".
@@ -1191,9 +1292,11 @@ enum CDKReactionParticipantLayoutRefiner {
         return 0.5 * atan2(2 * sxy, sxx - syy)
     }
 
-    private static func mapTemplateAlignmentScore(_ molecule: Molecule,
-                                                  mappedPairs: [(map: Int, id: Int)],
-                                                  mapTemplate: [Int: CGPoint]?) -> CGFloat? {
+    private static func mapTemplateAlignmentScore(
+        _ molecule: Molecule,
+        mappedPairs: [(map: Int, id: Int)],
+        mapTemplate: [Int: CGPoint]?
+    ) -> CGFloat? {
         guard let mapTemplate, !mapTemplate.isEmpty else { return nil }
 
         var xs: [CGFloat] = []

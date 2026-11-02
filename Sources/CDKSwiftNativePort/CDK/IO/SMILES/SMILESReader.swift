@@ -4,8 +4,10 @@ import Foundation
 /// Accepts one SMILES entry per non-empty line and lets `SmilesParser`
 /// consume any trailing CXSMILES/title suffix on the full line.
 public enum CDKSMILESReader {
-    public static func read(text: String,
-                            flavor: CDKSmiFlavor = .cdkDefault) throws -> [Molecule] {
+    public static func read(
+        text: String,
+        flavor: CDKSmiFlavor = .cdkDefault
+    ) throws -> [Molecule] {
         let parser = CDKSmilesParserFactory.shared.newSmilesParser(flavor: flavor)
         var molecules: [Molecule] = []
 

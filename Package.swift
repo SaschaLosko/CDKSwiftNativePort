@@ -5,7 +5,7 @@ let package = Package(
     name: "CDKSwiftNativePort",
     platforms: [
         .macOS(.v15),
-        .iOS(.v13)
+        .iOS(.v13),
     ],
     products: [
         .library(
@@ -20,7 +20,7 @@ let package = Package(
             path: "Sources/IUPACInChI",
             exclude: [
                 "External-contributors-IUPAC-InChI.txt",
-                "LICENSE-IUPAC-InChI.txt"
+                "LICENSE-IUPAC-InChI.txt",
             ],
             publicHeadersPath: "include",
             cSettings: [
@@ -29,7 +29,7 @@ let package = Package(
                 .headerSearchPath("include"),
                 .headerSearchPath("official/INCHI-1-SRC/INCHI_BASE/src"),
                 .headerSearchPath("official/INCHI-1-SRC/INCHI_API/libinchi/src"),
-                .headerSearchPath("official/INCHI-1-SRC/INCHI_API/libinchi/src/ixa")
+                .headerSearchPath("official/INCHI-1-SRC/INCHI_API/libinchi/src/ixa"),
             ],
             linkerSettings: [
                 .linkedLibrary("m", .when(platforms: [.linux]))
@@ -51,10 +51,10 @@ let package = Package(
                 "InChI/OfficialReference/known_gap_inventory.json",
                 "Reaction/UpstreamReference",
                 "Reaction/port_metadata.json",
-                "RInChI/UpstreamReference"
+                "RInChI/UpstreamReference",
             ],
             resources: [.copy("MDL/RGroupEnumerationFixtures")]
-        )
+        ),
     ],
     swiftLanguageModes: [.v6]
 )

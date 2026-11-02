@@ -45,9 +45,11 @@ private final class CMLReactionDocumentWriter {
         return lines
     }
 
-    private func hierarchyLines(for hierarchy: CDKReactionHierarchy,
-                                       indent: String,
-                                       defaultIndex: Int) -> [String] {
+    private func hierarchyLines(
+        for hierarchy: CDKReactionHierarchy,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
         switch hierarchy {
         case .reaction(let reaction):
             return reactionLines(reaction, indent: indent, defaultIndex: defaultIndex)
@@ -60,8 +62,10 @@ private final class CMLReactionDocumentWriter {
         }
     }
 
-    private func reactionSetLines(_ set: CDKReactionSet,
-                                         indent: String) -> [String] {
+    private func reactionSetLines(
+        _ set: CDKReactionSet,
+        indent: String
+    ) -> [String] {
         if set.members.count == 1, let member = set.members.first {
             return setMemberLines(member, indent: indent, defaultIndex: 1)
         }
@@ -73,9 +77,11 @@ private final class CMLReactionDocumentWriter {
         return lines
     }
 
-    private func setMemberLines(_ member: CDKReactionSetMember,
-                                       indent: String,
-                                       defaultIndex: Int) -> [String] {
+    private func setMemberLines(
+        _ member: CDKReactionSetMember,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
         switch member {
         case .reaction(let reaction):
             return reactionLines(reaction, indent: indent, defaultIndex: defaultIndex)
@@ -86,11 +92,14 @@ private final class CMLReactionDocumentWriter {
         }
     }
 
-    private func reactionListLines(_ list: CDKReactionList,
-                                          indent: String,
-                                          defaultIndex: Int) -> [String] {
+    private func reactionListLines(
+        _ list: CDKReactionList,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
         let tagName = list.isStepList ? "reactionStepList" : "reactionList"
-        let listID = sanitizedIdentifier(list.id)
+        let listID =
+            sanitizedIdentifier(list.id)
             ?? sanitizedIdentifier(list.name)
             ?? "\(list.isStepList ? "reactionStepList" : "reactionList")\(defaultIndex)"
         let listName = normalizedName(list.name)
@@ -107,14 +116,18 @@ private final class CMLReactionDocumentWriter {
         for (index, entry) in list.entries.enumerated() {
             if list.isStepList {
                 lines.append("\(indent)  <reactionStep>")
-                lines.append(contentsOf: reactionListEntryLines(entry,
-                                                                indent: indent + "    ",
-                                                                defaultIndex: index + 1))
+                lines.append(
+                    contentsOf: reactionListEntryLines(
+                        entry,
+                        indent: indent + "    ",
+                        defaultIndex: index + 1))
                 lines.append("\(indent)  </reactionStep>")
             } else {
-                lines.append(contentsOf: reactionListEntryLines(entry,
-                                                                indent: indent + "  ",
-                                                                defaultIndex: index + 1))
+                lines.append(
+                    contentsOf: reactionListEntryLines(
+                        entry,
+                        indent: indent + "  ",
+                        defaultIndex: index + 1))
             }
         }
 
@@ -122,9 +135,11 @@ private final class CMLReactionDocumentWriter {
         return lines
     }
 
-    private func reactionListEntryLines(_ entry: CDKReactionListEntry,
-                                               indent: String,
-                                               defaultIndex: Int) -> [String] {
+    private func reactionListEntryLines(
+        _ entry: CDKReactionListEntry,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
         switch entry {
         case .reaction(let reaction):
             return reactionLines(reaction, indent: indent, defaultIndex: defaultIndex)
@@ -135,10 +150,13 @@ private final class CMLReactionDocumentWriter {
         }
     }
 
-    private func reactionSchemeLines(_ scheme: CDKReactionScheme,
-                                            indent: String,
-                                            defaultIndex: Int) -> [String] {
-        let schemeID = sanitizedIdentifier(scheme.id)
+    private func reactionSchemeLines(
+        _ scheme: CDKReactionScheme,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
+        let schemeID =
+            sanitizedIdentifier(scheme.id)
             ?? sanitizedIdentifier(scheme.name)
             ?? "reactionScheme\(defaultIndex)"
         let schemeName = normalizedName(scheme.name)
@@ -153,18 +171,22 @@ private final class CMLReactionDocumentWriter {
         lines.append(contentsOf: propertyLines(scheme.properties, indent: indent + "  "))
 
         for (index, entry) in scheme.entries.enumerated() {
-            lines.append(contentsOf: reactionSchemeEntryLines(entry,
-                                                              indent: indent + "  ",
-                                                              defaultIndex: index + 1))
+            lines.append(
+                contentsOf: reactionSchemeEntryLines(
+                    entry,
+                    indent: indent + "  ",
+                    defaultIndex: index + 1))
         }
 
         lines.append("\(indent)</reactionScheme>")
         return lines
     }
 
-    private func reactionSchemeEntryLines(_ entry: CDKReactionSchemeEntry,
-                                                 indent: String,
-                                                 defaultIndex: Int) -> [String] {
+    private func reactionSchemeEntryLines(
+        _ entry: CDKReactionSchemeEntry,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
         switch entry {
         case .reaction(let reaction):
             return reactionLines(reaction, indent: indent, defaultIndex: defaultIndex)
@@ -175,10 +197,13 @@ private final class CMLReactionDocumentWriter {
         }
     }
 
-    private func reactionLines(_ reaction: CDKReaction,
-                                      indent: String,
-                                      defaultIndex: Int) -> [String] {
-        let reactionID = sanitizedIdentifier(reaction.id)
+    private func reactionLines(
+        _ reaction: CDKReaction,
+        indent: String,
+        defaultIndex: Int
+    ) -> [String] {
+        let reactionID =
+            sanitizedIdentifier(reaction.id)
             ?? sanitizedIdentifier(reaction.name)
             ?? "reaction\(defaultIndex)"
         let reactionName = normalizedName(reaction.name)
@@ -191,60 +216,75 @@ private final class CMLReactionDocumentWriter {
         var lines: [String] = []
         lines.append("\(indent)<reaction \(attrs.joined(separator: " "))>")
         lines.append(contentsOf: propertyLines(reaction.properties, indent: indent + "  "))
-        lines.append(contentsOf: participantListLines(listTag: "reactantList",
-                                                      participantTag: "reactant",
-                                                      participants: reaction.reactants,
-                                                      indent: indent + "  ",
-                                                      rolePrefix: "reactant"))
-        lines.append(contentsOf: participantListLines(listTag: "productList",
-                                                      participantTag: "product",
-                                                      participants: reaction.products,
-                                                      indent: indent + "  ",
-                                                      rolePrefix: "product"))
+        lines.append(
+            contentsOf: participantListLines(
+                listTag: "reactantList",
+                participantTag: "reactant",
+                participants: reaction.reactants,
+                indent: indent + "  ",
+                rolePrefix: "reactant"))
+        lines.append(
+            contentsOf: participantListLines(
+                listTag: "productList",
+                participantTag: "product",
+                participants: reaction.products,
+                indent: indent + "  ",
+                rolePrefix: "product"))
 
         if !reaction.agents.isEmpty {
-            lines.append(contentsOf: participantListLines(listTag: "substanceList",
-                                                          participantTag: "substance",
-                                                          participants: reaction.agents,
-                                                          indent: indent + "  ",
-                                                          rolePrefix: "agent"))
+            lines.append(
+                contentsOf: participantListLines(
+                    listTag: "substanceList",
+                    participantTag: "substance",
+                    participants: reaction.agents,
+                    indent: indent + "  ",
+                    rolePrefix: "agent"))
         }
 
         lines.append("\(indent)</reaction>")
         return lines
     }
 
-    private func propertyLines(_ properties: [String: String],
-                                      indent: String) -> [String] {
+    private func propertyLines(
+        _ properties: [String: String],
+        indent: String
+    ) -> [String] {
         properties.keys.sorted().compactMap { key in
             guard let value = properties[key] else { return nil }
-            return "\(indent)<scalar dictRef=\"cdk:reactionProperty\" title=\"\(xmlEsc(key))\" dataType=\"xsd:string\">\(xmlEsc(value))</scalar>"
+            return
+                "\(indent)<scalar dictRef=\"cdk:reactionProperty\" title=\"\(xmlEsc(key))\" dataType=\"xsd:string\">\(xmlEsc(value))</scalar>"
         }
     }
 
-    private func participantListLines(listTag: String,
-                                             participantTag: String,
-                                             participants: [Molecule],
-                                             indent: String,
-                                             rolePrefix: String) -> [String] {
+    private func participantListLines(
+        listTag: String,
+        participantTag: String,
+        participants: [Molecule],
+        indent: String,
+        rolePrefix: String
+    ) -> [String] {
         guard !participants.isEmpty else { return [] }
 
         var lines: [String] = []
         lines.append("\(indent)<\(listTag)>")
         for (index, molecule) in participants.enumerated() {
             lines.append("\(indent)  <\(participantTag)>")
-            lines.append(contentsOf: moleculeLines(molecule,
-                                                   indent: indent + "    ",
-                                                   defaultIdentifier: "\(rolePrefix)\(index + 1)"))
+            lines.append(
+                contentsOf: moleculeLines(
+                    molecule,
+                    indent: indent + "    ",
+                    defaultIdentifier: "\(rolePrefix)\(index + 1)"))
             lines.append("\(indent)  </\(participantTag)>")
         }
         lines.append("\(indent)</\(listTag)>")
         return lines
     }
 
-    private func moleculeLines(_ molecule: Molecule,
-                                      indent: String,
-                                      defaultIdentifier: String) -> [String] {
+    private func moleculeLines(
+        _ molecule: Molecule,
+        indent: String,
+        defaultIdentifier: String
+    ) -> [String] {
         let has3D = molecule.atoms.contains { $0.zPosition != nil }
         let aromaticBondIDs = molecule.aromaticDisplayBondIDs()
         let identity = moleculeIdentity(
@@ -288,7 +328,7 @@ private final class CMLReactionDocumentWriter {
                 "id=\"\(xmlEsc(atom.externalID ?? "a\(atom.id)"))\"",
                 "elementType=\"\(xmlEsc(elementType))\"",
                 "x2=\"\(fmt(Double(atom.position.x)))\"",
-                "y2=\"\(fmt(Double(atom.position.y)))\""
+                "y2=\"\(fmt(Double(atom.position.y)))\"",
             ]
             if has3D {
                 atomAttrs.append("x3=\"\(fmt(Double(atom.position.x)))\"")
@@ -341,13 +381,14 @@ private final class CMLReactionDocumentWriter {
                 childLines.append("\(indent)      <bondType dictRef=\"cdk:aromaticBond\" />")
             }
             if let stereo = cmlBondStereo(for: bond.stereo) {
-                childLines.append("\(indent)      <bondStereo dictRef=\"\(stereo.dictRef)\">\(stereo.content)</bondStereo>")
+                childLines.append(
+                    "\(indent)      <bondStereo dictRef=\"\(stereo.dictRef)\">\(stereo.content)</bondStereo>")
             }
 
             let attrs = [
                 "id=\"\(xmlEsc(bond.externalID ?? "b\(index + 1)"))\"",
                 "atomRefs2=\"\(xmlEsc(atomReference(for: bond.a1, in: molecule))) \(xmlEsc(atomReference(for: bond.a2, in: molecule)))\"",
-                "order=\"\(order)\""
+                "order=\"\(order)\"",
             ]
 
             if childLines.isEmpty {
@@ -407,7 +448,8 @@ private final class CMLReactionDocumentWriter {
 
     private func pseudoLabel(for atom: Atom) -> String? {
         if let alias = atom.aliasLabel?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !alias.isEmpty {
+            !alias.isEmpty
+        {
             return alias
         }
 
@@ -461,11 +503,13 @@ private final class CMLReactionDocumentWriter {
     private func fmt(_ value: Double) -> String {
         if value == 0 { return "0" }
         let string = String(format: "%.6f", value)
-        let trimmed = string.replacingOccurrences(of: #"(\.\d*?[1-9])0+$"#,
-                                                  with: "$1",
-                                                  options: .regularExpression)
-        return trimmed.replacingOccurrences(of: #"\.0+$"#,
-                                            with: "",
-                                            options: .regularExpression)
+        let trimmed = string.replacingOccurrences(
+            of: #"(\.\d*?[1-9])0+$"#,
+            with: "$1",
+            options: .regularExpression)
+        return trimmed.replacingOccurrences(
+            of: #"\.0+$"#,
+            with: "",
+            options: .regularExpression)
     }
 }

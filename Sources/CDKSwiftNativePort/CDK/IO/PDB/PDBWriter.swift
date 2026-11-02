@@ -23,9 +23,10 @@ public enum CDKPDBWriter {
             lines.append("TITLE     \(title)")
 
             let atoms = molecule.atoms.sorted { $0.id < $1.id }
-            let serialByAtomID = Dictionary(uniqueKeysWithValues: atoms.enumerated().map { (idx, atom) in
-                (atom.id, idx + 1)
-            })
+            let serialByAtomID = Dictionary(
+                uniqueKeysWithValues: atoms.enumerated().map { (idx, atom) in
+                    (atom.id, idx + 1)
+                })
 
             for atom in atoms {
                 let serial = serialByAtomID[atom.id] ?? 1
@@ -34,20 +35,22 @@ public enum CDKPDBWriter {
                 let x = Double(atom.position.x)
                 let y = Double(atom.position.y)
                 let z = atom.zPosition ?? 0.0
-                let line = String(format: "ATOM  %5d %-4@ MOL A%4d    %8.3f%8.3f%8.3f  1.00  0.00          %-2@",
-                                  serial,
-                                  atomName as NSString,
-                                  1,
-                                  x, y, z,
-                                  symbol as NSString)
+                let line = String(
+                    format: "ATOM  %5d %-4@ MOL A%4d    %8.3f%8.3f%8.3f  1.00  0.00          %-2@",
+                    serial,
+                    atomName as NSString,
+                    1,
+                    x, y, z,
+                    symbol as NSString)
                 lines.append(line)
             }
 
             var neighborsBySerial: [Int: [Int]] = [:]
             for bond in molecule.bonds {
                 guard let s1 = serialByAtomID[bond.a1],
-                      let s2 = serialByAtomID[bond.a2],
-                      s1 != s2 else {
+                    let s2 = serialByAtomID[bond.a2],
+                    s1 != s2
+                else {
                     continue
                 }
                 neighborsBySerial[s1, default: []].append(s2)

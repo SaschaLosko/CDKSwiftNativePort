@@ -47,7 +47,8 @@ public enum CDKKekulization {
             }
             guard !skipAtom else { continue }
 
-            let valence = molecule.neighbors(of: atom.id).count
+            let valence =
+                molecule.neighbors(of: atom.id).count
                 + molecule.implicitHydrogenCount(for: atom.id)
                 + piBondCount
             if isAvailableForPiBond(atomicNumber: atomicNumber, charge: atom.charge, valence: valence) {
@@ -77,12 +78,14 @@ public enum CDKKekulization {
         adjacency: [Int: [Int]]
     ) -> Set<EdgeKey>? {
         guard !unmatched.isEmpty else { return [] }
-        guard let atomID = unmatched.min(by: { lhs, rhs in
-            let leftDegree = adjacency[lhs, default: []].filter(unmatched.contains).count
-            let rightDegree = adjacency[rhs, default: []].filter(unmatched.contains).count
-            if leftDegree != rightDegree { return leftDegree < rightDegree }
-            return lhs < rhs
-        }) else {
+        guard
+            let atomID = unmatched.min(by: { lhs, rhs in
+                let leftDegree = adjacency[lhs, default: []].filter(unmatched.contains).count
+                let rightDegree = adjacency[rhs, default: []].filter(unmatched.contains).count
+                if leftDegree != rightDegree { return leftDegree < rightDegree }
+                return lhs < rhs
+            })
+        else {
             return []
         }
 
@@ -188,5 +191,5 @@ private let atomicNumberBySymbol: [String: Int] = [
     "Pa": 91, "U": 92, "Np": 93, "Pu": 94, "Am": 95, "Cm": 96, "Bk": 97, "Cf": 98,
     "Es": 99, "Fm": 100, "Md": 101, "No": 102, "Lr": 103, "Rf": 104, "Db": 105,
     "Sg": 106, "Bh": 107, "Hs": 108, "Mt": 109, "Ds": 110, "Rg": 111, "Cn": 112,
-    "Nh": 113, "Fl": 114, "Mc": 115, "Lv": 116, "Ts": 117, "Og": 118
+    "Nh": 113, "Fl": 114, "Mc": 115, "Lv": 116, "Ts": 117, "Og": 118,
 ]

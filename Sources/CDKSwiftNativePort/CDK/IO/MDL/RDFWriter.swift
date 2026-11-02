@@ -6,34 +6,43 @@ public enum CDKRDFWriter {
         public var rxnOptions: CDKRXNWriter.Options
         public var fixedTimestamp: Date?
 
-        public init(rxnOptions: CDKRXNWriter.Options = CDKRXNWriter.Options(),
-                    fixedTimestamp: Date? = nil) {
+        public init(
+            rxnOptions: CDKRXNWriter.Options = CDKRXNWriter.Options(),
+            fixedTimestamp: Date? = nil
+        ) {
             self.rxnOptions = rxnOptions
             self.fixedTimestamp = fixedTimestamp
         }
     }
 
-    public static func write(reactants: [Molecule],
-                             products: [Molecule] = [],
-                             agents: [Molecule] = [],
-                             reactionName: String = "CDKSwiftNativePort RDF",
-                             options: Options = Options()) throws -> String {
-        let reaction = CDKReaction(reactants: reactants,
-                                   agents: agents,
-                                   products: products,
-                                   name: reactionName)
+    public static func write(
+        reactants: [Molecule],
+        products: [Molecule] = [],
+        agents: [Molecule] = [],
+        reactionName: String = "CDKSwiftNativePort RDF",
+        options: Options = Options()
+    ) throws -> String {
+        let reaction = CDKReaction(
+            reactants: reactants,
+            agents: agents,
+            products: products,
+            name: reactionName)
         return try write(reaction: reaction, options: options)
     }
 
-    public static func write(reaction: CDKReaction,
-                             options: Options = Options()) throws -> String {
+    public static func write(
+        reaction: CDKReaction,
+        options: Options = Options()
+    ) throws -> String {
         let rxnPayload = try CDKRXNWriter.write(reaction: reaction, options: options.rxnOptions)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return wrapRXNPayload(rxnPayload, date: options.fixedTimestamp ?? Date())
     }
 
-    public static func write(reactions: [CDKReaction],
-                             options: Options = Options()) throws -> String {
+    public static func write(
+        reactions: [CDKReaction],
+        options: Options = Options()
+    ) throws -> String {
         guard !reactions.isEmpty else { throw ChemError.emptyInput }
         let blocks = try reactions.map { reaction in
             try write(reaction: reaction, options: options).trimmingCharacters(in: .whitespacesAndNewlines)
