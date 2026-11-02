@@ -50,7 +50,11 @@ public enum CDKMarkushMatcher {
     public static func match(
         _ compound: Molecule, in family: Molecule, options: CDKMarkushMatchOptions = .init()
     ) -> CDKMarkushMatchResult {
-        let budget = MarkushMatchBudget(options)
+        match(compound, in: family, budget: MarkushMatchBudget(options))
+    }
+
+    static func match(_ compound: Molecule, in family: Molecule, budget: MarkushMatchBudget) -> CDKMarkushMatchResult {
+        let options = budget.options
         var checked = 0
         var labels: [String: Int] = [:]
         var witness: CDKMarkushMatchResult.Witness?
@@ -72,7 +76,7 @@ public enum CDKMarkushMatcher {
             guard compound.atoms.count <= options.maximumAtoms, family.atoms.count <= options.maximumAtoms else {
                 throw MatchFailure(.atomLimit, "An input exceeds the atom limit.")
             }
-            try MatchingGraph.validateStereoScope(family)
+            _ = try MarkushStereoPlan(family)
             let resolution = try CDKMarkushVariableLabels.resolve(family)
             labels = resolution.numberBySourceLabel
             let target = try MatchingGraph(compound)
@@ -113,7 +117,7 @@ public enum CDKMarkushMatcher {
     }
 }
 
-private struct MatchFailure: Error {
+struct MatchFailure: Error {
     let reason: CDKMarkushMatchResult.Reason
     let detail: String
     init(_ reason: CDKMarkushMatchResult.Reason, _ detail: String) {
@@ -122,7 +126,7 @@ private struct MatchFailure: Error {
     }
 }
 
-private final class MarkushMatchBudget {
+final class MarkushMatchBudget {
     let options: CDKMarkushMatchOptions
     let start = ProcessInfo.processInfo.systemUptime
     var steps = 0
@@ -160,17 +164,9 @@ private struct MatchingGraph {
     let tetrahedra: [Int: [Int]]
     let alkenes: [Alkene]
 
-    static func validateStereoScope(_ molecule: Molecule) throws {
-        guard molecule.atoms.allSatisfy({ $0.cxStereoGroup == nil }),
-            molecule.cxState?.racemic != true,
-            molecule.cxState?.racemicFragments.isEmpty != false,
-            molecule.cxState?.stereoGroups.isEmpty != false
-        else { throw MatchFailure(.unsupported, "Enhanced or racemic stereo groups require separate semantics.") }
-    }
-
-    init(_ source: Molecule) throws {
+    init(_ input: Molecule) throws {
+        let source = try MarkushStereoPlan(input, concrete: true).source
         try RGroupEnumerationPlan.validateGraph(source)
-        try Self.validateStereoScope(source)
         guard !source.atoms.isEmpty, !CDKMarkushStructure.requiresSpecifiedStructure(source) else {
             throw MatchFailure(.unsupported, "A concrete compound or member is required.")
         }
@@ -290,9 +286,15 @@ private struct MatchingGraph {
             if let value {
                 for center in [value.left, value.right] {
                     let neighbors = edges[center, default: [:]]
-                    guard neighbors.count + (keys[center]?.hydrogens ?? 0) == 3,
+                    let coordination = neighbors.count + (keys[center]?.hydrogens ?? 0)
+                    let ordinaryCarbon = keys[center]?.element == "C" && coordination == 3
+                    let neutralImine = keys[center]?.element == "N" && keys[center]?.charge == 0 && coordination == 2
+                    guard ordinaryCarbon || neutralImine,
+                        keys[center]?.aromatic == false,
                         neighbors.values.filter({ $0 == .double }).count == 1
-                    else { throw MatchFailure(.unsupported, "Only ordinary two-ended alkene stereo is supported.") }
+                    else {
+                        throw MatchFailure(.unsupported, "Only ordinary alkene and neutral imine stereo is supported.")
+                    }
                 }
                 alkenes.append(value)
             }

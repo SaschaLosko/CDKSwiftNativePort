@@ -24,8 +24,10 @@ public enum CDKMarkushVariableLabels {
         guard source.atoms.allSatisfy({ ($0.rGroupLabel ?? 0) >= 0 }),
             source.rGroupLogicDefinitions.keys.allSatisfy({ $0 >= 0 })
         else { throw CDKRGroupEnumerationError.invalidQuery("Variable numbers must be nonnegative.") }
+        let positionDummies = Set(source.sgroups.filter { $0.kind == .extMulticenter }.compactMap { $0.atomIDs.first })
         var labels = Set(source.atoms.compactMap(\.rGroupMembership))
-        labels.formUnion(source.atoms.filter { $0.rGroupMembership == nil }.compactMap(label))
+        labels.formUnion(
+            source.atoms.filter { $0.rGroupMembership == nil && !positionDummies.contains($0.id) }.compactMap(label))
         var used = Set(source.atoms.compactMap(\.rGroupLabel)).union(source.rGroupLogicDefinitions.keys)
         var mapping: [String: Int] = [:]
         for value in labels.sorted() {

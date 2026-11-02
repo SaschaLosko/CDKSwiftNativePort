@@ -1,0 +1,3835 @@
+[
+  {
+    "id": 0,
+    "sourceImage": "EP14861496NWB1_40.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C1=CC=C(C(=O)NC2=CC=C(<r>R4</r>)C(<r>R6</r>)=C2<r>R7</r>)C(S(<r>R1</r>)=O)=C1|Sg:n:20:m:ht</cxsmi><stable>R1:(C1-C6)alkyl group<ns>R2:a halo (C1-C6) alkyl group<ns>R4:a halo (C1-C6) alkyl group<ns>m:0-2<ns>R6:a hydrogen atom<n>a halogen atom<n>a (C1-C6) alkyl group<ns>R7:a hydrogen atom<n>a halogen atom<n>a (C1-C6) alkyl group</stable></markush>",
+    "annotationSHA256": "fbd5dfd19d6f02e5eb81a26e6e90b65c482b224d7b62f0c47b9026f9f62c6f37",
+    "sourceCells": [
+      "R1",
+      "(O)m",
+      "S",
+      "R2",
+      "O",
+      "R7",
+      "R6",
+      "R4",
+      "N\\nH",
+      "wherein",
+      "R1 represents a (C1-C6)alkyl group,",
+      "R2 and R4 may be the same or different, and each represent a halo (C1-C6) alkyl group,",
+      "m represents 0, 1 or 2, and",
+      "R6 and R7 may be the same or different, and each represent a hydrogen atom, a halogen atom or a (C1-C6)",
+      "alkyl group, or a salt thereof to plants or soil."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:0:EP14861496NWB1_40.png",
+      "backbone": "*C1=CC=C(C(=O)NC2=CC=C(*)C(*)=C2*)C(S(*)=O)=C1 |$R2;;;;;;;;;;;;R4;;R6;;R7;;;R1;;$,Sg:n:20:m:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:(C1-C6)alkyl group<ns>R2:a halo (C1-C6) alkyl group<ns>R4:a halo (C1-C6) alkyl group<ns>m:0-2<ns>R6:a hydrogen atom<n>a halogen atom<n>a (C1-C6) alkyl group<ns>R7:a hydrogen atom<n>a halogen atom<n>a (C1-C6) alkyl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 1,
+    "sourceImage": "US5953857_17.png",
+    "sourceAnnotation": "<markush><cxsmi><r>B16</r>C1=C(<r>B15</r>)C(<r>A13</r>)=C2C(=O)C(<r>B17</r>)=C(<r>B18</r>)C(<r>A14</r>)=C2C1=O</cxsmi><stable>A13:an amino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted arylamino group<ns>A14:an amino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted arylamino group<ns>B15:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group<ns>B16:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group<ns>B17:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group<ns>B18:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group</stable></markush>",
+    "annotationSHA256": "0df63e063a48bdd9b59d80a6ec8aba9675d19a80da38975811d74e468204acee",
+    "sourceCells": [
+      "B17",
+      "B18",
+      "O",
+      "O",
+      "A13",
+      "B15",
+      "B16",
+      "A14",
+      "where each of A13 and A14 is independently an amino group,",
+      "a substituted or unsubstituted alkylamino group, or a sub-",
+      "stituted or unsubstituted arylamino group; and each of B15 to",
+      "B18 is independently a hydrogen atom, a halogen atom, a",
+      "substituted or unsubstituted alkyl group, a substituted or",
+      "unsubstituted alkoxy group, a substituted or unsubstituted",
+      "aryl group, or a substituted or unsubstituted aryloxy group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:1:US5953857_17.png",
+      "backbone": "*C1=C(*)C(*)=C2C(=O)C(*)=C(*)C(*)=C2C1=O |$B16;;;B15;;A13;;;;;B17;;B18;;A14;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "A13:an amino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted arylamino group<ns>A14:an amino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted alkylamino group<n>a substituted or unsubstituted arylamino group<ns>B15:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group<ns>B16:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group<ns>B17:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group<ns>B18:a hydrogen atom<n>a halogen atom<n>a substituted or unsubstituted alkyl group<n>a substituted or unsubstituted alkoxy group<n>a substituted or unsubstituted aryl group<n>a substituted or unsubstituted aryloxy group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 2,
+    "sourceImage": "US6232309_16.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C.CCC1=CN=CC=C1|m:1:4.5.6.7.8.9</cxsmi><stable>R3:H<n>a halogen atom</stable></markush>",
+    "annotationSHA256": "f360aa1c210242f28ab3388c37d6fd9829bfd00ca0db0fb60551408e4c0f8407",
+    "sourceCells": [
+      "CH2",
+      "R3",
+      "N",
+      "wherein",
+      "R3 represents H or a halogen atom,",
+      "X represents CH or N,",
+      "Y represents NO2 or CN, and",
+      "R1 represents H."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:2:US6232309_16.png",
+      "backbone": "*C.CCC1=CN=CC=C1 |$R3;;;;;;;;;$,m:1:7.8.9.6.4.5|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R3:H<n>a halogen atom"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 3,
+    "sourceImage": "US6344453_16.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C.CCC1=CN=CC=C1|m:1:4.5.6.7.8.9</cxsmi><stable>R3:hydrogen<n>halogen</stable></markush>",
+    "annotationSHA256": "3bb3dbdcb7242754aee14661f6dd58a308622f845d1dc67b0eb2d13224f2c8bb",
+    "sourceCells": [
+      "CH2",
+      "R3",
+      "N",
+      "wherein R3 is hydrogen or halogen, X represents N, Y",
+      "represents a nitro group or cyano group, and R1 rep-",
+      "resents a hydrogen atom."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:3:US6344453_16.png",
+      "backbone": "*C.CCC1=CN=CC=C1 |$R3;;;;;;;;;$,m:1:7.8.9.6.4.5|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R3:hydrogen<n>halogen"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 4,
+    "sourceImage": "US6521785_11.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C.<r>R3</r>C.O=S(=O)(O)C1=C2C=CC=CC2=CC=C1|m:1:9.10.11.12.13.14,m:3:8.9.14.15.16.17</cxsmi><stable>R2:hydrogen<n>C1-C24 alkyl<ns>R3:hydrogen<n>C1-C24 alkyl</stable></markush>",
+    "annotationSHA256": "1d8213c5c727ceec6978997afe8230a7409a3be33f257cc5763bbf02d6bc1d8e",
+    "sourceCells": [
+      "R2",
+      "R3",
+      "O",
+      "S",
+      "O",
+      "OH",
+      "wherein R1, R2, and R3 are independently selected from",
+      "the group consisting of hydrogen and C1-C24 alkyl;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:4:US6521785_11.png",
+      "backbone": "*C.*C.O=S(=O)(O)C1=C2C=CC=CC2=CC=C1 |$R2;;R3;;;;;;;;;;;;;;;$,m:1:11.10.12.9.14.13,m:3:14.15.9.8.17.16|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R2:hydrogen<n>C1-C24 alkyl<ns>R3:hydrogen<n>C1-C24 alkyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 5,
+    "sourceImage": "US8901170_31.png",
+    "sourceAnnotation": "<markush><cxsmi><r>RB</r>NC(=O)C1=C(NC(=O)C2=CC(<r>B2</r>)=NN2C2=C(Cl)C=CC=N2)C(C)=CC(<r>B1</r>)=C1</cxsmi><stable>B1:hydrogen<n>chlorine<n>cyano<ns>B2:a bromine atom<n>CF3<ns>RB:H<n>CH3<n>CH(CH3)2</stable></markush>",
+    "annotationSHA256": "9336a4180e3169001a4df899465aceea9ba767ca692817edc8f3a7f63990ae31",
+    "sourceCells": [
+      "B1",
+      "RB",
+      "N\\nH",
+      "N\\nH",
+      "CH3",
+      "O",
+      "O",
+      "N",
+      "N",
+      "N",
+      "B2",
+      "Cl",
+      "wherein B1 is hydrogen, chlorine or cyano, B2 is a bromine",
+      "atom or CF3, and RB is H, CH3 or CH(CH3)2."
+    ],
+    "scope": "finite interpretation of the supplied annotation",
+    "definition": {
+      "sourceIdentifier": "M2S:5:US8901170_31.png",
+      "backbone": "*NC(=O)C1=C(NC(=O)C2=CC(*)=NN2C2=C(Cl)C=CC=N2)C(C)=CC(*)=C1 |$RB;;;;;;;;;;;;B2;;;;;;;;;;;;;;B1;$,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "B1",
+          "sourceText": "hydrogen<n>chlorine<n>cyano",
+          "alternatives": [
+            "[H]",
+            "Cl",
+            "C#N"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        },
+        {
+          "label": "B2",
+          "sourceText": "a bromine atom<n>CF3",
+          "alternatives": [
+            "Br",
+            "C(F)(F)F"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        },
+        {
+          "label": "RB",
+          "sourceText": "H<n>CH3<n>CH(CH3)2",
+          "alternatives": [
+            "[H]",
+            "C",
+            "C(C)C"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
+    },
+    "expectedConfigurations": 18,
+    "positiveSMILES": [
+      "[H]NC(=O)C1=C(NC(=O)C2=CC(Br)=NN2C2=C(Cl)C=CC=N2)C(C)=CC(Cl)=C1"
+    ],
+    "negativeSMILES": [
+      "CC",
+      "[H]NC(=O)C1=C(NC(=O)C2=CC(I)=NN2C2=C(Cl)C=CC=N2)C(C)=CC(Cl)=C1"
+    ]
+  },
+  {
+    "id": 6,
+    "sourceImage": "US9550902_23.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Re</r>C(C)(C)CC|Sg:n:4:e:ht</cxsmi><stable>Re:hydrogen<n>methyl<ns>e:0-3</stable></markush>",
+    "annotationSHA256": "efc078f77ee890760a2b6e128785f3362b95ea014ef954f98871a3eb5e0328f1",
+    "sourceCells": [
+      "CH2",
+      "e",
+      "C",
+      "CH3",
+      "Re",
+      "CH3",
+      "wherein Re is hydrogen or methyl, and e is an integer of 0",
+      "to 3."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:6:US9550902_23.png",
+      "backbone": "*C(C)(C)CC |$Re;;;;;$,Sg:n:4:e:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Re:hydrogen<n>methyl<ns>e:0-3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 7,
+    "sourceImage": "US10526338B2_17_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C.<r>R2</r>C.<r>R3</r>C(C)(C)C(CC(=O)O)NC1=C(F)C=<r>X</r>C(C2=CNC3=<r>Y</r>C=<r>Z</r>C=C23)=N1|m:1:23.24.25.26.27.28,m:3:14.15.17.18.19.29</cxsmi><stable>Y:N<ns>X:C<n>N<ns>Z:C<n>N<ns>R1:halogen<n>H<ns>R2:H<n>CN<ns>R3:heterocycle<n>OCH3</stable></markush>",
+    "annotationSHA256": "dfa4d612d833a8f7b4e524f933e00a7078906cd1378732d2eae21d06e852f0e7",
+    "sourceCells": [
+      "O",
+      "OH",
+      "R3",
+      "NH",
+      "F",
+      "R2",
+      "X",
+      "N",
+      "N\\nH",
+      "Z",
+      "Y",
+      "R1",
+      "wherein Y is N, X is",
+      "C or N, Z is C or N, R1 is halogen or H, R2 is H or CN,",
+      "and R3 is heterocycle or OCH3."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:7:US10526338B2_17_c.png",
+      "backbone": "*C.*C.*C(C)(C)C(CC(=O)O)NC1=C(F)C=*C(C2=CNC3=*C=*C=C32)=N1 |$R1;;R2;;R3;;;;;;;;;;;;;;X;;;;;;Y;;Z;;;$,m:1:25.24.26.23.28.27,m:3:18.17.19.29.14.15|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Y:N<ns>X:C<n>N<ns>Z:C<n>N<ns>R1:halogen<n>H<ns>R2:H<n>CN<ns>R3:heterocycle<n>OCH3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 8,
+    "sourceImage": "WO2002010163A1_23.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r>C(=O)C(<r>L</r>)<r>R1</r></cxsmi><stable>R:described hereinabove<ns>R1:described hereinabove<ns>L:halogen<n>sulfonate</stable></markush>",
+    "annotationSHA256": "64c8e88fcb0ca958dd553fa46135eb43e62319c4cd241845716fa4f9339ae66a",
+    "sourceCells": [
+      "O",
+      "R",
+      "R1",
+      "L",
+      "wherein:",
+      "R and R1 are as described hereinabove; and",
+      "L is halogen or sulfonate;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:8:WO2002010163A1_23.png",
+      "backbone": "*C(=O)C(*)* |$R;;;;L;R1$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:described hereinabove<ns>R1:described hereinabove<ns>L:halogen<n>sulfonate"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 9,
+    "sourceImage": "WO2002010163A1_29_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Z</r>C(=<r>Y</r>)SC(<r>R3</r>)(<r>R2</r>)C1=NC(<r>R1</r>)=C(<r>R</r>)O1</cxsmi><stable>R:alkyl<n>aryl<n>heteroaryl<ns>R1:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>R2:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>R3:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>Y:O<n>S<n>NH<n>N-alkyl<n>N-aryl<n>N-acyl<ns>Z:hydrogen<n>alkyl<n>aryl<n>O-alkyl<n>O-aryl<n>S-alkyl<n>S-aryl<n>NH2<n>N-alkyl<n>N-aryl<n>N-acyl</stable></markush>",
+    "annotationSHA256": "3b20ff4563eea02abbb34d73d8a6c85fc725964dc460536f4ef8ef117257b966",
+    "sourceCells": [
+      "R1",
+      "R",
+      "O",
+      "N",
+      "S",
+      "Y",
+      "Z",
+      "R3",
+      "R2",
+      "R is alkyl, aryl or heteroaryl;",
+      "R1, R2 and R3 are each independently hydrogen, alkyl, aryl or heteroaryl;",
+      "Y is O, S, NH, N-alkyl, N-aryl or N-acyl; and",
+      "Z is hydrogen, alkyl, aryl, O-alkyl, O-aryl, S-alkyl, S-aryl, NH2, N-alkyl, N-aryl or N-",
+      "acyl;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:9:WO2002010163A1_29_2.png",
+      "backbone": "*C(=*)SC(*)(*)C1=NC(*)=C(*)O1 |$Z;;Y;;;R3;R2;;;;R1;;R;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:alkyl<n>aryl<n>heteroaryl<ns>R1:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>R2:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>R3:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>Y:O<n>S<n>NH<n>N-alkyl<n>N-aryl<n>N-acyl<ns>Z:hydrogen<n>alkyl<n>aryl<n>O-alkyl<n>O-aryl<n>S-alkyl<n>S-aryl<n>NH2<n>N-alkyl<n>N-aryl<n>N-acyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 10,
+    "sourceImage": "06521785_9.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>[N+]([H])(<r>R5</r>O[H])<r>R5</r>O[H]|Sg:n:6,7:x:ht,Sg:n:3,4:y:ht</cxsmi><stable>R4:C7-C24 alkyl<n>C2-C24 alkenyl—CH2—<ns>R5:a straight or branched chain C2-C4 alkylene<ns>x:1-50<ns>y:0-50</stable></markush>",
+    "annotationSHA256": "828d0db754207b706a26f9cfef1631c3f6f7b34a4111a9c46cd6c4b2eca2e4a6",
+    "sourceCells": [
+      "H",
+      "(R5O)x",
+      "H",
+      "H",
+      "R4",
+      "(R5O)y",
+      "N+",
+      "wherein R4 is selected from the group consisting of",
+      "C7-C24 alkyl and C2-C24 alkenyl-CH2-, each R5",
+      "independently is a straight chain or branched C2-C4",
+      "alkylene, x is a number from 1-50 and y is a number",
+      "from 0 to 50, wherein the salt compound has a pH of",
+      "4 to 6."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:10:06521785_9.png",
+      "backbone": "*[N+]([H])(*O[H])*O[H] |$R4;;;R5;;;R5;;$,,,Sg:n:6,7:x:ht:::,Sg:n:3,4:y:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:C7-C24 alkyl<n>C2-C24 alkenyl—CH2—<ns>R5:a straight or branched chain C2-C4 alkylene<ns>x:1-50<ns>y:0-50"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 11,
+    "sourceImage": "07083908_90_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r>C.C1=CC2=C(C=C1)NN=N2|m:1:2.3.4.5.6.7</cxsmi><stable>R:a hydrogen atom<n>an alkyl group having 1 to 4 carbon atoms<n>an aryl group<n>a halogen atom<n>an amino group<n>a nitro group<n>an alkoxycarbonyl group<n>a substituted or non-substituted carboxy group<n>a sulfonic group</stable></markush>",
+    "annotationSHA256": "889c474f3686d1710698819d6e98dc08e8a9a6962496416d5fc7e770f8f24446",
+    "sourceCells": [
+      "H",
+      "N",
+      "N",
+      "N",
+      "R",
+      "wherein R represents a hydrogen atom, an alkyl group",
+      "having 1 to 4 carbon atoms, an aryl group, a halogen atom,",
+      "an amino group, a nitro group, an alkoxycarbonyl group, a",
+      "substituted or non-substituted carboxyl group or salt thereof,",
+      "or a sulfonic group or salt thereof;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:11:07083908_90_c.png",
+      "backbone": "*C.C1=CC2=C(C=C1)NN=N2 |$R;;;;;;;;;;$,m:0:6.5.4.7.2.3|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:a hydrogen atom<n>an alkyl group having 1 to 4 carbon atoms<n>an aryl group<n>a halogen atom<n>an amino group<n>a nitro group<n>an alkoxycarbonyl group<n>a substituted or non-substituted carboxy group<n>a sulfonic group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 12,
+    "sourceImage": "07083908_91.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C(<r>R2</r>)C(<r>X</r>)C#N</cxsmi><stable>R1:a hydroxyl group<n>a metal salt of a hydroxyl group<ns>R2:an alkyl group<n>an aryl group<ns>X:an electron withdrawing group</stable></markush>",
+    "annotationSHA256": "a856aa94ac05a5b300e85eee37c8430e47f57d470ceb964bd3cc7f7e48e77a09",
+    "sourceCells": [
+      "X",
+      "CN",
+      "R2",
+      "R1",
+      "wherein R1 represents a hydroxyl group or a metal salt of a",
+      "hydroxyl group; R2 represents an alkyl group or an aryl",
+      "group; and X represents an electron withdrawing group, or",
+      "R1 and X together form a ring containing an electron",
+      "withdrawing group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:12:07083908_91.png",
+      "backbone": "*C(*)C(*)C#N |$R1;;R2;;X;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a hydroxyl group<n>a metal salt of a hydroxyl group<ns>R2:an alkyl group<n>an aryl group<ns>X:an electron withdrawing group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 13,
+    "sourceImage": "EP1337602B1_13_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C1(C<r>X</r><r>Y</r><r>Z</r><r>M</r><r>Z'</r><r>Y'</r><r>X'</r>CC2(<r>R2</r>)COC2)COC1</cxsmi><stable>R1:straight or branched C1-C4 alkyl<n>hydrogen<ns>R2:straight or branched C1-C4 alkyl<n>hydrogen<ns>X:oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-O-<ns>X':oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-O-<ns>Y:spacer groups having each independently 1 to 30 carbon atoms (linear or branched)<ns>Y':spacer groups having each independently 1 to 30 carbon atoms (linear or branched)<ns>Z:oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-<n>O-<ns>Z':oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-<n>O-<ns>M:any suitable mesogenic group</stable></markush>",
+    "annotationSHA256": "b23afbdf6f7823ca48606890aa2e57f8c8391c21313aefde9b82f205956e639a",
+    "sourceCells": [
+      "O",
+      "R1",
+      "X",
+      "Y",
+      "Z",
+      "M",
+      "Z'",
+      "Y'",
+      "X'",
+      "R2",
+      "O",
+      "wherein:",
+      "R1 and R2 are independently selected from straight or branched C1-C4 alkyl and hydrogen;",
+      "X and X' are independently selected from oxygen, sulfur, a single covalent bond, -O-CO-, -CO-O-, and -O-CO-O-;",
+      "Y and Y' are spacer groups having each independently 1 to 30 carbon atoms (linear or branched), in which the",
+      "carbon chain may be interrupted by oxygen in the ether function or by sulfur in the thioether function;",
+      "Z and Z' are independently selected from oxygen, sulfur, a single covalent bond, -O-CO-, -CO-O-, and -O-CO-",
+      "O-; and",
+      "M is any suitable mesogenic group,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:13:EP1337602B1_13_c.png",
+      "backbone": "*C1(C*******CC2(*)COC2)COC1 |$R1;;;X;Y;Z;M;Z';Y';X';;;R2;;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:straight or branched C1-C4 alkyl<n>hydrogen<ns>R2:straight or branched C1-C4 alkyl<n>hydrogen<ns>X:oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-O-<ns>X':oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-O-<ns>Y:spacer groups having each independently 1 to 30 carbon atoms (linear or branched)<ns>Y':spacer groups having each independently 1 to 30 carbon atoms (linear or branched)<ns>Z:oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-<n>O-<ns>Z':oxygen<n>sulfur<n>a single covalent bond<n>-O-CO-<n>-CO-O-<n>-O-CO-<n>O-<ns>M:any suitable mesogenic group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 14,
+    "sourceImage": "EP1337602B1_14.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r>C1=C(OC(=O)C2=CC=C(OCOCC3(C)COC3)C=C2)C=CC(OC(=O)C2=CC=C(OCOC3(C)COC3)C=C2)=C1|Sg:n:32:n:ht,Sg:n:11:n:ht</cxsmi><stable>R:methyl<ns>n:4-6</stable></markush>",
+    "annotationSHA256": "88bffd24470f4dfdd95abcd66289bcdcf9dd9a5f6c8db5fe2ba37d33bcaf30e8",
+    "sourceCells": [
+      "O",
+      "O",
+      "O",
+      "R",
+      "O",
+      "O",
+      "O",
+      "O(CH2)nO",
+      "O(CH2)nO",
+      "wherein R is methyl and n is 4, 5 or 6."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:14:EP1337602B1_14.png",
+      "backbone": "*C1=C(OC(=O)C2=CC=C(OCOCC3(C)COC3)C=C2)C=CC(OC(=O)C2=CC=C(OCOC3(C)COC3)C=C2)=C1 |$R;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:32:n:ht:::,Sg:n:11:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:methyl<ns>n:4-6"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 15,
+    "sourceImage": "EP12764969NWB2_43.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r><r>R2</r>OOP(=O)(O<r>M1</r>)O<r>M2</r>|Sg:n:1,2:n:ht</cxsmi><stable>R1:a hydrocarbon group<ns>R2:a hydrocarbon group<ns>M1:an alkali metal<ns>M2:an alkali metal<n>a hydrogen atom<n>a hydrocarbon group<n>a hydrocarbon group containing an oxygen atom(s)<ns>n:1-</stable></markush>",
+    "annotationSHA256": "947e4ff15d7d8d43b4ddcc7aab2a9c58d1aff9a483e54640241b1b605678b3b8",
+    "sourceCells": [
+      "R1",
+      "R2",
+      "O",
+      "n",
+      "O",
+      "O",
+      "P",
+      "OM1",
+      "OM2",
+      "Condition 1: R1 and R2 represent a hydrocarbon group;",
+      "Condition 2: M1 represents an alkali metal;",
+      "Condition 3: M2 represents a group selected from an alkali metal, a hydrogen atom, a hydrocarbon group and",
+      "a hydrocarbon group containing an oxygen atom(s);",
+      "Condition 4: n represents an integer of 1 or more."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:15:EP12764969NWB2_43.png",
+      "backbone": "**OOP(=O)(O*)O* |$R1;R2;;;;;;M1;;M2$,Sg:n:1,2:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a hydrocarbon group<ns>R2:a hydrocarbon group<ns>M1:an alkali metal<ns>M2:an alkali metal<n>a hydrogen atom<n>a hydrocarbon group<n>a hydrocarbon group containing an oxygen atom(s)<ns>n:1-"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 16,
+    "sourceImage": "EP14750931NWB1_98.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Rd</r>C.<r>Rc</r>C.<r>B</r>C1=NN=C(C2=CC3=C(C=C2O)N=CC=C3)C=C1|m:1:11.12.16.17.18.19,m:3:11.12.16.17.18.19</cxsmi><stable>Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino</stable></markush>",
+    "annotationSHA256": "941830c97328b05f1eee60ff2a0c030eafd34d696fa4a74334b5242bc988d86b",
+    "sourceCells": [
+      "Rc",
+      "B",
+      "N",
+      "N",
+      "OH",
+      "N",
+      "Rd",
+      "wherein",
+      "Rc and Rd are each, independently, selected from hydrogen, cyano, halogen, hydroxy, C1-C4alkyl, C2-C4alkenyl,",
+      "C2-C4alkynyl, C1-C4alkoxy, C3-C7cycloalkyl, heterocyclyl, heteroaryl, heterocyclyl C1-C4alkyl, C1-C4alkyl aryl,",
+      "C1-C4alkyl heterocyclyl, C1-C4alkyl heteroaryl, C1-C4alkoxy aryl, C1-C4alkoxy heterocyclyl, C1-C4alkoxy heteroaryl,",
+      "C1-C4alkoxy substituted with hydroxy, C1-C4alkoxy, amino and mono-and di-C1-C4alkylamino."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:16:EP14750931NWB1_98.png",
+      "backbone": "*C.*C.*C1=NN=C(C2=CC3=C(C=C2O)N=CC=C3)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:16.17.12.18.11.19,m:3:18.11.19.16.17.12|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 17,
+    "sourceImage": "EP14750931NWB1_99.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Rd</r>C.<r>Rc</r>C.<r>B</r>C1=NN=C(C2=CC3=C(C=CC=N3)C=C2O)C=C1|m:1:11.12.13.14.15.16,m:3:11.12.13.14.15.16</cxsmi><stable>Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino</stable></markush>",
+    "annotationSHA256": "056725b120815006d36d1894f8424fb43636d68c06fb9151cf4ba68d3919960a",
+    "sourceCells": [
+      "N",
+      "N",
+      "N",
+      "B",
+      "Rd",
+      "Rc",
+      "OH",
+      "wherein",
+      "Rc and Rd are each, independently, selected from hydrogen, cyano, halogen, hydroxy, C1-C4alkyl, C2-C4alkenyl,",
+      "C2-C4alkynyl, C1-C4alkoxy, C3-C7cycloalkyl, heterocyclyl, heteroaryl, heterocyclyl C1-C4alkyl, C1-C4alkyl aryl,",
+      "C1-C4alkyl heterocyclyl, C1-C4alkyl heteroaryl, C1-C4alkoxy aryl, C1-C4alkoxy heterocyclyl, C1-C4alkoxy heteroaryl,",
+      "C1-C4alkoxy substituted with hydroxy, C1-C4alkoxy, amino and mono-and di-C1-C4alkylamino."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:17:EP14750931NWB1_99.png",
+      "backbone": "*C.*C.*C1=NN=C(C2=CC3=C(C=CC=N3)C=C2O)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:11.16.14.13.15.12,m:3:14.13.15.12.11.16|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 18,
+    "sourceImage": "EP14750931NWB1_99_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Rd</r>C.<r>Rc</r>C.<r>B</r>C1=NN=C(C2=CC3=C(C=CN=C3)C=C2O)C=C1|m:1:11.12.13.14.15.16,m:3:11.12.13.14.15.16</cxsmi><stable>Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino</stable></markush>",
+    "annotationSHA256": "01d740e040d16c45e67f8dbbbe375a96ee0de1e61d772fa59b2e9b6d3e521a5d",
+    "sourceCells": [
+      "Rd",
+      "N",
+      "Rc",
+      "B",
+      "N",
+      "N",
+      "OH",
+      "wherein",
+      "Rc and Rd are each, independently, selected from hydrogen, cyano, halogen, hydroxy, C1-C4alkyl, C2-C4alkenyl,",
+      "C2-C4alkynyl, C1-C4alkoxy, C3-C7cycloalkyl, heterocyclyl, heteroaryl, heterocyclyl C1-C4alkyl, C1-C4alkyl aryl,",
+      "C1-C4alkyl heterocyclyl, C1-C4alkyl heteroaryl, C1-C4alkoxy aryl, C1-C4alkoxy heterocyclyl, C1-C4alkoxy heteroaryl,",
+      "C1-C4alkoxy substituted with hydroxy, C1-C4alkoxy, amino and mono-and di-C1-C4alkylamino."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:18:EP14750931NWB1_99_2.png",
+      "backbone": "*C.*C.*C1=NN=C(C2=CC3=C(C=CN=C3)C=C2O)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:11.16.14.13.12.15,m:3:14.13.12.15.11.16|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 19,
+    "sourceImage": "EP14750931NWB1_100.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Rd</r>C.<r>Rc</r>C.<r>B</r>C1=NN=C(C2=CC3=C(C=C2O)N=CC=N3)C=C1|m:1:11.12.16.17.18.19,m:3:11.12.16.17.18.19</cxsmi><stable>Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino</stable></markush>",
+    "annotationSHA256": "ed427a4ac3a490d18593ea5f0e70704c0e7d43899ce07f849d888d63d841fad1",
+    "sourceCells": [
+      "Rd",
+      "N",
+      "N",
+      "B",
+      "N",
+      "N",
+      "OH",
+      "Rc",
+      "wherein",
+      "Rc and Rd are each, independently, selected from hydrogen, cyano, halogen, hydroxy, C1-C4alkyl, C2-C4alkenyl,",
+      "C2-C4alkynyl, C1-C4alkoxy, C3-C7cycloalkyl, heterocyclyl, heteroaryl, heterocyclyl C1-C4alkyl,  C1-C4alkyl aryl,",
+      "C1-C4alkyl heterocyclyl, C1-C4alkyl heteroaryl, C1-C4alkoxy aryl, C1-C4alkoxy heterocyclyl, C1-C4alkoxy heteroaryl,",
+      "C1-C4alkoxy substituted with hydroxy, C1-C4alkoxy, amino and mono-and di-C1-C4alkylamino."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:19:EP14750931NWB1_100.png",
+      "backbone": "*C.*C.*C1=NN=C(C2=CC3=C(C=C2O)N=CC=N3)C=C1 |$Rd;;Rc;;B;;;;;;;;;;;;;;;;;$,m:1:11.19.17.12.16.18,m:3:17.12.16.18.11.19|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Rc:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino<ns>Rd:hydrogen<n>cyano<n>halogen<n>hydroxy<n>C1-C4alkyl<n>C2-C4alkenyl<n>C2-C4alkynyl<n>C1-C4alkoxy<n>C3-C7cycloalkyl<n>heterocyclyl<n>heteroaryl<n>heterocyclyl C1-C4alkyl<n>C1-C4alkyl aryl<n>C1-C4alkyl heterocyclyl<n>C1-C4alkyl heteroaryl<n>C1-C4alkoxy aryl<n>C1-C4alkoxy heterocyclyl<n>C1-C4alkoxy heteroaryl<n>C1-C4alkoxy substituted with hydroxy C1-C4alkoxy amino and mono-and di-C1-C4alkylamino"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 20,
+    "sourceImage": "US6239192_9.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C.<r>R4</r>C.<r>R2</r>C1=CC=CC(<r>R1</r>)=C1C(=O)NC(=O)NC1=CC=CC=C1|m:1:18.19.20.21.22.23,m:3:18.19.20.21.22.23</cxsmi><stable>R1:halogen<ns>R2:hydrogen<n>halogen<ns>R3:hydrogen<n>halogen<n>C1-4-alkyl<ns>R4:halogen<n>1-5-halogeno-C1-4-alkyl<n>C1-4-alkoxy<n>1-5-halogeno-C1-4-alkoxy<n>C1-4-alkylthio<n>1-5-halogeno-C1-4-alkylthio<n>phenoxy<n>pyridyloxy</stable></markush>",
+    "annotationSHA256": "78cf7fd6c54f204c11685274e73a5c6cf0513fc52c5d6ac6d86ef8ef7faa9cee",
+    "sourceCells": [
+      "R1",
+      "R2",
+      "CO",
+      "NH",
+      "CONH",
+      "R3",
+      "R4",
+      "wherein",
+      "R1 represents halogen,",
+      "R2 represents hydrogen or halogen,",
+      "R3 represents hydrogen, halogen or C1-4-alkyl,",
+      "R4 represents halogen, 1-5-halogeno-C1-4-alkyl, C1-4-",
+      "alkoxy, 1-5-halogeno-C1-4-alkoxy, C1-4-alkylthio, 1-5-",
+      "halogeno-C1-4-alkylthio, phenoxy or pyridyloxy, which",
+      "can optionally be substituted by halogeno, C1-4-alkyl,",
+      "1-5-halogeno-C1-4-alkyl, C1-4-alkoxy, 1-5-halogeno-C1-4-",
+      "alkoxy, C1-4-alkylthio, 1-5-halogeno-C1-4-alkylthio."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:20:US6239192_9.png",
+      "backbone": "*C.*C.*C1=CC=CC(*)=C1C(=O)NC(=O)NC1=CC=CC=C1 |$R3;;R4;;R2;;;;;;R1;;;;;;;;;;;;;$,m:1:19.20.18.21.23.22,m:3:18.21.23.22.19.20|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:halogen<ns>R2:hydrogen<n>halogen<ns>R3:hydrogen<n>halogen<n>C1-4-alkyl<ns>R4:halogen<n>1-5-halogeno-C1-4-alkyl<n>C1-4-alkoxy<n>1-5-halogeno-C1-4-alkoxy<n>C1-4-alkylthio<n>1-5-halogeno-C1-4-alkylthio<n>phenoxy<n>pyridyloxy"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 21,
+    "sourceImage": "US6495573_10.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C.<r>R5</r>C.<r>R1</r>C(<r>R2</r>)=CC1C(C(=O)OC(<r>R3</r>)C2=CC=CC(OC3=CC=CC=C3)=C2)C1(C)C|m:1:15.16.17.18.19.27,m:3:21.22.23.24.25.26</cxsmi><stable>R1:hydrogen<n>halogen<n>halogen-substituted alkyl<n>halogen-substituted phenyl<ns>R2:hydrogen<n>halogen<n>halogen-substituted alkyl<n>halogen-substituted phenyl<ns>R3:hydrogen<n>CN<ns>R4:hydrogen<n>halogen<ns>R5:hydrogen<n>halogen</stable></markush>",
+    "annotationSHA256": "ba7c378e5c1043a9ae9ede37ceb7ff9ef98d305d05762f7159985134a76003b0",
+    "sourceCells": [
+      "R1",
+      "R2",
+      "R2",
+      "R4",
+      "R5",
+      "O",
+      "COO",
+      "CH",
+      "in which",
+      "R1 and R2 represent halogen, optionally halogen-",
+      "substituted alkyl or optionally halogen-substituted",
+      "phenyl,",
+      "R3 represent hydrogen or CN,",
+      "R4 represents hydrogen or halogen and",
+      "R5 represents hydrogen or halogen."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:21:US6495573_10.png",
+      "backbone": "*C.*C.*C(*)=CC1C(C(=O)OC(*)C2=CC=CC(OC3=CC=CC=C3)=C2)C1(C)C |$R4;;R5;;R1;;R2;;;;;;;;R3;;;;;;;;;;;;;;;;$,m:1:15.16.17.27.18.19,m:3:22.21.23.24.25.26|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:hydrogen<n>halogen<n>halogen-substituted alkyl<n>halogen-substituted phenyl<ns>R2:hydrogen<n>halogen<n>halogen-substituted alkyl<n>halogen-substituted phenyl<ns>R3:hydrogen<n>CN<ns>R4:hydrogen<n>halogen<ns>R5:hydrogen<n>halogen"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 22,
+    "sourceImage": "US6538013_36_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Y</r>/<r>X</r>=C(\\N(<r>R1</r>)<r>T</r>)N(<r>U</r>)C(=O)OC(<r>R2</r>)(<r>R2'</r>)OC(<r>R</r>)=O</cxsmi><stable>R1:pyridyl-substituted C1-C6alkyl<ns>X:CH<ns>Y:NO2<ns>T:hydrogen<n>C1-C6alkyl<ns>U:hydrogen<n>C1-C6alkyl<ns>R2:hydrogen<n>C1-C6alkyl<ns>R2':hydrogen<n>C1-C6alkyl<ns>R:C1-C20alkyl</stable></markush>",
+    "annotationSHA256": "1e6ffa5749c3bb6085cc2cdf328bacf977f64cfc02aa5925ae63de2d6876217e",
+    "sourceCells": [
+      "R1",
+      "X",
+      "Y",
+      "O",
+      "R2",
+      "R2'",
+      "O",
+      "O",
+      "O",
+      "R",
+      "N",
+      "N",
+      "T",
+      "U",
+      "wherein",
+      "R1 pyridyl-substituted C1-C6alkyl, wherein the pyridyl",
+      "moiety is unsubstituted or mono- or poly-substituted by",
+      "identical or different halogen atoms;",
+      "X is CH;",
+      "Y is NO2;",
+      "T is hydrogen or C1-C6alkyl;",
+      "U is hydrogen or C1-C6alkyl;",
+      "R2 is hydrogen or C1-C6alkyl;",
+      "R2'is hydrogen or C1-C6alkyl; and",
+      "R is C1-C20alkyl, being unsubstituted or substituted by one",
+      "or more identical or different substituents, the said sub-",
+      "stituents being selected from the group halogen, cyano,",
+      "nitro, hydroxy, C1-C6alkoxy, C1-C6alkylthio,",
+      "C1-C6haloalkyl, and phenyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:22:US6538013_36_c.png",
+      "backbone": "*/*=C(\\N(*)*)N(*)C(=O)OC(*)(*)OC(*)=O |$Y;X;;;R1;T;;U;;;;;R2;R2';;;R;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:pyridyl-substituted C1-C6alkyl<ns>X:CH<ns>Y:NO2<ns>T:hydrogen<n>C1-C6alkyl<ns>U:hydrogen<n>C1-C6alkyl<ns>R2:hydrogen<n>C1-C6alkyl<ns>R2':hydrogen<n>C1-C6alkyl<ns>R:C1-C20alkyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 23,
+    "sourceImage": "US6995262_37_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r><r>A</r>N<r>Y</r>CC|Sg:n:4:n:ht</cxsmi><stable>n:1-9<ns>Y:C=O<n>—SO2<ns>A:C=O<n>—SO2<ns>R:an optionally substituted alkyl or aryl radical</stable></markush>",
+    "annotationSHA256": "08c8e86ade6a0c902b84016fb711073e275c875385b797bbb8c41ce31bd25996",
+    "sourceCells": [
+      "(CH2)n",
+      "H\\nN",
+      "Y",
+      "A",
+      "R",
+      "in which",
+      "n represents 1, 2, 3, 4, 5, 6, 7, 8 or 9",
+      "Y, A represent C=O or -SO2, and",
+      "R represents an optionally substituted alkyl or aryl",
+      "radical,",
+      "and at least one substituent selected from the group consist-",
+      "ing of"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:23:US6995262_37_c.png",
+      "backbone": "**N*CC |$R;A;;Y;;$,Sg:n:4:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "n:1-9<ns>Y:C=O<n>—SO2<ns>A:C=O<n>—SO2<ns>R:an optionally substituted alkyl or aryl radical"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 24,
+    "sourceImage": "US7847043B2_22.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>[Bi](<r>R2</r>)C(<r>R3</r>)(<r>R4</r>)<r>R5</r></cxsmi><stable>R1:C1-C8 alkyl<n>aryl<n>substituted aryl<n>an aromatic heterocyclic group<ns>R2:C1-C8 alkyl<n>aryl<n>substituted aryl<n>an aromatic heterocyclic group<ns>R3:hydrogen atom<n>C1-C8 alkyl<ns>R4:hydrogen atom<n>C1-C8 alkyl<ns>R5:aryl<n>substituted aryl<n>an aromatic heterocyclic group<n>acyl<n>amido<n>oxycarbonyl<n>cyano</stable></markush>",
+    "annotationSHA256": "fa7bed99dd3c7ddece2c00a39460bbb95ad30f428e3e1574d5c4bce347bcd8cf",
+    "sourceCells": [
+      "R3",
+      "R1",
+      "Bi",
+      "R4",
+      "R5",
+      "R2",
+      "wherein R1 and R2 are C1-C8, alkyl, aryl, substituted aryl or",
+      "an aromatic heterocyclic group, R3 and R4 are each a",
+      "hydrogen atom or C1-C8 alkyl, and R5 is aryl, substituted",
+      "aryl, an aromatic heterocyclic group, acyl, amido, oxy-",
+      "carbonyl or cyano."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:24:US7847043B2_22.png",
+      "backbone": "*[Bi](*)C(*)(*)* |$R1;;R2;;R3;R4;R5$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:C1-C8 alkyl<n>aryl<n>substituted aryl<n>an aromatic heterocyclic group<ns>R2:C1-C8 alkyl<n>aryl<n>substituted aryl<n>an aromatic heterocyclic group<ns>R3:hydrogen atom<n>C1-C8 alkyl<ns>R4:hydrogen atom<n>C1-C8 alkyl<ns>R5:aryl<n>substituted aryl<n>an aromatic heterocyclic group<n>acyl<n>amido<n>oxycarbonyl<n>cyano"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 25,
+    "sourceImage": "US7847043B2_22_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Z</r>[Bi](<r>R1</r>)<r>R2</r></cxsmi><stable>R1:as defined above<ns>R2:as defined above<ns>Z:a halogen atom<n>alkali metal</stable></markush>",
+    "annotationSHA256": "bb92af5e854e9c5ec77c74ccef3943f4de248bb85a7f777dbd1f8c91a23a534f",
+    "sourceCells": [
+      "Z",
+      "Bi",
+      "R1",
+      "R2",
+      "(wherein R1 and R2 are as defined above, and Z is a halogen",
+      " atom or alkali metal)"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:25:US7847043B2_22_2.png",
+      "backbone": "*[Bi](*)* |$Z;;R1;R2$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:as defined above<ns>R2:as defined above<ns>Z:a halogen atom<n>alkali metal"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 26,
+    "sourceImage": "US8076430B2_12_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>[Bi](<r>R2</r>)<r>R3</r></cxsmi><stable>R1:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>a group represented by the formula (2)<ns>R2:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>a group represented by the formula (2)<ns>R3:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>a group represented by the formula (2)</stable></markush>",
+    "annotationSHA256": "03b449044576bb86553c48f5b177f5c86215636efa3805c756d8b02821dab281",
+    "sourceCells": [
+      "R3",
+      "R1",
+      "R2",
+      "Bi",
+      "wherein R1to R3 each represent a C1-C8 alkyl group, an aryl",
+      "group, a substituted aryl group, an aromatic heterocyclic",
+      "group or a group represented by the formula (2) where at least",
+      "one of R1and R2 is a group represented by the following",
+      "formula (2)"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:26:US8076430B2_12_c.png",
+      "backbone": "*[Bi](*)* |$R1;;R2;R3$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>a group represented by the formula (2)<ns>R2:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>a group represented by the formula (2)<ns>R3:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>a group represented by the formula (2)"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 27,
+    "sourceImage": "US8076430B2_13.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R7</r>C1=C(<r>R6</r>)C(<r>R5</r>)=C(SC)C(<r>R4</r>)=C1<r>R8</r></cxsmi><stable>R4:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R5:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R6:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R7:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R8:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group</stable></markush>",
+    "annotationSHA256": "d5b82991f7fe93d671b8c5a6a9874176ca22ad19e779505ad212fd70cdc2cee4",
+    "sourceCells": [
+      "S",
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "R4",
+      "wherein R4 and R5 each represent a C3-C8 alkyl group, an",
+      "aryl group or a substituted aryl group, and R6 to R8 each",
+      "represent a hydrogen atom, a C1-C8 alkyl group, an aryl",
+      "group or a substituted aryl group, and R3 is a group other than",
+      "the at least one of R1 and R2."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:27:US8076430B2_13.png",
+      "backbone": "*C1=C(*)C(*)=C(SC)C(*)=C1* |$R7;;;R6;;R5;;;;;R4;;R8$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R5:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R6:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R7:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R8:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 28,
+    "sourceImage": "US8076430B2_13_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>X</r>[Bi](<r>X</r>)<r>X</r></cxsmi><stable>X:halogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group</stable></markush>",
+    "annotationSHA256": "cdcbea72a01270506313a07f3913a5c5ebe8ab907b0ae97a233eda5e776be4d3",
+    "sourceCells": [
+      "X",
+      "Bi",
+      "X",
+      "X",
+      "wherein X represents a halogen atom, a C1-C8 alkyl group, an",
+      "aryl group, a substituted aryl group or an aromatic heterocy-",
+      "clic group where at least one of Xs is a halogen atom,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:28:US8076430B2_13_2.png",
+      "backbone": "*[Bi](*)* |$X;;X;X$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X:halogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 29,
+    "sourceImage": "US8076430B2_13_4.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R10</r>[Bi](<r>R11</r>)C(<r>R12</r>)(<r>R13</r>)<r>R14</r></cxsmi><stable>R10:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<ns>R11:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<ns>R12:a hydrogen atom<n>a C1-C8 alkyl group<ns>R13:a hydrogen atom<n>a C1-C8 alkyl group<ns>R14:aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>an acyl group<n>an amido group<n>an oxycarbonyl group<n>a cyano group</stable></markush>",
+    "annotationSHA256": "2d7f5a33f436267ac714d2dece116bda767f77e40a98d526db21a5b600afb5d2",
+    "sourceCells": [
+      "R14",
+      "R10",
+      "R11",
+      "R12",
+      "R13",
+      "Bi",
+      "wherein R10 and R11 each represent a C1-C8 alkyl group, an",
+      "aryl group, a substituted aryl group or an aromatic heterocy-",
+      "clic group, R12 and R13 each represent a hydrogen atom or a",
+      "C1-C8 alkyl group, and R14 represents an aryl group, a sub-",
+      "stituted aryl group, an aromatic heterocyclic group, an acyl",
+      "group, an amido group, an oxycarbonyl group or a cyano",
+      "group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:29:US8076430B2_13_4.png",
+      "backbone": "*[Bi](*)C(*)(*)* |$R10;;R11;;R12;R13;R14$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R10:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<ns>R11:a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<ns>R12:a hydrogen atom<n>a C1-C8 alkyl group<ns>R13:a hydrogen atom<n>a C1-C8 alkyl group<ns>R14:aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>an acyl group<n>an amido group<n>an oxycarbonyl group<n>a cyano group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 30,
+    "sourceImage": "US8076430B2_13_5.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R15</r>[Te]C(<r>R12</r>)(<r>R13</r>)<r>R14</r></cxsmi><stable>R15:C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<ns>R12:a hydrogen atom<n>a C1-C8 alkyl group<ns>R13:a hydrogen atom<n>a C1-C8 alkyl group<ns>R14:an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>an acyl group<n>an amido group<n>an oxycarbonyl group<n>a cyano group</stable></markush>",
+    "annotationSHA256": "02b70c11c3bbf0b3b6bf61b8c4607e95a7cfee09aa1ddd5c2f27d874438d5d16",
+    "sourceCells": [
+      "R14",
+      "R15",
+      "R13",
+      "R12",
+      "Te",
+      "wherein R15 represents a C1-C8 alkyl group, an aryl group, a",
+      "substituted aryl group or an aromatic heterocyclic group, R12",
+      "and R13 each represent a hydrogen atom or a C1-C8 alkyl",
+      "group, and R14 represents an aryl group, a substituted aryl",
+      "group, an aromatic heterocyclic group, an acyl group, an",
+      "amido group, an oxycarbonyl group or a cyano group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:30:US8076430B2_13_5.png",
+      "backbone": "*[Te]C(*)(*)* |$R15;;;R12;R13;R14$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R15:C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<ns>R12:a hydrogen atom<n>a C1-C8 alkyl group<ns>R13:a hydrogen atom<n>a C1-C8 alkyl group<ns>R14:an aryl group<n>a substituted aryl group<n>an aromatic heterocyclic group<n>an acyl group<n>an amido group<n>an oxycarbonyl group<n>a cyano group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 31,
+    "sourceImage": "US20060078834A1_26_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>A12</r>C1=CC(=C(<r>R11</r>)C2=C([O-])C(=C(<r>Q11</r>)<r>R12</r>)C2=O)C=C(<r>A11</r>)<r>Z11</r>1</cxsmi><stable>R11:a hydrogen atom<n>a substituent<ns>R12:a hydrogen atom<n>a substituent<ns>Z11:O<n>S<n>N—R1<n>Se<n>Te<ns>Q11:a 6-membered heteocyclic group<ns>A11:a substituent<ns>A12:a substituent</stable></markush>",
+    "annotationSHA256": "37b5c0ffa6ea2b01f4a5a5c2beb8b15ca7cd226f1dc4c77476b3ce16a6b66041",
+    "sourceCells": [
+      "A11",
+      "Z11",
+      "A12",
+      "C",
+      "R11",
+      "C",
+      "O",
+      "Q11",
+      "R12",
+      "O-",
+      "wherein R11 and R12 are each independently a hydrogen",
+      "atom or a substituent; Z11 is O, S, N-R1, Se or. Te,",
+      "provided that R1 is an alkyl group or an aryl group; Q11",
+      "is a 6-membered heterocyclic group; A11 and A12 are",
+      "each independently a substituent, provided that A11 and",
+      "A12 are different groups from each other,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:31:US20060078834A1_26_c.png",
+      "backbone": "*C1=CC(=C(*)C2=C([O-])C(=C(*)*)C2=O)C=C(*)*1 |$A12;;;;;R11;;;;;;Q11;R12;;;;;A11;Z11$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R11:a hydrogen atom<n>a substituent<ns>R12:a hydrogen atom<n>a substituent<ns>Z11:O<n>S<n>N—R1<n>Se<n>Te<ns>Q11:a 6-membered heteocyclic group<ns>A11:a substituent<ns>A12:a substituent"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 32,
+    "sourceImage": "US20060078834A1_28.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R31</r>C1=C/C(=C(\\<r>R11</r>)C2=C([O-])/C(=C(\\<r>R12</r>)C3=CC(C4=CC=C(<r>X1</r>)C(<r>X2</r>)=C4)=[O+]C(<r>R31</r>)=C3)C2=O)C=C(C2=CC(<r>X2</r>)=C(<r>X1</r>)C=C2)O1</cxsmi><stable>R11:the same as in Formula (1)<ns>R12:the same as in Formula (1)<ns>X1:a halogen atom<ns>X2:a halogen atom<ns>R31:alkyl group</stable></markush>",
+    "annotationSHA256": "cfd15cd16314a8a79523c93f81f50e731bb42896205d725220c24c406e00a2da",
+    "sourceCells": [
+      "X1",
+      "X2",
+      "X2",
+      "X1",
+      "O",
+      "O",
+      "C",
+      "C",
+      "O+",
+      "R31",
+      "R11",
+      "R12",
+      "O-",
+      "R31",
+      "wherein R11 and R12 are each respectively the same as R11",
+      "and R12 in Formula (1); X1 and X2 are each indepen-",
+      "dently a halogen atom; and R31 is an alkyl group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:32:US20060078834A1_28.png",
+      "backbone": "*C1=C/C(=C(\\*)C2=C([O-])/C(=C(\\*)C3=CC(C4=CC=C(*)C(*)=C4)=[O+]C(*)=C3)C2=O)C=C(C2=CC(*)=C(*)C=C2)O1 |$R31;;;;;R11;;;;;;R12;;;;;;;;X1;;X2;;;;R31;;;;;;;;;X2;;X1;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R11:the same as in Formula (1)<ns>R12:the same as in Formula (1)<ns>X1:a halogen atom<ns>X2:a halogen atom<ns>R31:alkyl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 33,
+    "sourceImage": "US20110217348A1_18.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C=C(<r>R1</r>)C(=O)O<r>R3</r></cxsmi><stable>R1:C1-to C10-alkyl<n>H<ns>R2:C1-to C10-alkyl<n>H<ns>R3:C1-to C10-alkyl<n>H</stable></markush>",
+    "annotationSHA256": "f62d98efa3088acd8c46e74e4c512b915ef8c1f0e33e468c4f810729ced73b4c",
+    "sourceCells": [
+      "O",
+      "OR3",
+      "R2",
+      "R1",
+      "wherein",
+      "R1, R2 and R3 are independently C1- to C10-alkyl which is",
+      "linear or branched, or substituted or unsubstituted aryl;",
+      "R1 and R2 are optionally H."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:33:US20110217348A1_18.png",
+      "backbone": "*C=C(*)C(=O)O* |$R2;;;R1;;;;R3$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:C1-to C10-alkyl<n>H<ns>R2:C1-to C10-alkyl<n>H<ns>R3:C1-to C10-alkyl<n>H"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 34,
+    "sourceImage": "US20110217348A1_18_2.png",
+    "sourceAnnotation": "<markush><cxsmi>C<r>R4</r>C1C(=O)C(<r>R4</r>C)C(=O)C(<r>R4</r>C)C1=O|Sg:n:1,2,3,5,8,10,13,4,6,9,7,11,14: :ht</cxsmi><stable>R4:an alkylene or arylene residue</stable></markush>",
+    "annotationSHA256": "e56fff4a94f802cf68b613718003bdae5cc37318bf96461e3689979b07b52f18",
+    "sourceCells": [
+      "R4",
+      "O",
+      "O",
+      "R4",
+      "R4",
+      "O",
+      "wherein R4 is an alkylene or arylene residue;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:34:US20110217348A1_18_2.png",
+      "backbone": "C*C1C(=O)C(*C)C(=O)C(*C)C1=O |$;R4;;;;;R4;;;;;R4;;;$,Sg:n:1,2,3,5,8,10,13,4,6,9,7,11,14: :ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:an alkylene or arylene residue"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 35,
+    "sourceImage": "US20200041896A1_18.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R32</r>O[Sn](<r>L</r>[Sn](O<r>R35</r>)(OC(<r>R34</r>)=O)OC(<r>R36</r>)=O)(OC(<r>R31</r>)=O)OC(<r>R33</r>)=O</cxsmi><stable>R31:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R32:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R33:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R34:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R35:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R36:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>L:divalent linking group</stable></markush>",
+    "annotationSHA256": "a2b6095900eede3c16dfc6393348fcf4853da90a2e5e38b14d7c69c543c21466",
+    "sourceCells": [
+      "R31",
+      "R32",
+      "R33",
+      "R36",
+      "R35",
+      "R34",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "Sn",
+      "L",
+      "Sn",
+      "wherein, in Chemical Formula 2 to Chemical Formula 4,",
+      "R11 to R16, R21 to R26, and R31 to R36 are each indepen-",
+      "dently selected from a substituted or unsubstituted C1",
+      "to C10 alkyl group, a substituted or unsubstituted C3 to",
+      "C20 cycloalkyl group, a substituted or unsubstituted C2",
+      "to C8 alkenyl group, a substituted or unsubstituted C2",
+      "to C8 alkynyl group, and a substituted or unsubstituted",
+      "C6 to C30 arylalkyl group, and",
+      "L is a divalent linking group comprising at least one",
+      "substituted or unsubstituted C1 to C20 alkylene group",
+      "in the main chain."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:35:US20200041896A1_18.png",
+      "backbone": "*O[Sn](*[Sn](O*)(OC(*)=O)OC(*)=O)(OC(*)=O)OC(*)=O |$R32;;;L;;;R35;;;R34;;;;R36;;;;R31;;;;R33;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R31:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R32:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R33:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R34:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R35:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>R36:a substituted or unsubstituted C1 to C10 alkyl group<n>a substituted or unsubstituted C3 to C20 cycloalkyll group<n>a substituted or unsubstituted C2 to C8 alkenyl group<n>a substituted or unsubstituted C2 to C8 alkynyl group<n>a substituted or unsubstituted C6 to C30 arylalkyl group<ns>L:divalent linking group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 36,
+    "sourceImage": "WO2000004894A2_34.png",
+    "sourceAnnotation": "<markush><cxsmi><r>M</r>OC(=O)CCC(NC(=O)CC(<r>R</r>)(<r>R1</r>)<r>R2</r>)C(N)=O|Sg:n:10:n:ht</cxsmi><stable>R:H<n>lower alkoxy (C1-6)<n>lower alkyl (C1-6)<ns>R1:H<n>lower alkoxy (C1-6)<n>lower alkyl (C1-6)<ns>R2:Formula II</stable></markush>",
+    "annotationSHA256": "7c4e096ca373735b325a207ad40dbbfc34a31898b5e140a95721c5de8bd1b733",
+    "sourceCells": [
+      "R2",
+      "R",
+      "C",
+      "CH2",
+      "H",
+      "N",
+      "O",
+      "C",
+      "C",
+      "O",
+      "OM",
+      "O",
+      "NH2",
+      "R1",
+      "wherein R and R1 are independently selected from the group consisting of H, lower",
+      "alkoxy (C1-6), and lower alkyl (C1-6); R2 is selected from Formula II;",
+      "n"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:36:WO2000004894A2_34.png",
+      "backbone": "*OC(=O)CCC(NC(=O)CC(*)(*)*)C(N)=O |$M;;;;;;;;;;;;R;R1;R2;;;$,Sg:n:10:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:H<n>lower alkoxy (C1-6)<n>lower alkyl (C1-6)<ns>R1:H<n>lower alkoxy (C1-6)<n>lower alkyl (C1-6)<ns>R2:Formula II"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 37,
+    "sourceImage": "WO2020146194A1_22_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C1=NO<r>X</r>=C1C(=O)N[C@H](C1=CN2N=CC(C(<r>R2</r>)N3C[C@@H](C(F)(F)F)NC3=O)=CC2=N1)C1CCC(F)(F)CC1</cxsmi><stable>X:CH<n>N<ns>R1:-CH3<n>-CH2F<n>-CHF2<n>-CF3<n>-CH2CH3<n>-CH2CF3<n>-CH(CH3)2<n>-CH2CHF2<n>-CH2CH2F<n>-CF(CH3)2<n>-CF2CH3<n>-OCH3<ns>R2:-H<n>-CH2OCH3</stable></markush>",
+    "annotationSHA256": "29987c1aa55552d90e03d9bc86b03fd35a8e84ccef2978cce4339b8b4d6dffc5",
+    "sourceCells": [
+      "O",
+      "R2",
+      "NH",
+      "N",
+      "F",
+      "F",
+      "F",
+      "N",
+      "N",
+      "N",
+      "F",
+      "F",
+      "O",
+      "O",
+      "N",
+      "R1",
+      "H\\nN",
+      "X",
+      "F",
+      "F",
+      "F",
+      "F",
+      "wherein:",
+      "X is CH, or N;",
+      "R1 is -CH3, -CH2F, -CHF2, -CF3, -CH2CH3, -CH2CF3, -CH(CH3)2, -CH2CHF2,",
+      "-CH2CH2F, -CF(CH3)2, -CF2CH3, -OCH3,",
+      "R2 is -H or -CH2OCH3;",
+      "or a pharmaceutically acceptable salt thereof.",
+      ",and",
+      ";and",
+      "F",
+      ",",
+      ",",
+      ","
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:37:WO2020146194A1_22_c.png",
+      "backbone": "*C1=NO*=C1C(=O)N[C@H](C1=CN2N=CC(C(*)N3C[C@@H](C(F)(F)F)NC3=O)=CC2=N1)C1CCC(F)(F)CC1 |$R1;;;;X;;;;;;;;;;;;;R2;;;;;;;;;;;;;;;;;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X:CH<n>N<ns>R1:-CH3<n>-CH2F<n>-CHF2<n>-CF3<n>-CH2CH3<n>-CH2CF3<n>-CH(CH3)2<n>-CH2CHF2<n>-CH2CH2F<n>-CF(CH3)2<n>-CF2CH3<n>-OCH3<ns>R2:-H<n>-CH2OCH3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 38,
+    "sourceImage": "US6239192_9_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>NC1=NC(N<r>R2</r>)=NC(N<r>R3</r>)=N1</cxsmi><stable>R1:cyclopropyl<n>isopropyl<ns>R2:hydrogen<n>halogen<n>C1-C12-alkylcarbonyl<n>cyclopropylcarbonyl<n>C1-C12-alkylcarbamoyl<n>C1-C12-alkylthiocarbamoyl<n>C2-C6-alkenylcarbamoyl<ns>R3:hydrogen<n>C1-C12-alkyl<n>cyclopropyl<n>C2-C6-alkenyl<n>C1-C12-alkylcarbonyl<n>cyclopropylcarbonyl<n>C1-C12-alkylcarbamoyl<n>C1-C12-alkylthiocarbamoyl<n>C2-C6-alkenylcarbamoyl</stable></markush>",
+    "annotationSHA256": "ceb82a90a15f9a948bee5171df2e686776be419d0d1fe2b74b1875ca5c8c51c0",
+    "sourceCells": [
+      "NH",
+      "R1",
+      "N",
+      "N",
+      "N",
+      "HN",
+      "NH",
+      "R3",
+      "R2",
+      "wherein",
+      "R1 represents cyclopropyl or isopropyl;",
+      "R2 denotes hydrogen, halogen, C1-C12-alkylcarbonyl,",
+      "cyclopropylcarbonyl, C1-C12-alkylcarbamoyl, C1-C12-",
+      "alkylthiocarbamoyl or C2-C6-alkenylcarbamoyl; and",
+      "R3 represents hydrogen, C1-C12-alkyl, cyclopropyl, C2-C6-",
+      "alkenyl, C1-C12-alkylcarbonyl, cyclopropylcarbonyl,",
+      "C1-C12-alkylcarbamoyl, C1-C12-alkylthiocarbamoyl or",
+      "C2-C6-alkenylcarbamoyl, and acid addition salts thereof",
+      "which are non-toxic to warm-blooded animals."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:38:US6239192_9_2.png",
+      "backbone": "*NC1=NC(N*)=NC(N*)=N1 |$R1;;;;;;R2;;;;R3;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:cyclopropyl<n>isopropyl<ns>R2:hydrogen<n>halogen<n>C1-C12-alkylcarbonyl<n>cyclopropylcarbonyl<n>C1-C12-alkylcarbamoyl<n>C1-C12-alkylthiocarbamoyl<n>C2-C6-alkenylcarbamoyl<ns>R3:hydrogen<n>C1-C12-alkyl<n>cyclopropyl<n>C2-C6-alkenyl<n>C1-C12-alkylcarbonyl<n>cyclopropylcarbonyl<n>C1-C12-alkylcarbamoyl<n>C1-C12-alkylthiocarbamoyl<n>C2-C6-alkenylcarbamoyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 39,
+    "sourceImage": "US6444415_41.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R''</r>C1=CC(<r>R'</r>)=C(O)C(C(<r>R</r>)C2=C(O)C(<r>R'</r>)=CC(<r>R''</r>)=C2)=C1</cxsmi><stable>R:a hydrogen atom<n>an alkyl group having from 1 to 10 carbon atoms<ns>R':an alkyl group having from 1 to 5 carbon atoms<ns>R'':an alkyl group having from 1 to 5 carbon atoms</stable></markush>",
+    "annotationSHA256": "b950ac87d812989179fcfd0bb98a2c8ddbfafe1a8be9a6dc7327018d07622227",
+    "sourceCells": [
+      "R'",
+      "OH",
+      "R",
+      "R'",
+      "R\"",
+      "R\"",
+      "OH",
+      "CH",
+      "wherein R represents a hydrogen atom or an alkyl group",
+      "having from 1 to 10 carbon atoms, and R' and R\" each",
+      "represents an alkyl group having from 1 to 5 carbon atoms."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:39:US6444415_41.png",
+      "backbone": "*C1=CC(*)=C(O)C(C(*)C2=C(O)C(*)=CC(*)=C2)=C1 |$R'';;;;R';;;;;R;;;;;R';;;R'';;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:a hydrogen atom<n>an alkyl group having from 1 to 10 carbon atoms<ns>R':an alkyl group having from 1 to 5 carbon atoms<ns>R'':an alkyl group having from 1 to 5 carbon atoms"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 40,
+    "sourceImage": "US6538013_36.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r>C(=O)OC(<r>R2'</r>)(<r>R2</r>)OC(=O)N(<r>U</r>)/C(=C/N(=O)=O)N(<r>T</r>)<r>R1</r></cxsmi><stable>R:C1-C20alkyl<ns>T:hydrogen<n>methyl<n>ethyl<ns>U:hydrogen<n>methyl<n>ethyl<ns>R2:hydrogen<n>C1-C6alkyl<ns>R2':hydrogen<n>C1-C6alkyl</stable></markush>",
+    "annotationSHA256": "72af80ef89374c05594126a5c374f6c4006ce8773bb1654173554efdf71150e9",
+    "sourceCells": [
+      "O2N",
+      "R1",
+      "N",
+      "N",
+      "U",
+      "T",
+      "O",
+      "O",
+      "O",
+      "R",
+      "O",
+      "R2'",
+      "R2",
+      "wherein",
+      "R1 is -CH2-pyridyl, which is unsubstituted or mono- or",
+      "poly-substituted by identical or different halogen",
+      "atoms;",
+      "R is C1-C20alkyl, being unsubstituted or mono- or poly-",
+      "substituted by identical or different substituents, the",
+      "said substLents being selected from the group halogen,",
+      "cyano, nitro, hydroxy, C1-C6alkoxy, C1-C6alkylthio,",
+      "C1-C6haloalkyl, C1-C6haloalkoxy and phenyl;",
+      "T and U are each independently of the other hydrogen,",
+      "methyl or ethyl;",
+      "R2 is hydrogen or C1-C6alkyl; and",
+      "R2'is hydrogen or C1-C6alkyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:40:US6538013_36.png",
+      "backbone": "*C(=O)OC(*)(*)OC(=O)N(*)/C(=C/N(=O)=O)N(*)* |$R;;;;;R2';R2;;;;;U;;;;;;;T;R1$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:C1-C20alkyl<ns>T:hydrogen<n>methyl<n>ethyl<ns>U:hydrogen<n>methyl<n>ethyl<ns>R2:hydrogen<n>C1-C6alkyl<ns>R2':hydrogen<n>C1-C6alkyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 41,
+    "sourceImage": "US8076430B2_13_3.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Y</r>SC1=C(<r>R5</r>)C(<r>R6</r>)=C(<r>R7</r>)C(<r>R8</r>)=C1<r>R4</r></cxsmi><stable>Y:hydrogen atom or an alkali metal<ns>R4:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R5:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R6:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R7:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R8:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group</stable></markush>",
+    "annotationSHA256": "5a5e38a1c0a336490136d6d3ce04901442b3e9a726fbe63a8d0946f24bb6127a",
+    "sourceCells": [
+      "Y",
+      "S",
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "R4",
+      "wherein Y represents a hydrogen atom or an alkali metal, R4",
+      "and R5 each represent a C3-C8 alkyl group, an aryl group or",
+      "a substituted aryl group, and R6 to R8 each represent a hydro-",
+      "gen atom, a C1-C8 alkyl group, an aryl group or a substituted",
+      "aryl group,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:41:US8076430B2_13_3.png",
+      "backbone": "*SC1=C(*)C(*)=C(*)C(*)=C1* |$Y;;;;R5;;R6;;R7;;R8;;R4$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Y:hydrogen atom or an alkali metal<ns>R4:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R5:a C3-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R6:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R7:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group<ns>R8:a hydrogen atom<n>a C1-C8 alkyl group<n>an aryl group<n>a substituted aryl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 42,
+    "sourceImage": "US9372402B2_19.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C.<r>R2</r>C.C1=CN=C(C2=NC=CC=C2)C=C1|m:1:4.5.6.7.14.15,m:3:8.9.10.11.12.13</cxsmi><stable>R1:one substituent<n>two substituent<n>three substituent<ns>R2:one substituent<n>two substituent<n>three substituent</stable></markush>",
+    "annotationSHA256": "801d0e66584b4786839bd649932a407e6ccf3a2b4996c8c30bd13520c819d7aa",
+    "sourceCells": [
+      "R1",
+      "R2",
+      "N",
+      "N",
+      "R1 and R2 each represent one, two or three substituents and",
+      "are each independently selected from hydrogen, halo-",
+      "gen, (C1-4)alkoxy, hydroxyl, nitro, amino, cyano, and",
+      "(C1-6)alkyl optionally substituted with halogen,",
+      "hydroxyl, nitro, amino, cyano, and phenyl, wherein the",
+      "phenyl may be optionally substituted with (C1-6)alkyl,",
+      "halogen, hydroxyl, nitro, amino, and cyano;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:42:US9372402B2_19.png",
+      "backbone": "*C.*C.C1=CN=C(C2=NC=CC=C2)C=C1 |$R1;;R2;;;;;;;;;;;;;$,m:1:4.5.15.6.7.14,m:3:13.8.9.10.12.11|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:one substituent<n>two substituent<n>three substituent<ns>R2:one substituent<n>two substituent<n>three substituent"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 43,
+    "sourceImage": "US20210149301A1_106.png",
+    "sourceAnnotation": "<markush><cxsmi>*<r>R21</r>.<r>RA</r>C(C)(<r>YA</r>C1=CC=CC=C1)C([H])([H])C.*O|Sg:n:17:b:ht,Sg:n:1:c:ht,Sg:n:13,12,14,3,2,5,6,7,8,9,10,11: :ht,m:16:6.7.8.9.10.11,m:0:6.7.8.9.10.11</cxsmi><stable>RA:hydrogen<n>methyl<ns>YA:a single bond<n>a ester bond<ns>R21:fluorine<n>iodine<n>a C1-C10 hydrocarbyl group<ns>b:1-5<ns>c:0-4</stable></markush>",
+    "annotationSHA256": "38291c6e43fd468814a4ae1a37afe4b38044bca12648bcb3672b7f810b3767e6",
+    "sourceCells": [
+      "H",
+      "RA",
+      "YA",
+      "H",
+      "(R21)c",
+      "(OH)b",
+      "wherein RA is hydrogen or methyl, YA is a single bond or",
+      "ester bond, R21 is fluorine, iodine or a C1-C10 hydrocarbyl",
+      "group in which -CH2- may be replaced by an ether bond",
+      "or carbonyl moiety, b is an integer of 1 to 5, c is an integer",
+      "of 0 to 4, and b+c is 1 to 5."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:43:US20210149301A1_106.png",
+      "backbone": "*C.*C(C)(*C1=CC=CC=C1)C([H])([H])C.*O |$;R21;RA;;;YA;;;;;;;;;;;;$,,,,Sg:n:17:b:ht:::,Sg:n:1:c:ht:::,Sg:n:13,12,14,3,2,5,6,7,8,9,10,11: :ht:::,m:16:6.7.8.9.10.11,m:0:6.7.8.9.10.11|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "RA:hydrogen<n>methyl<ns>YA:a single bond<n>a ester bond<ns>R21:fluorine<n>iodine<n>a C1-C10 hydrocarbyl group<ns>b:1-5<ns>c:0-4"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 44,
+    "sourceImage": "WO2002010163A1_30.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C1=C(<r>R</r>)OC(C(<r>L</r>)(<r>R2</r>)<r>R3</r>)=N1</cxsmi><stable>R:as described hereinabove<ns>R1:as described hereinabove<ns>R2:as described hereinabove<ns>R3:as described hereinabove<ns>L:halogen<n>sulfonate</stable></markush>",
+    "annotationSHA256": "dbae4469d742633870854562cfae4e9d6cdc131cfa56a6446642d879031aa65f",
+    "sourceCells": [
+      "R1",
+      "N",
+      "L",
+      "R",
+      "O",
+      "R2",
+      "R3",
+      "wherein:",
+      "R, R1, R2 and R3 are as described hereinabove; and",
+      "L is halogen or sulfonate;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:44:WO2002010163A1_30.png",
+      "backbone": "*C1=C(*)OC(C(*)(*)*)=N1 |$R1;;;R;;;;L;R2;R3;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:as described hereinabove<ns>R1:as described hereinabove<ns>R2:as described hereinabove<ns>R3:as described hereinabove<ns>L:halogen<n>sulfonate"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 45,
+    "sourceImage": "US9029365_37_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C1=CC(C(=O)N(<r>R4a</r>)<r>R4b</r>)=C(NC(=O)C2=CC(<r>R3</r>)=NN2C2=C(<r>R5</r>)C=CC=N2)C(<r>R1</r>)=C1</cxsmi><stable>R1:CH3<n>F<n>Cl<n>Br<ns>R2:F<n>Cl<n>Br<n>I<n>CF3<ns>R3:CF3<n>Cl<n>Br<n>OCH2CF3<ns>R4a:C1-C4 alkyl<ns>R4b:H<n>CH3<ns>R5:Cl<n>Br</stable></markush>",
+    "annotationSHA256": "e422ceb924fcd18946602a5001a49c788b3cb687f6aa6063e8154744e7ac19d9",
+    "sourceCells": [
+      "R3",
+      "R5",
+      "N",
+      "N",
+      "O",
+      "R1",
+      "R2",
+      "C(O)NR4aR4b",
+      "N",
+      "NH",
+      "R1 is CH3, F, Cl or Br;  \n",
+      "R2 is F, Cl, Br, I or CF3;  \n",
+      "R3 is CF3, Cl, Br or OCH2CF3;  \n",
+      "R4a is C1-C4 alkyl;  \n",
+      "R4b is H or CH3; and  ",
+      "R5 is Cl or Br."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:45:US9029365_37_c.png",
+      "backbone": "*C1=CC(C(=O)N(*)*)=C(NC(=O)C2=CC(*)=NN2C2=C(*)C=CC=N2)C(*)=C1 |$R2;;;;;;;R4a;R4b;;;;;;;;R3;;;;;R5;;;;;;R1;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:CH3<n>F<n>Cl<n>Br<ns>R2:F<n>Cl<n>Br<n>I<n>CF3<ns>R3:CF3<n>Cl<n>Br<n>OCH2CF3<ns>R4a:C1-C4 alkyl<ns>R4b:H<n>CH3<ns>R5:Cl<n>Br"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 46,
+    "sourceImage": "US9372402B2_19_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C.<r>R2</r>C.OC1=CC=CC=C1/C=N/CC/N=C\\C1=C(O)C=CC=C1|m:1:5.6.7.8.9.10,m:3:17.18.20.21.22.23</cxsmi><stable>R1:one substituent<n>two substituent<n>three substituent<ns>R2:one substituent<n>two substituent<n>three substituent</stable></markush>",
+    "annotationSHA256": "2fdf56fa85e6b4072dbc2c239d93ca99570b0f43ad492312d4d9a187ffa2be88",
+    "sourceCells": [
+      "R1",
+      "OH",
+      "HO",
+      "N",
+      "N",
+      "R2",
+      "R1 and R2 each represent one, two or three substituents and",
+      "are each independently selected from hydrogen, halo-",
+      "gen, (C1-4)alkoxy, hydroxyl, nitro, amino, cyano, and",
+      "(C1-6)alkyl optionally substituted with halogen,",
+      "hydroxyl, nitro, amino, cyano, and phenyl, wherein the",
+      "phenyl may be optionally substituted with (C1-6)alkyl,",
+      "halogen, hydroxyl, nitro, amino, and cyano;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:46:US9372402B2_19_2.png",
+      "backbone": "*C.*C.OC1=CC=CC=C1/C=N/CC/N=C\\C1=C(O)C=CC=C1 |$R1;;R2;;;;;;;;;;;;;;;;;;;;;$,m:1:7.8.6.9.10.5,m:3:20.18.21.22.23.17|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:one substituent<n>two substituent<n>three substituent<ns>R2:one substituent<n>two substituent<n>three substituent"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 47,
+    "sourceImage": "US20220213127A1_51.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R32</r>C1=C(<r>R31</r>)C2=C(C(<r>R34</r>)=C1<r>R33</r>)N(<r>R1</r>)C1=C3B2C2=C(C4=C(<r>Y3</r>C5=C4<r>Z4</r>=<r>Z3</r><r>Z2</r>=<r>Z1</r>5)C=C2)N(<r>R1</r>)C3=C(<r>R36</r>)C(<r>R35</r>)=C1<r>R37</r></cxsmi><stable>R31:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R32:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R33:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R34:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R35:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R36:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R37:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl</stable></markush>",
+    "annotationSHA256": "164983d67002072b441a0d83b7785c56feda209355b40e5802c29a95597935a2",
+    "sourceCells": [
+      "R32",
+      "R33",
+      "R34",
+      "R1",
+      "N",
+      "B",
+      "N",
+      "R37",
+      "R35",
+      "R36",
+      "R1",
+      "Z4",
+      "Z3",
+      "Z2",
+      "Z1",
+      "Y3",
+      "R31",
+      "wherein in the Formulas 4-2 to 4-4, one of Z1 to Z4 is N,",
+      "and three of Z1 to Z4 are CR4,",
+      "wherein at least one of three R4 is deuterium-substituted",
+      "C1 to C10 alkyl group, and",
+      "wherein each of R31 to R37 is independently selected from",
+      "the group consisting of hydrogen, deuterium, C1 to C10",
+      "alkyl group unsubstituted or substituted with deute-",
+      "rium, C6 to C30 arylamine group unsubstituted or",
+      "substituted with deuterium or C1 to C10 alkyl, C6 to",
+      "C30 aryl group unsubstituted or substituted with deu-",
+      "terium or C1 to C10 alkyl, and C5 to C30 heteroaryl",
+      "group unsubstituted or substituted with deuterium or",
+      "C1 to C10 alkyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:47:US20220213127A1_51.png",
+      "backbone": "*C1=C(*)C2=C(C(*)=C1*)N(*)C1=C3B2C2=C(C4=C(*C5=C4*=**=*5)C=C2)N(*)C3=C(*)C(*)=C1* |$R32;;;R31;;;;R34;;R33;;R1;;;;;;;;Y3;;;Z4;Z3;Z2;Z1;;;;R1;;;R36;;R35;;R37$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R31:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R32:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R33:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R34:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R35:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R36:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<ns>R37:hydrogen<n>deuterium<n>C1 to C10 alkyl group unsubstituted or substituted with deuterium<n>C6 to C30 arylamine group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C6 to C30 aryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl<n>C5 to C30 heteroaryl group unsubstituted or substituted with deuterium or C1 to C10 alkyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 48,
+    "sourceImage": "WO2000043362A1_41.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Z</r><r>E</r>C1=CC=C(S(=O)(=O)C2CCN(CC(<r>R13</r>)(<r>R14</r>)C3=CC=C(<r>R11</r>)C=C3<r>R12</r>)CC2)C=C1.<r>R21</r>C|m:30:2.3.4.5.27.28</cxsmi><stable>Z:as defined in claim 1<ns>E:as defined in claim 1<ns>R11:as defined in claim 3<ns>R12:as defined in claim 3<ns>R13:as defined in claim 3<ns>R14:as defined in claim 3</stable></markush>",
+    "annotationSHA256": "43febbbafe0334e71537937a858201b529e4575f075409400153aeef6e7c3aa3",
+    "sourceCells": [
+      "Z",
+      "E",
+      "N",
+      "S",
+      "O",
+      "O",
+      "R21",
+      "R13",
+      "R14",
+      "R12",
+      "R11",
+      "wherein Z and E are as defined in claim 1; and",
+      "R11, R12, R13, R14 and R21 are as defined in claim 3."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:48:WO2000043362A1_41.png",
+      "backbone": "**C1=CC=C(S(=O)(=O)C2CCN(CC(*)(*)C3=CC=C(*)C=C3*)CC2)C=C1.*C |$Z;E;;;;;;;;;;;;;;R13;R14;;;;;R11;;;R12;;;;;R21;$,m:30:2.28.27.5.3.4|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Z:as defined in claim 1<ns>E:as defined in claim 1<ns>R11:as defined in claim 3<ns>R12:as defined in claim 3<ns>R13:as defined in claim 3<ns>R14:as defined in claim 3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 49,
+    "sourceImage": "WO2001014360A2_33_c.png",
+    "sourceAnnotation": "<markush><cxsmi>*C=CC1=CC=C(C(=O)O<r>R1</r>)C=C1.<r>R3</r>OCC1(<r>R2</r>)CC<r>X</r>C2=C1C=CC=C2|Sg:n:18:n:ht,m:0:21.22.23.24.25.26</cxsmi><stable>R2:lower alkyl<ns>R3:lower alkyl<n>H<ns>X:oxygen<n>sulfur<ns>n:1-2</stable></markush>",
+    "annotationSHA256": "3f9a723c1c91ef07259b2e0aa52a537196f1a2d3848d30cfb193b1d73a149d7f",
+    "sourceCells": [
+      "X",
+      "(CH2)n",
+      "R2",
+      "O",
+      "R3",
+      "COOR1",
+      "wherein",
+      "R1 is hydrogen, lower alkyl;",
+      "R2 is lower alkyl;",
+      "R3 is lower alkyl or H;",
+      "X is oxygen or sulfur;",
+      "n is 1 or 2; and",
+      "wherein the dotted bond is optional;",
+      "and pharmaceutically active salts of carboxylic acids of formula I."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:49:WO2001014360A2_33_c.png",
+      "backbone": "*C=CC1=CC=C(C(=O)O*)C=C1.*OCC1(*)CC*C2=C1C=CC=C2 |$;;;;;;;;;;R1;;;R3;;;;R2;;;X;;;;;;$,Sg:n:18:n:ht:::,m:0:25.26.24.21.22.23|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R2:lower alkyl<ns>R3:lower alkyl<n>H<ns>X:oxygen<n>sulfur<ns>n:1-2"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 50,
+    "sourceImage": "WO2002010163A1_24.png",
+    "sourceAnnotation": "<markush><cxsmi><r>X</r>C(=O)C(<r>L</r>)(<r>R2</r>)<r>R3</r></cxsmi><stable>R2:as described hereinabove<ns>R3:as described hereinabove<ns>L:as described hereinabove<ns>X:hydroxy<n>halogen<n>acyloxy</stable></markush>",
+    "annotationSHA256": "51f31659e377565b304310350926dc4c7adc68121c4ad2e78a2fcc25ad1756f9",
+    "sourceCells": [
+      "O",
+      "X",
+      "L",
+      "R3",
+      "R2",
+      "wherein:",
+      "R2, R3 and L are as described hereinabove; and",
+      "X is hydroxy, halogen or acyloxy;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:50:WO2002010163A1_24.png",
+      "backbone": "*C(=O)C(*)(*)* |$X;;;;L;R2;R3$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R2:as described hereinabove<ns>R3:as described hereinabove<ns>L:as described hereinabove<ns>X:hydroxy<n>halogen<n>acyloxy"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 51,
+    "sourceImage": "WO2002010163A1_25.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R6</r>C.<r>R7</r>C.<r>X</r>C(=O)C1CCN(<r>P</r>)C1|Sg:n:8:m:ht,Sg:n:12:n:ht,m:1:7.8.9.10.12,m:3:7.8.9.10.12</cxsmi><stable>R6:as described hereinabove<ns>R7:as described hereinabove<ns>X:as described hereinabove<ns>P:nitrogen-protecting group<ns>m:0-5<ns>n:0-5</stable></markush>",
+    "annotationSHA256": "59a7843bb43b7df32eed1dd9fefc4781c9a892e4094f0f80ae88f7e65af6d87b",
+    "sourceCells": [
+      "O",
+      "X",
+      "n",
+      "m",
+      "R6",
+      "R7",
+      "N",
+      "P",
+      "wherein:",
+      "R6, R7 and X are as described hereinabove;",
+      "P is a nitrogen-protecting group;",
+      "m equals 0 to 5; and",
+      "n equals 0 to 5;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:51:WO2002010163A1_25.png",
+      "backbone": "*C.*C.*C(=O)C1CCN(*)C1 |$R6;;R7;;X;;;;;;;P;$,,,Sg:n:8:m:ht:::,Sg:n:12:n:ht:::,m:1:7.8.9.12.10,m:3:7.8.9.12.10|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R6:as described hereinabove<ns>R7:as described hereinabove<ns>X:as described hereinabove<ns>P:nitrogen-protecting group<ns>m:0-5<ns>n:0-5"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 52,
+    "sourceImage": "WO2002010163A1_29.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r>C(=O)C(<r>L</r>)<r>R1</r></cxsmi><stable>R:as described hereinabove<ns>R1:as described hereinabove<ns>L:as described hereinabove</stable></markush>",
+    "annotationSHA256": "f7ce6932e7439192c41d40d3ce1a19a9fb199239a4fcf2380758d506051b59cd",
+    "sourceCells": [
+      "O",
+      "L",
+      "R",
+      "R1",
+      "wherein:",
+      "R, R1 and L are as described hereinabove;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:52:WO2002010163A1_29.png",
+      "backbone": "*C(=O)C(*)* |$R;;;;L;R1$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R:as described hereinabove<ns>R1:as described hereinabove<ns>L:as described hereinabove"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 53,
+    "sourceImage": "11279716_34_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C1=C(<r>R2</r>)C(<r>R1</r>)=[N+]2C1=C(<r>R4</r>)C1=C(<r>R5</r>)C(<r>R6</r>)=C(<r>R7</r>)N1[B-]2(<r>X2</r>)<r>X1</r></cxsmi><stable>R2:a cyano group<ns>R6:hydrogen<ns>R4:a substituted or unsubstituted aryl group<ns>R1:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>R3:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>R5:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>R7:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>X1:a halogen group<n>a cyano group<ns>X2:a halogen group<n>a cyano group</stable></markush>",
+    "annotationSHA256": "3903d2f6d166c8136ffd61968d1be0bf07ae8cf311be925b0d957f09dc0c8862",
+    "sourceCells": [
+      "R5",
+      "R4",
+      "R4",
+      "R2",
+      "R1",
+      "X2",
+      "X1",
+      "R7",
+      "R6",
+      "N",
+      "N",
+      "B",
+      "in Chemical Formula 1,",
+      "R2 is a cyano group,",
+      "R6 is hydrogen,",
+      "R4 is a substituted or unsubstituted aryl group,",
+      "R1, R3, R5, and R7 are the same as or different from each",
+      "other, and are each independently a substituted or",
+      "unsubstituted cycloalkyl group; or a substituted or",
+      "unsubstituted aliphatic heterocyclic group, and",
+      "X1 and X2 are the same as or different from each other,",
+      "and are each independently a halogen group or a cyano",
+      "group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:53:11279716_34_c1.png",
+      "backbone": "*C1=C(*)C(*)=[N+]2C1=C(*)C1=C(*)C(*)=C(*)N1[B-]2(*)* |$R3;;;R2;;R1;;;;R4;;;R5;;R6;;R7;;;X2;X1$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R2:a cyano group<ns>R6:hydrogen<ns>R4:a substituted or unsubstituted aryl group<ns>R1:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>R3:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>R5:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>R7:a substituted or unsubstituted cycloalkyl group<n>a substituted or unsubstituted aliphatic heterocyclic group<ns>X1:a halogen group<n>a cyano group<ns>X2:a halogen group<n>a cyano group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 54,
+    "sourceImage": "US8362048B2_131_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Y</r>C1=CC(C2=NC(C3=C4CC[C@H](<r>X</r>)C4=CC=C3)=NO2)=CC=C1OC(C)C</cxsmi><stable>X:NH2<n>NHC(=O)CH3<n>NHCH2COOH<ns>Y:CN</stable></markush>",
+    "annotationSHA256": "37542980827b41af82ff79b55e57f256b29f83625786662635680261d15aca0b",
+    "sourceCells": [
+      "O",
+      "O",
+      "N",
+      "N",
+      "Y",
+      "X",
+      "or pharmaceutically acceptable salt thereof,",
+      "wherein",
+      "X is -NH2, and -NHC(=O)CH3 or -NHCH2COOH,",
+      "and",
+      "Y is -CN."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:54:US8362048B2_131_c1.png",
+      "backbone": "*C1=CC(C2=NC(C3=C4CC[C@H](*)C4=CC=C3)=NO2)=CC=C1OC(C)C |$Y;;;;;;;;;;;;X;;;;;;;;;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X:NH2<n>NHC(=O)CH3<n>NHCH2COOH<ns>Y:CN"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 55,
+    "sourceImage": "US8980898B2_40.png",
+    "sourceAnnotation": "<markush><cxsmi><r>A1</r>CCCCNC(=N)NC(=O)C1=NC(Cl)=C(N)N=C1N</cxsmi><stable>A1:phenyl<n>indenyl<n>napthalenyl<n>1,2-dihydronapthalenyl<n>1,2,3,4-tetrahydronapthalenyl<n>anthracenyl<n>fluorenyl<n>phenanthrenyl<n>azulenyl<n>cyclohepta-1,3,5-trienyl<n>5H-dibenzo[a,d]cycloheptenyl</stable></markush>",
+    "annotationSHA256": "572e020156d13b42ed41773cc07ba20fd0c2e4dc58d82b5bec5bedad8e267157",
+    "sourceCells": [
+      "Cl",
+      "N",
+      "N",
+      "N",
+      "H2N",
+      "N\\nH",
+      "N\\nH",
+      "NH2",
+      "A1",
+      "NH",
+      "In a preferred aspect of formula II, A1\n is selected from",
+      "phenyl, indenyl, napthalenyl, 1,2-dihydronapthalenyl, 1,2,3,",
+      "4-tetrahydronapthalenyl, anthracenyl, fluorenyl, phenanthre-",
+      "nyl, azulenyl, cyclohepta-1,3,5-trienyl or 5H-dibenzo[a,d]cy-",
+      "cloheptenyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:55:US8980898B2_40.png",
+      "backbone": "*CCCCNC(=N)NC(=O)C1=NC(Cl)=C(N)N=C1N |$A1;;;;;;;;;;;;;;;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "A1:phenyl<n>indenyl<n>napthalenyl<n>1,2-dihydronapthalenyl<n>1,2,3,4-tetrahydronapthalenyl<n>anthracenyl<n>fluorenyl<n>phenanthrenyl<n>azulenyl<n>cyclohepta-1,3,5-trienyl<n>5H-dibenzo[a,d]cycloheptenyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 56,
+    "sourceImage": "US10017503B2_3_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2a</r>C1=CC=C(C2=C(<r>R3</r>)C(C(=O)NCCS(=O)(=O)N(<r>A</r>)<r>Re</r>)=NO2)C=C1|Sg:n:13:q:ht</cxsmi><stable>R2a:hydrogen<n>fluoro<ns>R3:hydrogen<n>fluoro<ns>A:an optionally substituted 5- or 6-membered heteroaryl<ns>Re:hydrogen<n>optionally substituted C1-C10 alkyl<n>optionally substituted C2-C10 alkenyl<n>optionally substituted C2-C10 alkynyl<n>optionally substituted C3-C12 cycloalkyl<n>optionally substituted C3-C12 cycloalkenyl<n>optionally substituted heterocyclic<n>optionally substituted aryl<n>optionally substituted heteroaryl<ns>q:1-2</stable></markush>",
+    "annotationSHA256": "034d75c0f585322a3316b5bbc2d6db3893a785c086f6ed39a228bae7d230c6a6",
+    "sourceCells": [
+      "R2a",
+      "R3",
+      "O",
+      "O",
+      "N",
+      "N\\H",
+      "O",
+      "Re",
+      "N",
+      "A",
+      "S",
+      "O",
+      "q",
+      "or a pharmaceutically acceptable salt, prodrug or solvate",
+      "thereof, wherein:",
+      "R2a is hydrogen or fluoro;",
+      "R3 is hydrogen or fluoro;",
+      "A is an optionally substituted 5- or 6-membered het-",
+      "eroaryl;",
+      "each Re is independently selected from the group con-",
+      "sisting of hydrogen, optionally substituted C1-C10",
+      "alkyl, optionally substituted C2-C10 alkenyl, option-",
+      "ally substituted C2-C10 alkynyl, optionally substi-",
+      "tuted C3-C12 cycloalkyl, optionally substituted",
+      "C3-C12 cycloalkenyl, optionally substituted hetero-",
+      "cyclic, optionally substituted aryl and optionally",
+      "substituted heteroaryl; and",
+      "q is 1 or 2."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:56:US10017503B2_3_c1.png",
+      "backbone": "*C1=CC=C(C2=C(*)C(C(=O)NCCS(=O)(=O)N(*)*)=NO2)C=C1 |$R2a;;;;;;;R3;;;;;;;;;;;A;Re;;;;$,Sg:n:13:q:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R2a:hydrogen<n>fluoro<ns>R3:hydrogen<n>fluoro<ns>A:an optionally substituted 5- or 6-membered heteroaryl<ns>Re:hydrogen<n>optionally substituted C1-C10 alkyl<n>optionally substituted C2-C10 alkenyl<n>optionally substituted C2-C10 alkynyl<n>optionally substituted C3-C12 cycloalkyl<n>optionally substituted C3-C12 cycloalkenyl<n>optionally substituted heterocyclic<n>optionally substituted aryl<n>optionally substituted heteroaryl<ns>q:1-2"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 57,
+    "sourceImage": "US10239846B2_132_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Y</r>C1=CC(C2=NC(C3=CC=CC4=C3CC[C@@H]4<r>X</r>)=NO2)=CC=C1OC(C)C</cxsmi><stable>X:NHCH2CH2OH<ns>Y:CN</stable></markush>",
+    "annotationSHA256": "5c169b6b49f0b6e63c1b37f5bc13a90f042397deedc4e43ca7db5afab235a869",
+    "sourceCells": [
+      "O",
+      "Y",
+      "N",
+      "N",
+      "O",
+      "X",
+      "wherein",
+      "X is -NHCH2CH2OH; and",
+      "Y is -CN."
+    ],
+    "scope": "finite interpretation of the supplied annotation",
+    "definition": {
+      "sourceIdentifier": "M2S:57:US10239846B2_132_c1.png",
+      "backbone": "*C1=CC(C2=NC(C3=CC=CC4=C3CC[C@@H]4*)=NO2)=CC=C1OC(C)C |$Y;;;;;;;;;;;;;;;;X;;;;;;;;;$,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "X",
+          "sourceText": "NHCH2CH2OH",
+          "alternatives": [
+            "NCCO"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        },
+        {
+          "label": "Y",
+          "sourceText": "CN",
+          "alternatives": [
+            "C#N"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
+    },
+    "expectedConfigurations": 1,
+    "positiveSMILES": [
+      "N#CC1=CC(C2=NC(C3=CC=CC4=C3CC[C@@H]4NCCO)=NO2)=CC=C1OC(C)C"
+    ],
+    "negativeSMILES": [
+      "CC"
+    ]
+  },
+  {
+    "id": 58,
+    "sourceImage": "US10597390B2_129_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R6</r>NC1=C(F)C=<r>X</r>C(C2=C(<r>R5</r>)NC3=C(<r>R1</r>)C(<r>R2</r>)=C(<r>R3</r>)C(<r>R4</r>)=C23)=N1</cxsmi><stable>X:N<n>C<ns>R1:F<n>Cl<ns>R2:H<n>halogen<n>CN<n>CF3<n>O-alkyl<n>NH2<ns>R4:H<n>halogen<n>CN<n>CF3<n>O-alkyl<n>NH2<ns>R3:F<n>Cl<n>CN<n>CF3<n>—C1-3 alkyl<n>—O-alkyl<n>carboxylic ester<n>carboxylic amide<ns>R5:Br<n>CN<n>CH3<n>CH2OH<n>C(O)NH2<n>NH2<n>H<ns>R6:C1-8 alkyl substituted by carboxylic acid<n>C3-8 cycloalkyl substituted by carboxylic acid<n>—N—C1-3 alkylsulfone<n>—N—C(O)—C3-6 heterocycle optionally substituted by C1-6 alkyl;C3-6 heterocycle substituted by —N—C(O)—C3-6 heterocycle<n>C3-6 heterocycle substituted by COOH</stable></markush>",
+    "annotationSHA256": "f26cd983450d5b0495ddf5603eeeac383598d54105a7537bc00819ce5e604e20",
+    "sourceCells": [
+      "F",
+      "H\\nN",
+      "N",
+      "X",
+      "R4",
+      "R3",
+      "R2",
+      "R1",
+      "H\\nN",
+      "R5",
+      "R6",
+      "a stereo-isomeric form, a pharmaceutically acceptable",
+      "R5 is Br, CN, CH3, CH2OH, C(O)NH2, NH2 or H;",
+      "R3 is F, Cl, CN, CF3, -C1-3 alkyl, -O-alkyl, carboxylic",
+      "ester or carboxylic amide;",
+      "R6 is C1-8 alkyl substituted by carboxylic acid; C3-8",
+      "cycloalkyl substituted by carboxylic acid, -N-C1-3",
+      "alkylsulfone, -N-C(O)-C3-6heterocycle optionally",
+      "substituted by C1-6 alkyl; C3-6 heterocycle substituted",
+      "by -N-C(O)-C3-6 heterocycle; or C3-6 heterocycle",
+      "substituted by COOH.",
+      "salt, solvate or polymorph thereof, wherein X is N or C",
+      "wherein when X is C, then X is optionally substituted",
+      "by -CN, -CF3, -C1-3 alkyl-NH-C(O)-C1-3 alkyl,",
+      "-C(O)-NH2, -C(O)-NH-C1-3 alkyl, -C(O)-",
+      "N-(dialkyl) or -CH2-NH-C(O)-CH3;",
+      "R1 is F or Cl;",
+      "each of R2 and R4 is independently H, halogen, CN,",
+      "CF3, -O-alkyl or NH2;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:58:US10597390B2_129_c1.png",
+      "backbone": "*NC1=C(F)C=*C(C2=C(*)NC3=C(*)C(*)=C(*)C(*)=C32)=N1 |$R6;;;;;;X;;;;R5;;;;R1;;R2;;R3;;R4;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X:N<n>C<ns>R1:F<n>Cl<ns>R2:H<n>halogen<n>CN<n>CF3<n>O-alkyl<n>NH2<ns>R4:H<n>halogen<n>CN<n>CF3<n>O-alkyl<n>NH2<ns>R3:F<n>Cl<n>CN<n>CF3<n>—C1-3 alkyl<n>—O-alkyl<n>carboxylic ester<n>carboxylic amide<ns>R5:Br<n>CN<n>CH3<n>CH2OH<n>C(O)NH2<n>NH2<n>H<ns>R6:C1-8 alkyl substituted by carboxylic acid<n>C3-8 cycloalkyl substituted by carboxylic acid<n>—N—C1-3 alkylsulfone<n>—N—C(O)—C3-6 heterocycle optionally substituted by C1-6 alkyl;C3-6 heterocycle substituted by —N—C(O)—C3-6 heterocycle<n>C3-6 heterocycle substituted by COOH"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 59,
+    "sourceImage": "US10946697_12_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C1=C(<r>R1</r>)C(OC)=C(<r>R2</r>)C(<r>R4</r>)=C1C|Sg:n:9,11,1,2,4,7,5,8,10,0,3:ht</cxsmi><stable>R1:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms<ns>R2:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms<ns>R3:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms<ns>R4:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms</stable></markush>",
+    "annotationSHA256": "8b37d9ff9b03e98a0b7166b03f124f4864fcd08bba0130ff5a9328725271736b",
+    "sourceCells": [
+      "R4",
+      "R2",
+      "O",
+      "n",
+      "R3",
+      "R1",
+      "wherein R1, R2, R3 and R4 represent, independently of one",
+      "another, identical or different groups selected from the",
+      "group consisting of hydrogen, hydroxy, alkoxy, halo-",
+      "gen, amino, alkylamino or dialkylamino groups or",
+      "hydrocarbon-based groups comprising at least 2 carbon",
+      "atoms, optionally interrupted by heteroatoms and",
+      "optionally substituted;",
+      "wherein R1 and R3 taken together, and R2 and R4 taken",
+      "together, may form, together with the carbon atoms to",
+      "which they are attached, one or more rings fused to the",
+      "benzene ring of the compound of formula (I); and",
+      "wherein n is an integer within a range extending from 3",
+      "to 300."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:59:US10946697_12_c.png",
+      "backbone": "*C1=C(*)C(OC)=C(*)C(*)=C1C |$R3;;;R1;;;;;R2;;R4;;$,Sg:n:9,11,1,2,4,7,5,8,10,0,3::ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms<ns>R2:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms<ns>R3:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms<ns>R4:hydrogen<n>hydroxy<n>alkoxy<n>halogen<n>amino<n>alkylamino<n>dialkylamino groups<n>hydrocarbon-based groups comprising at least 2 carbon atoms"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 60,
+    "sourceImage": "US10975475_11_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>P(<r>R3</r>)<r>R2</r></cxsmi><stable>R1:a phenyl group<n>an alkyl group having 1 to 5 carbons<ns>R2:a phenyl group<n>an alkyl group having 1 to 5 carbons<ns>R3:a phenyl group<n>an alkyl group having 1 to 5 carbons</stable></markush>",
+    "annotationSHA256": "df003afed3722ead359ce84d0c2637271e15c9e6fa156c9ff24a7cd17b2fced9",
+    "sourceCells": [
+      "R2",
+      "R1",
+      "R3",
+      "P",
+      "wherein R1, R2, and R3 represent identically or differently",
+      "either a phenyl group, or an alkyl group having 1 to 5",
+      "carbons, and at least one of the phenyl group or the",
+      "alkyl group is substituted by a sulfonate group or its",
+      "salt, a cyano group, or a carboxy group or its salt."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:60:US10975475_11_c1.png",
+      "backbone": "*P(*)* |$R1;;R3;R2$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a phenyl group<n>an alkyl group having 1 to 5 carbons<ns>R2:a phenyl group<n>an alkyl group having 1 to 5 carbons<ns>R3:a phenyl group<n>an alkyl group having 1 to 5 carbons"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 61,
+    "sourceImage": "US11407846_27_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R7</r>C(N)COCCOC(<r>R6</r>)COCC(<r>R5</r>)N|Sg:n:7,6,5:q:ht,Sg:n:12,11,10,8,9:p:ht,Sg:n:4,3,1,0:r:ht</cxsmi><stable>R5:a hydrogen atom<n>a methyl group<ns>R6:a hydrogen atom<n>a methyl group<ns>R7:a hydrogen atom<n>a methyl group<ns>p:0-100<ns>q:0-100<ns>r:1-100</stable></markush>",
+    "annotationSHA256": "8467401f26c6655bdaf9f9c1b132396b874fd5678bd2130e8f54cf78d7a371d6",
+    "sourceCells": [
+      "H2N",
+      "O",
+      "O",
+      "O",
+      "r",
+      "q",
+      "p",
+      "NH2",
+      "R7",
+      "R6",
+      "R5",
+      "wherein",
+      "R5 to R7 each represent a hydrogen atom or a methyl",
+      "group;",
+      "p represents an integer of 0 to 100;",
+      "q represents an integer of 0 to 100;",
+      "r represents an integer of 1 to 100;",
+      "p+r satisfies an integer of 1 to 101; and",
+      "when a plurality of R6 or R7 are present, the plurality of",
+      "R6 or the plurality of R7 may be the same as or different",
+      "from each other,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:61:US11407846_27_c1.png",
+      "backbone": "*C(N)COCCOC(*)COCC(*)N |$R7;;;;;;;;;R6;;;;;R5;$,,,,Sg:n:7,6,5:q:ht:::,Sg:n:12,11,10,8,9:p:ht:::,Sg:n:4,3,1,0:r:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R5:a hydrogen atom<n>a methyl group<ns>R6:a hydrogen atom<n>a methyl group<ns>R7:a hydrogen atom<n>a methyl group<ns>p:0-100<ns>q:0-100<ns>r:1-100"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 62,
+    "sourceImage": "US20010004639A1_8.png",
+    "sourceAnnotation": "<markush><cxsmi><r>X</r>1=CC=CC=C1.<r>W</r>C.<r>R3</r>C.<r>R</r>OC(=O)C(*)(<r>R2</r>)<r>R1</r>|m:7:0.1.2.3.4.5,m:9:0.1.2.3.4.5,m:15:0.1.2.3.4.5</cxsmi><stable>R1:as described hereinabove<ns>R2:as described hereinabove<ns>R3:as described hereinabove<ns>X:as described hereinabove<ns>R:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>W:halogen<n>sulfonate</stable></markush>",
+    "annotationSHA256": "9278949c530ef4ce89284e9a92899cdde391028f063cce4113ae72c1fe42cd36",
+    "sourceCells": [
+      "OR",
+      "R1",
+      "R2",
+      "R3",
+      "W",
+      "X",
+      "O",
+      "wherein:",
+      "R2, R2, R3 and X are as described hereinabove;",
+      "R is hydrogen, alkyl, aryl or heteroaryl; and",
+      "W is halogen or sulfonate;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:62:US20010004639A1_8.png",
+      "backbone": "*1=CC=CC=C1.*C.*C.*OC(=O)C(*)(*)* |$X;;;;;;W;;R3;;R;;;;;;R2;R1$,m:7:3.2.1.0.5.4,m:9:3.2.1.0.5.4,m:15:3.2.1.0.5.4|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:as described hereinabove<ns>R2:as described hereinabove<ns>R3:as described hereinabove<ns>X:as described hereinabove<ns>R:hydrogen<n>alkyl<n>aryl<n>heteroaryl<ns>W:halogen<n>sulfonate"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 63,
+    "sourceImage": "US20010004639A1_8_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>X</r>1=CC=CC=C1.<r>R3</r>C.<r>R7</r>C1=C(SC(<r>R9</r>)(<r>R8</r>)C2=NC(<r>R10</r>)C(<r>R11</r>)O2)SC(N(<r>R6</r>)C(=O)C(*)(<r>R2</r>)<r>R1</r>)=N1.<r>R13</r>N(<r>R12</r>)C(*)(<r>R5</r>)<r>R4</r>|m:7:0.1.2.3.4.5,m:37:0.1.2.3.4.5,m:29:0.1.2.3.4.5</cxsmi><stable>R1:hydrogen<n>alkyl<n>heteroaryl<ns>R2:hydrogen<n>alkyl<n>heteroaryl<ns>R4:hydrogen<n>alkyl<n>heteroaryl<ns>R5:hydrogen<n>alkyl<n>heteroaryl<ns>R6:hydrogen<n>alkyl<n>heteroaryl<ns>R8:hydrogen<n>alkyl<n>heteroaryl<ns>R9:hydrogen<n>alkyl<n>heteroaryl<ns>R12:hydrogen<n>alkyl<n>heteroaryl<ns>R13:hydrogen<n>alkyl<n>heteroaryl<ns>R3:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>R7:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>R10:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>R11:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>X:CH<n>N</stable></markush>",
+    "annotationSHA256": "6534d08395d9bf1fcf5fcc6a685b35c5a54ed6c35a75659579449b4d43147c10",
+    "sourceCells": [
+      "R13",
+      "R5",
+      "N",
+      "R12",
+      "R6",
+      "R7",
+      "R10",
+      "R11",
+      "R8",
+      "R9",
+      "R4",
+      "R1",
+      "R2",
+      "R3",
+      "X",
+      "O",
+      "O",
+      "N",
+      "S",
+      "S",
+      "N",
+      "N",
+      "or a pharmaceutically acceptable salt thereof, wherein:",
+      "R1, R2, R4, R5, R6, R8, R9, R12 and R13 are each inde-",
+      "pendently hydrogen, alkyl, or heteroaryl;",
+      "R3, R7, R10 and R11 are each independently hydrogen,",
+      "alkyl, aryl, heteroaryl, halogen, hydroxy or alkoxy; and",
+      "X is CH or N;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:63:US20010004639A1_8_c1.png",
+      "backbone": "*1=CC=CC=C1.*C.*C1=C(SC(*)(*)C2=NC(*)C(*)O2)SC(N(*)C(=O)C(*)(*)*)=N1.*N(*)C(*)(*)* |$X;;;;;;R3;;R7;;;;;R9;R8;;;;R10;;R11;;;;;R6;;;;;R2;R1;;R13;;R12;;;R5;R4$,m:7:3.2.1.0.5.4,m:37:3.2.1.0.5.4,m:29:3.2.1.0.5.4|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:hydrogen<n>alkyl<n>heteroaryl<ns>R2:hydrogen<n>alkyl<n>heteroaryl<ns>R4:hydrogen<n>alkyl<n>heteroaryl<ns>R5:hydrogen<n>alkyl<n>heteroaryl<ns>R6:hydrogen<n>alkyl<n>heteroaryl<ns>R8:hydrogen<n>alkyl<n>heteroaryl<ns>R9:hydrogen<n>alkyl<n>heteroaryl<ns>R12:hydrogen<n>alkyl<n>heteroaryl<ns>R13:hydrogen<n>alkyl<n>heteroaryl<ns>R3:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>R7:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>R10:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>R11:hydrogen<n>alkyl<n>aryl<n>heteroaryl<n>halogen<n>hydroxy<n>alkoxy<ns>X:CH<n>N"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 64,
+    "sourceImage": "US20170334882A1_304_2_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>G1</r>C.<r>G2</r>C.<r>G3</r>C.<r>G4</r>C.<r>R4</r>N(C(=O)C1=CC(S(=O)(=O)NC2CCCC2)=CC=C1)C1=CC=CC=C1|Sg:n:23:w:ht,Sg:n:0:y:ht,m:1:27.28.29.30.31.32,m:3:12.13.14.24.25.26,m:5:19.20.21.22.23,m:7:19.20.21.22.22.23</cxsmi><stable>G1:CH3<n>OCH3<n>halo<n>CF3<n>CCl3<n>CH2Cl<n>CCl2H<n>CF2H<n>CH2F<n>CF3<ns>G2:H<n>C1-C4 alkyl<n>halo<ns>G3:OH<n>CH2OH<n>CH2CH2OH<ns>G4:H<n>OH<n>halo<n>C1-C6 alkyl<n>C1-C6 alkyl-OH<n>C1-C6 chloroalkyl<n>C1-C6 dichloroalkyl<n>C1-C6 trichloroalkyl<n>C1-C6 fluoroalkyl<n>C1-C6 difluoroalkyl<n>C1-C6 trifluoroalkyl<n>phenyl<ns>y:1-3</stable></markush>",
+    "annotationSHA256": "ebef977405625cbf631b980053e1604055a6e895c85c7f93af0c9c1435ab6d9f",
+    "sourceCells": [
+      "(G1)y",
+      "O",
+      "N",
+      "R4",
+      "G2",
+      "O",
+      "O",
+      "O",
+      "G3",
+      "N",
+      "H",
+      "w1",
+      "G4",
+      "or pharmaceutically acceptable salts thereof;",
+      "wherein G1 is independently selected at each occurrence",
+      "from CH3, OCH3, halo, CF3, CCl3, CH2Cl, CCl2H,",
+      "CF2H, CH2F, and CF3;",
+      "G2 is H, C1 -C4 alkyl, or halo;",
+      "G3 is OH, CH2OH, or CH2CH2OH;",
+      "G4 is H, OH, halo, C1-C6 alkyl, C1-C6 alkyl-OH, -C1-C6",
+      "chloroalkyl, -C1-C6 dichloroalkyl, -C1-C6 trichloro-",
+      "alkyl, -C1-C6 fluoroalkyl, -C1-C6 difluoroalkyl,",
+      "-C1-C6 trifluoroalkyl, or phenyl, wherein the phenyl",
+      "group is optionally independently substituted with 1-5",
+      "substituents selected from halo, -C1-C6 alkyl, and",
+      "-C1-C6 alkoxy; and",
+      "y is 1, 2, or 3."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:64:US20170334882A1_304_2_c.png",
+      "backbone": "*C.*C.*C.*C.*N(C(=O)C1=CC(S(=O)(=O)NC2CCCC2)=CC=C1)C1=CC=CC=C1 |$G1;;G2;;G3;;G4;;R4;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:23:w:ht:::,Sg:n:0:y:ht:::,m:1:31.30.32.27.28.29,m:3:12.13.14.26.24.25,m:5:19.20.21.22.23,m:7:19.20.21.22.22.23|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "G1:CH3<n>OCH3<n>halo<n>CF3<n>CCl3<n>CH2Cl<n>CCl2H<n>CF2H<n>CH2F<n>CF3<ns>G2:H<n>C1-C4 alkyl<n>halo<ns>G3:OH<n>CH2OH<n>CH2CH2OH<ns>G4:H<n>OH<n>halo<n>C1-C6 alkyl<n>C1-C6 alkyl-OH<n>C1-C6 chloroalkyl<n>C1-C6 dichloroalkyl<n>C1-C6 trichloroalkyl<n>C1-C6 fluoroalkyl<n>C1-C6 difluoroalkyl<n>C1-C6 trifluoroalkyl<n>phenyl<ns>y:1-3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 65,
+    "sourceImage": "US20170334882A1_304_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>G2</r>C.<r>G4</r>C.<r>G1</r>C1=C(<r>X</r>)C(<r>X</r>)=C([H])C(N(C)C(=O)C2=CC=CC(S(=O)(=O)NC3CCCC3)=C2)=C1.CCO|Sg:n:30:w:ht,Sg:n:34: :ht,m:33:26.27.28.29.30,m:1:17.18.19.20.21.31,m:3:26.27.28.29.30</cxsmi><stable>X:halo<ns>G1:hydrogen<n>halo<ns>G2:H<n>C1-C4 alkyl<n>halo<ns>G4:H<n>halo<n>C1-C4 alkyl<n>OH</stable></markush>",
+    "annotationSHA256": "c7cc9b706908eb57e49fbd4883e6327681243e8d1056de04b0c7a406ac15745b",
+    "sourceCells": [
+      "G1",
+      "X",
+      "X",
+      "H",
+      "N",
+      "O",
+      "G2",
+      "O",
+      "O",
+      "S",
+      "N",
+      "H",
+      "G4",
+      "HO",
+      "w",
+      "R4",
+      "or pharmaceutically acceptable salts thereof;",
+      "wherein X is halo;",
+      "G1 is hydrogen or halo;",
+      "G2 is H, C1-C4 alkyl, or halo; and",
+      "G4 is H, halo, C1-C4 alkyl, or OH."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:65:US20170334882A1_304_c.png",
+      "backbone": "*C.*C.*C1=C(*)C(*)=C([H])C(N(C)C(=O)C2=CC=CC(S(=O)(=O)NC3CCCC3)=C2)=C1.CCO |$G2;;G4;;G1;;;X;;X;;;;;;;;;;;;;;;;;;;;;;;;;;$,,,Sg:n:30:w:ht:::,Sg:n:34: :ht:::,m:33:26.27.28.29.30,m:1:17.31.18.21.20.19,m:3:26.27.28.29.30|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X:halo<ns>G1:hydrogen<n>halo<ns>G2:H<n>C1-C4 alkyl<n>halo<ns>G4:H<n>halo<n>C1-C4 alkyl<n>OH"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 66,
+    "sourceImage": "US20200050122A1_18_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C1=C(<r>R3</r>)C(<r>R5</r>)=C(/C=C/C2=C(<r>R10</r>)C(<r>R8</r>)=C(<r>R2</r>)C(<r>R7</r>)=C2<r>R9</r>)C(<r>R6</r>)=C1<r>R4</r></cxsmi><stable>R1:an electron donating group<ns>R2:an electron withdrawing group<ns>R3:a hydrogen atom<n>an alkyl group<ns>R4:a hydrogen atom<n>an alkyl group<ns>R5:a hydrogen atom<n>an alkyl group<ns>R6:a hydrogen atom<n>an alkyl group<ns>R7:a hydrogen atom<n>an alkyl group<ns>R8:a hydrogen atom<n>an alkyl group<ns>R9:a hydrogen atom<n>an alkyl group<ns>R10:a hydrogen atom<n>an alkyl group</stable></markush>",
+    "annotationSHA256": "0681bd197fc230bd3acf967eba0deab8aa623b6259c15dfb371ebcac08080e83",
+    "sourceCells": [
+      "R1",
+      "R3",
+      "R5",
+      "R4",
+      "R6",
+      "R9",
+      "R7",
+      "R2",
+      "R8",
+      "R10",
+      "wherein R1 represents an electron donating group; R2",
+      "represents an electron withdrawing group; R3 to R10",
+      "each independently represent a hydrogen atom or an",
+      "alkyl group which may have a branch, provided that at",
+      "least one of R3 to R10 represents an alkyl group which",
+      "may have a branch."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:66:US20200050122A1_18_c1.png",
+      "backbone": "*C1=C(*)C(*)=C(/C=C/C2=C(*)C(*)=C(*)C(*)=C2*)C(*)=C1* |$R1;;;R3;;R5;;;;;;R10;;R8;;R2;;R7;;R9;;R6;;R4$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:an electron donating group<ns>R2:an electron withdrawing group<ns>R3:a hydrogen atom<n>an alkyl group<ns>R4:a hydrogen atom<n>an alkyl group<ns>R5:a hydrogen atom<n>an alkyl group<ns>R6:a hydrogen atom<n>an alkyl group<ns>R7:a hydrogen atom<n>an alkyl group<ns>R8:a hydrogen atom<n>an alkyl group<ns>R9:a hydrogen atom<n>an alkyl group<ns>R10:a hydrogen atom<n>an alkyl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 67,
+    "sourceImage": "US20200352840A1_29_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>NC(CNC(=N)N)C(<r>R2</r>)=O|Sg:n:3:n:ht</cxsmi><stable>R1:a hydrogen atom<n>a hydroxyl group<n>an acyl radical<n>an acyloxy radical<n>an amino acid<ns>R2:a hydroxyl group<n>an amine<n>alkylamine<n>alcoxy radical<n>a silyloxy group<n>an amino acid<ns>n:3-4</stable></markush>",
+    "annotationSHA256": "2505c551a20f1e41c8135f93a7692a5cf20dabdabb448bc2b6a3942a25fd0ddf",
+    "sourceCells": [
+      "H2N",
+      "H\\nN",
+      "(CH2)n",
+      "NH",
+      "HN",
+      "R1",
+      "R2",
+      "O",
+      "wherein",
+      "R1 represents",
+      "a hydrogen atom, a hydroxyl group, an acyl or acyloxy",
+      "radical, or an amino acid substituted or not on its free",
+      "α-amino function, bound by a peptide bond;",
+      "R2 represents",
+      "a hydroxyl group, an amine, alkylamine or alcoxy radical,",
+      "a silyloxy group, or an amino acid substituted or not on",
+      "its free a-carboxylic function, bound by a peptide",
+      "bond;",
+      "n represent 3 or 4;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:67:US20200352840A1_29_c1.png",
+      "backbone": "*NC(CNC(=N)N)C(*)=O |$R1;;;;;;;;;R2;$,Sg:n:3:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a hydrogen atom<n>a hydroxyl group<n>an acyl radical<n>an acyloxy radical<n>an amino acid<ns>R2:a hydroxyl group<n>an amine<n>alkylamine<n>alcoxy radical<n>a silyloxy group<n>an amino acid<ns>n:3-4"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 68,
+    "sourceImage": "US20210102027A1_13_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>/N=C(/<r>R1</r>)N(<r>R4</r>)<r>R3</r></cxsmi><stable>R1:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R2:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R3:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R4:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl</stable></markush>",
+    "annotationSHA256": "b1e39966167dae9edef1cdf06d450f36ae17c055bb24e893413ccb6184187b57",
+    "sourceCells": [
+      "R4",
+      "R3",
+      "R2",
+      "N",
+      "R1",
+      "N",
+      "wherein R1, R2, R3 and/or R4 each include at least one",
+      "component selected from the group consisting of:",
+      "hydrogen, branched or unbranched alkyl, acyl, and/or",
+      "aryl moieties; and/or",
+      "form a cycle between R2/R3 and/or R1/R4."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:68:US20210102027A1_13_c1.png",
+      "backbone": "*/N=C(/*)N(*)* |$R2;;;R1;;R4;R3$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R2:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R3:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl<ns>R4:hydrogen<n>branched or unbranched alkyl<n>acyl<n>aryl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 69,
+    "sourceImage": "US20210283300A9_9_c.png",
+    "sourceAnnotation": "<markush><cxsmi>C=C(C)C(=O)OC(=O)CC(=O)OC(=O)C(=C)C|Sg:n:8:n:ht</cxsmi><stable>n:0-5</stable></markush>",
+    "annotationSHA256": "9c52b2742d80f0f48a682a3c5065ef968fa0a3df062dbbafa2bef627fa7622e8",
+    "sourceCells": [
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "n",
+      "wherein n is 0, 1, 2, 3, 4, or 5."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:69:US20210283300A9_9_c.png",
+      "backbone": "C=C(C)C(=O)OC(=O)CC(=O)OC(=O)C(=C)C |Sg:n:8:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "n:0-5"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 70,
+    "sourceImage": "US20220115602A1_51_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C1=C(<r>R5</r>)[N+](<r>R2</r>)=C(<r>R3</r>)N1<r>R1</r></cxsmi><stable>R1:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R2:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R3:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R4:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R5:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino</stable></markush>",
+    "annotationSHA256": "4e18c6fba6b32f8a3c623b9d9c957e08bd254224b653896f47c2d7b4277fc0aa",
+    "sourceCells": [
+      "R4",
+      "R5",
+      "R1",
+      "R3",
+      "R2",
+      "N",
+      "+",
+      "N",
+      "wherein each of R1, R2, R3, R4 and R5 is independently",
+      "selected from hydrogen, unsubstituted or substituted",
+      "C1-10 alkyl, unsubstituted or substituted C2-10 alkenyl,",
+      "unsubstituted or substituted C2-10 alkynyl, unsubsti-",
+      "tuted or substituted C6-12 aryl, unsubstituted or substi-",
+      "tuted C3-10 cycloalkyl, unsubstituted or substituted",
+      "C3-10 cycloalkenyl, amino, unsubstituted or substituted",
+      "(C1-6 alkyl)amino and unsubstituted or substituted",
+      "di(C1-6 alkyl)amino;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:70:US20220115602A1_51_c.png",
+      "backbone": "*C1=C(*)[N+](*)=C(*)N1* |$R4;;;R5;;R2;;R3;;R1$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R2:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R3:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R4:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino<ns>R5:hydrogen<n>unsubstituted or substituted C1-10 alkyl<n>unsubstituted or substituted C2-10 alkenyl<n>unsubstituted or substituted C2-10 alkynyl<n>unsubstituted or substituted C6-12 aryl<n>unsubstituted or substituted C3-10 cycloalkyl<n>unsubstituted or substituted C3-10 cycloalkenyl<n>amino<n>unsubstituted or substituted (C1-6 alkyl)amino<n>unsubstituted or substituted di(C1-6 alkyl)amino"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 71,
+    "sourceImage": "US20220183287A1_13_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>OC(=O)C1=C(<r>R2</r>)C(<r>R2</r>)=C(<r>R2</r>)C(<r>R2</r>)=C1<r>R2</r></cxsmi><stable>R1:CH3<n>C2H5<n>C3H7<n>saturated or unsaturated, straight or branched, or halogen substituted alkyl<ns>R2:H<n>halogen<n>nitrogen<n>oxygen<n>sulfur<n>saturated or unsaturated, straight or branched alkyl<n>alkenyl<n>alkyl halide<n>aldehyde<n>ketone<n>ether ester<n>amine<n>amide</stable></markush>",
+    "annotationSHA256": "0e7157f4500e0e2a8bf7d72be429891c1b35867eb5f05e397ff88582cb000eac",
+    "sourceCells": [
+      "O",
+      "O",
+      "R1",
+      "R2",
+      "R2",
+      "R2",
+      "R2",
+      "R2",
+      "wherein R1 is CH3, C2H5, C3H7; saturated or unsaturated,",
+      "straight or branched, or halogen substituted alkyl; and",
+      "wherein R2 are independently H, halogen, nitrogen, oxygen,",
+      "sulfur, saturated or unsaturated, straight or branched alkyl,",
+      "alkenyl, alkyl halide, aldehyde, ketone, ether, ester, amine,",
+      "or amide; optionally methyl benzoate, optionally a surfac-",
+      "tant, and optionally a carrier."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:71:US20220183287A1_13_c1.png",
+      "backbone": "*OC(=O)C1=C(*)C(*)=C(*)C(*)=C1* |$R1;;;;;;R2;;R2;;R2;;R2;;R2$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:CH3<n>C2H5<n>C3H7<n>saturated or unsaturated, straight or branched, or halogen substituted alkyl<ns>R2:H<n>halogen<n>nitrogen<n>oxygen<n>sulfur<n>saturated or unsaturated, straight or branched alkyl<n>alkenyl<n>alkyl halide<n>aldehyde<n>ketone<n>ether ester<n>amine<n>amide"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 72,
+    "sourceImage": "US20220227955A1_18_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>/N=C(\\N<r>R1</r>)NN</cxsmi><stable>R1:a hydrogen atom<n>an amino group<ns>R2:a hydrogen atom<n>an amino group</stable></markush>",
+    "annotationSHA256": "87d414fa8aeccdd5451f0572af47f64c7af33375ef0d4413eab604eb7a47db3b",
+    "sourceCells": [
+      "H2N",
+      "R2",
+      "N",
+      "N\\nH",
+      "N\\nH",
+      "R1",
+      "wherein R1 and R2 represent independently from each",
+      "other a hydrogen atom or an amino group."
+    ],
+    "scope": "finite interpretation of the supplied annotation",
+    "definition": {
+      "sourceIdentifier": "M2S:72:US20220227955A1_18_c1.png",
+      "backbone": "*/N=C(\\N*)NN |$R2;;;;R1;;$,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "R1",
+          "sourceText": "a hydrogen atom<n>an amino group",
+          "alternatives": [
+            "[H]",
+            "N"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        },
+        {
+          "label": "R2",
+          "sourceText": "a hydrogen atom<n>an amino group",
+          "alternatives": [
+            "[H]",
+            "N"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
+    },
+    "expectedConfigurations": 4,
+    "positiveSMILES": [
+      "[H]/N=C(\\N[H])NN"
+    ],
+    "negativeSMILES": [
+      "CC"
+    ]
+  },
+  {
+    "id": 73,
+    "sourceImage": "US20220271335A1_26_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R10</r>P(<r>R11</r>)(<r>R12</r>)=O</cxsmi><stable>R10:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R11:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R12:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy</stable></markush>",
+    "annotationSHA256": "1a7c85026963c1a5a56f0c18008f67440d41c81ee94fe99084752a2124a625bf",
+    "sourceCells": [
+      "R11",
+      "R12",
+      "R10",
+      "O",
+      "P",
+      "wherein R10, R11, and R12, are independently selected",
+      "from the group consisting of alkyl, aryl, heteroalkyl,",
+      "heteroaryl, halogen substituted alkyl, halogen substi-",
+      "tuted aryl, halogen substituted heteroalkyl, halogen",
+      "substituted heteroaryl, alkoxy, aryloxy, heteroalkoxy,",
+      "heteroaryloxy, halogen substituted alkoxy, halogen",
+      "substituted aryloxy, halogen substituted heteroalkoxy,",
+      "and halogen substituted heteroaryloxy functional",
+      "groups, and the second liquid solvent is stable under an",
+      "applied electrical potential no less than 4 V."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:73:US20220271335A1_26_c.png",
+      "backbone": "*P(*)(*)=O |$R10;;R11;R12;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R10:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R11:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R12:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 74,
+    "sourceImage": "US20220271335A1_26_c_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>X</r>N=P(<r>R1</r>)(<r>R2</r>)<r>R3</r></cxsmi><stable>R1:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R2:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R3:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>X:an organosilyl group<n>a tert-butyl group</stable></markush>",
+    "annotationSHA256": "0009bd3ed3661adc3f55d7ad58fdd2ce82d265562a9372bea47f4dcf97a3d37f",
+    "sourceCells": [
+      "X",
+      "N",
+      "P",
+      "R2",
+      "R1",
+      "R3",
+      "wherein R1, R2, and R3 are independently selected from",
+      "the group consisting of alkyl, aryl, heteroalkyl, het-",
+      "eroaryl, halogen substituted alkyl, halogen substituted",
+      "aryl, halogen substituted heteroalkyl, halogen substi-",
+      "tuted heteroaryl, alkoxy, aryloxy, heteroalkoxy, het-",
+      "eroaryloxy, halogen substituted alkoxy, halogen substi-",
+      "tuted aryloxy, halogen substituted heteroalkoxy, and",
+      "halogen substituted heteroaryloxy functional groups,",
+      "wherein R1, R2, and R3 are represented by at least two",
+      "different substituents and wherein X is selected from",
+      "the group consisting of an organosilyl group or a",
+      "tert-butyl group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:74:US20220271335A1_26_c_2.png",
+      "backbone": "*N=P(*)(*)* |$X;;;R1;R2;R3$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R2:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>R3:alkyl<n>aryl<n>heteroalkyl<n>heteroaryl<n>halogen substituted alkyl<n>halogen substituted aryl<n>halogen substituted heteroalkyl<n>halogen substituted heteroaryl<n>alkoxy<n>aryloxy<n>heteroalkoxy<n>heteroaryloxy<n>halogen substituted alkoxy<n>halogen substituted aryloxy<n>halogen substituted heteroalkoxy<n>halogen substituted heteroaryloxy<ns>X:an organosilyl group<n>a tert-butyl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 75,
+    "sourceImage": "US20220288063A1_24_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R</r>NC1=NC(C2=CC(C(=O)N3CCN(CC4=CC=C(Cl)C=C4)CC3)=C(Cl)C=N2)=CS1</cxsmi><stable>R:CD3<n>Me</stable></markush>",
+    "annotationSHA256": "dadbbf778f9ef9ecba3b638885fb648a0173e28e6f5a20b966a8b1bcd959bcf3",
+    "sourceCells": [
+      "R",
+      "S",
+      "N",
+      "N",
+      "HN",
+      "Cl",
+      "O",
+      "N",
+      "N",
+      "Cl",
+      "or a pharmaceutically acceptable salt thereof, wherein",
+      "R is CD3 or Me."
+    ],
+    "scope": "finite interpretation of the supplied annotation",
+    "definition": {
+      "sourceIdentifier": "M2S:75:US20220288063A1_24_c.png",
+      "backbone": "*NC1=NC(C2=CC(C(=O)N3CCN(CC4=CC=C(Cl)C=C4)CC3)=C(Cl)C=N2)=CS1 |$R;;;;;;;;;;;;;;;;;;;;;;;;;;;;;$,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "R",
+          "sourceText": "CD3<n>Me",
+          "alternatives": [
+            "C([2H])([2H])[2H]",
+            "C"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
+    },
+    "expectedConfigurations": 2,
+    "positiveSMILES": [
+      "CNC1=NC(C2=CC(C(=O)N3CCN(CC4=CC=C(Cl)C=C4)CC3)=C(Cl)C=N2)=CS1"
+    ],
+    "negativeSMILES": [
+      "CC",
+      "CCNC1=NC(C2=CC(C(=O)N3CCN(CC4=CC=C(Cl)C=C4)CC3)=C(Cl)C=N2)=CS1"
+    ]
+  },
+  {
+    "id": 76,
+    "sourceImage": "US20220332736A1_5_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C1=CC(<r>R3</r>)=C(OP2OC3=C(<r>R1</r>)C=C(<r>R2</r>)C=C3C3=C(O2)C(<r>R1</r>)=CC(<r>R2</r>)=C3)C(C2=C(OP(OC3=CC=CC(C)=C3)OC3=CC(C)=CC=C3)C(<r>R3</r>)=CC(<r>R4</r>)=C2)=C1</cxsmi><stable>R1:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl<ns>R2:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl<ns>R3:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl<ns>R4:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl</stable></markush>",
+    "annotationSHA256": "2fbf93c2d0a52bb62be851c69381345e40479abd45c3d85fe0aa99a33ac45daa",
+    "sourceCells": [
+      "R4",
+      "R4",
+      "R3",
+      "R3",
+      "R1",
+      "O",
+      "P",
+      "O",
+      "O",
+      "P",
+      "O",
+      "O",
+      "O",
+      "R1",
+      "R2",
+      "R2",
+      "where R1, R2, R3, R4 are selected from: -H, -(C1-C12)-",
+      "alkyl, -O-(C1-C12)-alkyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:76:US20220332736A1_5_c.png",
+      "backbone": "*C1=CC(*)=C(OP2OC3=C(*)C=C(*)C=C3C3=C(O2)C(*)=CC(*)=C3)C(C2=C(OP(OC3=CC=CC(C)=C3)OC3=CC(C)=CC=C3)C(*)=CC(*)=C2)=C1 |$R4;;;;R3;;;;;;;R1;;;R2;;;;;;;R1;;;R2;;;;;;;;;;;;;;;;;;;;;;;;R3;;;R4;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl<ns>R2:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl<ns>R3:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl<ns>R4:—H<n>—(C1-C12)-alkyl<n>—O—(C1-C12)-alkyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 77,
+    "sourceImage": "US20230174533A1_64_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Cy</r><r>Ar</r>N(<r>R5</r>)C(=O)C(<r>R3</r>)(<r>R4</r>)N1C(<r>D</r>)=NC2=C1C(=O)N(<r>R1</r>)C(=O)N2<r>R2</r></cxsmi><stable>R1:H<n>an alkyl group<ns>R2:H<n>an alkyl group<ns>R3:H<n>an alkyl group<ns>R4:H<n>an alkyl group<ns>R5:H<n>an alkyl group<ns>D:H<n>halogen<n>alkyl<n>cycloalkyl<n>aryl<n>dialkylamino<ns>Ar:a 6-membered heteroaryl ring having 1 or 2 nitrogen atoms<ns>Cy:an aryl<n>heteroaryl<n>saturated ring containing at least one heteroatom</stable></markush>",
+    "annotationSHA256": "32f132443d090f1886e3c2e167c0bd0f4056dbdd427526756ca16ac40635d0e8",
+    "sourceCells": [
+      "O",
+      "R1",
+      "R3",
+      "R4",
+      "R5",
+      "R2",
+      "N",
+      "O",
+      "N",
+      "N",
+      "N",
+      "N",
+      "D",
+      "O",
+      "Ar",
+      "Cy",
+      "n",
+      "wherein:",
+      "R1, R2, R3, R4 and R5 are each, independently, H or an",
+      "alkyl group;",
+      "D is selected from the group consisting of H, halogen,",
+      "alkyl, cycloalkyl, aryl, and dialkylamino, each (other",
+      "than H and halogen) being optionally substituted;",
+      "Ar is a 6-membered heteroaryl ring having 1 or 2 nitrogen",
+      "atoms having no substituents other than Cy and the",
+      "amide nitrogen atom depicted in structure (I), these",
+      "being in a 1,4-relationship on the ring; and",
+      "Cy is an aryl, heteroaryl, or saturated ring containing at",
+      "least one heteroatom, each being optionally substituted;",
+      "and",
+      "n is an integer from 1 to 2;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:77:US20230174533A1_64_c.png",
+      "backbone": "**N(*)C(=O)C(*)(*)N1C(*)=NC2=C1C(=O)N(*)C(=O)N2* |$Cy;Ar;;R5;;;;R3;R4;;;D;;;;;;;R1;;;;R2$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:H<n>an alkyl group<ns>R2:H<n>an alkyl group<ns>R3:H<n>an alkyl group<ns>R4:H<n>an alkyl group<ns>R5:H<n>an alkyl group<ns>D:H<n>halogen<n>alkyl<n>cycloalkyl<n>aryl<n>dialkylamino<ns>Ar:a 6-membered heteroaryl ring having 1 or 2 nitrogen atoms<ns>Cy:an aryl<n>heteroaryl<n>saturated ring containing at least one heteroatom"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 78,
+    "sourceImage": "US7776936B2_16_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C(=C)C(=O)O<r>R5</r>OC(=O)CC1CCSS1|Sg:n:10:n:ht</cxsmi><stable>R4:a hydrogen atom<n>a hydrocarbon group having 1 to 3 carbon atoms<ns>R5:an optionally substituted alkylene group having 1 to 30 carbon atoms<ns>n:0-15</stable></markush>",
+    "annotationSHA256": "2c8f897a1ca3db8d0ef551ecd967364533fc25fca9bd4063885584fd97d2899a",
+    "sourceCells": [
+      "H2C",
+      "C",
+      "C",
+      "O",
+      "R5",
+      "O",
+      "C",
+      "O",
+      "H2\\nC",
+      "CH",
+      "CH2",
+      "S",
+      "S",
+      "(CH2)n",
+      "O",
+      "wherein R4 represents a hydrogen atom or a hydrocarbon",
+      "group having 1 to 3 carbon atoms, R5 represents an optionally",
+      "substituted alkylene group having 1 to 30 carbon atoms, and",
+      "n represents an integer of 0 to 15 as a component (d),",
+      "R4"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:78:US7776936B2_16_c.png",
+      "backbone": "*C(=C)C(=O)O*OC(=O)CC1CCSS1 |$R4;;;;;;R5;;;;;;;;;$,Sg:n:10:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:a hydrogen atom<n>a hydrocarbon group having 1 to 3 carbon atoms<ns>R5:an optionally substituted alkylene group having 1 to 30 carbon atoms<ns>n:0-15"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 79,
+    "sourceImage": "US7776936B2_16_c1.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C(=C)C(=O)O<r>R2</r>OC(=O)<r>R3</r>P(=O)(O)O</cxsmi><stable>R1:a hydrogen atom<n>a methyl group<ns>R2:an optionally substituted alkylene group having 1 to 20 carbon atoms<ns>R3:an optionally substituted alkylene group having 1 to 15 carbon atoms</stable></markush>",
+    "annotationSHA256": "c82647e7ad62326bfaff653809ddb1ad0901eb2875a51f7c70eca7430bebd89c",
+    "sourceCells": [
+      "H2C",
+      "C",
+      "C",
+      "O",
+      "O",
+      "O",
+      "O",
+      "R1",
+      "R2",
+      "R3",
+      "C",
+      "P",
+      "O",
+      "OH",
+      "OH",
+      "wherein R1 represents a hydrogen atom or a methyl group, R2",
+      "represents an optionally substituted an alkylene group having",
+      "1 to 20 carbon atoms, and R3 represents an optionally substi-",
+      "tuted an alkylene group having 1 to 15 carbon atoms as a",
+      "component (b),"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:79:US7776936B2_16_c1.png",
+      "backbone": "*C(=C)C(=O)O*OC(=O)*P(=O)(O)O |$R1;;;;;;R2;;;;R3;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a hydrogen atom<n>a methyl group<ns>R2:an optionally substituted alkylene group having 1 to 20 carbon atoms<ns>R3:an optionally substituted alkylene group having 1 to 15 carbon atoms"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 80,
+    "sourceImage": "US9056043B2_12.png",
+    "sourceAnnotation": "<markush><cxsmi><r>OG</r>C(<r>Q</r>)COCCCCOC|Sg:n:9,8,7,6,5:n:ht,Sg:n:4,3,1,2:m:ht</cxsmi><stable>m:1-3<ns>n:1-3<ns>Q:hydrogen<n>methyl<n>phenyl<n>phenoxymethyl</stable></markush>",
+    "annotationSHA256": "a7518b64c41493189a58cda7d54bb5d7a7f88d39c3d5c0ccec2bf82be58f4088",
+    "sourceCells": [
+      "O",
+      "n",
+      "O",
+      "OG",
+      "m",
+      "Q",
+      "wherein m is 1 to 3; n is 1 to 3; and Q is hydrogen, methyl,",
+      "phenyl, phenoxymethyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:80:US9056043B2_12.png",
+      "backbone": "*C(*)COCCCCOC |$OG;;Q;;;;;;;;$,,,Sg:n:9,8,7,6,5:n:ht:::,Sg:n:4,3,1,2:m:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "m:1-3<ns>n:1-3<ns>Q:hydrogen<n>methyl<n>phenyl<n>phenoxymethyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 81,
+    "sourceImage": "US9056043B2_35.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C.<r>R4</r>C(=C)C1=CC=CC=C1.CC|m:11:5.6.7.8.9.10,m:1:5.6.7.8.9.10</cxsmi><stable>R4:H<n>C1-C4 alkyl</stable></markush>",
+    "annotationSHA256": "c01bbfdeeab0d636382e1503a47dff9ddf1bad6c652373598cf351d62f615455",
+    "sourceCells": [
+      "R4",
+      "R4",
+      "wherein R4 is H or C1-C4 alkyl."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:81:US9056043B2_35.png",
+      "backbone": "*C.*C(=C)C1=CC=CC=C1.CC |$R4;;R4;;;;;;;;;;$,m:11:9.10.7.6.5.8,m:1:9.10.7.6.5.8|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:H<n>C1-C4 alkyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 82,
+    "sourceImage": "US9066852B2_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>C(=C)C(=O)O<r>R2</r>OC(=O)<r>R3</r>P(=O)(O)O</cxsmi><stable>R1:a hydrogen atom<n>a methyl group<ns>R2:an alkylene group having 5 to 10 carbon atoms<ns>R3:an alkylene group having 1 to 6 carbon atoms</stable></markush>",
+    "annotationSHA256": "bf9efbb31398f69d3cfa8ce2979bf9739a03f5d4eb85772256ee4519a148db2d",
+    "sourceCells": [
+      "H2C",
+      "C",
+      "C",
+      "O",
+      "R2",
+      "R1",
+      "O",
+      "C",
+      "R3",
+      "P",
+      "O",
+      "OH",
+      "OH",
+      "O",
+      "O",
+      "wherein R1 represents a hydrogen atom or a methyl group, R2",
+      "represents an alkylene group having 5 to 10 carbon atoms, and",
+      "R3 represents an alkylene group having 1 to 6 carbon atoms,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:82:US9066852B2_2.png",
+      "backbone": "*C(=C)C(=O)O*OC(=O)*P(=O)(O)O |$R1;;;;;;R2;;;;R3;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:a hydrogen atom<n>a methyl group<ns>R2:an alkylene group having 5 to 10 carbon atoms<ns>R3:an alkylene group having 1 to 6 carbon atoms"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 83,
+    "sourceImage": "US9156839B2_4.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C.<r>R3</r>C.<r>R1</r>N(<r>R2</r>)S(=O)(=O)C1=CC2=C(C=C1)NN=C2NC1=CC=CC=C1|m:1:20,m:3:20.21.22.23.24.25</cxsmi><stable>R1:as above<ns>R2:as above<ns>R3:as above</stable></markush>",
+    "annotationSHA256": "7a43ea81cd2dd0196330ea6fc333d4100a71e660034a63241ac4d7101f8410b6",
+    "sourceCells": [
+      "R3",
+      "R3",
+      "NH",
+      "HN",
+      "N",
+      "O",
+      "S",
+      "O",
+      "N",
+      "R2",
+      "R1",
+      "wherein R1, R2, R3 are defined as above."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:83:US9156839B2_4.png",
+      "backbone": "*C.*C.*N(*)S(=O)(=O)C1=CC2=C(C=C1)NN=C2NC1=CC=CC=C1 |$R3;;R3;;R1;;R2;;;;;;;;;;;;;;;;;;;$,m:1:20,m:3:20.21.22.23.24.25|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:as above<ns>R2:as above<ns>R3:as above"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 84,
+    "sourceImage": "US9237990B2_27_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C(=C)C(=O)O<r>Z</r><r>R1</r>N1C(=O)N(<r>R4</r>)C(=O)N(<r>R3</r>)C1=O</cxsmi><stable>R1:alkylene<n>arylene<n>alkarylene<ns>R2:hydrogen<n>methyl<ns>Z:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group<ns>R3:hydrogen<n>alkyl<n>aryl<n>alkaryl<ns>R4:hydrogen<n>alkyl<n>aryl<n>alkaryl</stable></markush>",
+    "annotationSHA256": "e020ab5bcf0c550a45e3141ae34feb0cdd9a30689601f9f46023e820e5d40809",
+    "sourceCells": [
+      "R4",
+      "R3",
+      "R2",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "Z",
+      "N",
+      "R1",
+      "N",
+      "N",
+      "wherein",
+      "R1 is alkylene, arylene, or alkarylene, optionally including",
+      "a heteroatom;",
+      "R2 is hydrogen or methyl;",
+      "Z is an alkylene, arylene, or alkarylene linking group com-",
+      "prising one or more moieties selected from ester,",
+      "thioester, ether, thioether, and at least one Z comprises",
+      "an aliphatic cyclic moiety or aromatic moiety; and",
+      "R3 and R4 are independently hydrogen, alkyl, aryl, or",
+      "alkaryl,"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:84:US9237990B2_27_c.png",
+      "backbone": "*C(=C)C(=O)O**N1C(=O)N(*)C(=O)N(*)C1=O |$R2;;;;;;Z;R1;;;;;R4;;;;R3;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:alkylene<n>arylene<n>alkarylene<ns>R2:hydrogen<n>methyl<ns>Z:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group<ns>R3:hydrogen<n>alkyl<n>aryl<n>alkaryl<ns>R4:hydrogen<n>alkyl<n>aryl<n>alkaryl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 85,
+    "sourceImage": "US9237990B2_28_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C(=C)C(=O)O<r>Z</r><r>R1</r>N1C(=O)N(<r>R5</r><r>X</r>OC(=O)C(<r>R2</r>)=C)C(=O)N(<r>R6</r><r>Y</r>OC(=O)C(<r>R2</r>)=C)C1=O</cxsmi><stable>R1:alkylene<n>arylene<n>alkarylene<ns>R5:alkylene<n>arylene<n>alkarylene<ns>R6:alkylene<n>arylene<n>alkarylene<ns>R2:hydrogen<n>methyl<ns>X:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group<ns>Y:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group<ns>Z:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group</stable></markush>",
+    "annotationSHA256": "f86032dc440e34844d26cbccd0b7797680b76caba0ea161f567a167fda5eab81",
+    "sourceCells": [
+      "R2",
+      "O",
+      "O",
+      "Y",
+      "R6",
+      "O",
+      "R1",
+      "N",
+      "N",
+      "O",
+      "O",
+      "R2",
+      "Z",
+      "O",
+      "O",
+      "N",
+      "R5",
+      "X",
+      "O",
+      "O",
+      "R2",
+      "wherein",
+      "R1, R5, and R6. are independently alkylene, arylene, or",
+      "alkarylene, optionally including a heteroatom;",
+      "R2 is hydrogen or methyl;",
+      "X, Y, and Z are independently an alkylene, arylene, or",
+      "alkarylene linking group"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:85:US9237990B2_28_c.png",
+      "backbone": "*C(=C)C(=O)O**N1C(=O)N(**OC(=O)C(*)=C)C(=O)N(**OC(=O)C(*)=C)C1=O |$R2;;;;;;Z;R1;;;;;R5;X;;;;;R2;;;;;R6;Y;;;;;R2;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:alkylene<n>arylene<n>alkarylene<ns>R5:alkylene<n>arylene<n>alkarylene<ns>R6:alkylene<n>arylene<n>alkarylene<ns>R2:hydrogen<n>methyl<ns>X:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group<ns>Y:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group<ns>Z:an alkylene linking group<n>an arylene linking group<n>an alkarylene linking group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 86,
+    "sourceImage": "US9339510B2_229_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>C.<r>R1</r>C.<r>Cy</r>S(=O)(=O)C1=CC(C(=O)NC2=CC=CC=C2)=CC=C1|Sg:n:2:x:ht,m:1:8.9.10.20.21.22,m:3:14.15.16.17.18.19</cxsmi><stable>R1:halo<n>OH<n>—C1-C6 alkyl<n>—O—C1-C6 alkyl<ns>R2:halo<n>OH<n>—C1-C6 alkyl<n>—O—C1-C6 alkyl<ns>x:2-3</stable></markush>",
+    "annotationSHA256": "5341d3958dfcd3419f7fa91c4c49c131974c44517690f2be03d0354d46749ec0",
+    "sourceCells": [
+      "(R1)x",
+      "O",
+      "O",
+      "O",
+      "S",
+      "Cy",
+      "R2",
+      "N\\nH",
+      "or a pharmaceutically acceptable salt thereof;",
+      "wherein",
+      "each R1 is, independently at each occurrence, halo, OH,",
+      "-C1-C6 alkyl, or -O-C1-C6 alkyl, wherein the alkyl",
+      "groups are optionally substituted 1-3 times with halo or",
+      "OH;",
+      "each R2 is, independently at each occurrence, halo, OH,",
+      "-C1-C6 alkyl, or -O-C1-C6 alkyl, wherein the alkyl",
+      "groups are optionally substituted 1-3 times with halo or",
+      "OH;",
+      "x is 2 or 3;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:86:US9339510B2_229_c.png",
+      "backbone": "*C.*C.*S(=O)(=O)C1=CC(C(=O)NC2=CC=CC=C2)=CC=C1 |$R2;;R1;;Cy;;;;;;;;;;;;;;;;;;$,Sg:n:2:x:ht:::,m:1:9.10.8.22.20.21,m:3:18.19.17.14.15.16|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:halo<n>OH<n>—C1-C6 alkyl<n>—O—C1-C6 alkyl<ns>R2:halo<n>OH<n>—C1-C6 alkyl<n>—O—C1-C6 alkyl<ns>x:2-3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 87,
+    "sourceImage": "US9682968B2_123.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R5</r>C1=CC=C(C2CC(<r>R6</r>)(C)CCN2CC2=C(<r>R1</r>)C=C(<r>R2</r>)C3=C2C(<r>R3</r>)=CN3)C=<r>X</r>1</cxsmi><stable>X:N<n>CH</stable></markush>",
+    "annotationSHA256": "0e409415833236bbfe2ee6dab3790c1c7b4b9e0e039bba8c55e136e0ef4f28ad",
+    "sourceCells": [
+      "R5",
+      "R6",
+      "CH3",
+      "X",
+      "R3",
+      "N",
+      "R1",
+      "N\\nH",
+      "R2",
+      "Wherein X is N or CH."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:87:US9682968B2_123.png",
+      "backbone": "*C1=CC=C(C2CC(*)(C)CCN2CC2=C(*)C=C(*)C3=C2C(*)=CN3)C=*1 |$R5;;;;;;;;R6;;;;;;;;R1;;;R2;;;;R3;;;;X$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X:N<n>CH"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 88,
+    "sourceImage": "US10077240B2_3.png",
+    "sourceAnnotation": "<markush><cxsmi>CC(=O)O.CN1N=C(C(=O)N(<r>L2</r>C2=CC=CC=C2)CC2=CC=CC=C2)C2=C1C1=C<r>Z3</r>=<r>Z2</r>C=C1OC2|m:0:12.13.14.15.16.17</cxsmi><stable>L2:—CH2—<n>*2—CH2CH2NH—<n>*2—CH2CH2O—<n>*2—CH2C(O)NH—<ns>Z2:CH<n>CF<n>CCl<n>CCH3<ns>Z3:CH<n>CF<n>CCl<n>CCH3</stable></markush>",
+    "annotationSHA256": "174051a5822d6702ba9a57e5b0134a850cfb299d2ce4ed18628254c05adedc66",
+    "sourceCells": [
+      "Z2",
+      "Z3",
+      "O",
+      "O",
+      "N",
+      "L2",
+      "O",
+      "OH",
+      "N",
+      "N",
+      "or a pharmaceutically acceptable salt thereof; wherein",
+      "each phenyl ring is optionally further substituted by 1-2",
+      "substituents independently represented by R2, wherein",
+      "R2 is fluoro or methyl;",
+      "L2 is selected from -CH2-, *2-CH2-CH2NH-,",
+      "*2-CH2CH2O-, and *2-CH2C(O)NH-, wherein",
+      "\"*2\" indicates the point of attachment of L2 to N;",
+      "Z2 is selected from CH, CF, CCl, and CCH3; and",
+      "Z3 is selected from CH, CF, CCl, and CCH3."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:88:US10077240B2_3.png",
+      "backbone": "CC(=O)O.CN1N=C(C(=O)N(*C2=CC=CC=C2)CC2=CC=CC=C2)C2=C1C1=C*=*C=C1OC2 |$;;;;;;;;;;;L2;;;;;;;;;;;;;;;;;;Z3;Z2;;;;$,m:0:13.14.12.17.15.16|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "L2:—CH2—<n>*2—CH2CH2NH—<n>*2—CH2CH2O—<n>*2—CH2C(O)NH—<ns>Z2:CH<n>CF<n>CCl<n>CCH3<ns>Z3:CH<n>CF<n>CCl<n>CCH3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 89,
+    "sourceImage": "US10130564B2_22_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>Rd</r>C(=C)C(=O)O<r>Rc</r>OC(=O)N<r>Ra</r>NC(=O)O<r>Rb</r>OC(=O)C=C</cxsmi><stable>Ra:a group which has a divalent C6-9 aromatic hydrocarbon group or a divalent C6-9 bridged cyclic hydrocarbon group in the middle and is bonded to nitrogen atoms in adjacent carbamoyl groups via an unsubstituted methylene group<ns>Rb:a C2-6 linear alkylene group<n>a C2-6 linear oxyalkylene group<ns>Rc:a C2-6 linear alkylene group<n>a C2-6 linear oxyalkylene group<ns>Rd:a hydrogen atom<n>a methyl group</stable></markush>",
+    "annotationSHA256": "bcea842108614aacc3928339e4522e324ea8c3251a1b732f6cea721d79aee1e7",
+    "sourceCells": [
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "Rd",
+      "Rc",
+      "N\\nH",
+      "Ra",
+      "N\\nH",
+      "Rb",
+      "wherein in the general formula (1), Ra is a group which",
+      "has a divalent C6-9 aromatic hydrocarbon group or a",
+      "divalent C6-9 bridged cyclic hydrocarbon group in the",
+      "middle and is bonded to nitrogen atoms in adjacent",
+      "carbamoyl groups via an unsubstituted methylene",
+      "group; Rb and Rc are each independently a C2-6 linear",
+      "alkylene group or a C2-6 linear oxyalkylene group, each",
+      "of which is optionally substituted with a C1-3 alkyl",
+      "group or a (meth)acryloylmethylene group in place of",
+      "a hydrogen atom; and Rd represents a hydrogen atom or",
+      "a methyl group."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:89:US10130564B2_22_c.png",
+      "backbone": "*C(=C)C(=O)O*OC(=O)N*NC(=O)O*OC(=O)C=C |$Rd;;;;;;Rc;;;;;Ra;;;;;Rb;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "Ra:a group which has a divalent C6-9 aromatic hydrocarbon group or a divalent C6-9 bridged cyclic hydrocarbon group in the middle and is bonded to nitrogen atoms in adjacent carbamoyl groups via an unsubstituted methylene group<ns>Rb:a C2-6 linear alkylene group<n>a C2-6 linear oxyalkylene group<ns>Rc:a C2-6 linear alkylene group<n>a C2-6 linear oxyalkylene group<ns>Rd:a hydrogen atom<n>a methyl group"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 90,
+    "sourceImage": "US10414768B2_14.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R5</r>C1=NC(N(<r>R7</r>)<r>R6</r>)=C(N(<r>R3</r>)<r>R2</r>)C(<r>R4</r>)=N1</cxsmi><stable>R4:as defined above in Formula I<ns>R5:as defined above in Formula I<ns>R6:as defined above in Formula I<ns>R7:as defined above in Formula I<ns>R2:H<n>alkyl<n>aryl<n>heteroaryl<n>arylalkyl<n>heteroarylalkyl<n>alkyloxyaryl<n>formyl<n>alkylcarbonyl<n>arylcarbonyl<n>heteroarylcarbonyl<n>arylalkylcarbonyl<n>heteroarylalkylcarbonyl<n>alkyloxyarylcarbonyl<ns>R3:H<n>alkyl<n>aryl<n>heteroaryl<n>arylalkyl<n>heteroarylalkyl<n>alkyloxyaryl<n>formyl<n>alkylcarbonyl<n>arylcarbonyl<n>heteroarylcarbonyl<n>arylalkylcarbonyl<n>heteroarylalkylcarbonyl<n>alkyloxyarylcarbonyl</stable></markush>",
+    "annotationSHA256": "6cbd9f0844b63ecdc80da30b5c00bfa9b5f30f8ce2043e5bf10b2ec4f8ff00c0",
+    "sourceCells": [
+      "R3",
+      "R4",
+      "R2",
+      "R7",
+      "N",
+      "N",
+      "N",
+      "N",
+      "R6",
+      "R5",
+      "and pharmaceutically acceptable enantiomers, salts, solvates",
+      "and prodrugs thereof, wherein",
+      "R4, R5, R6 and R7 are as defined above in Formula I.",
+      "R2 and R3 represent each independently H, alkyl, aryl,",
+      "heteroaryl, arylalkyl, heteroarylalkyl, alkyloxyaryl,",
+      "formyl, alkylcarbonyl, arylcarbonyl, heteroarylcarbo-",
+      "nyl, arylalkylcarbonyl, heteroarylalkylcarbonyl, alky-",
+      "loxyarylcarbonyl;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:90:US10414768B2_14.png",
+      "backbone": "*C1=NC(N(*)*)=C(N(*)*)C(*)=N1 |$R5;;;;;R7;R6;;;R3;R2;;R4;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:as defined above in Formula I<ns>R5:as defined above in Formula I<ns>R6:as defined above in Formula I<ns>R7:as defined above in Formula I<ns>R2:H<n>alkyl<n>aryl<n>heteroaryl<n>arylalkyl<n>heteroarylalkyl<n>alkyloxyaryl<n>formyl<n>alkylcarbonyl<n>arylcarbonyl<n>heteroarylcarbonyl<n>arylalkylcarbonyl<n>heteroarylalkylcarbonyl<n>alkyloxyarylcarbonyl<ns>R3:H<n>alkyl<n>aryl<n>heteroaryl<n>arylalkyl<n>heteroarylalkyl<n>alkyloxyaryl<n>formyl<n>alkylcarbonyl<n>arylcarbonyl<n>heteroarylcarbonyl<n>arylalkylcarbonyl<n>heteroarylalkylcarbonyl<n>alkyloxyarylcarbonyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 91,
+    "sourceImage": "US10676429B2_13.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C.<r>R4</r>C.<r>R4</r>C.<r>R4</r>C.<r>R1</r>N(<r>R2</r>)S(=O)(=O)C1=CC=CC(C(=O)NC2=CC=CC=C2)=C1F|m:1:14.15.16.17.18.28,m:3:22.23.24.25.26.27,m:5:22.23.24.25.26.27,m:7:22.23.24.25.26.27</cxsmi><stable>R1:any one of the embodiments described<ns>R2:any one of the embodiments described<ns>R4:any one of the embodiments described<ns>R3:hydrogen<n>halogen<n>C1-C3 alkyl<n>CN<n>CFH2<n>CF2H<n>CF3</stable></markush>",
+    "annotationSHA256": "bc53b11fcc0359cec131a9610dbddb2c59f59acf91ddbf8c095e243b91eb3643",
+    "sourceCells": [
+      "R4",
+      "R4",
+      "R4",
+      "N\\nH",
+      "O",
+      "F",
+      "R2",
+      "N",
+      "R1",
+      "S",
+      "O",
+      "O",
+      "R3",
+      "wherein R1, R2 and R4 are defined as in any one of the",
+      "embodiments described and R3 is selected from the group",
+      "comprising hydrogen, halogen, C1-C3alkyl, CN, CFH2,",
+      "CF2H, CF3."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:91:US10676429B2_13.png",
+      "backbone": "*C.*C.*C.*C.*N(*)S(=O)(=O)C1=CC=CC(C(=O)NC2=CC=CC=C2)=C1F |$R3;;R4;;R4;;R4;;R1;;R2;;;;;;;;;;;;;;;;;;;$,m:1:17.18.16.15.14.28,m:3:25.24.23.22.27.26,m:5:25.24.23.22.27.26,m:7:25.24.23.22.27.26|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:any one of the embodiments described<ns>R2:any one of the embodiments described<ns>R4:any one of the embodiments described<ns>R3:hydrogen<n>halogen<n>C1-C3 alkyl<n>CN<n>CFH2<n>CF2H<n>CF3"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 92,
+    "sourceImage": "US10941113B2_7.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C.<r>R4</r>C1=CC(NC(=O)C2=CC(S(=O)(=O)N(<r>R2</r>)<r>R1</r>)=CC=C2)=CC=C1F|m:1:9.10.11.18.19.20</cxsmi><stable>R1:hydrogen<ns>R2:C1-C8 alkyl<ns>R3:Hydrogen<n>methyl<ns>R4:methyl</stable></markush>",
+    "annotationSHA256": "653ffcf88e48587da6be92b0730e95318875b32244a1ee1e21456a4373cd9492",
+    "sourceCells": [
+      "F",
+      "O",
+      "O",
+      "O",
+      "N",
+      "S",
+      "R2",
+      "R1",
+      "R3",
+      "R4",
+      "N\\nH",
+      "or a stereoisomer or tautomeric form thereof, wherein:",
+      "R1 represents hydrogen;",
+      "R2 represents C1 -C8alkyl substituted with one or more R5,",
+      "R3 represents Hydrogen or methyl;",
+      "R4 represents methyl;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:92:US10941113B2_7.png",
+      "backbone": "*C.*C1=CC(NC(=O)C2=CC(S(=O)(=O)N(*)*)=CC=C2)=CC=C1F |$R3;;R4;;;;;;;;;;;;;;R2;R1;;;;;;;$,m:1:9.20.19.18.10.11|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R1:hydrogen<ns>R2:C1-C8 alkyl<ns>R3:Hydrogen<n>methyl<ns>R4:methyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 93,
+    "sourceImage": "US10961247B2_75_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R3</r>C(=O)N1CCCC(NC2=NC(NC3=CC=CC(<r>R'</r>)=C3)=NC3=C2C=CN3)C1</cxsmi><stable>R':—NHCO(C2-4 alkenyl)<n>—NHCO(pyrrolidinyl)<n>pyrazolyl unsubstituted or substituted with two C1-4 alkyl<ns>R3:C1-4 alkyl unsubstituted or substituted with cyano<n>C2-4 alkenyl unsubstituted or substituted with cyano<n>—N(C1-4 alkyl)</stable></markush>",
+    "annotationSHA256": "58642ec5f3c90af94cdebb56005701d9ac23467134a01434667cb30b0dfc0d8e",
+    "sourceCells": [
+      "R'",
+      "N\\nH",
+      "N\\nH",
+      "N",
+      "R3",
+      "O",
+      "HN",
+      "N",
+      "N",
+      "in Chemical Formula 1-1,",
+      "R' is -NHCO(C2-4 alkenyl); -NHCO(pyrrolidinyl); or",
+      "pyrazolyl unsubstituted or substituted with two C1-4",
+      "alkyl,",
+      "R3 is C1-4 alkyl unsubstituted or substituted with cyano; or",
+      "C2-4 alkenyl unsubstituted or substituted with cyano or",
+      "-N(C1-4 alkyl)."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:93:US10961247B2_75_c.png",
+      "backbone": "*C(=O)N1CCCC(NC2=NC(NC3=CC=CC(*)=C3)=NC3=C2C=CN3)C1 |$R3;;;;;;;;;;;;;;;;;;R';;;;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R':—NHCO(C2-4 alkenyl)<n>—NHCO(pyrrolidinyl)<n>pyrazolyl unsubstituted or substituted with two C1-4 alkyl<ns>R3:C1-4 alkyl unsubstituted or substituted with cyano<n>C2-4 alkenyl unsubstituted or substituted with cyano<n>—N(C1-4 alkyl)"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 94,
+    "sourceImage": "US10961247B2_75_c_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R5</r>C1=<r>X1</r>NC2=C1C(NC1CCCN(C(=O)C=C)C1)=NC(NC1=CC=C(<r>R'</r>)C=C1)=N2</cxsmi><stable>X1:CH<n>N<ns>R':piperazinyl unsubstituted or substituted with C1-4 alkyl<n>morpholino<n>—CO-(molpolino)<n>—N(C1-4 alkyl)2<n>C1-4 alkoxy unsubstituted or substituted with —N(C1-4 alkyl)2<n>phenoxy<n>pyrazolyl unsubstituted or substituted with one or two C1-4 alkyl<n>pyrrolidinyl<ns>R5:hydrogen<n>halogen</stable></markush>",
+    "annotationSHA256": "12fc374731cfcc24a2f5d0d98bda5d896113b27cf51ed7f5e7b738a22fdd7fd2",
+    "sourceCells": [
+      "R'",
+      "HN",
+      "N",
+      "O",
+      "R5",
+      "N",
+      "X1",
+      "N\\nH",
+      "N",
+      "N\\nH",
+      "in Chemical Formula 1-2,",
+      "X1 is CH, or N,",
+      "R' is piperazinyl unsubstituted or substituted with C1-4",
+      "alkyl; morpholino; -CO-(molpolino);",
+      "-N(C1 -4 alkyl)2; C1 -4 alkoxy unsubstituted or substituted",
+      "with -N(C1-4 alkyl)2; phenoxy; pyrazolyl unsubsti-",
+      "tuted or substituted with one or two C1-4 alkyl; or",
+      "pyrrolidinyl, and",
+      "R5 is hydrogen or halogen."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:94:US10961247B2_75_c_2.png",
+      "backbone": "*C1=*NC2=C1C(NC1CCCN(C(=O)C=C)C1)=NC(NC1=CC=C(*)C=C1)=N2 |$R5;;X1;;;;;;;;;;;;;;;;;;;;;;;R';;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "X1:CH<n>N<ns>R':piperazinyl unsubstituted or substituted with C1-4 alkyl<n>morpholino<n>—CO-(molpolino)<n>—N(C1-4 alkyl)2<n>C1-4 alkoxy unsubstituted or substituted with —N(C1-4 alkyl)2<n>phenoxy<n>pyrazolyl unsubstituted or substituted with one or two C1-4 alkyl<n>pyrrolidinyl<ns>R5:hydrogen<n>halogen"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 95,
+    "sourceImage": "US11247998B2_71_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C.<r>R9</r>C(<r>R8</r>)NC(=O)C1=C2CN(C(=O)NC3=CC=<r>G</r>C=C3)C(<r>R3</r>)CN2C=C1|Sg:n:0:s:ht,m:1:15.16.17.18.19.20</cxsmi><stable>G:C<n>N<ns>R8:methyl<ns>R9:methyl<n>ethyl</stable></markush>",
+    "annotationSHA256": "c538103f1d024f3f461c108e7aeb611086b6aa75864e8288c1e99b553dbefc6b",
+    "sourceCells": [
+      "(R4)s",
+      "G",
+      "O",
+      "N\\nH",
+      "N",
+      "R3",
+      "N",
+      "H\\nN",
+      "O",
+      "R8",
+      "R9",
+      "wherein:",
+      "G is C or N;",
+      "R8 is methyl; and",
+      "R9 is methyl or ethyl, wherein the methyl or ethyl is",
+      "optionally further substituted by one or more halogen."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:95:US11247998B2_71_c.png",
+      "backbone": "*C.*C(*)NC(=O)C1=C2CN(C(=O)NC3=CC=*C=C3)C(*)CN2C=C1 |$R4;;R9;;R8;;;;;;;;;;;;;;G;;;;R3;;;;$,Sg:n:0:s:ht:::,m:1:19.18.20.15.17.16|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "G:C<n>N<ns>R8:methyl<ns>R9:methyl<n>ethyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 96,
+    "sourceImage": "US20200332046A1_33.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R4</r>C(=C)C(=O)O<r>Z</r><r>R3</r>C|Sg:n:1,2,0,3,4,5:q:ht</cxsmi><stable>R4:H<n>CH3<ns>Z:a linking group with a valency of q+1<ns>q:1-2<ns>R3:a divalent group of Formula III,Formula IV,Formula V,Formula VI</stable></markush>",
+    "annotationSHA256": "6066bd8c0a04ccf5b09fdd3f63aee2e6d5b573db437c53c5eac3ed77f9f1189b",
+    "sourceCells": [
+      "R4",
+      "R3",
+      "O",
+      "O",
+      "q",
+      "Z",
+      "wherein R4 is selected from H and CH3; Z is a",
+      "linking group with a valency of q+1; q is 1 or 2; and R3",
+      "is a divalent group of Formula III, Formula IV, Formula",
+      "V, or Formula VI:"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:96:US20200332046A1_33.png",
+      "backbone": "*C(=C)C(=O)O**C |$R4;;;;;;Z;R3;$,Sg:n:1,2,0,3,4,5:q:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R4:H<n>CH3<ns>Z:a linking group with a valency of q+1<ns>q:1-2<ns>R3:a divalent group of Formula III,Formula IV,Formula V,Formula VI"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 97,
+    "sourceImage": "US20200332046A1_33_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R10</r>N(<r>R11</r>C)C(=O)O<r>R9</r>C</cxsmi><stable>R9:an alkylene<n>a heteroalkylene<n>an alkenediyl<n>a heteroalkenediyl</stable></markush>",
+    "annotationSHA256": "a1c1535f210fb0f9ced6e675e31bd6e398a4f1bd98aeea53b86b7c0134d47f52",
+    "sourceCells": [
+      "R11",
+      "R10",
+      "R9",
+      "N",
+      "O",
+      "O",
+      "wherein R9 and R11 are independently selected",
+      "from an alkylene, a heteroalkylene, an alkenediyl, and",
+      "a heteroalkenediyl; and R1 is H, an alkyl, a heteroalkyl,",
+      "an alkenyl, or a heteroalkenyl;"
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:97:US20200332046A1_33_2.png",
+      "backbone": "*N(*C)C(=O)O*C |$R10;;R11;;;;;R9;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R9:an alkylene<n>a heteroalkylene<n>an alkenediyl<n>a heteroalkenediyl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 98,
+    "sourceImage": "US20200332046A1_34.png",
+    "sourceAnnotation": "<markush><cxsmi>C=C(C)C(=O)OCCNC(=O)OCC(C)OC(=O)NCCOC(=O)C(=C)C|Sg:n:11,12,13,14:n:ht</cxsmi><stable>n:5-70</stable></markush>",
+    "annotationSHA256": "00e09a119f5f1b9c2627a8d456ef6cf06654a53074b92a845d698144bc45e2a5",
+    "sourceCells": [
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "N\\nH",
+      "H\\nN",
+      "n",
+      "wherein n is 5 to 70."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:98:US20200332046A1_34.png",
+      "backbone": "C=C(C)C(=O)OCCNC(=O)OCC(C)OC(=O)NCCOC(=O)C(=C)C |Sg:n:11,12,13,14:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "n:5-70"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 99,
+    "sourceImage": "US20200332046A1_34_2.png",
+    "sourceAnnotation": "<markush><cxsmi>C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C|Sg:n:23,24,25,26:n:ht</cxsmi><stable>n:5-70<n>5-40</stable></markush>",
+    "annotationSHA256": "47abf57e06b08579020066996cd92c4a92ff5633c7e1e1fea006d4c3fe7afbfc",
+    "sourceCells": [
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "O",
+      "n",
+      "wherein n is 5 to 70 or 5 to 40."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:99:US20200332046A1_34_2.png",
+      "backbone": "C=C(C)C(=O)OCC(COC(=O)C(=C)C)OC(=O)CCCC(=O)OCC(C)OC(=O)CCCC(=O)OC(COC(=O)C(=C)C)COC(=O)C(=C)C |Sg:n:23,24,25,26:n:ht:::,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "n:5-70<n>5-40"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 100,
+    "sourceImage": "US20220227732A1_94_c.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R2</r>NC(=O)C1=C(OC2=CC=C(<r>R16</r>)C=C2<r>R18</r>)N=CC(C(F)(F)F)=C1</cxsmi><stable>R2:3-(methylsulfonimidoyl)phenyl<n>pyridazin-4-yl<ns>R16:halogen<ns>R18:halogen</stable></markush>",
+    "annotationSHA256": "15e5f7309a9c1538e6b63d990b19144310eb3b7b8a0945cbefd1a9816fbd2ad0",
+    "sourceCells": [
+      "F",
+      "F",
+      "F",
+      "O",
+      "O",
+      "N",
+      "R2",
+      "N\\nH",
+      "R16",
+      "R18;",
+      "wherein:",
+      "R2 is 3-(methylsulfonimidoyl)phenyl or pyridazin-4-yl;",
+      "and",
+      "R16 and R18 are each halogen."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:100:US20220227732A1_94_c.png",
+      "backbone": "*NC(=O)C1=C(OC2=CC=C(*)C=C2*)N=CC(C(F)(F)F)=C1 |$R2;;;;;;;;;;;R16;;;R18;;;;;;;;$,|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "R2:3-(methylsulfonimidoyl)phenyl<n>pyridazin-4-yl<ns>R16:halogen<ns>R18:halogen"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  },
+  {
+    "id": 101,
+    "sourceImage": "US20220227732A1_c_2.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1</r>OC1=C(C(=O)NC2=C[N+]([O-])=CC=C2)C=C(C(F)(F)F)C=N1</cxsmi><stable>R1:4-fluoro-2-methylphenyl<n>4-fluoro-2-methoxyphenyl<n>2,4-difluoro-phenyl<n>4-difluoromethoxyphenyl<n>2,4-dimethoxyphenyl<n>2-chloro-4-methoxyphenyl<n>3,4-difluorophenyl<n>2-chloro-4-fluorophenyl</stable></markush>",
+    "annotationSHA256": "d3ffb5b339c16f8348392e258abc7569ddeab7e7c4ceef8ef3f61d72c00d5fe2",
+    "sourceCells": [
+      ";",
+      "F",
+      "F",
+      "F",
+      "O",
+      "O-",
+      "N+",
+      "N\\nH",
+      "O",
+      "N",
+      "R1",
+      "wherein R1 is selected from the group consisting of 4-fluoro-",
+      "2-methylphenyl, 4-fluoro-2-methoxyphenyl, 2,4-difluoro-",
+      "phenyl, 4-difluoromethoxyphenyl, 2,4-dimethoxyphenyl,",
+      "2-chloro-4-methoxyphenyl, 3,4-difluorophenyl, and",
+      "2-chloro-4-fluorophenyl."
+    ],
+    "scope": "finite interpretation of the supplied annotation",
+    "definition": {
+      "sourceIdentifier": "M2S:101:US20220227732A1_c_2.png",
+      "backbone": "*OC1=C(C(=O)NC2=C[N+]([O-])=CC=C2)C=C(C(F)(F)F)C=N1 |$R1;;;;;;;;;;;;;;;;;;;;;$,|",
+      "reviewed": true,
+      "unresolvedConditions": [],
+      "variables": [
+        {
+          "label": "R1",
+          "sourceText": "4-fluoro-2-methylphenyl<n>4-fluoro-2-methoxyphenyl<n>2,4-difluoro-phenyl<n>4-difluoromethoxyphenyl<n>2,4-dimethoxyphenyl<n>2-chloro-4-methoxyphenyl<n>3,4-difluorophenyl<n>2-chloro-4-fluorophenyl",
+          "alternatives": [
+            "c1c(C)cc(F)cc1",
+            "c1c(OC)cc(F)cc1",
+            "c1c(F)cc(F)cc1",
+            "c1ccc(OC(F)F)cc1",
+            "c1c(OC)cc(OC)cc1",
+            "c1c(Cl)cc(OC)cc1",
+            "c1cc(F)c(F)cc1",
+            "c1c(Cl)cc(F)cc1"
+          ],
+          "excludedAlternativeIndices": [],
+          "occurrence": ">0",
+          "restH": false
+        }
+      ]
+    },
+    "expectedConfigurations": 8,
+    "positiveSMILES": [],
+    "negativeSMILES": [
+      "CC"
+    ]
+  },
+  {
+    "id": 102,
+    "sourceImage": "US20230117605A1_253.png",
+    "sourceAnnotation": "<markush><cxsmi><r>R1a</r>C.CC1=NC=NC2=C1C=CC=C2|Sg:n:0:m:ht,m:1:7.8.9.10.11.12</cxsmi><stable>m:0-5<ns>R1a:deuterium<n>halogen<n>alkyl<n>haloalkyl<n>alkoxy<n>hydroxy<n>CN<n>heteroaryl</stable></markush>",
+    "annotationSHA256": "4f93dc9767c2fed2d6e0c478f5e15d3636bbbc38c78ec814dfb99f6a5c7248e7",
+    "sourceCells": [
+      "(R1a)m",
+      "N",
+      "N",
+      "wherein m is 0, 1, 2, 3, 4, or 5 and each R1a is, where",
+      "applicable, independently deuterium, halogen, alkyl, haloal-",
+      "kyl, alkoxy, hydroxy, -CN, or heteroaryl, wherein the",
+      "alkyl, haloalkyl, alkoxy, hydroxy, and heteroaryl of R1a are",
+      "independently optionally substituted by deuterium."
+    ],
+    "scope": "unresolved; source terms and omitted context require interpretation",
+    "definition": {
+      "sourceIdentifier": "M2S:102:US20230117605A1_253.png",
+      "backbone": "*C.CC1=NC=NC2=C1C=CC=C2 |$R1a;;;;;;;;;;;;$,Sg:n:0:m:ht:::,m:1:10.9.11.8.7.12|",
+      "reviewed": false,
+      "unresolvedConditions": [
+        "m:0-5<ns>R1a:deuterium<n>halogen<n>alkyl<n>haloalkyl<n>alkoxy<n>hydroxy<n>CN<n>heteroaryl"
+      ],
+      "variables": []
+    },
+    "expectedConfigurations": null,
+    "positiveSMILES": [],
+    "negativeSMILES": []
+  }
+]

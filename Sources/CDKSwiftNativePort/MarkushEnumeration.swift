@@ -4,6 +4,10 @@ public struct CDKMarkushConfiguration: Sendable {
     public let molecule: Molecule
     /// Counts in the source scaffold's repeat-Sgroup order.
     public let repeatCounts: [Int]
+    public let positionVariationTargets: [Int: Int]
+    public let stereoInversions: [Int]
+    public let assignments: [CDKRGroupAssignment]
+    public let sourceByMemberAtomID: [Int: CDKMarkushAtomSource]
 }
 
 /// Bounded expansion of finite, two-ended repeat units followed by R-group substitution.
@@ -32,11 +36,66 @@ public enum CDKMarkushEnumerator {
             throw CDKRGroupEnumerationError.invalidQuery("Limits must be positive.")
         }
         try checkpoint()
+        let stereo = try MarkushStereoPlan(molecule)
+        if stereo.hasMetadata {
+            var total = 0
+            var stopped = false
+            try stereo.enumerate(checkpoint: checkpoint) { graph, inversions in
+                try enumerate(
+                    graph, maximumConfigurations: maximumConfigurations, maximumAtoms: maximumAtoms,
+                    checkpoint: checkpoint
+                ) { configuration in
+                    guard total < maximumConfigurations else {
+                        throw CDKRGroupEnumerationError.configurationLimitExceeded(maximumConfigurations)
+                    }
+                    total += 1
+                    stopped = try !visit(
+                        .init(
+                            molecule: configuration.molecule,
+                            repeatCounts: configuration.repeatCounts,
+                            positionVariationTargets: configuration.positionVariationTargets,
+                            stereoInversions: inversions,
+                            assignments: configuration.assignments,
+                            sourceByMemberAtomID: configuration.sourceByMemberAtomID))
+                    return !stopped
+                }
+                return !stopped
+            }
+            return total
+        }
+        let positions = try MarkushPositionPlan(molecule)
+        if !positions.sites.isEmpty {
+            var total = 0
+            var stopped = false
+            try positions.enumerate(checkpoint: checkpoint) { graph, targets in
+                try enumerate(
+                    graph, maximumConfigurations: maximumConfigurations, maximumAtoms: maximumAtoms,
+                    checkpoint: checkpoint
+                ) { configuration in
+                    guard total < maximumConfigurations else {
+                        throw CDKRGroupEnumerationError.configurationLimitExceeded(maximumConfigurations)
+                    }
+                    total += 1
+                    stopped = try !visit(
+                        .init(
+                            molecule: configuration.molecule,
+                            repeatCounts: configuration.repeatCounts, positionVariationTargets: targets,
+                            stereoInversions: configuration.stereoInversions,
+                            assignments: configuration.assignments,
+                            sourceByMemberAtomID: configuration.sourceByMemberAtomID))
+                    return !stopped
+                }
+                return !stopped
+            }
+            return total
+        }
         let molecule = try CDKMarkushVariableLabels.resolve(molecule).molecule
         let repeats = try RepeatExpansionPlan(molecule)
         var count = 0
         var stopped = false
-        func deliver(_ member: Molecule, counts: [Int]) throws -> Bool {
+        func deliver(_ member: Molecule, counts: [Int], assignments: [CDKRGroupAssignment], origins: [Int: Int]) throws
+            -> Bool
+        {
             try Task.checkCancellation()
             try checkpoint()
             guard !CDKMarkushStructure.requiresSpecifiedStructure(member) else {
@@ -51,10 +110,28 @@ public enum CDKMarkushEnumerator {
                 throw CDKRGroupEnumerationError.configurationLimitExceeded(maximumConfigurations)
             }
             count += 1
-            stopped = try !visit(CDKMarkushConfiguration(molecule: member, repeatCounts: counts))
+            var sources: [Int: CDKMarkushAtomSource] = [:]
+            for atom in member.atoms {
+                if let original = origins[atom.id] {
+                    sources[atom.id] = .init(
+                        atomID: original, siteAtomID: nil, rGroupNumber: nil, alternativeIndex: nil)
+                }
+            }
+            for assignment in assignments {
+                for (source, target) in assignment.memberAtomIDByFragmentAtomID {
+                    sources[target] = .init(
+                        atomID: origins[source] ?? source,
+                        siteAtomID: origins[assignment.siteAtomID] ?? assignment.siteAtomID,
+                        rGroupNumber: assignment.rGroupNumber, alternativeIndex: assignment.alternativeIndex)
+                }
+            }
+            stopped = try !visit(
+                CDKMarkushConfiguration(
+                    molecule: member, repeatCounts: counts, positionVariationTargets: [:], stereoInversions: [],
+                    assignments: assignments, sourceByMemberAtomID: sources))
             return !stopped
         }
-        func expand(_ index: Int, _ graph: Molecule, _ counts: [Int]) throws {
+        func expand(_ index: Int, _ graph: Molecule, _ counts: [Int], _ origins: [Int: Int]) throws {
             try Task.checkCancellation()
             try checkpoint()
             guard !stopped else { return }
@@ -68,25 +145,26 @@ public enum CDKMarkushEnumerator {
                     || !expanded.rGroupLogicDefinitions.isEmpty
                 {
                     let query = try CDKRGroupQueryManipulator.toRGroupQuery(expanded)
-                    try query.enumerateConfigurations(
+                    try query.enumerateConfigurationsWithAssignments(
                         maximumConfigurations: maximumConfigurations, checkpoint: checkpoint
                     ) {
-                        try deliver($0, counts: counts)
+                        try deliver($0.molecule, counts: counts, assignments: $0.assignments, origins: origins)
                     }
                 } else {
-                    _ = try deliver(expanded, counts: counts)
+                    _ = try deliver(expanded, counts: counts, assignments: [], origins: origins)
                 }
                 return
             }
             let unit = repeats.units[index]
             for repetitions in unit.range {
+                var expandedOrigins = origins
                 let expanded = try unit.expand(
-                    graph, count: repetitions, maximumAtoms: maximumAtoms)
-                try expand(index + 1, expanded, counts + [repetitions])
+                    graph, count: repetitions, maximumAtoms: maximumAtoms, origins: &expandedOrigins)
+                try expand(index + 1, expanded, counts + [repetitions], expandedOrigins)
                 if stopped { return }
             }
         }
-        try expand(0, molecule, [])
+        try expand(0, molecule, [], Dictionary(uniqueKeysWithValues: molecule.atoms.map { ($0.id, $0.id) }))
         return count
     }
 }
@@ -97,8 +175,10 @@ private struct RepeatExpansionPlan {
         let crossingBondIDs: [Int]
         let range: ClosedRange<Int>
 
-        func expand(_ molecule: Molecule, count: Int, maximumAtoms: Int) throws -> Molecule {
-            guard molecule.atoms.count + atomIDs.count * (count - 1) <= maximumAtoms else {
+        func expand(_ molecule: Molecule, count: Int, maximumAtoms: Int, origins: inout [Int: Int]) throws -> Molecule {
+            guard molecule.atoms.count <= maximumAtoms,
+                atomIDs.count <= (maximumAtoms - molecule.atoms.count) / max(1, count - 1) || count == 1
+            else {
                 throw CDKRGroupEnumerationError.unsupportedFeature(
                     "Repeat expansion exceeds the atom limit.")
             }
@@ -123,8 +203,12 @@ private struct RepeatExpansionPlan {
             for _ in 1..<count {
                 var map: [Int: Int] = [:]
                 for atom in sourceAtoms {
+                    guard nextAtom < Int.max else {
+                        throw CDKRGroupEnumerationError.invalidQuery("Atom IDs overflow during repetition.")
+                    }
                     nextAtom += 1
                     map[atom.id] = nextAtom
+                    origins[nextAtom] = origins[atom.id] ?? atom.id
                 }
                 maps.append(map)
             }
@@ -143,11 +227,20 @@ private struct RepeatExpansionPlan {
                     output.atoms.append(cloned)
                 }
                 for bond in sourceBonds {
+                    guard nextBond < Int.max else {
+                        throw CDKRGroupEnumerationError.invalidQuery("Bond IDs overflow during repetition.")
+                    }
+                    guard nextBond < Int.max else {
+                        throw CDKRGroupEnumerationError.invalidQuery("Bond IDs overflow during repetition.")
+                    }
                     nextBond += 1
                     output.bonds.append(
                         RGroupEnumerationPlan.copyBond(
                             bond, id: nextBond,
                             a1: map[bond.a1]!, a2: map[bond.a2]!, mapReference: { map[$0] ?? $0 }))
+                }
+                guard nextBond < Int.max else {
+                    throw CDKRGroupEnumerationError.invalidQuery("Bond IDs overflow during repetition.")
                 }
                 nextBond += 1
                 output.bonds.append(

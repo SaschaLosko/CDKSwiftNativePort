@@ -39,6 +39,18 @@ extension CDKRGroupQuery {
         checkpoint: () throws -> Void = {},
         _ visit: (Molecule) throws -> Bool
     ) throws -> Int {
+        try enumerateConfigurationsWithAssignments(
+            maximumConfigurations: maximumConfigurations, checkpoint: checkpoint
+        ) { try visit($0.molecule) }
+    }
+
+    /// Streams the same configurations together with each site's substitution decision.
+    @discardableResult
+    public func enumerateConfigurationsWithAssignments(
+        maximumConfigurations: Int = 100_000,
+        checkpoint: () throws -> Void = {},
+        _ visit: (CDKRGroupConfiguration) throws -> Bool
+    ) throws -> Int {
         guard maximumConfigurations > 0 else {
             throw CDKRGroupEnumerationError.invalidQuery(
                 "The configuration limit must be positive.")
@@ -257,12 +269,13 @@ struct RGroupEnumerationPlan {
         return (neighbor.id, id)
     }
 
-    func configuration(_ assignments: [Int: Int]) throws -> Molecule {
+    func configuration(_ assignments: [Int: Int]) throws -> CDKRGroupConfiguration {
         var result = query.rootStructure
         var nextAtomID = result.atoms.map(\.id).max() ?? 0
         var nextBondID = result.bonds.map(\.id).max() ?? 0
         var replacements: [Int: [Int: Int]] = [:]  // Bond -> root site -> replacement atom.
         var fragments: [Fragment] = []
+        var decisions: [CDKRGroupAssignment] = []
         func nextID(_ value: inout Int) throws -> Int {
             let increment = value.addingReportingOverflow(1)
             guard !increment.overflow else {
@@ -273,7 +286,15 @@ struct RGroupEnumerationPlan {
         }
         for group in groups {
             for site in group.sites {
-                guard let index = assignments[site.id], index >= 0 else { continue }
+                let neighbors = attachments[site.id, default: []].map { $0.a1 == site.id ? $0.a2 : $0.a1 }
+                guard let index = assignments[site.id], index >= 0 else {
+                    decisions.append(
+                        .init(
+                            rGroupNumber: group.number, siteAtomID: site.id,
+                            alternativeIndex: nil, scaffoldAttachmentAtomIDs: neighbors,
+                            fragmentAttachmentAtomIDs: [], memberAtomIDByFragmentAtomID: [:]))
+                    continue
+                }
                 let chosen = group.definition.rGroups[index]
                 let dummies = Set(chosen.group.atoms.filter(Self.isDummy).map(\.id))
                 var map: [Int: Int] = [:]
@@ -302,6 +323,13 @@ struct RGroupEnumerationPlan {
                     Fragment(
                         source: chosen.group, atomMap: map, dummyIDs: dummies,
                         dummyRootBonds: dummyBonds, offset: offset))
+                let fragmentAttachments = try (1...2).compactMap { try Self.attachment(chosen, ordinal: $0)?.atom }
+                decisions.append(
+                    .init(
+                        rGroupNumber: group.number, siteAtomID: site.id,
+                        alternativeIndex: index, scaffoldAttachmentAtomIDs: neighbors,
+                        fragmentAttachmentAtomIDs: fragmentAttachments,
+                        memberAtomIDByFragmentAtomID: map))
             }
         }
         func rootEndpoint(_ id: Int, bond: Bond) -> Int? {
@@ -388,7 +416,7 @@ struct RGroupEnumerationPlan {
         result.highlightedAtomIDs.removeAll { removedRootIDs.contains($0) }
         let bondIDs = Set(result.bonds.map(\.id))
         result.highlightedBondIDs.removeAll { !bondIDs.contains($0) }
-        return result
+        return CDKRGroupConfiguration(molecule: result, assignments: decisions)
     }
 
     static func copyBond(_ bond: Bond, id: Int, a1: Int, a2: Int, mapReference: (Int) -> Int?)
