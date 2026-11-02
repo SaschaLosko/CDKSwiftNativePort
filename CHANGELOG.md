@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.45 — 2026-11-02
+
+- Preserve whether coordinates were generated when encoding and decoding a
+  molecule. This provenance prevents synthesized depiction geometry from being
+  mistaken for source stereochemistry after persistence. Legacy payloads retain
+  their unspecified provenance.
+
 ## 1.4.44 — 2026-11-02
 
 - Add lexical alternative-local definitions with shadowing, cycle checks and

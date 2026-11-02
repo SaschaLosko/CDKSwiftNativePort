@@ -409,6 +409,7 @@ public struct Molecule: Hashable, Codable, Sendable {
         highlightedBondIDs =
             try container.decodeIfPresent([Int].self, forKey: .highlightedBondIDs) ?? []
         cxState = try container.decodeIfPresent(CDKCxSmilesState.self, forKey: .cxState)
+        coordinatesAreGenerated = try container.decodeIfPresent(Bool.self, forKey: .coordinatesAreGenerated)
         dataFields = try container.decodeIfPresent([String: [String]].self, forKey: .dataFields) ?? [:]
         dataFieldOrder = try container.decodeIfPresent([String].self, forKey: .dataFieldOrder) ?? []
         dataFieldOrder = Molecule.normalizedDataFieldOrder(
@@ -429,6 +430,7 @@ public struct Molecule: Hashable, Codable, Sendable {
         try container.encode(highlightedAtomIDs, forKey: .highlightedAtomIDs)
         try container.encode(highlightedBondIDs, forKey: .highlightedBondIDs)
         try container.encodeIfPresent(cxState, forKey: .cxState)
+        try container.encodeIfPresent(coordinatesAreGenerated, forKey: .coordinatesAreGenerated)
         try container.encode(dataFields, forKey: .dataFields)
         try container.encode(orderedDataFieldNames, forKey: .dataFieldOrder)
         try container.encode(rGroupLogicDefinitions, forKey: .rGroupLogicDefinitions)
