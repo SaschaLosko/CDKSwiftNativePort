@@ -255,6 +255,29 @@ private struct MatchingGraph {
                     left: refs[1], right: refs[2],
                     leftLigand: removed.contains(refs[0]) ? refs[1] : refs[0],
                     rightLigand: removed.contains(refs[3]) ? refs[2] : refs[3], cis: stereo == .cis)
+                // Importers may retain SMILES directions alongside the explicit
+                // geometric element. Account for both without treating those
+                // directions as unrelated tetrahedral wedges below.
+                var referenceDirections: [Int] = []
+                for (center, reference) in [(refs[1], refs[0]), (refs[2], refs[3])] {
+                    let sides = source.bonds(forAtom: center).filter {
+                        $0.order == .single && direction($0, awayFrom: center) != nil
+                    }
+                    guard sides.count <= 2,
+                        sides.count != 2
+                            || direction(sides[0], awayFrom: center) != direction(sides[1], awayFrom: center)
+                    else { throw MatchFailure(.invalidInput, "Conflicting alkene directions.") }
+                    if let side = sides.first, let sign = direction(side, awayFrom: center) {
+                        let ligand = side.a1 == center ? side.a2 : side.a1
+                        referenceDirections.append(ligand == reference ? sign : -sign)
+                    }
+                    interpretedDirectionalBonds.formUnion(sides.map(\.id))
+                }
+                if referenceDirections.count == 2,
+                    (referenceDirections[0] == referenceDirections[1]) != (stereo == .cis)
+                {
+                    throw MatchFailure(.invalidInput, "Explicit and directional alkene stereo disagree.")
+                }
             } else {
                 func isAlkeneDirection(_ side: Bond, center: Int) -> Bool {
                     guard side.order == .single, direction(side, awayFrom: center) != nil else { return false }

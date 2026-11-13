@@ -589,7 +589,7 @@ public final class CDKSmilesParser {
             if order.count == 4 { molecule.atoms[index].ligandOrderingAtomIDs = order }
         }
         try validateAromaticConstraints(in: molecule)
-        annotateDirectionalDoubleBonds(in: &molecule)
+        try annotateDirectionalDoubleBonds(in: &molecule)
         if generateCoordinates {
             molecule = Depiction2DGenerator.generate(for: molecule)
             molecule.coordinatesAreGenerated = true
@@ -667,7 +667,7 @@ public final class CDKSmilesParser {
         }
     }
 
-    private func annotateDirectionalDoubleBonds(in molecule: inout Molecule) {
+    private func annotateDirectionalDoubleBonds(in molecule: inout Molecule) throws {
         func isDirectional(_ stereo: BondStereo) -> Bool {
             switch stereo {
             case .up, .down, .upReversed, .downReversed:
@@ -680,7 +680,7 @@ public final class CDKSmilesParser {
         for idx in molecule.bonds.indices where molecule.bonds[idx].order == .double {
             let db = molecule.bonds[idx]
 
-            let sideAHasDirection = molecule.bonds.contains { bond in
+            let sideA = molecule.bonds.filter { bond in
                 guard bond.id != db.id, bond.order == .single, isDirectional(bond.stereo) else {
                     return false
                 }
@@ -689,7 +689,7 @@ public final class CDKSmilesParser {
                 return false
             }
 
-            let sideBHasDirection = molecule.bonds.contains { bond in
+            let sideB = molecule.bonds.filter { bond in
                 guard bond.id != db.id, bond.order == .single, isDirectional(bond.stereo) else {
                     return false
                 }
@@ -698,8 +698,25 @@ public final class CDKSmilesParser {
                 return false
             }
 
-            if sideAHasDirection && sideBHasDirection {
+            if let left = sideA.first, let right = sideB.first {
+                func direction(_ bond: Bond, from center: Int) -> Int {
+                    let sign = bond.stereo == .up || bond.stereo == .downReversed ? 1 : -1
+                    return bond.a1 == center ? sign : -sign
+                }
+                for (side, center) in [(sideA, db.a1), (sideB, db.a2)] {
+                    guard side.count <= 2,
+                        side.count != 2 || direction(side[0], from: center) != direction(side[1], from: center)
+                    else { throw ChemError.parseFailed("Conflicting geometric stereo directions.") }
+                }
+                // Keep directional bonds for isomeric SMILES output, and retain
+                // the actual geometric relationship for non-SMILES consumers.
                 molecule.bonds[idx].stereo = .either
+                molecule.bonds[idx].doubleBondStereo =
+                    direction(left, from: db.a1) == direction(right, from: db.a2) ? .cis : .trans
+                molecule.bonds[idx].stereoReferenceAtomIDs = [
+                    left.a1 == db.a1 ? left.a2 : left.a1, db.a1, db.a2,
+                    right.a1 == db.a2 ? right.a2 : right.a1,
+                ]
             }
         }
     }

@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## Unreleased
+
+- Preserve circular fingerprint stereochemistry under atom renumbering and bond
+  reordering by using ordered stereo carriers, as in upstream CDK. Persisted
+  circular fingerprint caches must be rebuilt when adopting this change.
+- Preserve explicit geometric stereo references when parsing directional SMILES,
+  including graph-only parsing, so Standard InChI retains the double-bond layer.
+  Finite matching accepts consistent explicit-plus-directional metadata and
+  rejects contradictions.
+- Add reproducible chemistry invariants: nine structures across eight seeded
+  graph permutations, isomeric SMILES and Codable round trips, and distinct
+  tetrahedral/alkene stereoisomers. Full validation: 683 tests pass on macOS and
+  Ubuntu. This bounded corpus does not imply complete upstream chemistry parity.
+
+The carrier ordering follows
+[upstream CircularFingerprinter](https://github.com/cdk/cdk/blob/main/descriptor/fingerprint/src/main/java/org/openscience/cdk/fingerprint/CircularFingerprinter.java).
+
 ## 1.4.45 — 2026-11-02
 
 - Preserve whether coordinates were generated when encoding and decoding a

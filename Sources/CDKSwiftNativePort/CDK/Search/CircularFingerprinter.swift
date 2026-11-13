@@ -462,10 +462,21 @@ private struct CircularFingerprintCalculator {
         for atomIndex in atoms.indices {
             let atom = atoms[atomIndex]
             guard atom.chirality != .none else { continue }
-            var rubric = atomAdjacency[atomIndex]
-            guard rubric.count == 3 || rubric.count == 4 else { continue }
-            if rubric.count == 3, hydrogenCounts[atomIndex] == 1 {
-                rubric.append(-1)
+            // Chirality is relative to the stored carriers, never the current
+            // bond-array order. The focus itself represents an implicit H.
+            // This follows upstream CircularFingerprinter.rubricTetrahedralsCdk.
+            var rubric: [Int]
+            if let carriers = atom.ligandOrderingAtomIDs {
+                rubric = carriers.compactMap { id in
+                    id == atom.id ? -1 : atomIDToIndex[id]
+                }
+            } else {
+                // Legacy molecules without explicit carriers retain their
+                // historical adjacency-based interpretation.
+                rubric = atomAdjacency[atomIndex]
+                if rubric.count == 3, hydrogenCounts[atomIndex] == 1 {
+                    rubric.append(-1)
+                }
             }
             guard rubric.count == 4 else { continue }
             if atom.chirality == .anticlockwise {
