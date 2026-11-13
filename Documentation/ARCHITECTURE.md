@@ -47,6 +47,10 @@ The host app or extension owns:
   - identifier and molecular property services
 - `Sources/CDKSwiftNativePort/CDK/Smiles`
   - SMILES, CXSMILES, reaction SMILES parsing and generation
+  - CX state is a standalone value model. The internal layer decoder reads text;
+    metadata application and R-group graph assembly are separate responsibilities.
+    `CDKCxSmilesParser` retains the public entry points and malformed-layer title
+    fallback. Decoding never publishes a partially accepted metadata state.
 - `Sources/CDKSwiftNativePort/CDK/InChI`
   - InChI parse/generate facades
 - `Sources/CDKSwiftNativePort/CDK/Layout`
@@ -55,6 +59,11 @@ The host app or extension owns:
     ring-placement, refinement and geometry stages; these helpers remain module-internal
 - `Sources/CDKSwiftNativePort/CDK/Rendering`
   - depiction preprocessing, SVG generation, scene generation, highlight/query/Sgroup rendering
+  - Metal scene values, preparation cache, fitting metrics and bond primitives
+    have separate owners. Bond primitives use immutable per-render metrics;
+    viewport transforms stay outside the shared preparation cache. The existing
+    lock protects both cache entries and LRU order, while preparation happens
+    outside that lock. The public scene builder and rendered chemistry are unchanged.
 - `Sources/CDKSwiftNativePort/CDK/IO`
   - reader/writer implementations and unified import/export dispatch
 - `Sources/CDKSwiftNativePort/CDK/QSAR`

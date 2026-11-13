@@ -3,97 +3,6 @@
 #endif
 import Foundation
 
-public struct CDKMetalDepictionScene: Hashable {
-    public struct BackgroundBox: Hashable {
-        public let rect: CGRect
-        public let cornerRadius: CGFloat
-        public let color: CDKRenderColor
-        public let opacity: CGFloat
-
-        public init(
-            rect: CGRect,
-            cornerRadius: CGFloat,
-            color: CDKRenderColor,
-            opacity: CGFloat = 1.0
-        ) {
-            self.rect = rect
-            self.cornerRadius = cornerRadius
-            self.color = color
-            self.opacity = opacity
-        }
-    }
-
-    public struct LineSegment: Hashable {
-        public let from: CGPoint
-        public let to: CGPoint
-        public let width: CGFloat
-        public let opacity: CGFloat
-        public let color: CDKRenderColor
-
-        public init(from: CGPoint, to: CGPoint, width: CGFloat, opacity: CGFloat, color: CDKRenderColor) {
-            self.from = from
-            self.to = to
-            self.width = width
-            self.opacity = opacity
-            self.color = color
-        }
-    }
-
-    public struct AtomLabel: Identifiable, Hashable {
-        public let id: Int
-        public let text: String
-        public let position: CGPoint
-        public let fontSize: CGFloat
-        public let aromatic: Bool
-        public let color: CDKRenderColor
-        public let italicized: Bool
-        public let drawsBackground: Bool
-        public let usesGlowOverlay: Bool
-        public let suppressesMatchedBackground: Bool
-
-        public init(
-            id: Int,
-            text: String,
-            position: CGPoint,
-            fontSize: CGFloat,
-            aromatic: Bool,
-            color: CDKRenderColor,
-            italicized: Bool = false,
-            drawsBackground: Bool = false,
-            usesGlowOverlay: Bool = false,
-            suppressesMatchedBackground: Bool = false
-        ) {
-            self.id = id
-            self.text = text
-            self.position = position
-            self.fontSize = fontSize
-            self.aromatic = aromatic
-            self.color = color
-            self.italicized = italicized
-            self.drawsBackground = drawsBackground
-            self.usesGlowOverlay = usesGlowOverlay
-            self.suppressesMatchedBackground = suppressesMatchedBackground
-        }
-    }
-
-    public let gridSegments: [LineSegment]
-    public let backgroundBoxes: [BackgroundBox]
-    public let bondSegments: [LineSegment]
-    public let labels: [AtomLabel]
-
-    public init(
-        gridSegments: [LineSegment],
-        backgroundBoxes: [BackgroundBox] = [],
-        bondSegments: [LineSegment],
-        labels: [AtomLabel]
-    ) {
-        self.gridSegments = gridSegments
-        self.backgroundBoxes = backgroundBoxes
-        self.bondSegments = bondSegments
-        self.labels = labels
-    }
-}
-
 private struct MetalRenderEdgeKey: Hashable {
     let a: Int
     let b: Int
@@ -104,220 +13,7 @@ private struct MetalRenderEdgeKey: Hashable {
     }
 }
 
-private struct MetalPreparedDepictionKey: Hashable {
-    let molecule: Molecule
-    let style: RenderStyle
-}
-
-private struct MetalPreparedDepictionData {
-    let depictionMolecule: Molecule
-    let boundingBox: CGRect?
-    let degreeByAtomID: [Int: Int]
-    let aromaticRings: [[Int]]
-    let aromaticBondIDs: Set<Int>
-    let conjugatedRings: [[Int]]
-}
-
-private enum MetalPreparedDepictionCache {
-    private static let maxEntries = 16
-    private static let lock = NSLock()
-    nonisolated(unsafe) private static var entries: [MetalPreparedDepictionKey: MetalPreparedDepictionData] = [:]
-    nonisolated(unsafe) private static var lruOrder: [MetalPreparedDepictionKey] = []
-
-    static func preparedData(molecule: Molecule, style: RenderStyle) -> MetalPreparedDepictionData {
-        let key = MetalPreparedDepictionKey(molecule: molecule, style: style)
-
-        lock.lock()
-        if let cached = entries[key] {
-            touchLRU(key)
-            lock.unlock()
-            return cached
-        }
-        lock.unlock()
-
-        let depictionMolecule = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: style)
-        let aromaticRings = depictionMolecule.aromaticDisplayRings()
-        let aromaticBondIDs = depictionMolecule.aromaticDisplayBondIDs()
-        let conjugatedRings = depictionMolecule.simpleCycles(maxSize: 10).filter { ring in
-            guard ring.count >= 5 else { return false }
-            let ringBonds: [Bond] = (0..<ring.count).compactMap { idx in
-                depictionMolecule.bond(between: ring[idx], and: ring[(idx + 1) % ring.count])
-            }
-            guard ringBonds.count == ring.count else { return false }
-            let piCount = ringBonds.reduce(0) { partial, bond in
-                partial + ((bond.order == .double || bond.order == .aromatic) ? 1 : 0)
-            }
-            return piCount >= 2 && ringBonds.allSatisfy { $0.order != .triple }
-        }
-
-        var degreeByAtomID: [Int: Int] = [:]
-        for bond in depictionMolecule.bonds {
-            degreeByAtomID[bond.a1, default: 0] += 1
-            degreeByAtomID[bond.a2, default: 0] += 1
-        }
-
-        let prepared = MetalPreparedDepictionData(
-            depictionMolecule: depictionMolecule,
-            boundingBox: depictionMolecule.boundingBox(),
-            degreeByAtomID: degreeByAtomID,
-            aromaticRings: aromaticRings,
-            aromaticBondIDs: aromaticBondIDs,
-            conjugatedRings: conjugatedRings)
-
-        lock.lock()
-        if let cached = entries[key] {
-            touchLRU(key)
-            lock.unlock()
-            return cached
-        }
-        entries[key] = prepared
-        lruOrder.append(key)
-        while lruOrder.count > maxEntries {
-            let stale = lruOrder.removeFirst()
-            entries.removeValue(forKey: stale)
-        }
-        lock.unlock()
-        return prepared
-    }
-
-    private static func touchLRU(_ key: MetalPreparedDepictionKey) {
-        guard let index = lruOrder.firstIndex(of: key) else { return }
-        if index == lruOrder.count - 1 { return }
-        let moved = lruOrder.remove(at: index)
-        lruOrder.append(moved)
-    }
-}
-
 public enum CDKMetalDepictionSceneBuilder {
-    private static func representativeBondLength(
-        molecule: Molecule,
-        positionsByAtomID: [Int: CGPoint]
-    ) -> CGFloat? {
-        let bondLengths = molecule.bonds.compactMap { bond -> CGFloat? in
-            guard let p1 = positionsByAtomID[bond.a1],
-                let p2 = positionsByAtomID[bond.a2]
-            else {
-                return nil
-            }
-            let length = hypot(p2.x - p1.x, p2.y - p1.y)
-            return (length.isFinite && length > 0.0001) ? length : nil
-        }.sorted()
-
-        guard !bondLengths.isEmpty else { return nil }
-        let mid = bondLengths.count / 2
-        if bondLengths.count.isMultiple(of: 2) {
-            return (bondLengths[mid - 1] + bondLengths[mid]) * 0.5
-        }
-        return bondLengths[mid]
-    }
-
-    private static func labelDensityScale(visibleAtomLabelCount: Int) -> CGFloat {
-        let extraLabels = max(0, visibleAtomLabelCount - 2)
-        return (1.0 - (CGFloat(extraLabels) * 0.026)).clamped(to: 0.80...1.0)
-    }
-
-    private static func sceneProminenceBoost(
-        showCarbons: Bool,
-        atomCount: Int,
-        bondCount: Int,
-        visibleAtomLabelCount: Int
-    ) -> CGFloat {
-        let extraVisibleLabels = max(0, visibleAtomLabelCount - 1)
-        let hiddenCarbonBias =
-            showCarbons
-            ? CGFloat.zero
-            : max(0, 0.12 - (CGFloat(max(0, visibleAtomLabelCount - 4)) * 0.03))
-        let macroPenalty =
-            (CGFloat(max(0, atomCount - 40)) * 0.004)
-            + (CGFloat(max(0, bondCount - 42)) * 0.003)
-        return
-            (1.60
-            + hiddenCarbonBias
-            - (CGFloat(extraVisibleLabels) * 0.07)
-            - macroPenalty)
-            .clamped(to: 1.0...1.72)
-    }
-
-    private static func zoomVisualScale(
-        _ zoom: CGFloat,
-        zoomOutExponent: CGFloat,
-        zoomInExponent: CGFloat
-    ) -> CGFloat {
-        let safeZoom = max(0.2, zoom)
-        if safeZoom >= 1.0 {
-            return pow(safeZoom, zoomInExponent)
-        }
-        return pow(safeZoom, zoomOutExponent)
-    }
-
-    private static func autoFitLabelFontSize(
-        style: RenderStyle,
-        baseViewportFontSize: CGFloat,
-        representativeBondLength: CGFloat?,
-        atomCount: Int,
-        bondCount: Int,
-        visibleAtomLabelCount: Int,
-        minimumLabelFontSize: CGFloat
-    ) -> CGFloat {
-        let clampedMinimum = max(2.5, minimumLabelFontSize)
-        guard let representativeBondLength,
-            representativeBondLength.isFinite,
-            representativeBondLength > 0.0001
-        else {
-            return max(clampedMinimum, baseViewportFontSize)
-        }
-        if baseViewportFontSize <= clampedMinimum + 0.0001 {
-            return clampedMinimum
-        }
-
-        let densityScale = labelDensityScale(visibleAtomLabelCount: visibleAtomLabelCount)
-        let prominenceBoost = sceneProminenceBoost(
-            showCarbons: style.showCarbons,
-            atomCount: atomCount,
-            bondCount: bondCount,
-            visibleAtomLabelCount: visibleAtomLabelCount)
-        let preferredMinimumRatio = ((style.fontSize / 152.0) * densityScale).clamped(to: 0.126...0.166)
-        let ratioFloorFontSize = representativeBondLength * preferredMinimumRatio
-        let prominenceFontSize = baseViewportFontSize * prominenceBoost
-        let boostedFontSize = max(baseViewportFontSize, max(ratioFloorFontSize, prominenceFontSize))
-        let absoluteMaxFontSize = max(
-            clampedMinimum,
-            baseViewportFontSize * (prominenceBoost + 0.10).clamped(to: 1.16...1.50))
-        return boostedFontSize.clamped(to: clampedMinimum...absoluteMaxFontSize)
-    }
-
-    private static func autoFitBondWidth(
-        style: RenderStyle,
-        baseViewportBondWidth: CGFloat,
-        representativeBondLength: CGFloat?,
-        atomCount: Int,
-        bondCount: Int,
-        visibleAtomLabelCount: Int
-    ) -> CGFloat {
-        guard let representativeBondLength,
-            representativeBondLength.isFinite,
-            representativeBondLength > 0.0001
-        else {
-            return max(1.0, baseViewportBondWidth)
-        }
-
-        let densityScale = labelDensityScale(visibleAtomLabelCount: visibleAtomLabelCount)
-        let prominenceBoost = sceneProminenceBoost(
-            showCarbons: style.showCarbons,
-            atomCount: atomCount,
-            bondCount: bondCount,
-            visibleAtomLabelCount: visibleAtomLabelCount)
-        let strokeProminenceBoost = 1.0 + ((prominenceBoost - 1.0) * 0.72)
-        let preferredMinimumRatio = ((style.bondWidth / 72.0) * densityScale).clamped(to: 0.016...0.026)
-        let ratioFloorWidth = representativeBondLength * preferredMinimumRatio
-        let prominenceWidth = baseViewportBondWidth * strokeProminenceBoost
-        let boostedBondWidth = max(baseViewportBondWidth, max(ratioFloorWidth, prominenceWidth))
-        let absoluteMaxBondWidth = max(
-            1.0,
-            baseViewportBondWidth * (strokeProminenceBoost + 0.06).clamped(to: 1.10...1.34))
-        return boostedBondWidth.clamped(to: 1.0...absoluteMaxBondWidth)
-    }
-
     private static func usesGlowHighlights(style: RenderStyle) -> Bool {
         switch style.highlightStyle {
         case .outerGlow, .outerGlowWhiteEdge:
@@ -431,12 +127,12 @@ public enum CDKMetalDepictionSceneBuilder {
             }
         }
         let visibleAtomLabelCount = visibleLabelAtomIDs.count
-        let representativeBaseBondLength = representativeBondLength(
+        let representativeBaseBondLength = MetalDepictionMetrics.representativeBondLength(
             molecule: depictionMolecule,
             positionsByAtomID: basePositionByAtomID)
         let clampedMinimumLabelFontSize = max(2.5, minimumLabelFontSize)
         let baseViewportLabelFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportAutoFitScale)
-        let labelLayoutFontSize = autoFitLabelFontSize(
+        let labelLayoutFontSize = MetalDepictionMetrics.autoFitLabelFontSize(
             style: style,
             baseViewportFontSize: baseViewportLabelFontSize,
             representativeBondLength: representativeBaseBondLength,
@@ -446,11 +142,11 @@ public enum CDKMetalDepictionSceneBuilder {
             minimumLabelFontSize: clampedMinimumLabelFontSize)
         // When the auto-fit view zooms out, keep labels and strokes from shrinking
         // as aggressively as the scaffold so sparse scenes stay readable.
-        let zoomedLabelScale = zoomVisualScale(
+        let zoomedLabelScale = MetalDepictionMetrics.zoomVisualScale(
             zoom,
             zoomOutExponent: 0.62,
             zoomInExponent: 1.18)
-        let zoomedStrokeScale = zoomVisualScale(
+        let zoomedStrokeScale = MetalDepictionMetrics.zoomVisualScale(
             zoom,
             zoomOutExponent: 0.68,
             zoomInExponent: 1.14)
@@ -562,7 +258,7 @@ public enum CDKMetalDepictionSceneBuilder {
         var aromaticEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         var conjugatedDoubleEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         let baseViewportBondWidth = max(1.0, style.bondWidth * viewportStrokeScale)
-        let layoutBondWidth = autoFitBondWidth(
+        let layoutBondWidth = MetalDepictionMetrics.autoFitBondWidth(
             style: style,
             baseViewportBondWidth: baseViewportBondWidth,
             representativeBondLength: representativeBaseBondLength,
@@ -648,317 +344,16 @@ public enum CDKMetalDepictionSceneBuilder {
             }
         }
 
-        func appendSegment(
-            _ from: CGPoint,
-            _ to: CGPoint,
-            width: CGFloat,
-            opacity: CGFloat,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            segments.append(
-                CDKMetalDepictionScene.LineSegment(
-                    from: from,
-                    to: to,
-                    width: max(0.75, width),
-                    opacity: opacity.clamped(to: 0.05...1.0),
-                    color: color))
-        }
-
-        func normalize(dx: CGFloat, dy: CGFloat) -> (CGFloat, CGFloat)? {
-            let l = hypot(dx, dy)
-            guard l > 0.0001 else { return nil }
-            return (dx / l, dy / l)
-        }
-
-        func appendAromaticInnerLine(
-            from p1: CGPoint,
-            to p2: CGPoint,
-            center: CGPoint,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
-            guard let inward = normalize(dx: center.x - mid.x, dy: center.y - mid.y) else { return }
-            let trim = CGFloat(0.16)
-            let inset = max(1.6, style.bondWidth * 0.95 * viewportStrokeScale) * zoomedStrokeScale
-            let a = CGPoint(
-                x: p1.x + (p2.x - p1.x) * trim + inward.0 * inset,
-                y: p1.y + (p2.y - p1.y) * trim + inward.1 * inset)
-            let b = CGPoint(
-                x: p2.x + (p1.x - p2.x) * trim + inward.0 * inset,
-                y: p2.y + (p1.y - p2.y) * trim + inward.1 * inset)
-            appendSegment(
-                a,
-                b,
-                width: max(1.0, baseBondWidth * 0.8),
-                opacity: 0.76,
-                color: color,
-                into: &segments)
-        }
-
-        func appendConjugatedDoubleInnerLine(
-            from p1: CGPoint,
-            to p2: CGPoint,
-            px: CGFloat,
-            py: CGFloat,
-            centers: [CGPoint],
-            paritySeed: Int,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
-            let summed = centers.reduce((dx: CGFloat(0), dy: CGFloat(0))) { partial, c in
-                (dx: partial.dx + (c.x - mid.x), dy: partial.dy + (c.y - mid.y))
-            }
-            let preferred = normalize(dx: summed.dx, dy: summed.dy)
-            let sign: CGFloat
-            if let preferred {
-                sign = (preferred.0 * px + preferred.1 * py) >= 0 ? 1 : -1
-            } else {
-                sign = (paritySeed % 2 == 0) ? 1 : -1
-            }
-
-            let trim = CGFloat(0.15)
-            let inset = doubleBondSeparation
-            let a = CGPoint(
-                x: p1.x + (p2.x - p1.x) * trim + px * inset * sign,
-                y: p1.y + (p2.y - p1.y) * trim + py * inset * sign)
-            let b = CGPoint(
-                x: p2.x + (p1.x - p2.x) * trim + px * inset * sign,
-                y: p2.y + (p1.y - p2.y) * trim + py * inset * sign)
-            appendSegment(
-                a,
-                b,
-                width: max(1.05, baseBondWidth * 0.85),
-                opacity: 0.88,
-                color: color,
-                into: &segments)
-        }
-
-        func appendSolidWedge(
-            from start: CGPoint,
-            to end: CGPoint,
-            endInset: CGFloat,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let rawDX = end.x - start.x
-            let rawDY = end.y - start.y
-            let rawLen = max(0.0001, hypot(rawDX, rawDY))
-            let inset = min(endInset, rawLen * 0.32)
-            let trimmedEnd = CGPoint(
-                x: end.x - (rawDX / rawLen) * inset,
-                y: end.y - (rawDY / rawLen) * inset)
-            let dx = trimmedEnd.x - start.x
-            let dy = trimmedEnd.y - start.y
-            let len = max(0.0001, hypot(dx, dy))
-            let px = -dy / len
-            let py = dx / len
-
-            let maxHalfWidth = min(stereoSolidWedgeHalfWidth, len * 0.42)
-            let stripeCount = max(16, min(40, Int(len / max(1.6, baseBondWidth * 0.28))))
-            let step = len / CGFloat(stripeCount + 1)
-            for i in 1...stripeCount {
-                let t = CGFloat(i) / CGFloat(stripeCount + 1)
-                let cx = start.x + dx * t
-                let cy = start.y + dy * t
-                let halfTick = max(baseBondWidth * 0.10 * stereoScale, t * maxHalfWidth)
-                let left = CGPoint(x: cx + px * halfTick, y: cy + py * halfTick)
-                let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
-                appendSegment(
-                    left,
-                    right,
-                    width: max(step * 1.35, baseBondWidth * 0.95 * stereoScale),
-                    opacity: 0.985,
-                    color: color,
-                    into: &segments)
-            }
-        }
-
-        func appendHashedWedge(
-            from start: CGPoint,
-            to end: CGPoint,
-            endInset: CGFloat,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let rawDX = end.x - start.x
-            let rawDY = end.y - start.y
-            let rawLen = max(0.0001, hypot(rawDX, rawDY))
-            let inset = min(endInset, rawLen * 0.32)
-            let trimmedEnd = CGPoint(
-                x: end.x - (rawDX / rawLen) * inset,
-                y: end.y - (rawDY / rawLen) * inset)
-            let dx = trimmedEnd.x - start.x
-            let dy = trimmedEnd.y - start.y
-            let len = max(0.0001, hypot(dx, dy))
-            let px = -dy / len
-            let py = dx / len
-
-            let maxHalfWidth = min(stereoHashedWedgeHalfWidth, len * 0.34)
-            let tickCount = max(9, min(22, Int(len / max(4.8, baseBondWidth * 1.55))))
-            for i in 1...tickCount {
-                let t = CGFloat(i) / CGFloat(tickCount + 1)
-                let cx = start.x + dx * t
-                let cy = start.y + dy * t
-                let halfTick = max(baseBondWidth * 0.12 * stereoScale * hashedStereoScale, t * maxHalfWidth)
-                let left = CGPoint(x: cx + px * halfTick, y: cy + py * halfTick)
-                let right = CGPoint(x: cx - px * halfTick, y: cy - py * halfTick)
-                appendSegment(
-                    left,
-                    right,
-                    width: max(0.75, baseBondWidth * 0.52 * stereoScale * hashedStereoScale),
-                    opacity: 0.96,
-                    color: color,
-                    into: &segments)
-            }
-        }
-
-        func appendAromaticCircle(
-            points: [CGPoint],
-            color: CDKRenderColor,
-            width: CGFloat,
-            opacity: CGFloat,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            guard points.count >= 5 else { return }
-            let center = points.reduce(CGPoint.zero) { acc, p in
-                CGPoint(
-                    x: acc.x + p.x / CGFloat(points.count),
-                    y: acc.y + p.y / CGFloat(points.count))
-            }
-            let minRadius = points.map { hypot($0.x - center.x, $0.y - center.y) }.min() ?? 0
-            guard minRadius > 1 else { return }
-            let radius = minRadius * 0.53
-            let segmentsCount = 40
-            var previous: CGPoint?
-            for i in 0...segmentsCount {
-                let t = CGFloat(i) / CGFloat(segmentsCount)
-                let angle = t * 2 * .pi
-                let point = CGPoint(
-                    x: center.x + cos(angle) * radius,
-                    y: center.y + sin(angle) * radius)
-                if let previous {
-                    appendSegment(previous, point, width: width, opacity: opacity, color: color, into: &segments)
-                }
-                previous = point
-            }
-        }
-
-        func appendAttachmentPointGlyph(
-            center: CGPoint,
-            other: CGPoint,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            for segment in CDKMarkushRendering.attachmentPointSegments(
-                center: center,
-                other: other,
-                style: style,
-                scale: viewportStrokeScale * zoomedStrokeScale)
-            {
-                appendSegment(
-                    segment.from,
-                    segment.to,
-                    width: max(1.0, baseBondWidth * 0.92),
-                    opacity: 0.95,
-                    color: color,
-                    into: &segments)
-            }
-        }
-
-        func appendDashedSegment(
-            _ from: CGPoint,
-            _ to: CGPoint,
-            width: CGFloat,
-            opacity: CGFloat,
-            color: CDKRenderColor,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let dx = to.x - from.x
-            let dy = to.y - from.y
-            let length = hypot(dx, dy)
-            guard length > 0.0001 else { return }
-            let direction = CGVector(dx: dx / length, dy: dy / length)
-            let dashLength = max(width * 3.6, 8.0)
-            let gapLength = max(width * 1.8, 4.8)
-            var traveled: CGFloat = 0
-            while traveled < length {
-                let start = traveled
-                let end = min(length, traveled + dashLength)
-                let p1 = CGPoint(x: from.x + direction.dx * start, y: from.y + direction.dy * start)
-                let p2 = CGPoint(x: from.x + direction.dx * end, y: from.y + direction.dy * end)
-                appendSegment(p1, p2, width: width, opacity: opacity, color: color, into: &segments)
-                traveled += dashLength + gapLength
-            }
-        }
-
-        func appendGlowSegment(
-            _ from: CGPoint,
-            _ to: CGPoint,
-            width: CGFloat,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let glowWidth = max(width * 2.35, width + max(1.6, style.bondWidth * 1.8))
-            appendSegment(
-                from,
-                to,
-                width: glowWidth,
-                opacity: 0.34,
-                color: .outerGlowHighlight,
-                into: &segments)
-        }
-
-        func appendQuerySecondaryLine(
-            from p1: CGPoint,
-            to p2: CGPoint,
-            px: CGFloat,
-            py: CGFloat,
-            centers: [CGPoint],
-            paritySeed: Int,
-            color: CDKRenderColor,
-            dashed: Bool,
-            into segments: inout [CDKMetalDepictionScene.LineSegment]
-        ) {
-            let mid = CGPoint(x: (p1.x + p2.x) * 0.5, y: (p1.y + p2.y) * 0.5)
-            let summed = centers.reduce((dx: CGFloat(0), dy: CGFloat(0))) { partial, c in
-                (dx: partial.dx + (c.x - mid.x), dy: partial.dy + (c.y - mid.y))
-            }
-            let preferred = normalize(dx: summed.dx, dy: summed.dy)
-            let sign: CGFloat
-            if let preferred {
-                sign = (preferred.0 * px + preferred.1 * py) >= 0 ? 1 : -1
-            } else {
-                sign = (paritySeed % 2 == 0) ? 1 : -1
-            }
-
-            let trim = CGFloat(0.15)
-            let inset = doubleBondSeparation
-            let a = CGPoint(
-                x: p1.x + (p2.x - p1.x) * trim + px * inset * sign,
-                y: p1.y + (p2.y - p1.y) * trim + py * inset * sign)
-            let b = CGPoint(
-                x: p2.x + (p1.x - p2.x) * trim + px * inset * sign,
-                y: p2.y + (p1.y - p2.y) * trim + py * inset * sign)
-            if dashed {
-                appendDashedSegment(
-                    a,
-                    b,
-                    width: max(1.0, baseBondWidth * 0.82),
-                    opacity: 0.92,
-                    color: color,
-                    into: &segments)
-            } else {
-                appendSegment(
-                    a,
-                    b,
-                    width: max(1.0, baseBondWidth * 0.82),
-                    opacity: 0.92,
-                    color: color,
-                    into: &segments)
-            }
-        }
+        let primitives = MetalBondPrimitives(
+            style: style,
+            viewportStrokeScale: viewportStrokeScale,
+            zoomedStrokeScale: zoomedStrokeScale,
+            baseBondWidth: baseBondWidth,
+            doubleBondSeparation: doubleBondSeparation,
+            stereoSolidWedgeHalfWidth: stereoSolidWedgeHalfWidth,
+            stereoHashedWedgeHalfWidth: stereoHashedWedgeHalfWidth,
+            stereoScale: stereoScale,
+            hashedStereoScale: hashedStereoScale)
 
         var bondSegments: [CDKMetalDepictionScene.LineSegment] = []
         bondSegments.reserveCapacity(max(16, depictionMolecule.bonds.count * 3))
@@ -991,9 +386,9 @@ public enum CDKMetalDepictionSceneBuilder {
                 switch bond.queryType {
                 case .any:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendDashedSegment(
+                    primitives.appendDashedSegment(
                         p1,
                         p2,
                         width: max(1.0, baseBondWidth * 0.92),
@@ -1002,16 +397,16 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .singleOrDouble:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSegment(
+                    primitives.appendSegment(
                         p1,
                         p2,
                         width: baseBondWidth,
                         opacity: 0.95,
                         color: queryColor,
                         into: &bondSegments)
-                    appendQuerySecondaryLine(
+                    primitives.appendQuerySecondaryLine(
                         from: p1,
                         to: p2,
                         px: px,
@@ -1023,16 +418,16 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .singleOrAromatic:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.92), into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.92), into: &bondSegments)
                     }
-                    appendSegment(
+                    primitives.appendSegment(
                         p1,
                         p2,
                         width: max(1.0, baseBondWidth * 0.92),
                         opacity: 0.90,
                         color: queryColor,
                         into: &bondSegments)
-                    appendQuerySecondaryLine(
+                    primitives.appendQuerySecondaryLine(
                         from: p1,
                         to: p2,
                         px: px,
@@ -1044,16 +439,16 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .doubleOrAromatic:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSegment(
+                    primitives.appendSegment(
                         p1.offsetBy(dx: px * doubleBondHalfSeparation, dy: py * doubleBondHalfSeparation),
                         p2.offsetBy(dx: px * doubleBondHalfSeparation, dy: py * doubleBondHalfSeparation),
                         width: baseBondWidth,
                         opacity: 0.95,
                         color: queryColor,
                         into: &bondSegments)
-                    appendQuerySecondaryLine(
+                    primitives.appendQuerySecondaryLine(
                         from: p1,
                         to: p2,
                         px: px,
@@ -1071,19 +466,19 @@ public enum CDKMetalDepictionSceneBuilder {
             if bond.queryType != nil {
                 appendQueryBondSegments()
                 if atomByID[bond.a1]?.attachmentPoint != nil {
-                    appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
+                    primitives.appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
                 }
                 if atomByID[bond.a2]?.attachmentPoint != nil {
-                    appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
+                    primitives.appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
                 }
                 continue
             }
 
             if aromaticStyled {
                 if glowHighlighted {
-                    appendGlowSegment(p1, p2, width: max(1.1, baseBondWidth * 0.88), into: &bondSegments)
+                    primitives.appendGlowSegment(p1, p2, width: max(1.1, baseBondWidth * 0.88), into: &bondSegments)
                 }
-                appendSegment(
+                primitives.appendSegment(
                     p1,
                     p2,
                     width: max(1.1, baseBondWidth * 0.88),
@@ -1094,7 +489,7 @@ public enum CDKMetalDepictionSceneBuilder {
                     aromaticCenters.count == 1,
                     let center = aromaticCenters.first
                 {
-                    appendAromaticInnerLine(
+                    primitives.appendAromaticInnerLine(
                         from: p1,
                         to: p2,
                         center: center,
@@ -1102,10 +497,10 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 }
                 if atomByID[bond.a1]?.attachmentPoint != nil {
-                    appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
+                    primitives.appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
                 }
                 if atomByID[bond.a2]?.attachmentPoint != nil {
-                    appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
+                    primitives.appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
                 }
                 continue
             }
@@ -1115,9 +510,9 @@ public enum CDKMetalDepictionSceneBuilder {
                 switch bond.stereo {
                 case .up:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSolidWedge(
+                    primitives.appendSolidWedge(
                         from: p1,
                         to: p2,
                         endInset: labelInsetAtA2,
@@ -1125,9 +520,9 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .upReversed:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSolidWedge(
+                    primitives.appendSolidWedge(
                         from: p2,
                         to: p1,
                         endInset: labelInsetAtA1,
@@ -1135,9 +530,9 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .down:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendHashedWedge(
+                    primitives.appendHashedWedge(
                         from: p1,
                         to: p2,
                         endInset: labelInsetAtA2,
@@ -1145,9 +540,9 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .downReversed:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendHashedWedge(
+                    primitives.appendHashedWedge(
                         from: p2,
                         to: p1,
                         endInset: labelInsetAtA1,
@@ -1155,24 +550,26 @@ public enum CDKMetalDepictionSceneBuilder {
                         into: &bondSegments)
                 case .either:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.72), into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: max(1.0, baseBondWidth * 0.72), into: &bondSegments)
                     }
-                    appendSegment(
+                    primitives.appendSegment(
                         p1, p2, width: max(1.0, baseBondWidth * 0.72), opacity: 0.78, color: bondColor,
                         into: &bondSegments)
                 case .none:
                     if glowHighlighted {
-                        appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                        primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                     }
-                    appendSegment(p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
+                    primitives.appendSegment(
+                        p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
                 }
             case .double:
                 if glowHighlighted {
-                    appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                 }
                 if !conjugatedCenters.isEmpty {
-                    appendSegment(p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
-                    appendConjugatedDoubleInnerLine(
+                    primitives.appendSegment(
+                        p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
+                    primitives.appendConjugatedDoubleInnerLine(
                         from: p1,
                         to: p2,
                         px: px,
@@ -1182,14 +579,14 @@ public enum CDKMetalDepictionSceneBuilder {
                         color: bondColor,
                         into: &bondSegments)
                 } else {
-                    appendSegment(
+                    primitives.appendSegment(
                         CGPoint(x: p1.x + px * doubleBondHalfSeparation, y: p1.y + py * doubleBondHalfSeparation),
                         CGPoint(x: p2.x + px * doubleBondHalfSeparation, y: p2.y + py * doubleBondHalfSeparation),
                         width: baseBondWidth,
                         opacity: 0.95,
                         color: bondColor,
                         into: &bondSegments)
-                    appendSegment(
+                    primitives.appendSegment(
                         CGPoint(x: p1.x - px * doubleBondHalfSeparation, y: p1.y - py * doubleBondHalfSeparation),
                         CGPoint(x: p2.x - px * doubleBondHalfSeparation, y: p2.y - py * doubleBondHalfSeparation),
                         width: baseBondWidth,
@@ -1199,17 +596,18 @@ public enum CDKMetalDepictionSceneBuilder {
                 }
             case .triple:
                 if glowHighlighted {
-                    appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
+                    primitives.appendGlowSegment(p1, p2, width: baseBondWidth, into: &bondSegments)
                 }
-                appendSegment(p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
-                appendSegment(
+                primitives.appendSegment(
+                    p1, p2, width: baseBondWidth, opacity: 0.95, color: bondColor, into: &bondSegments)
+                primitives.appendSegment(
                     CGPoint(x: p1.x + px * tripleBondOffset, y: p1.y + py * tripleBondOffset),
                     CGPoint(x: p2.x + px * tripleBondOffset, y: p2.y + py * tripleBondOffset),
                     width: baseBondWidth,
                     opacity: 0.95,
                     color: bondColor,
                     into: &bondSegments)
-                appendSegment(
+                primitives.appendSegment(
                     CGPoint(x: p1.x - px * tripleBondOffset, y: p1.y - py * tripleBondOffset),
                     CGPoint(x: p2.x - px * tripleBondOffset, y: p2.y - py * tripleBondOffset),
                     width: baseBondWidth,
@@ -1218,9 +616,9 @@ public enum CDKMetalDepictionSceneBuilder {
                     into: &bondSegments)
             case .aromatic:
                 if glowHighlighted {
-                    appendGlowSegment(p1, p2, width: max(1.1, baseBondWidth * 0.88), into: &bondSegments)
+                    primitives.appendGlowSegment(p1, p2, width: max(1.1, baseBondWidth * 0.88), into: &bondSegments)
                 }
-                appendSegment(
+                primitives.appendSegment(
                     p1,
                     p2,
                     width: max(1.1, baseBondWidth * 0.88),
@@ -1230,16 +628,16 @@ public enum CDKMetalDepictionSceneBuilder {
             }
 
             if atomByID[bond.a1]?.attachmentPoint != nil {
-                appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
+                primitives.appendAttachmentPointGlyph(center: p1, other: p2, color: bondColor, into: &bondSegments)
             }
             if atomByID[bond.a2]?.attachmentPoint != nil {
-                appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
+                primitives.appendAttachmentPointGlyph(center: p2, other: p1, color: bondColor, into: &bondSegments)
             }
         }
 
         for annotation in sgroupBracketAnnotations {
             for segment in annotation.segments {
-                appendSegment(
+                primitives.appendSegment(
                     segment.from,
                     segment.to,
                     width: max(0.95, baseBondWidth * 0.84),
@@ -1267,14 +665,14 @@ public enum CDKMetalDepictionSceneBuilder {
                         return highlightedBondIDs.contains(bond.id)
                     }
                 if ringIsHighlighted {
-                    appendAromaticCircle(
+                    primitives.appendAromaticCircle(
                         points: ringPoints,
                         color: .outerGlowHighlight,
                         width: max(1.0, baseBondWidth * 1.95),
                         opacity: 0.26,
                         into: &bondSegments)
                 }
-                appendAromaticCircle(
+                primitives.appendAromaticCircle(
                     points: ringPoints,
                     color: ringColor,
                     width: max(1.0, baseBondWidth * 0.84),

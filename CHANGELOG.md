@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.47 — 2026-11-13
+
+- Separate CX metadata values, lexical layer decoding, metadata application and
+  R-group graph assembly without changing public APIs or chemistry semantics.
+- Give Metal scene values, preparation caching, fitting metrics and bond drawing
+  primitives focused internal owners. Per-render geometry remains outside the
+  shared preparation cache; existing cache locking and eviction are preserved.
+- Add transactional malformed-layer and viewport/cache-isolation regressions.
+  The full 686-test suite passes on macOS and Ubuntu. This is an internal
+  organization change; it adds no chemical format or enumeration capabilities.
+
 ## 1.4.46 — 2026-11-13
 
 - Preserve circular fingerprint stereochemistry under atom renumbering and bond
