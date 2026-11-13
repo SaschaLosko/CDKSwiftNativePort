@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
-## Unreleased
+## 1.4.46 — 2026-11-13
 
 - Preserve circular fingerprint stereochemistry under atom renumbering and bond
   reordering by using ordered stereo carriers, as in upstream CDK. Persisted
