@@ -19,6 +19,16 @@ app checkout, Java source, JVM, bundle identifiers, or app session logic.
 
 ## Feature Set
 
+### Maximum common substructure
+
+- portable exact reference search with complete/limited/cancelled outcomes
+- connected or disconnected common-edge scoring, complete relevant rings
+- ordered tetrahedral/alkene stereo, relative groups and query predicates
+- retained mapping limits kept separate from proof of the maximum
+
+See [MCS API, evidence and scalability boundaries](Documentation/MCS.md).
+
+
 ### Molecular queries
 
 - molecular SMARTS expressions, Boolean predicates and anchored recursive queries

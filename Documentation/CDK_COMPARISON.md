@@ -11,6 +11,13 @@ this package is CDK `2.13` (`cdk-2.13`, commit
 
 ## Selected CDK 2.14.1 adoption
 
+Release 1.4.53 adds the portable MCS contract and selected behavior corresponding
+to #1323: bounded exact reference traversal, distinct completion/mapping limits,
+query predicates, relevant rings, stereo and disconnected common-edge matching.
+See [MCS.md](MCS.md) for defaults, evidence, upstream differences and scaling limits.
+It adds no dependency on a native MCS engine and does not change existing search APIs.
+
+
 Release 1.4.52 adds the shared isotope dataset/service corresponding to upstream
 #1343/#1344/#1345 and separates element recognition from natural-mass availability
 (the concern in #1368). Explicit isotope mass, natural average and major-isotope
@@ -26,7 +33,7 @@ Version 1.4.50 adopts the TPSA fixes ([#1347](https://github.com/cdk/cdk/pull/13
 ([#1379](https://github.com/cdk/cdk/pull/1379)). Attributed Swift regressions cover
 the affected chemistry, group ordering, expansion, highlighting and source
 nonmutation. This incremental adoption does not establish complete 2.14.1 parity.
-Isotope-service, MCS, remaining stereo and presentation work are separate milestones.
+Remaining stereo and reaction-presentation changes are separate milestones.
 
 ## CDK Reference Citations
 

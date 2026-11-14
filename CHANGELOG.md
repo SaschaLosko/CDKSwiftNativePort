@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.53
+
+- Add portable `CDKMCS` with immutable configuration, explicit maximum proof,
+  retained-mapping limits, cooperative cancellation and bounded best-so-far results.
+- Implement connected/non-induced common graphs, disconnected minimum bonds per
+  fragment, complete relevant rings, configurable/query predicates and ordered
+  tetrahedral/alkene stereo with relative groups.
+- Qualify 35 selected upstream numerical fixtures, 512 independent small-graph
+  oracle comparisons and bounded larger searches. All 725 tests pass on macOS
+  and Ubuntu. See `Documentation/MCS.md` for scalability and parity boundaries.
+
 ## 1.4.52
 
 - Add a shared, immutable isotope service with 3,171 BODR 10 records aligned to
