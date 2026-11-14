@@ -26,6 +26,9 @@ public enum CDKCMLReactionWriter {
     }
 
     public static func write(_ hierarchy: CDKReactionHierarchy) throws -> String {
+        for reaction in hierarchy.flattenedReactions {
+            for participant in reaction.participants { try CMLStereo.validate(participant.molecule) }
+        }
         let lines = CMLReactionDocumentWriter().cmlDocumentLines(for: hierarchy)
         return lines.joined(separator: "\n") + "\n"
     }
@@ -327,10 +330,12 @@ private final class CMLReactionDocumentWriter {
             var atomAttrs = [
                 "id=\"\(xmlEsc(atom.externalID ?? "a\(atom.id)"))\"",
                 "elementType=\"\(xmlEsc(elementType))\"",
-                "x2=\"\(fmt(Double(atom.position.x)))\"",
-                "y2=\"\(fmt(Double(atom.position.y)))\"",
             ]
-            if has3D {
+            if molecule.coordinatesAreGenerated != true {
+                atomAttrs.append("x2=\"\(fmt(Double(atom.position.x)))\"")
+                atomAttrs.append("y2=\"\(fmt(Double(atom.position.y)))\"")
+            }
+            if has3D && molecule.coordinatesAreGenerated != true {
                 atomAttrs.append("x3=\"\(fmt(Double(atom.position.x)))\"")
                 atomAttrs.append("y3=\"\(fmt(Double(atom.position.y)))\"")
                 atomAttrs.append("z3=\"\(fmt(atom.zPosition ?? 0))\"")
@@ -354,6 +359,9 @@ private final class CMLReactionDocumentWriter {
             }
 
             var childLines: [String] = []
+            if let parity = CMLStereo.atomParity(atom, reference: { xmlEsc(atomReference(for: $0, in: molecule)) }) {
+                childLines.append("\(indent)      \(parity)")
+            }
             if atom.aromatic {
                 childLines.append("\(indent)      <scalar dictRef=\"cdk:aromaticAtom\" />")
             }
@@ -380,9 +388,8 @@ private final class CMLReactionDocumentWriter {
             if aromaticBondIDs.contains(bond.id) {
                 childLines.append("\(indent)      <bondType dictRef=\"cdk:aromaticBond\" />")
             }
-            if let stereo = cmlBondStereo(for: bond.stereo) {
-                childLines.append(
-                    "\(indent)      <bondStereo dictRef=\"\(stereo.dictRef)\">\(stereo.content)</bondStereo>")
+            if let stereo = CMLStereo.bondStereo(bond, reference: { xmlEsc(atomReference(for: $0, in: molecule)) }) {
+                childLines.append("\(indent)      \(stereo)")
             }
 
             let attrs = [
@@ -432,17 +439,6 @@ private final class CMLReactionDocumentWriter {
             return "T"
         case .aromatic:
             return "A"
-        }
-    }
-
-    private func cmlBondStereo(for stereo: BondStereo) -> (dictRef: String, content: String)? {
-        switch stereo {
-        case .up, .upReversed:
-            return ("cml:W", "W")
-        case .down, .downReversed:
-            return ("cml:H", "H")
-        default:
-            return nil
         }
     }
 

@@ -170,3 +170,13 @@ Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
 configuration semantics without a Java dependency. See the [API, limits and
 Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
 remain separate capabilities.
+
+### CML stereochemistry (1.4.48)
+
+Molecule and reaction CML now write/read ordered `atomParity` and `bondStereo`
+references and preserve wedge/hatch endpoint direction. Synthetic depiction
+coordinates are omitted on export and regenerated on import; they must not
+be mistaken for evidence of specified stereo. Original coordinates remain.
+The bounded regression corpus covers tetrahedral and alkene stereo, including
+unspecified controls; this does not assert parity for every CML stereo class.
+The encoding follows the [CML molecular convention](https://www.xml-cml.org/convention/molecular).

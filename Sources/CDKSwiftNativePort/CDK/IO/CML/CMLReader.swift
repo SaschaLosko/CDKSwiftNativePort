@@ -19,7 +19,9 @@ public enum CDKCMLReader {
             throw ChemError.parseFailed(message)
         }
 
+        if let error = delegate.stereoError { throw error }
         let molecules = delegate.buildMolecules()
+        for molecule in molecules { try CMLStereo.validate(molecule) }
         guard !molecules.isEmpty else {
             throw ChemError.parseFailed("CML did not contain any atoms.")
         }
@@ -28,6 +30,7 @@ public enum CDKCMLReader {
 }
 
 private final class CMLParserDelegate: NSObject, XMLParserDelegate {
+    var stereoError: Error?
     private final class PendingMolecule {
         var id: String?
         var title: String?
@@ -448,7 +451,12 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                 currentBond?.stereoReferenceAtomRefs = refs?.count == 4 ? refs : nil
             }
             if let stereo = parseBondStereo(attributes: capture.attributes, text: capture.text) {
-                currentBond?.stereo = stereo
+                if let bond = currentBond {
+                    do {
+                        currentBond?.stereo = try CMLStereo.wedge(
+                            stereo, attributes: capture.attributes, first: bond.refA, second: bond.refB)
+                    } catch { stereoError = error }
+                }
             }
 
         case "atomparity":
@@ -480,24 +488,11 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
     }
 
     private func applyAtomParityCapture(_ capture: TextCapture) {
-        let parityText = capture.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let parity = Int(parityText) ?? 0
-        switch parity.signum() {
-        case 1:
-            currentAtom?.chirality = .anticlockwise
-        case -1:
-            currentAtom?.chirality = .clockwise
-        default:
-            currentAtom?.chirality = .none
-        }
-
-        if let refs = capture.attributes["atomRefs4"]?
-            .split(whereSeparator: \.isWhitespace)
-            .map(String.init),
-            refs.count == 4
-        {
+        do {
+            let (chirality, refs) = try CMLStereo.parity(capture.text, attributes: capture.attributes)
+            currentAtom?.chirality = chirality
             currentAtom?.ligandOrderingRefs = refs
-        }
+        } catch { stereoError = error }
     }
 
     private func applyAtomScalarCapture(_ capture: TextCapture) {

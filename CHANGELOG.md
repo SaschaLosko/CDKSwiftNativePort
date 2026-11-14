@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.48 — 2026-11-13
+
+- Preserve ordered tetrahedral atom parity and cis/trans double-bond references
+  in molecule and reaction CML, including participants with external atom IDs.
+- Preserve reversed wedge/hatch endpoints; reject malformed explicit stereo
+  references instead of silently interpreting incomplete metadata.
+- Omit synthetic depiction coordinates from CML so an unspecified alkene does
+  not acquire stereochemistry from an automatically generated drawing. Original
+  coordinates remain exported. Readers regenerate a display layout when needed.
+- Add identity-based tests for enantiomers, alkenes, adjacent stereocenters,
+  unspecified stereo, reordered arrays, reaction participants and malformed input.
+  All 690 tests pass on macOS and Ubuntu; strict changed-source lint passes.
+
 ## 1.4.47 — 2026-11-13
 
 - Separate CX metadata values, lexical layer decoding, metadata application and

@@ -64,7 +64,7 @@ final class CMLWriterPortTests: XCTestCase {
         let text = try CDKCMLWriter.write([molecule])
         XCTAssertTrue(text.contains("elementType=\"Du\""))
         XCTAssertTrue(text.contains("title=\"Glu55\""))
-        XCTAssertTrue(text.contains("<bondStereo dictRef=\"cml:W\">W</bondStereo>"))
+        XCTAssertTrue(text.contains("<bondStereo atomRefs2=\"a1 a2\" dictRef=\"cml:W\">W</bondStereo>"))
 
         let roundTripped = try XCTUnwrap(CDKCMLReader.read(text: text).first)
         XCTAssertEqual(roundTripped.atoms[0].aliasLabel, "Glu55")

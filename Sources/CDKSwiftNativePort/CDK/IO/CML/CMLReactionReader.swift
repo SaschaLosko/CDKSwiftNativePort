@@ -30,8 +30,12 @@ public enum CDKCMLReactionReader {
             throw ChemError.parseFailed(message)
         }
 
+        if let error = delegate.stereoError { throw error }
         guard let hierarchy = delegate.buildHierarchy() else {
             throw ChemError.parseFailed("CML did not contain any reactions.")
+        }
+        for reaction in hierarchy.flattenedReactions {
+            for participant in reaction.participants { try CMLStereo.validate(participant.molecule) }
         }
         return hierarchy
     }
@@ -66,6 +70,7 @@ public enum CDKCMLReactionReader {
 }
 
 private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
+    var stereoError: Error?
     private final class PendingMolecule {
         var id: String?
         var title: String?
@@ -98,6 +103,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var hydrogenCount: Int?
         var aromatic: Bool
         var aliasLabel: String?
+        var chirality: AtomChirality = .none
+        var ligandOrderingRefs: [String]?
     }
 
     private struct PendingBond {
@@ -108,6 +115,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var stereo: BondStereo
         var aromatic: Bool
         var hadExplicitOrder: Bool
+        var doubleBondStereo: DoubleBondStereo?
+        var stereoReferenceAtomRefs: [String]?
     }
 
     private struct PendingReaction {
@@ -300,7 +309,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                         text: ""))
             }
 
-        case "label":
+        case "label", "atomparity":
             if currentAtom != nil {
                 textCaptures.append(
                     TextCapture(
@@ -394,7 +403,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         case "formula":
             formulaDepth = max(0, formulaDepth - 1)
 
-        case "bondstereo", "label", "scalar", "string", "float", "integer":
+        case "bondstereo", "atomparity", "label", "scalar", "string", "float", "integer":
             guard let capture = popCapture(for: lower) else { return }
             applyCapture(capture)
 
@@ -517,9 +526,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var atomIDByXMLID: [String: Int] = [:]
         atoms.reserveCapacity(source.atoms.count)
 
+        for (index, atom) in source.atoms.enumerated() { atomIDByXMLID[atom.xmlID] = index + 1 }
         for (atomIndex, atomSource) in source.atoms.enumerated() {
             let atomID = atomIndex + 1
-            atomIDByXMLID[atomSource.xmlID] = atomID
             atoms.append(
                 Atom(
                     id: atomID,
@@ -530,7 +539,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                     charge: atomSource.charge,
                     isotopeMassNumber: atomSource.isotope,
                     aromatic: atomSource.aromatic,
+                    chirality: atomSource.chirality,
                     explicitHydrogenCount: atomSource.hydrogenCount,
+                    ligandOrderingAtomIDs: atomSource.ligandOrderingRefs?.compactMap { atomIDByXMLID[$0] },
                     aliasLabel: atomSource.aliasLabel))
         }
 
@@ -551,7 +562,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                     a1: a1,
                     a2: a2,
                     order: bondSource.order,
-                    stereo: bondSource.stereo))
+                    stereo: bondSource.stereo,
+                    doubleBondStereo: bondSource.doubleBondStereo,
+                    stereoReferenceAtomIDs: bondSource.stereoReferenceAtomRefs?.compactMap { atomIDByXMLID[$0] }))
             if bondSource.aromatic || bondSource.order == .aromatic {
                 aromaticAtomIDs.insert(a1)
                 aromaticAtomIDs.insert(a2)
@@ -581,7 +594,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             box.width <= 0.0001 && box.height <= 0.0001
         {
             molecule = Depiction2DGenerator.generate(for: molecule)
+            molecule.coordinatesAreGenerated = true
         }
+        molecule.assignWedgeHashFromChiralCenters()
 
         if atoms.isEmpty && !allowEmpty && molecule.dataFields.isEmpty {
             return Molecule(name: moleculeName, externalID: source.id)
@@ -904,6 +919,12 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
     private func applyAtomCapture(_ capture: TextCapture) {
         switch capture.elementName {
+        case "atomparity":
+            do {
+                let (chirality, refs) = try CMLStereo.parity(capture.text, attributes: capture.attributes)
+                currentAtom?.chirality = chirality
+                currentAtom?.ligandOrderingRefs = refs
+            } catch { stereoError = error }
         case "bondstereo":
             return
 
@@ -921,8 +942,22 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private func applyBondCapture(_ capture: TextCapture) {
         switch capture.elementName {
         case "bondstereo":
+            let token =
+                (capture.attributes["dictRef"].map { String($0.split(separator: ":").last ?? "") } ?? capture.text)
+                .trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            if ["C", "CIS", "T", "TRANS"].contains(token) {
+                currentBond?.doubleBondStereo = ["C", "CIS"].contains(token) ? .cis : .trans
+                currentBond?.stereoReferenceAtomRefs = capture.attributes["atomRefs4"]?.split(
+                    whereSeparator: \.isWhitespace
+                ).map(String.init)
+            }
             if let stereo = parseBondStereo(attributes: capture.attributes, text: capture.text) {
-                currentBond?.stereo = stereo
+                if let bond = currentBond {
+                    do {
+                        currentBond?.stereo = try CMLStereo.wedge(
+                            stereo, attributes: capture.attributes, first: bond.refA, second: bond.refB)
+                    } catch { stereoError = error }
+                }
             }
 
         case "scalar", "string", "float", "integer":

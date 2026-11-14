@@ -8,6 +8,8 @@ public enum CDKCMLWriter {
             throw ChemError.parseFailed("Cannot write CML for an empty molecule.")
         }
 
+        for molecule in molecules { try CMLStereo.validate(molecule) }
+
         var lines: [String] = []
         lines.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
         lines.append("<cml xmlns=\"http://www.xml-cml.org/schema\">")
@@ -31,10 +33,12 @@ public enum CDKCMLWriter {
                 var attrs = [
                     "id=\"a\(atom.id)\"",
                     "elementType=\"\(xmlEsc(elementType))\"",
-                    "x2=\"\(fmt(Double(atom.position.x)))\"",
-                    "y2=\"\(fmt(Double(atom.position.y)))\"",
                 ]
-                if has3D {
+                if molecule.coordinatesAreGenerated != true {
+                    attrs.append("x2=\"\(fmt(Double(atom.position.x)))\"")
+                    attrs.append("y2=\"\(fmt(Double(atom.position.y)))\"")
+                }
+                if has3D && molecule.coordinatesAreGenerated != true {
                     attrs.append("x3=\"\(fmt(Double(atom.position.x)))\"")
                     attrs.append("y3=\"\(fmt(Double(atom.position.y)))\"")
                     attrs.append("z3=\"\(fmt(atom.zPosition ?? 0))\"")
@@ -58,6 +62,9 @@ public enum CDKCMLWriter {
                 }
 
                 var childLines: [String] = []
+                if let parity = CMLStereo.atomParity(atom, reference: { "a\($0)" }) {
+                    childLines.append("        \(parity)")
+                }
                 if atom.aromatic {
                     childLines.append("        <scalar dictRef=\"cdk:aromaticAtom\" />")
                 }
@@ -85,9 +92,8 @@ public enum CDKCMLWriter {
                 if aromaticBondIDs.contains(bond.id) {
                     childLines.append("        <bondType dictRef=\"cdk:aromaticBond\" />")
                 }
-                if let stereo = cmlBondStereo(for: bond.stereo) {
-                    childLines.append(
-                        "        <bondStereo dictRef=\"\(stereo.dictRef)\">\(stereo.content)</bondStereo>")
+                if let stereo = CMLStereo.bondStereo(bond, reference: { "a\($0)" }) {
+                    childLines.append("        \(stereo)")
                 }
 
                 let attrs = [
@@ -122,17 +128,6 @@ public enum CDKCMLWriter {
             return "T"
         case .aromatic:
             return "A"
-        }
-    }
-
-    private static func cmlBondStereo(for stereo: BondStereo) -> (dictRef: String, content: String)? {
-        switch stereo {
-        case .up, .upReversed:
-            return ("cml:W", "W")
-        case .down, .downReversed:
-            return ("cml:H", "H")
-        default:
-            return nil
         }
     }
 
