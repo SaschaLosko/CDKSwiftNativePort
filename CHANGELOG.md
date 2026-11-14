@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.51
+
+- Decode defined InChI alkene stereo through the bundled reference C library,
+  with ordered carriers and explicit-hydrogen normalization; retain unknown
+  stereo and invalidate source-identifier caches after stereo edits.
+- Preserve tetrahedral parity through CTfile atom permutations. Write defined
+  acyclic E/Z using validated geometry, read 2D alkene geometry, and prevent
+  generated coordinates from assigning previously unspecified stereo.
+- Preserve explicit unknown bonds in CML using the documented
+  `other`/`cdk:unknownStereo` extension; this extension requires reader support.
+- Reject inconsistent cyclic/degenerate alkene export rather than silently
+  changing the configuration. Extended InChI geometries remain unsupported.
+- Validate with ordered-graph and direct reference-identifier checks independent
+  of the source cache, alongside the complete macOS and Linux suites.
+
 ## 1.4.50 — 2026-11-13
 
 - Adopt CDK 2.14 TPSA corrections for sulfur/phosphorus ring fragments and

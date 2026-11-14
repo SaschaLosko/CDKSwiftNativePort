@@ -193,3 +193,15 @@ the interoperable representation of specified tetrahedral and alkene stereo.
 The bounded regression corpus covers tetrahedral and alkene stereo, including
 unspecified controls; this does not assert parity for every CML stereo class.
 The encoding follows the [CML molecular convention](https://www.xml-cml.org/convention/molecular).
+
+### Additional 2.14 stereo regression work (1.4.51)
+
+The #1340/#1370 regression themes are covered by `CDK214StereoTests`:
+CTfile output-order parity, zero-coordinate E/Z, unknown alkene stereo, mixed
+tetrahedral/alkene configurations, and InChI ordered-carrier decoding. Tests
+regenerate identities through the reference C implementation without the source
+cache. This is selected coverage, not full upstream stereo parity. CTfile export
+rejects inconsistent cyclic/degenerate E/Z layouts; InChI extended geometries and
+additional isotope-H layouts are not promoted as supported. CML unknown bonds
+use `bondStereo` value `other` with `dictRef="cdk:unknownStereo"`, following the
+[extension mechanism](https://www.xml-cml.org/convention/molecular#12.3).

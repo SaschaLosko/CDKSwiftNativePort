@@ -42,6 +42,8 @@ enum CDKInChIRoundTripCache {
                     atom.isotopeMassNumber.map(String.init) ?? "_",
                     atom.aromatic ? "1" : "0",
                     String(describing: atom.chirality),
+                    String(describing: atom.ligandOrderingAtomIDs),
+                    String(describing: atom.cxStereoGroup),
                     atom.explicitHydrogenCount.map(String.init) ?? "_",
                 ].joined(separator: ":")
             }
@@ -61,6 +63,8 @@ enum CDKInChIRoundTripCache {
                     "\(max(bond.a1, bond.a2))",
                     "\(bond.order.rawValue)",
                     String(describing: bond.stereo),
+                    String(describing: bond.doubleBondStereo),
+                    String(describing: bond.stereoReferenceAtomIDs),
                 ].joined(separator: ":")
             }
 

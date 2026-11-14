@@ -83,6 +83,22 @@ int cdk_inchi_key_from_standard_inchi(const char *inchi, char *key_buffer, int k
 void cdk_inchi_free_result(CDKInChIResult *result);
 const char *cdk_inchi_version(void);
 
+/* Owned stereo records from the official decoder. Each record has seven ints:
+ * type, center, four ordered neighbors, parity. Symbol stride is eight bytes. */
+typedef struct CDKInChIStereoResult {
+    int atom_count;
+    char *atom_symbols;
+    int *hydrogen_parents;
+    int *atom_hydrogens;
+    int *atom_charges;
+    int bond_count;
+    int *bonds;
+    int count;
+    int *records;
+} CDKInChIStereoResult;
+int cdk_inchi_read_stereo(const char *inchi, CDKInChIStereoResult *result);
+void cdk_inchi_free_stereo(CDKInChIStereoResult *result);
+
 #ifdef __cplusplus
 }
 #endif

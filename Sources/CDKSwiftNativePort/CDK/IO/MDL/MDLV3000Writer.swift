@@ -79,6 +79,7 @@ public enum CDKMDLV3000Writer {
     }
 
     private static func serializedCTAB(for molecule: Molecule) throws -> SerializedCTAB {
+        let molecule = try CDKMDLStereo.preparedForWriting(molecule)
         let order = try outputOrder(for: molecule)
         let orderedSgroups = orderCtabSgroups(for: molecule)
         let sgroupPayloads = sgroupPayloads(forOrderedSgroups: orderedSgroups, order: order)
@@ -97,7 +98,7 @@ public enum CDKMDLV3000Writer {
                     for: atomLine(
                         atom,
                         outputIndex: index + 1,
-                        in: molecule)))
+                        in: molecule, outputIDs: order.atoms.map(\.id))))
         }
         lines.append("M  V30 END ATOM")
 
@@ -216,7 +217,7 @@ public enum CDKMDLV3000Writer {
         return 0
     }
 
-    private static func atomLine(_ atom: Atom, outputIndex: Int, in molecule: Molecule) -> String {
+    private static func atomLine(_ atom: Atom, outputIndex: Int, in molecule: Molecule, outputIDs: [Int]) -> String {
         let symbol = atomSymbol(atom)
         let x = formatCoordinate(Double(atom.position.x))
         let y = formatCoordinate(Double(atom.position.y))
@@ -244,7 +245,7 @@ public enum CDKMDLV3000Writer {
             payload += " ATTCHPT=\(attachmentPoint)"
         }
         if atom.chirality != .none {
-            payload += atom.chirality == .clockwise ? " CFG=1" : " CFG=2"
+            payload += " CFG=\(CDKMDLStereo.parity(atom, in: molecule, outputIDs: outputIDs))"
         }
         if let atomList = atom.atomList, !atomList.isEmpty {
             payload += " ATOMLIST=(\(atomList.count) \(atomList.joined(separator: " ")))"

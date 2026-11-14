@@ -137,7 +137,7 @@ final class InChIToStructureTests: XCTestCase {
         let parser = CDKInChIGeneratorFactory.shared.getInChIToStructure(inchi)
         let molecule = try parser.getAtomContainer()
 
-        let hasStereoDoubleBond = molecule.bonds.contains { $0.order == .double && $0.stereo == .either }
+        let hasStereoDoubleBond = molecule.bonds.contains { $0.order == .double && $0.doubleBondStereo == .trans }
         XCTAssertTrue(hasStereoDoubleBond)
     }
 
@@ -147,7 +147,7 @@ final class InChIToStructureTests: XCTestCase {
         XCTAssertEqual(parser.getStatus(), .success)
 
         let molecule = try parser.getAtomContainer()
-        XCTAssertTrue(molecule.bonds.contains { $0.order == .double && $0.stereo == .either })
+        XCTAssertTrue(molecule.bonds.contains { $0.order == .double && $0.doubleBondStereo == .trans })
         XCTAssertEqual(try CDKInChIGeneratorFactory.shared.getInChIGenerator(molecule).getInchi(), inchi)
     }
 

@@ -214,7 +214,11 @@ private enum CDKInChIParser {
         let doubleBondStereoInfo = parseDoubleBondStereoLayer(layers["b"], in: &molecule)
         ignoredTokens.append(contentsOf: doubleBondStereoInfo.ignoredTokens)
         applyTetrahedralLayer(layers: layers, to: &molecule)
+        if layers["b"] != nil {
+            ignoredTokens.append(contentsOf: try CDKInChIStereoDecoder.apply(inchi: trimmed, to: &molecule))
+        }
         molecule = Depiction2DGenerator.generate(for: molecule)
+        molecule.coordinatesAreGenerated = true
         molecule.assignWedgeHashFromChiralCenters()
         molecule = CDKInChIRoundTripCache.annotating(molecule, source: trimmed)
 

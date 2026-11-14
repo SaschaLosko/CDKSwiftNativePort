@@ -7,7 +7,7 @@ enum CDKInChIOfficialLibraryGenerator {
         case fixedH
     }
 
-    private static let lock = NSLock()
+    static let lock = NSLock()
 
     static func generate(
         for molecule: Molecule,

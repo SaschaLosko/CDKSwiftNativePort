@@ -116,9 +116,12 @@ public enum CDKMDLV3000Reader {
         applySGroupSemantics(scaffold.sgroupLines, to: &molecule)
         try applyRGroupBlocks(rgroupBlocks, to: &molecule)
         CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
+        CDKMDLStereo.attachParityCarriers(to: &molecule)
+        CDKMDLStereo.attachDoubleBondGeometry(to: &molecule)
 
         if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
             molecule = Depiction2DGenerator.generate(for: molecule)
+            molecule.coordinatesAreGenerated = true
         }
 
         return molecule

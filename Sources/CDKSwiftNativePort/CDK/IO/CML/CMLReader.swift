@@ -714,6 +714,8 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
     private func bondStereoTokenToValue(_ raw: String) -> BondStereo? {
         let token = raw.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         switch token {
+        case "UNKNOWNSTEREO":
+            return .either
         case "W", "UP", "WEDGEBEGIN":
             return .up
         case "H", "DOWN", "HATCH":

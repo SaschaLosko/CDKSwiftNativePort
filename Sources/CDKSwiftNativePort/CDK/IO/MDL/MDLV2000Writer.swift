@@ -20,6 +20,7 @@ public enum CDKMDLV2000Writer {
         _ molecule: Molecule,
         options: Options = Options()
     ) throws -> String {
+        let molecule = try CDKMDLStereo.preparedForWriting(molecule)
         let order = try outputOrder(for: molecule)
         let atomListCount = order.atoms.reduce(0) { partial, atom in
             partial + ((atom.atomList?.isEmpty == false) ? 1 : 0)
@@ -138,7 +139,7 @@ public enum CDKMDLV2000Writer {
         var fields: [Int] = Array(repeating: 0, count: 12)
         fields[0] = inlineMassDifference(for: atom, symbolToken: symbolDecision.symbol)
         fields[1] = atomBlockChargeCode(for: atom)
-        fields[2] = atomParity(for: atom)
+        fields[2] = CDKMDLStereo.parity(atom, in: molecule, outputIDs: molecule.atoms.map(\.id).sorted())
         fields[5] = atomValenceField(for: atom, in: molecule)
         fields[9] = atom.atomMapNumber ?? atom.atomClass ?? 0
 
@@ -403,17 +404,6 @@ public enum CDKMDLV2000Writer {
             return false
         }
         return true
-    }
-
-    private static func atomParity(for atom: Atom) -> Int {
-        switch atom.chirality {
-        case .clockwise:
-            return 1
-        case .anticlockwise:
-            return 2
-        case .none:
-            return 0
-        }
     }
 
     private static func atomValenceField(for atom: Atom, in molecule: Molecule) -> Int {

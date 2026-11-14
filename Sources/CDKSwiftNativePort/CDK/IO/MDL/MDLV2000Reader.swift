@@ -107,12 +107,15 @@ public enum CDKMDLV2000Reader {
         applySgroupDrafts(sgroupDrafts, to: &molecule)
         applyChiralFlag(chiralFlag, to: &molecule)
         CDKSDFDataFieldParser.applyParsedFields(from: trimmed, to: &molecule)
+        CDKMDLStereo.attachParityCarriers(to: &molecule)
+        CDKMDLStereo.attachDoubleBondGeometry(to: &molecule)
 
         if molecule.atomCount > 0,
             let box = molecule.boundingBox(),
             box.width <= 0.0001 && box.height <= 0.0001
         {
             molecule = Depiction2DGenerator.generate(for: molecule)
+            molecule.coordinatesAreGenerated = true
         }
 
         return molecule

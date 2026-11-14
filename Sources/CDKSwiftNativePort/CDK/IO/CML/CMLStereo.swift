@@ -35,6 +35,10 @@ enum CMLStereo {
             return
                 "<bondStereo atomRefs4=\"\(refs.map(reference).joined(separator: " "))\">\(stereo == .cis ? "C" : "T")</bondStereo>"
         }
+        if bond.stereo == .either {
+            return
+                "<bondStereo atomRefs2=\"\(reference(bond.a1)) \(reference(bond.a2))\" dictRef=\"cdk:unknownStereo\">other</bondStereo>"
+        }
         let symbol: String
         let refs: [Int]
         switch bond.stereo {
@@ -66,7 +70,7 @@ enum CMLStereo {
         guard let raw = attributes["atomRefs2"] else { return value }  // Older CML documents omit this attribute.
         let refs = raw.split(whereSeparator: \.isWhitespace).map(String.init)
         if refs == [first, second] { return value }
-        if refs == [second, first] { return value == .up ? .upReversed : .downReversed }
+        if refs == [second, first] { return value == .either ? .either : value == .up ? .upReversed : .downReversed }
         throw ChemError.parseFailed("CML wedge references do not identify the parent bond.")
     }
 }
