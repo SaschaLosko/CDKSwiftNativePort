@@ -51,6 +51,7 @@ See [query APIs, reference evidence and remaining boundaries](Documentation/QUER
 
 - `Molecule`, `Atom`, `Bond`, `MoleculeSgroup`
 - `CDKReaction`, `CDKReactionParticipant`, `CDKReactionDirection`
+- optional above/below agent placement, with CML and JSON persistence
 - stereochemistry, atom maps, aliases, attachment points
 - query atoms and query bonds
 - SDF-style data fields and Sgroup metadata

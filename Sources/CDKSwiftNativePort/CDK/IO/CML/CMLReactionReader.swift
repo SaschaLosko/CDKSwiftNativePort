@@ -124,9 +124,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
         var id: String?
         var name: String?
         var properties: [String: String] = [:]
-        var reactants: [PendingMolecule] = []
-        var products: [PendingMolecule] = []
-        var agents: [PendingMolecule] = []
+        var reactants: [PendingParticipant] = []
+        var products: [PendingParticipant] = []
+        var agents: [PendingParticipant] = []
     }
 
     private final class PendingReactionList {
@@ -169,6 +169,8 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private struct PendingParticipant {
         let role: CDKReactionRole
         var molecule: PendingMolecule
+        var arrowPosition: CDKReactionArrowPosition? = nil
+        var stoichiometry: Double? = nil
     }
 
     private enum CaptureContext {
@@ -212,6 +214,14 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     ) {
         let lower = localName(elementName).lowercased()
 
+        if ["reactant", "product", "substance"].contains(lower) {
+            if let raw = attributeDict["count"], Double(raw).map({ $0.isFinite && $0 > 0 }) != true {
+                stereoError = ChemError.parseFailed("Invalid CML reaction coefficient.")
+            }
+            if let raw = attributeDict["cdk:arrowPosition"], CDKReactionArrowPosition(rawValue: raw) == nil {
+                stereoError = ChemError.unsupported("Unsupported CML reaction arrow position.")
+            }
+        }
         switch lower {
         case "reaction":
             reactionStack.append(
@@ -247,21 +257,27 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             participantStack.append(
                 PendingParticipant(
                     role: .reactant,
-                    molecule: participantSeedMolecule(attributes: attributeDict)))
+                    molecule: participantSeedMolecule(attributes: attributeDict),
+                    arrowPosition: attributeDict["cdk:arrowPosition"].flatMap(CDKReactionArrowPosition.init(rawValue:)),
+                    stoichiometry: attributeDict["count"].flatMap(Double.init)))
 
         case "product":
             ensureCurrentReaction()
             participantStack.append(
                 PendingParticipant(
                     role: .product,
-                    molecule: participantSeedMolecule(attributes: attributeDict)))
+                    molecule: participantSeedMolecule(attributes: attributeDict),
+                    arrowPosition: attributeDict["cdk:arrowPosition"].flatMap(CDKReactionArrowPosition.init(rawValue:)),
+                    stoichiometry: attributeDict["count"].flatMap(Double.init)))
 
         case "substance":
             ensureCurrentReaction()
             participantStack.append(
                 PendingParticipant(
                     role: .agent,
-                    molecule: participantSeedMolecule(attributes: attributeDict)))
+                    molecule: participantSeedMolecule(attributes: attributeDict),
+                    arrowPosition: attributeDict["cdk:arrowPosition"].flatMap(CDKReactionArrowPosition.init(rawValue:)),
+                    stoichiometry: attributeDict["count"].flatMap(Double.init)))
 
         case "molecule":
             let molecule = resolveMolecule(attributes: attributeDict)
@@ -384,11 +400,11 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             guard let participant = participantStack.popLast(), !reactionStack.isEmpty else { return }
             switch participant.role {
             case .reactant:
-                reactionStack[reactionStack.count - 1].reactants.append(participant.molecule)
+                reactionStack[reactionStack.count - 1].reactants.append(participant)
             case .product:
-                reactionStack[reactionStack.count - 1].products.append(participant.molecule)
+                reactionStack[reactionStack.count - 1].products.append(participant)
             case .agent:
-                reactionStack[reactionStack.count - 1].agents.append(participant.molecule)
+                reactionStack[reactionStack.count - 1].agents.append(participant)
             }
 
         case "reaction":
@@ -438,28 +454,19 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     }
 
     private func buildReaction(from pending: PendingReaction, index: Int) -> CDKReaction {
-        let reactants = pending.reactants.enumerated().map {
-            buildMolecule(
-                from: $0.element,
-                allowEmpty: true,
-                fallbackName: "Reactant \($0.offset + 1)")
-        }
-        let products = pending.products.enumerated().map {
-            buildMolecule(
-                from: $0.element,
-                allowEmpty: true,
-                fallbackName: "Product \($0.offset + 1)")
-        }
-        let agents = pending.agents.enumerated().map {
-            buildMolecule(
-                from: $0.element,
-                allowEmpty: true,
-                fallbackName: "Agent \($0.offset + 1)")
+        func participants(_ values: [PendingParticipant], name: String) -> [CDKReactionParticipant] {
+            values.enumerated().map { index, value in
+                CDKReactionParticipant(
+                    molecule: buildMolecule(
+                        from: value.molecule, allowEmpty: true, fallbackName: "\(name) \(index + 1)"),
+                    role: value.role, stoichiometry: value.stoichiometry,
+                    arrowPosition: value.role == .agent ? value.arrowPosition : nil)
+            }
         }
         return CDKReaction(
-            reactants: reactants,
-            agents: agents,
-            products: products,
+            reactantParticipants: participants(pending.reactants, name: "Reactant"),
+            agentParticipants: participants(pending.agents, name: "Agent"),
+            productParticipants: participants(pending.products, name: "Product"),
             id: pending.id,
             name: pending.name,
             properties: pending.properties)

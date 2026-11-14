@@ -81,14 +81,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let arrowGap = splitRegions.arrowGap
         let leftRegion = splitRegions.leftRegion
         let rightRegion = splitRegions.rightRegion
-        let agentRegion = agentRegion(
-            in: mainRegion,
-            splitRegions: splitRegions,
-            agentCount: agents.count)
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
-        let agentLayout = layoutBoxes(for: agents, in: agentRegion, style: reactionStyle)
+        let agentLayout = agentBoxes(
+            agents, participants: reaction.agentParticipants, in: mainRegion,
+            splitRegions: splitRegions, style: reactionStyle)
         let participantScale = sharedParticipantScale(
             for: [reactantLayout, productLayout, agentLayout],
             style: reactionStyle)
@@ -376,14 +374,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                 style: reactionStyle))
         let leftRegion = splitRegions.leftRegion
         let rightRegion = splitRegions.rightRegion
-        let agentRegion = agentRegion(
-            in: mainRegion,
-            splitRegions: splitRegions,
-            agentCount: agents.count)
 
         let reactantLayout = layoutBoxes(for: reactants, in: leftRegion, style: reactionStyle)
         let productLayout = layoutBoxes(for: products, in: rightRegion, style: reactionStyle)
-        let agentLayout = layoutBoxes(for: agents, in: agentRegion, style: reactionStyle)
+        let agentLayout = agentBoxes(
+            agents, participants: reaction.agentParticipants, in: mainRegion,
+            splitRegions: splitRegions, style: reactionStyle)
 
         let untransformedPoint = inverseViewportTransform(
             point,
@@ -680,6 +676,26 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         return [Array(0..<count)]
+    }
+
+    /// Keep items in original participant order so rendering, glow and hit testing agree.
+    private static func agentBoxes(
+        _ molecules: [Molecule], participants: [CDKReactionParticipant], in region: CGRect,
+        splitRegions: ReactionSideRegions, style: RenderStyle
+    ) -> MoleculeBoxLayout {
+        var indexed: [(Int, MoleculeBoxLayout.Item)] = []
+        var plusPositions: [CGPoint] = []
+        for position in CDKReactionArrowPosition.allCases {
+            let indices = molecules.indices.filter { (participants[$0].arrowPosition ?? .above) == position }
+            var bounds = agentRegion(in: region, splitRegions: splitRegions, agentCount: indices.count)
+            if position == .below && !indices.isEmpty {
+                bounds.origin.y = 2 * region.midY - bounds.maxY
+            }
+            let layout = layoutBoxes(for: indices.map { molecules[$0] }, in: bounds, style: style)
+            indexed += zip(indices, layout.items).map { ($0.0, $0.1) }
+            plusPositions += layout.plusPositions
+        }
+        return MoleculeBoxLayout(items: indexed.sorted { $0.0 < $1.0 }.map { $0.1 }, plusPositions: plusPositions)
     }
 
     private static func agentRegion(

@@ -27,7 +27,12 @@ public enum CDKCMLReactionWriter {
 
     public static func write(_ hierarchy: CDKReactionHierarchy) throws -> String {
         for reaction in hierarchy.flattenedReactions {
-            for participant in reaction.participants { try CMLStereo.validate(participant.molecule) }
+            for participant in reaction.participants {
+                try CMLStereo.validate(participant.molecule)
+                guard participant.stoichiometry.map({ $0.isFinite && $0 > 0 }) ?? true else {
+                    throw ChemError.unsupported("Reaction coefficients must be finite and positive.")
+                }
+            }
         }
         let lines = CMLReactionDocumentWriter().cmlDocumentLines(for: hierarchy)
         return lines.joined(separator: "\n") + "\n"
@@ -42,7 +47,7 @@ private final class CMLReactionDocumentWriter {
     func cmlDocumentLines(for hierarchy: CDKReactionHierarchy) -> [String] {
         var lines: [String] = []
         lines.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-        lines.append("<cml xmlns=\"http://www.xml-cml.org/schema\">")
+        lines.append("<cml xmlns=\"http://www.xml-cml.org/schema\" xmlns:cdk=\"http://cdk.sourceforge.net/dict/cdk/\">")
         lines.append(contentsOf: hierarchyLines(for: hierarchy, indent: "  ", defaultIndex: 1))
         lines.append("</cml>")
         return lines
@@ -223,14 +228,14 @@ private final class CMLReactionDocumentWriter {
             contentsOf: participantListLines(
                 listTag: "reactantList",
                 participantTag: "reactant",
-                participants: reaction.reactants,
+                participants: reaction.reactantParticipants,
                 indent: indent + "  ",
                 rolePrefix: "reactant"))
         lines.append(
             contentsOf: participantListLines(
                 listTag: "productList",
                 participantTag: "product",
-                participants: reaction.products,
+                participants: reaction.productParticipants,
                 indent: indent + "  ",
                 rolePrefix: "product"))
 
@@ -239,7 +244,7 @@ private final class CMLReactionDocumentWriter {
                 contentsOf: participantListLines(
                     listTag: "substanceList",
                     participantTag: "substance",
-                    participants: reaction.agents,
+                    participants: reaction.agentParticipants,
                     indent: indent + "  ",
                     rolePrefix: "agent"))
         }
@@ -262,7 +267,7 @@ private final class CMLReactionDocumentWriter {
     private func participantListLines(
         listTag: String,
         participantTag: String,
-        participants: [Molecule],
+        participants: [CDKReactionParticipant],
         indent: String,
         rolePrefix: String
     ) -> [String] {
@@ -270,8 +275,14 @@ private final class CMLReactionDocumentWriter {
 
         var lines: [String] = []
         lines.append("\(indent)<\(listTag)>")
-        for (index, molecule) in participants.enumerated() {
-            lines.append("\(indent)  <\(participantTag)>")
+        for (index, participant) in participants.enumerated() {
+            let molecule = participant.molecule
+            var attributes = ""
+            if participant.role == .agent, let position = participant.arrowPosition {
+                attributes += " cdk:arrowPosition=\"\(position.rawValue)\""
+            }
+            if let count = participant.stoichiometry { attributes += " count=\"\(fmt(count))\"" }
+            lines.append("\(indent)  <\(participantTag)\(attributes)>")
             lines.append(
                 contentsOf: moleculeLines(
                     molecule,

@@ -28,15 +28,26 @@ public enum CDKReactionDirection: String, CaseIterable, Codable, Hashable, Senda
     }
 }
 
+/// Presentation only; agents remain chemically agents on either side of the arrow.
+public enum CDKReactionArrowPosition: String, CaseIterable, Codable, Hashable, Sendable {
+    case above
+    case below
+}
+
 public struct CDKReactionParticipant: Equatable, Hashable, Codable, Sendable {
     public var molecule: Molecule
     public var role: CDKReactionRole
     public var stoichiometry: Double?
+    public var arrowPosition: CDKReactionArrowPosition?
 
-    public init(molecule: Molecule, role: CDKReactionRole, stoichiometry: Double? = nil) {
+    public init(
+        molecule: Molecule, role: CDKReactionRole, stoichiometry: Double? = nil,
+        arrowPosition: CDKReactionArrowPosition? = nil
+    ) {
         self.molecule = molecule
         self.role = role
         self.stoichiometry = stoichiometry
+        self.arrowPosition = arrowPosition
     }
 }
 
@@ -162,7 +173,8 @@ public struct CDKReaction: Equatable {
             CDKReactionParticipant(
                 molecule: participant.molecule,
                 role: role,
-                stoichiometry: participant.stoichiometry)
+                stoichiometry: participant.stoichiometry,
+                arrowPosition: role == .agent ? participant.arrowPosition : nil)
         }
     }
 }

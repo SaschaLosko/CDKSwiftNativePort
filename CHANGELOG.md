@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.54
+
+- Add optional above/below-arrow presentation for reaction agents, independent of
+  chemical role and SMILES identity; older participant JSON remains readable.
+- Preserve placement using a namespaced CML participant extension and preserve
+  participant coefficients. Reject invalid coefficients and unsupported positions.
+- Share both-lane geometry between depiction and hit testing, retaining participant
+  indices and highlights. Default documents retain their above-arrow behavior.
+- All 731 tests pass on macOS and Ubuntu, including placement, legacy decoding,
+  shared CML molecule references and transformed selection checks.
+
 ## 1.4.53
 
 - Add portable `CDKMCS` with immutable configuration, explicit maximum proof,

@@ -220,3 +220,17 @@ rejects inconsistent cyclic/degenerate E/Z layouts; InChI extended geometries an
 additional isotope-H layouts are not promoted as supported. CML unknown bonds
 use `bondStereo` value `other` with `dictRef="cdk:unknownStereo"`, following the
 [extension mechanism](https://www.xml-cml.org/convention/molecular#12.3).
+
+## Selected 2.14 reaction presentation adoption (1.4.54)
+
+`CDKReactionParticipant.arrowPosition` adds optional `.above`/`.below` agent
+presentation inspired by upstream #1357. Nil retains the default above lane.
+Chemical roles, graphs and reaction SMILES are independent of this preference.
+The scene builder shares lane geometry with participant hit testing and highlights.
+CML persists the preference on the participant as `cdk:arrowPosition` in
+`http://cdk.sourceforge.net/dict/cdk/`; this is a documented package extension,
+not a claim that other CML readers understand it. Participant JSON also preserves
+it and decodes older documents without the optional field. RXN/RDF and reaction
+SMILES do not preserve this presentation metadata; use a supported drawing codec
+or this CML extension when placement matters. Explicit drawing coordinates remain
+the responsibility of the consuming drawing codec.
