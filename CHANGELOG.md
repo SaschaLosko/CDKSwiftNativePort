@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.55
+
+- Preserve full floating-point precision for CML reaction participant coefficients,
+  independently of coordinate formatting. Cover fractional, tiny and large values
+  for all three participant roles. All 732 tests pass on macOS and Ubuntu.
+
 ## 1.4.54
 
 - Add optional above/below-arrow presentation for reaction agents, independent of

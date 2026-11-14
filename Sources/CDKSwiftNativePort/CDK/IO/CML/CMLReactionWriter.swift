@@ -281,7 +281,7 @@ private final class CMLReactionDocumentWriter {
             if participant.role == .agent, let position = participant.arrowPosition {
                 attributes += " cdk:arrowPosition=\"\(position.rawValue)\""
             }
-            if let count = participant.stoichiometry { attributes += " count=\"\(fmt(count))\"" }
+            if let count = participant.stoichiometry { attributes += " count=\"\(count)\"" }
             lines.append("\(indent)  <\(participantTag)\(attributes)>")
             lines.append(
                 contentsOf: moleculeLines(

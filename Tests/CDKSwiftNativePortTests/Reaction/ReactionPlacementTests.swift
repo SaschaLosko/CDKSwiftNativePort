@@ -56,6 +56,19 @@ final class ReactionPlacementTests: XCTestCase {
         XCTAssertThrowsError(try CDKCMLReactionWriter.write(source))
     }
 
+    func testCMLCoefficientPrecisionIsIndependentOfCoordinateFormatting() throws {
+        for count in [1.2345678901234567, 1.0 / 3.0, 1.0e-12, 1.0e12] {
+            var source = try reaction()
+            source.reactantParticipants[0].stoichiometry = count
+            source.agentParticipants[0].stoichiometry = count
+            source.productParticipants[0].stoichiometry = count
+            let restored = try CDKCMLReactionReader.readReaction(text: CDKCMLReactionWriter.write(source))
+            XCTAssertEqual(restored.reactantParticipants[0].stoichiometry, count)
+            XCTAssertEqual(restored.agentParticipants[0].stoichiometry, count)
+            XCTAssertEqual(restored.productParticipants[0].stoichiometry, count)
+        }
+    }
+
     func testCMLSharedMoleculeReferenceDoesNotShareParticipantPlacement() throws {
         let molecule = try reaction().agents[0]
         let source = CDKReaction(
