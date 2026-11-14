@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.56
+
+- Add a separate bounded unfinished-SMILES preview API with explicit complete,
+  incomplete, invalid, unsupported and limited states. Never invent missing atoms
+  or ring closures; clear stereo on partial graphs and propagate cancellation.
+- Keep ordinary parsing strict and reject malformed branches, repeated bonds,
+  dangling fragment separators and self/duplicate ring bonds. Correct one legacy
+  depiction fixture's branch syntax without changing its intended molecule.
+- All 739 tests pass on macOS and Ubuntu. See
+  [the preview contract](Documentation/SMILES_PREVIEW.md) for limits and usage.
+
 ## 1.4.55
 
 - Preserve full floating-point precision for CML reaction participant coefficients,

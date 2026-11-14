@@ -212,7 +212,7 @@ final class DepictionGeneratorTests: XCTestCase {
     }
 
     func testCDK213SuppressesBothHydrogensOnOneDoubleBondEnd() throws {
-        let molecule = try smilesParser.parseSmiles("C/C=C/([H])[H]")
+        let molecule = try smilesParser.parseSmiles("C/C=C(/[H])[H]")
         let style = RenderStyle(
             showCarbons: true,
             showImplicitHydrogens: true,

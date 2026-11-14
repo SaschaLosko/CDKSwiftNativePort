@@ -33,6 +33,10 @@ public final class CDKSmilesParser {
     }
 
     public func parseCoreSmiles(_ smiles: String) throws -> Molecule {
+        try parseCoreSmiles(smiles, preview: nil)
+    }
+
+    func parseCoreSmiles(_ smiles: String, preview: CDKSmilesPreviewContext?) throws -> Molecule {
         let source = smiles.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !source.isEmpty else { throw ChemError.emptyInput }
 
@@ -65,7 +69,7 @@ public final class CDKSmilesParser {
         var nextBondID = 0
 
         var currentAtom: Int? = nil
-        var branchStack: [Int] = []
+        var branchStack: [(parent: Int, atomCount: Int)] = []
         var ringClosures: [Int: RingClosureState] = [:]
 
         var pendingOrder: BondOrder? = nil
@@ -186,6 +190,9 @@ public final class CDKSmilesParser {
                 advance()
                 let digits = readDigits(maxCount: 2)
                 guard digits.count == 2, let idx = Int(digits) else {
+                    if preview != nil, i == source.endIndex {
+                        throw CDKSmilesPreviewInterruption.incomplete(.ringIndex)
+                    }
                     throw ChemError.parseFailed("Invalid ring index after '%' in SMILES.")
                 }
                 return idx
@@ -262,6 +269,7 @@ public final class CDKSmilesParser {
             let isotopeMass = isotopeDigits.isEmpty ? nil : Int(isotopeDigits)
 
             guard let head = peek() else {
+                if preview != nil { throw CDKSmilesPreviewInterruption.incomplete(.atom) }
                 throw ChemError.parseFailed("Unterminated bracket atom.")
             }
 
@@ -297,6 +305,9 @@ public final class CDKSmilesParser {
 
             let normalized = normalizeElement(
                 symbol: rawSymbol, aromatic: aromatic, isotopeMass: isotopeMass)
+            if preview != nil, normalized.symbol != "*", CDKIsotopes.atomicNumber(symbol: normalized.symbol) == nil {
+                throw ChemError.parseFailed("Unknown element symbol.")
+            }
             var descriptor = BracketAtomDescriptor(
                 element: normalized.symbol,
                 aromatic: normalized.aromatic,
@@ -337,6 +348,11 @@ public final class CDKSmilesParser {
                         i = classStart
                     } else {
                         if !classToken.isEmpty {
+                            if preview != nil, i == source.endIndex, rankToken.isEmpty,
+                                "TH".hasPrefix(classToken)
+                            {
+                                throw CDKSmilesPreviewInterruption.incomplete(.atom)
+                            }
                             guard classToken == "TH", atCount == 1, let rank = Int(rankToken), rank == 1 || rank == 2
                             else {
                                 throw ChemError.parseFailed(
@@ -412,6 +428,9 @@ public final class CDKSmilesParser {
                         descriptor.atomClass = value
                         descriptor.atomMapNumber = value
                     } else if flavor.contains(.strict) {
+                        if preview != nil, i == source.endIndex {
+                            throw CDKSmilesPreviewInterruption.incomplete(.atom)
+                        }
                         throw ChemError.parseFailed("Missing atom-class/map index after ':' in bracket atom.")
                     }
                     continue
@@ -430,6 +449,7 @@ public final class CDKSmilesParser {
             }
 
             guard peek() == "]" else {
+                if preview != nil { throw CDKSmilesPreviewInterruption.incomplete(.atom) }
                 throw ChemError.parseFailed("Unterminated bracket atom.")
             }
             advance()  // ']'
@@ -454,122 +474,163 @@ public final class CDKSmilesParser {
         }
 
         while i < source.endIndex {
+            if let preview { try preview.check(atomCount: molecule.atoms.count) }
             guard let ch = peek() else { break }
-
-            switch ch {
-            case "(":
-                guard let cur = currentAtom else {
-                    throw ChemError.parseFailed("Branch start '(' has no parent atom.")
-                }
-                branchStack.append(cur)
-                advance()
-
-            case ")":
-                guard let parent = branchStack.popLast() else {
-                    throw ChemError.parseFailed("Branch close ')' without matching '('.")
-                }
-                currentAtom = parent
-                advance()
-
-            case "-", "=", "#", ":", "/", "\\":
+            do {
                 switch ch {
-                case "-":
-                    pendingOrder = .single
-                    pendingDirectionalStereo = nil
-                case "=":
-                    pendingOrder = .double
-                    pendingDirectionalStereo = nil
-                case "#":
-                    pendingOrder = .triple
-                    pendingDirectionalStereo = nil
-                case ":":
-                    pendingOrder = .aromatic
-                    pendingDirectionalStereo = nil
-                case "/":
-                    pendingOrder = pendingOrder ?? .single
-                    pendingDirectionalStereo = .up
-                case "\\":
-                    pendingOrder = pendingOrder ?? .single
-                    pendingDirectionalStereo = .down
-                default:
-                    break
-                }
-                advance()
+                case "(":
+                    guard let cur = currentAtom, pendingOrder == nil,
+                        branchStack.last?.atomCount != molecule.atoms.count
+                    else {
+                        throw ChemError.parseFailed("Branch start '(' has no parent atom.")
+                    }
+                    branchStack.append((cur, molecule.atoms.count))
+                    advance()
 
-            case ".":
-                currentAtom = nil
-                pendingOrder = nil
-                pendingDirectionalStereo = nil
-                advance()
+                case ")":
+                    guard let parent = branchStack.popLast() else {
+                        throw ChemError.parseFailed("Branch close ')' without matching '('.")
+                    }
+                    guard molecule.atoms.count > parent.atomCount, currentAtom != nil, pendingOrder == nil else {
+                        throw ChemError.parseFailed("Empty or incomplete branch in SMILES.")
+                    }
+                    currentAtom = parent.parent
+                    advance()
 
-            case "0"..."9", "%":
-                guard let ringIndex = try parseRingIndex() else {
-                    throw ChemError.parseFailed("Invalid ring closure token in SMILES.")
-                }
-                guard let cur = currentAtom else {
-                    throw ChemError.parseFailed("Ring closure '\(ringIndex)' has no current atom.")
-                }
+                case "-", "=", "#", ":", "/", "\\":
+                    guard currentAtom != nil, pendingOrder == nil else {
+                        throw ChemError.parseFailed("Bond token has no preceding atom or follows another bond token.")
+                    }
+                    switch ch {
+                    case "-":
+                        pendingOrder = .single
+                        pendingDirectionalStereo = nil
+                    case "=":
+                        pendingOrder = .double
+                        pendingDirectionalStereo = nil
+                    case "#":
+                        pendingOrder = .triple
+                        pendingDirectionalStereo = nil
+                    case ":":
+                        pendingOrder = .aromatic
+                        pendingDirectionalStereo = nil
+                    case "/":
+                        pendingOrder = pendingOrder ?? .single
+                        pendingDirectionalStereo = .up
+                    case "\\":
+                        pendingOrder = pendingOrder ?? .single
+                        pendingDirectionalStereo = .down
+                    default:
+                        break
+                    }
+                    advance()
 
-                if let open = ringClosures[ringIndex] {
-                    ringClosures[ringIndex] = nil
+                case ".":
+                    guard currentAtom != nil, pendingOrder == nil,
+                        branchStack.last?.atomCount != molecule.atoms.count
+                    else { throw ChemError.parseFailed("Invalid disconnected-fragment separator.") }
+                    currentAtom = nil
+                    pendingOrder = nil
+                    pendingDirectionalStereo = nil
+                    advance()
 
-                    if let left = open.explicitOrder, let right = pendingOrder, left != right {
-                        throw ChemError.parseFailed("Conflicting ring bond order for closure \(ringIndex).")
+                case "0"..."9", "%":
+                    guard branchStack.last?.atomCount != molecule.atoms.count else {
+                        throw ChemError.parseFailed("A branch must start with an atom.")
+                    }
+                    guard let ringIndex = try parseRingIndex() else {
+                        throw ChemError.parseFailed("Invalid ring closure token in SMILES.")
+                    }
+                    guard let cur = currentAtom else {
+                        throw ChemError.parseFailed("Ring closure '\(ringIndex)' has no current atom.")
                     }
 
-                    let explicitOrder = pendingOrder ?? open.explicitOrder
-                    let order = resolveBondOrder(a1: open.atomID, a2: cur, explicit: explicitOrder)
-                    let stereo =
-                        (order == .single)
-                        ? (pendingDirectionalStereo ?? open.directionalStereo ?? .none) : .none
-                    if let slot = stereoNeighborOrder[open.atomID]?.firstIndex(of: -ringIndex - 1) {
-                        stereoNeighborOrder[open.atomID]?[slot] = cur
+                    if let open = ringClosures[ringIndex] {
+                        guard open.atomID != cur,
+                            !molecule.bonds.contains(where: {
+                                ($0.a1 == open.atomID && $0.a2 == cur) || ($0.a2 == open.atomID && $0.a1 == cur)
+                            })
+                        else { throw ChemError.parseFailed("Ring closure creates a self or duplicate bond.") }
+                        ringClosures[ringIndex] = nil
+
+                        if let left = open.explicitOrder, let right = pendingOrder, left != right {
+                            throw ChemError.parseFailed("Conflicting ring bond order for closure \(ringIndex).")
+                        }
+
+                        let explicitOrder = pendingOrder ?? open.explicitOrder
+                        let order = resolveBondOrder(a1: open.atomID, a2: cur, explicit: explicitOrder)
+                        let stereo =
+                            (order == .single)
+                            ? (pendingDirectionalStereo ?? open.directionalStereo ?? .none) : .none
+                        if let slot = stereoNeighborOrder[open.atomID]?.firstIndex(of: -ringIndex - 1) {
+                            stereoNeighborOrder[open.atomID]?[slot] = cur
+                        }
+                        appendBond(open.atomID, cur, order: order, stereo: stereo)
+                    } else {
+                        stereoNeighborOrder[cur, default: []].append(-ringIndex - 1)
+                        ringClosures[ringIndex] = RingClosureState(
+                            atomID: cur,
+                            explicitOrder: pendingOrder,
+                            directionalStereo: pendingDirectionalStereo)
                     }
-                    appendBond(open.atomID, cur, order: order, stereo: stereo)
-                } else {
-                    stereoNeighborOrder[cur, default: []].append(-ringIndex - 1)
-                    ringClosures[ringIndex] = RingClosureState(
-                        atomID: cur,
-                        explicitOrder: pendingOrder,
-                        directionalStereo: pendingDirectionalStereo)
-                }
 
-                pendingOrder = nil
-                pendingDirectionalStereo = nil
+                    pendingOrder = nil
+                    pendingDirectionalStereo = nil
 
-            case "[":
-                let bracket = try parseBracketAtom()
-                let newID = appendAtom(
-                    element: bracket.element,
-                    aromatic: bracket.aromatic,
-                    charge: bracket.charge,
-                    isotopeMass: bracket.isotopeMass,
-                    chirality: bracket.chirality,
-                    explicitHydrogenCount: bracket.hasExplicitHydrogenSpecification
-                        ? bracket.explicitHydrogenCount : nil,
-                    exactDegree: bracket.exactDegree,
-                    totalConnectivity: bracket.totalConnectivity,
-                    valence: bracket.valence,
-                    ringMembership: bracket.ringMembership,
-                    ringSize: bracket.ringSize,
-                    unsaturated: bracket.unsaturated,
-                    atomClass: bracket.atomClass,
-                    atomMapNumber: bracket.atomMapNumber)
-                connectCurrentTo(newID)
-
-            default:
-                if let atom = parsePlainAtom() {
+                case "[":
+                    let bracket = try parseBracketAtom()
                     let newID = appendAtom(
-                        element: atom.element,
-                        aromatic: atom.aromatic,
-                        isotopeMass: atom.isotopeMass)
+                        element: bracket.element,
+                        aromatic: bracket.aromatic,
+                        charge: bracket.charge,
+                        isotopeMass: bracket.isotopeMass,
+                        chirality: bracket.chirality,
+                        explicitHydrogenCount: bracket.hasExplicitHydrogenSpecification
+                            ? bracket.explicitHydrogenCount : nil,
+                        exactDegree: bracket.exactDegree,
+                        totalConnectivity: bracket.totalConnectivity,
+                        valence: bracket.valence,
+                        ringMembership: bracket.ringMembership,
+                        ringSize: bracket.ringSize,
+                        unsaturated: bracket.unsaturated,
+                        atomClass: bracket.atomClass,
+                        atomMapNumber: bracket.atomMapNumber)
                     connectCurrentTo(newID)
-                } else {
-                    throw ChemError.parseFailed("Unexpected token '\(ch)' in SMILES.")
+
+                default:
+                    if let atom = parsePlainAtom() {
+                        let newID = appendAtom(
+                            element: atom.element,
+                            aromatic: atom.aromatic,
+                            isotopeMass: atom.isotopeMass)
+                        connectCurrentTo(newID)
+                    } else {
+                        throw ChemError.parseFailed("Unexpected token '\(ch)' in SMILES.")
+                    }
                 }
+            } catch CDKSmilesPreviewInterruption.incomplete(let issue) {
+                preview?.issues.append(issue)
+                break
             }
         }
 
+        if let preview {
+            try preview.check(atomCount: molecule.atoms.count)
+            if !branchStack.isEmpty { preview.issues.append(.branch) }
+            if !ringClosures.isEmpty { preview.issues.append(.ringClosure) }
+            if pendingOrder != nil || pendingDirectionalStereo != nil { preview.issues.append(.bond) }
+            if currentAtom == nil, !molecule.atoms.isEmpty { preview.issues.append(.fragment) }
+            if !preview.issues.isEmpty {
+                // Partial neighbor lists cannot establish stereochemistry. Never invent it
+                // from a drawing generated for unfinished input.
+                for index in molecule.atoms.indices {
+                    molecule.atoms[index].chirality = .none
+                    molecule.atoms[index].ligandOrderingAtomIDs = nil
+                }
+                for index in molecule.bonds.indices { molecule.bonds[index].stereo = .none }
+                return molecule
+            }
+        }
         guard !molecule.atoms.isEmpty else {
             throw ChemError.parseFailed("No atoms found.")
         }
@@ -582,6 +643,9 @@ public final class CDKSmilesParser {
         }
         if flavor.contains(.strict), pendingOrder != nil || pendingDirectionalStereo != nil {
             throw ChemError.parseFailed("Dangling bond token at end of SMILES.")
+        }
+        if flavor.contains(.strict), currentAtom == nil {
+            throw ChemError.parseFailed("Missing fragment after '.' in SMILES.")
         }
 
         for index in molecule.atoms.indices where molecule.atoms[index].chirality != .none {
