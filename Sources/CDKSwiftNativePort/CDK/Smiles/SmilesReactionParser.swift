@@ -18,6 +18,7 @@ extension CDKSmilesParser {
         var components = reactantComponents + agentComponents + productComponents
         applyCxAtomLabels(to: &components, state: split.state)
         applyCxCoordinateBonds(to: &components, state: split.state)
+        applyCxStereoGroups(to: &components, state: split.state)
         let grouped = try applyFragmentGrouping(to: components, state: split.state)
 
         let reactants = grouped.filter { $0.side == .reactant }.map {
@@ -54,6 +55,26 @@ private struct CDKIndexedReactionComponent {
 }
 
 extension CDKSmilesParser {
+    fileprivate func applyCxStereoGroups(
+        to components: inout [CDKIndexedReactionComponent], state: CDKCxSmilesState
+    ) {
+        var offset = 0
+        for componentIndex in components.indices {
+            var molecule = components[componentIndex].molecule
+            for atomIndex in molecule.atoms.indices where molecule.atoms[atomIndex].chirality != .none {
+                if state.racemic || state.racemicFragments.contains(componentIndex) {
+                    molecule.atoms[atomIndex].cxStereoGroup = CDKCxSmilesParser.encodeStereoGroup(
+                        kind: "and", number: state.racemic ? 1 : componentIndex + 1)
+                }
+                if let group = state.stereoGroups[offset + atomIndex] {
+                    molecule.atoms[atomIndex].cxStereoGroup = group
+                }
+            }
+            offset += molecule.atomCount
+            components[componentIndex].molecule = molecule
+        }
+    }
+
     fileprivate func parseReactionSide(_ raw: String, side: CDKReactionSide) throws
         -> [CDKIndexedReactionComponent]
     {
@@ -280,9 +301,11 @@ extension CDKSmilesParser {
             var idMap: [Int: Int] = [:]
             var bondIDMap: [Int: Int] = [:]
 
+            for (index, atom) in molecule.atoms.enumerated() {
+                idMap[atom.id] = nextAtomID + index + 1
+            }
             for atom in molecule.atoms {
                 nextAtomID += 1
-                idMap[atom.id] = nextAtomID
                 out.atoms.append(
                     Atom(
                         id: nextAtomID,
@@ -309,7 +332,7 @@ extension CDKSmilesParser {
                         attachmentPoint: atom.attachmentPoint,
                         valenceOverride: atom.valenceOverride,
                         cxStereoGroup: atom.cxStereoGroup,
-                        ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs,
+                        ligandOrderingAtomIDs: atom.ligandOrderingAtomIDs?.compactMap { idMap[$0] },
                         atomClass: atom.atomClass,
                         atomMapNumber: atom.atomMapNumber)
                 )

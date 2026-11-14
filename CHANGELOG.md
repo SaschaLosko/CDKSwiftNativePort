@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.50 — 2026-11-13
+
+- Adopt CDK 2.14 TPSA corrections for sulfur/phosphorus ring fragments and
+  double-bonded phosphorus, and the dedicated CTfile isotope-offset table.
+- Apply reaction CXSMILES racemic/stereogroup metadata to participant atoms,
+  regenerate stereo output indices, and remap carriers when grouping fragments.
+- Adopt CDK 2.14.1 nested-abbreviation visibility rules; rendering remains
+  nonmutating and honors expansion and partial highlights.
+- All 696 package tests pass on macOS and Ubuntu; changed Swift sources pass
+  strict formatting lint. Additional 2.14 parity work remains documented.
+
 ## 1.4.49 — 2026-11-13
 
 - Retain CML drawing coordinates alongside their generated-coordinate provenance

@@ -9,6 +9,17 @@ Development Kit (CDK). The current parity target for the supported surface in
 this package is CDK `2.13` (`cdk-2.13`, commit
 `3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`).
 
+## Selected CDK 2.14.1 adoption
+
+Version 1.4.50 adopts the TPSA fixes ([#1347](https://github.com/cdk/cdk/pull/1347),
+[#1364](https://github.com/cdk/cdk/pull/1364)), CTfile isotope offsets
+([#1350](https://github.com/cdk/cdk/pull/1350)), reaction stereogroups
+([#1369](https://github.com/cdk/cdk/pull/1369)), and nested-abbreviation visibility
+([#1379](https://github.com/cdk/cdk/pull/1379)). Attributed Swift regressions cover
+the affected chemistry, group ordering, expansion, highlighting and source
+nonmutation. This incremental adoption does not establish complete 2.14.1 parity.
+Isotope-service, MCS, remaining stereo and presentation work are separate milestones.
+
 ## CDK Reference Citations
 
 - Willighagen et al. (2017), *The Chemistry Development Kit (CDK) v2.0: atom

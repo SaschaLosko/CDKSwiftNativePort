@@ -146,8 +146,10 @@ public enum CDKMDLV2000Reader {
 
         let massDiff = parseSignedFixedInt(line, start: 34, length: 2) ?? parseInt(parts, index: 4) ?? 0
         if massDiff != 0, isotopeMassNumber == nil {
-            let baseMass = majorMassNumber(for: element)
-            if baseMass > 0 {
+            if let baseMass = CDKMDLIsotope.referenceMass(for: element) {
+                guard baseMass + massDiff > 0 else {
+                    throw ChemError.parseFailed("Invalid relative isotope mass.")
+                }
                 isotopeMassNumber = baseMass + massDiff
             }
         }
@@ -870,12 +872,6 @@ public enum CDKMDLV2000Reader {
         guard trimmed.allSatisfy(\.isLetter) else { return false }
         let lower = trimmed.lowercased()
         return trimmed == lower && aromaticTokens.contains(lower)
-    }
-
-    private static func majorMassNumber(for element: String) -> Int {
-        let mass = CDKDescriptorSupport.monoisotopicAtomicMass(forElementSymbol: element)
-        guard mass > 0 else { return 0 }
-        return Int(mass.rounded())
     }
 
     private static func parseRGroupLabel(_ label: String) -> Int? {

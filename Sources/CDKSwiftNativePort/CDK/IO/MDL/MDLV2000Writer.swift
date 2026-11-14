@@ -391,9 +391,7 @@ public enum CDKMDLV2000Writer {
         if symbolToken.uppercased() == "D" || symbolToken.uppercased() == "T" {
             return 0
         }
-        let baseMass = Int(
-            CDKDescriptorSupport.monoisotopicAtomicMass(forElementSymbol: atom.element).rounded())
-        guard baseMass > 0 else { return 0 }
+        guard let baseMass = CDKMDLIsotope.referenceMass(for: atom.element) else { return 0 }
         let diff = isotope - baseMass
         return (-3...4).contains(diff) ? diff : 0
     }

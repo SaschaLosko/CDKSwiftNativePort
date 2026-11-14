@@ -101,16 +101,36 @@ public final class CDKSmilesGenerator {
     }
 
     public func create(_ reaction: CDKReaction) -> String {
-        let reactants = reaction.reactantParticipants.map { createCoreSmiles($0.molecule).smiles }
-            .joined(separator: ".")
-        let agents = reaction.agentParticipants.map { createCoreSmiles($0.molecule).smiles }.joined(
-            separator: ".")
-        let products = reaction.productParticipants.map { createCoreSmiles($0.molecule).smiles }
-            .joined(
-                separator: ".")
+        var offset = 0
+        var stereoGroups: [Int: Int] = [:]
+        var hasGroup = false
+        func side(_ participants: [CDKReactionParticipant]) -> String {
+            participants.map { participant in
+                let molecule = participant.molecule
+                let core = createCoreSmiles(molecule)
+                for (index, id) in core.atomOutputOrder.enumerated() {
+                    guard let atom = molecule.atom(id: id), atom.chirality != .none else { continue }
+                    hasGroup = hasGroup || atom.cxStereoGroup != nil
+                    stereoGroups[offset + index] =
+                        atom.cxStereoGroup
+                        ?? CDKCxSmilesParser.encodeStereoGroup(kind: "abs", number: 0)
+                }
+                offset += core.atomOutputOrder.count
+                return core.smiles
+            }.joined(separator: ".")
+        }
+        let reactants = side(reaction.reactantParticipants)
+        let agents = side(reaction.agentParticipants)
+        let products = side(reaction.productParticipants)
 
         let base = reactants + ">" + agents + ">" + products
-        guard wantsCxOutput, let cxState = reaction.cxState else { return base }
+        guard wantsCxOutput else { return base }
+        var cxState = reaction.cxState ?? CDKCxSmilesState()
+        if hasGroup {
+            cxState.racemic = false
+            cxState.racemicFragments = []
+            cxState.stereoGroups = stereoGroups
+        }
         guard let cxSuffix = createCxLayer(from: cxState, atomOutputOrder: []) else {
             return base
         }

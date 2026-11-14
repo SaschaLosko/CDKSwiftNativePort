@@ -27,12 +27,19 @@ enum CDKDepictionPreprocessor {
         var prepared = molecule
         var state = ShortcutState()
 
-        for sgroup in molecule.sgroups {
+        // Outer abbreviations own their hidden atoms; an inner group must not
+        // expose a second label. Build visibility afresh for every render.
+        let groups = molecule.sgroups.sorted {
+            if $0.atomIDs.count != $1.atomIDs.count { return $0.atomIDs.count > $1.atomIDs.count }
+            return $0.atomIDs.sorted().lexicographicallyPrecedes($1.atomIDs.sorted())
+        }
+        for sgroup in groups {
             let keyword =
                 sgroup.keyword?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() ?? ""
             switch keyword {
             case "SUP":
                 guard !sgroup.expanded,
+                    state.hiddenAtomIDs.isDisjoint(with: sgroup.atomIDs),
                     let label = sgroup.subscriptText?.trimmingCharacters(in: .whitespacesAndNewlines),
                     !label.isEmpty,
                     canContractAbbreviation(sgroup: sgroup, in: molecule)
@@ -41,6 +48,7 @@ enum CDKDepictionPreprocessor {
                 }
                 contractAbbreviation(sgroup: sgroup, label: label, molecule: molecule, state: &state)
             case "MUL":
+                guard state.hiddenAtomIDs.isDisjoint(with: sgroup.atomIDs) else { continue }
                 hideMultipleGroupParts(sgroup: sgroup, molecule: molecule, state: &state)
             default:
                 if sgroup.kind == .extMulticenter {

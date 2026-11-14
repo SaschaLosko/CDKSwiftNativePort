@@ -85,7 +85,7 @@ extension CDKCxSmilesParser {
         guard state.racemic || !state.stereoGroups.isEmpty else { return }
         for idx in molecule.atoms.indices where molecule.atoms[idx].chirality != .none {
             if state.racemic {
-                molecule.atoms[idx].cxStereoGroup = 1
+                molecule.atoms[idx].cxStereoGroup = encodeStereoGroup(kind: "and", number: 1)
             }
         }
         for (atomIndex, group) in state.stereoGroups

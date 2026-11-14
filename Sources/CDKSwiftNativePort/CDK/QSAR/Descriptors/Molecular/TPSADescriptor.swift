@@ -61,7 +61,8 @@ public enum CDKTPSADescriptor {
             if tripleBondCount > 0 { maxBondOrder = 3.0 }
 
             let isInThreeMemberedRing =
-                CDKDescriptorRingSupport.hasThreeMemberedRing(containing: atom.id, in: molecule) ? 1 : 0
+                (uppercasedSymbol == "N" || uppercasedSymbol == "O")
+                    && CDKDescriptorRingSupport.hasThreeMemberedRing(containing: atom.id, in: molecule) ? 1 : 0
             let profile = makeProfile(
                 symbol: symbol,
                 maxBondOrder: maxBondOrder,
@@ -142,7 +143,7 @@ public enum CDKTPSADescriptor {
         "S+1.5+3.0+2+0+0+2+0+0+0+0": 28.24,
         "S+2.0+5.0+3+0+0+2+0+0+1+0": 21.7,
         "P+1.0+3.0+3+0+0+0+0+3+0+0": 13.59,
-        "P+2.0+3.0+3+0+0+0+0+1+1+0": 34.14,
+        "P+2.0+3.0+2+0+0+0+0+1+1+0": 34.14,
         "P+2.0+5.0+4+0+0+0+0+3+1+0": 9.81,
         "P+2.0+5.0+4+1+0+0+0+3+1+0": 23.47,
     ]
