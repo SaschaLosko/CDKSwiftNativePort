@@ -392,6 +392,6 @@ enum CDKInChIOfficialLibraryGenerator {
         if uppercased == "D" || uppercased == "T" {
             return true
         }
-        return CDKDescriptorSupport.averageAtomicMass(forElementSymbol: canonical) > 0
+        return CDKIsotopes.atomicNumber(symbol: canonical) != nil
     }
 }

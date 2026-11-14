@@ -11,6 +11,14 @@ this package is CDK `2.13` (`cdk-2.13`, commit
 
 ## Selected CDK 2.14.1 adoption
 
+Release 1.4.52 adds the shared isotope dataset/service corresponding to upstream
+#1343/#1344/#1345 and separates element recognition from natural-mass availability
+(the concern in #1368). Explicit isotope mass, natural average and major-isotope
+mass are distinct. Unsupported physical data is reported, not approximated by
+mass number or another mass convention. Dataset provenance, measured lookup cost,
+legacy NaN behavior and the validated throwing APIs are documented in
+[ISOTOPES.md](ISOTOPES.md).
+
 Version 1.4.50 adopts the TPSA fixes ([#1347](https://github.com/cdk/cdk/pull/1347),
 [#1364](https://github.com/cdk/cdk/pull/1364)), CTfile isotope offsets
 ([#1350](https://github.com/cdk/cdk/pull/1350)), reaction stereogroups

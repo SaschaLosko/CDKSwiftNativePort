@@ -171,7 +171,7 @@ public enum CDKCMLWriter {
         if upper == "D" || upper == "T" {
             return true
         }
-        return CDKDescriptorSupport.averageAtomicMass(forElementSymbol: canonical) > 0
+        return CDKIsotopes.atomicNumber(symbol: canonical) != nil
     }
 
     private static func normalizedName(_ raw: String, fallback: String) -> String {

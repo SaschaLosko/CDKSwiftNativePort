@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.52
+
+- Add a shared, immutable isotope service with 3,171 BODR 10 records aligned to
+  CDK 2.14.1, retaining upstream precision, provenance and the data license.
+- Calculate explicit isotope masses from physical data instead of mass numbers;
+  cover rare-element exact/average masses without substituting one for the other.
+- Add validated throwing mass descriptors. Existing nonthrowing APIs return NaN
+  for unavailable mass; Rule-of-Five evaluation remains partial in that case.
+- Classify real elements independently of natural-mass availability in CML and
+  InChI. Keep CTfile isotope-reference numbers separate.
+- Qualification: 709 tests on macOS and Linux. See `Documentation/ISOTOPES.md` for
+  dataset scope, measured lookup cost and remaining boundaries.
+
 ## 1.4.51
 
 - Decode defined InChI alkene stereo through the bundled reference C library,

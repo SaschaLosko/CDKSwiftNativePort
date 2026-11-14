@@ -466,7 +466,7 @@ private final class CMLReactionDocumentWriter {
         if canonicalUpper == "D" || canonicalUpper == "T" {
             return nil
         }
-        return CDKDescriptorSupport.averageAtomicMass(forElementSymbol: canonical) > 0 ? nil : trimmed
+        return CDKIsotopes.atomicNumber(symbol: canonical) != nil ? nil : trimmed
     }
 
     private func normalizedElementType(for atom: Atom) -> String {

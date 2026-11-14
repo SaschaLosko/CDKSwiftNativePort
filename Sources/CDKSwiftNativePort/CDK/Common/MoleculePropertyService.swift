@@ -33,7 +33,9 @@ public struct CDKRuleOfFiveResult: Equatable {
             let status = isCompliant ? "Pass" : "Fail"
             return "\(status) (\(violations) violation\(suffix))"
         }
-        return "Partial (\(violations) violation\(suffix), XLogP unavailable)"
+        let missing = [molecularWeight.isFinite ? nil : "molecular weight", xlogP == nil ? "XLogP" : nil]
+            .compactMap { $0 }.joined(separator: ", ")
+        return "Partial (\(violations) violation\(suffix), \(missing) unavailable)"
     }
 }
 
@@ -103,16 +105,17 @@ public enum CDKRuleOfFiveDescriptor {
         if molecularWeight > 500.0 { violations += 1 }
         if hBondDonorCount > 5 { violations += 1 }
         if hBondAcceptorCount > 10 { violations += 1 }
-        if let xlogP, xlogP > 5.0 { violations += 1 }
+        let finiteXlogP = xlogP.flatMap { $0.isFinite ? $0 : nil }
+        if let finiteXlogP, finiteXlogP > 5.0 { violations += 1 }
 
-        let criteriaCount = xlogP == nil ? 3 : 4
-        let isCompliant = xlogP == nil ? nil : (violations <= 1)
+        let criteriaCount = 2 + (molecularWeight.isFinite ? 1 : 0) + (finiteXlogP == nil ? 0 : 1)
+        let isCompliant = criteriaCount == 4 ? (violations <= 1) : nil
 
         return CDKRuleOfFiveResult(
             molecularWeight: molecularWeight,
             hBondDonorCount: hBondDonorCount,
             hBondAcceptorCount: hBondAcceptorCount,
-            xlogP: xlogP,
+            xlogP: finiteXlogP,
             violations: violations,
             evaluatedCriteriaCount: criteriaCount,
             isCompliant: isCompliant)

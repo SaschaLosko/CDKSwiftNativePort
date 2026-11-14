@@ -37,7 +37,8 @@ let package = Package(
         ),
         .target(
             name: "CDKSwiftNativePort",
-            dependencies: ["IUPACInChI"]
+            dependencies: ["IUPACInChI"],
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "CDKSwiftNativePortTests",
