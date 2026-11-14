@@ -20,6 +20,9 @@ public enum CDKCMLWriter {
             let aromaticBondIDs = molecule.aromaticDisplayBondIDs()
 
             lines.append("  <molecule id=\"m\(idx + 1)\" title=\"\(xmlEsc(name))\">")
+            if let generated = molecule.coordinatesAreGenerated {
+                lines.append("    <scalar dictRef=\"cdk:coordinatesAreGenerated\">\(generated)</scalar>")
+            }
             lines.append("    <atomArray>")
 
             let atoms = molecule.atoms.sorted { $0.id < $1.id }
@@ -34,11 +37,9 @@ public enum CDKCMLWriter {
                     "id=\"a\(atom.id)\"",
                     "elementType=\"\(xmlEsc(elementType))\"",
                 ]
-                if molecule.coordinatesAreGenerated != true {
-                    attrs.append("x2=\"\(fmt(Double(atom.position.x)))\"")
-                    attrs.append("y2=\"\(fmt(Double(atom.position.y)))\"")
-                }
-                if has3D && molecule.coordinatesAreGenerated != true {
+                attrs.append("x2=\"\(fmt(Double(atom.position.x)))\"")
+                attrs.append("y2=\"\(fmt(Double(atom.position.y)))\"")
+                if has3D {
                     attrs.append("x3=\"\(fmt(Double(atom.position.x)))\"")
                     attrs.append("y3=\"\(fmt(Double(atom.position.y)))\"")
                     attrs.append("z3=\"\(fmt(atom.zPosition ?? 0))\"")

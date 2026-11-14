@@ -74,6 +74,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     private final class PendingMolecule {
         var id: String?
         var title: String?
+        var coordinatesAreGenerated: Bool?
         var formulaValues: [String] = []
         var atoms: [PendingAtom] = []
         var bonds: [PendingBond] = []
@@ -171,6 +172,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
     }
 
     private enum CaptureContext {
+        case molecule
         case atom
         case bond
         case reaction
@@ -334,6 +336,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
                         attributes: attributeDict,
                         context: .bond,
                         text: ""))
+            } else if !moleculeStack.isEmpty, attributeDict["dictRef"] == "cdk:coordinatesAreGenerated" {
+                textCaptures.append(
+                    TextCapture(elementName: lower, attributes: attributeDict, context: .molecule, text: ""))
             } else if !reactionStack.isEmpty || !containerStack.isEmpty {
                 textCaptures.append(
                     TextCapture(
@@ -585,6 +590,7 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
             externalID: source.id,
             atoms: atoms,
             bonds: bonds)
+        molecule.coordinatesAreGenerated = source.coordinatesAreGenerated
         for formula in source.formulaValues {
             molecule.appendDataFieldValue(formula, named: "Formula")
         }
@@ -908,6 +914,9 @@ private final class CMLReactionParserDelegate: NSObject, XMLParserDelegate {
 
     private func applyCapture(_ capture: TextCapture) {
         switch capture.context {
+        case .molecule:
+            moleculeStack.last?.coordinatesAreGenerated = Bool(
+                capture.text.trimmingCharacters(in: .whitespacesAndNewlines))
         case .atom:
             applyAtomCapture(capture)
         case .bond:

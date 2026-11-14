@@ -34,6 +34,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
     private final class PendingMolecule {
         var id: String?
         var title: String?
+        var coordinatesAreGenerated: Bool?
         var atoms: [PendingAtom] = []
         var bonds: [PendingBond] = []
 
@@ -127,7 +128,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             }
 
         case "bondstereo", "atomparity", "label", "scalar", "string", "float", "integer":
-            guard currentAtom != nil || currentBond != nil else { return }
+            guard currentAtom != nil || currentBond != nil || !moleculeStack.isEmpty else { return }
             textCaptures.append(TextCapture(elementName: lower, attributes: attributeDict, text: ""))
 
         default:
@@ -251,6 +252,7 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
             }
 
             var molecule = Molecule(name: moleculeName, atoms: atoms, bonds: bonds)
+            molecule.coordinatesAreGenerated = source.coordinatesAreGenerated
             if let box = molecule.boundingBox(), box.width <= 0.0001 && box.height <= 0.0001 {
                 molecule = Depiction2DGenerator.generate(for: molecule)
                 molecule.coordinatesAreGenerated = true
@@ -472,6 +474,9 @@ private final class CMLParserDelegate: NSObject, XMLParserDelegate {
                 applyAtomScalarCapture(capture)
             } else if currentBond != nil {
                 applyBondScalarCapture(capture)
+            } else if capture.attributes["dictRef"] == "cdk:coordinatesAreGenerated" {
+                moleculeStack.last?.coordinatesAreGenerated = Bool(
+                    capture.text.trimmingCharacters(in: .whitespacesAndNewlines))
             }
 
         default:

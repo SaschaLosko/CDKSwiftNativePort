@@ -321,6 +321,9 @@ private final class CMLReactionDocumentWriter {
             return lines
         }
 
+        if let generated = molecule.coordinatesAreGenerated {
+            lines.append("\(indent)  <scalar dictRef=\"cdk:coordinatesAreGenerated\">\(generated)</scalar>")
+        }
         lines.append("\(indent)  <atomArray>")
         let atoms = molecule.atoms.sorted { $0.id < $1.id }
         for atom in atoms {
@@ -331,11 +334,9 @@ private final class CMLReactionDocumentWriter {
                 "id=\"\(xmlEsc(atom.externalID ?? "a\(atom.id)"))\"",
                 "elementType=\"\(xmlEsc(elementType))\"",
             ]
-            if molecule.coordinatesAreGenerated != true {
-                atomAttrs.append("x2=\"\(fmt(Double(atom.position.x)))\"")
-                atomAttrs.append("y2=\"\(fmt(Double(atom.position.y)))\"")
-            }
-            if has3D && molecule.coordinatesAreGenerated != true {
+            atomAttrs.append("x2=\"\(fmt(Double(atom.position.x)))\"")
+            atomAttrs.append("y2=\"\(fmt(Double(atom.position.y)))\"")
+            if has3D {
                 atomAttrs.append("x3=\"\(fmt(Double(atom.position.x)))\"")
                 atomAttrs.append("y3=\"\(fmt(Double(atom.position.y)))\"")
                 atomAttrs.append("z3=\"\(fmt(atom.zPosition ?? 0))\"")

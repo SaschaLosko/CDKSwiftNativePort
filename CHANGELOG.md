@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.49 — 2026-11-13
+
+- Retain CML drawing coordinates alongside their generated-coordinate provenance
+  using an additive `cdk:coordinatesAreGenerated` scalar. This supersedes 1.4.48's
+  omission of synthetic coordinates, preserving manually arranged layouts while
+  retaining unspecified-stereo semantics in this reader.
+- Verify original and generated coordinate values and provenance in both molecule
+  and reaction round trips. All 691 tests pass on macOS and Ubuntu; strict
+  changed-source lint passes.
+
 ## 1.4.48 — 2026-11-13
 
 - Preserve ordered tetrahedral atom parity and cis/trans double-bond references

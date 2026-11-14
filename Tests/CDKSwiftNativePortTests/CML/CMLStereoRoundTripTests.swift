@@ -58,6 +58,21 @@ final class CMLStereoRoundTripTests: XCTestCase {
         }
     }
 
+    func testSyntheticAndSourceCoordinatesRetainLayoutAndProvenance() throws {
+        for generated in [false, true] {
+            var source = try CDKSmilesParser().parseSmiles("FC=CF")
+            source.coordinatesAreGenerated = generated
+            for i in source.atoms.indices { source.atoms[i].position = CGPoint(x: Double(i) * 2.0 - 6, y: 2) }
+            let restored = try XCTUnwrap(CDKCMLReader.read(text: CDKCMLWriter.write([source])).first)
+            XCTAssertEqual(restored.coordinatesAreGenerated, generated)
+            XCTAssertEqual(restored.atoms.map(\.position), source.atoms.map(\.position))
+            let reaction = CDKReaction(reactants: [source], agents: [], products: [source])
+            let copy = try CDKCMLReactionReader.readReaction(text: CDKCMLReactionWriter.write(reaction))
+            XCTAssertEqual(copy.reactants[0].coordinatesAreGenerated, generated)
+            XCTAssertEqual(copy.products[0].atoms.map(\.position), source.atoms.map(\.position))
+        }
+    }
+
     func testMalformedStereoCannotSilentlyBecomeUnspecified() throws {
         var source = try CDKSmilesParser().parseSmiles("F/C=C/F")
         source.bonds[source.bonds.firstIndex { $0.order == .double }!].stereoReferenceAtomIDs = [1, 2, 3, 999]

@@ -171,12 +171,14 @@ configuration semantics without a Java dependency. See the [API, limits and
 Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
 remain separate capabilities.
 
-### CML stereochemistry (1.4.48)
+### CML stereochemistry (1.4.49)
 
 Molecule and reaction CML now write/read ordered `atomParity` and `bondStereo`
-references and preserve wedge/hatch endpoint direction. Synthetic depiction
-coordinates are omitted on export and regenerated on import; they must not
-be mistaken for evidence of specified stereo. Original coordinates remain.
+references and preserve wedge/hatch endpoint direction. Drawing coordinates and their generated-coordinate provenance are retained.
+An additive `cdk:coordinatesAreGenerated` scalar prevents this reader from
+treating synthetic layout as evidence of specified stereo. Other readers may
+ignore this extension; the standard atom-parity and bond-stereo records remain
+the interoperable representation of specified tetrahedral and alkene stereo.
 The bounded regression corpus covers tetrahedral and alkene stereo, including
 unspecified controls; this does not assert parity for every CML stereo class.
 The encoding follows the [CML molecular convention](https://www.xml-cml.org/convention/molecular).
