@@ -27,8 +27,10 @@ final class MDLV3000WriterTests: XCTestCase {
             M  V30 2 1 1 3
             M  V30 END BOND
             M  V30 BEGIN SGROUP
-            M  V30 1 SUP 0 ATOMS=(2 1 2) XBONDS=(1 2) LABEL=Test CLASS=BASE-
-            M  V30  SAP=(3 1 0 Br) SAP=(3 1 0 Cx) SAP=(3 2 3 Al)
+            M  V30 1 SUP 0 ATOMS=(2 1 2) XBONDS=(1 2) LA-
+            M  V30 BEL=Test CLASS=BASE SAP=-
+            M  V30 (3 1 0 Br) SAP=(3 1-
+            M  V30  0 Cx) SAP=(3 2 3 Al)
             M  V30 END SGROUP
             M  V30 END CTAB
             M  END
@@ -41,6 +43,7 @@ final class MDLV3000WriterTests: XCTestCase {
         ]
         XCTAssertEqual(molecule.sgroups.first?.attachmentPoints, expected)
         XCTAssertEqual(molecule.sgroups.first?.groupClass, "BASE")
+        XCTAssertEqual(molecule.sgroups.first?.subscriptText, "Test")
 
         let output = try CDKSDFWriter.write([molecule])
         XCTAssertTrue(output.contains("V3000"))

@@ -1337,7 +1337,7 @@ public enum CDKMDLV3000Reader {
         if trimmed.hasSuffix("-") {
             trimmed.removeLast()
         }
-        return trimmed + " "
+        return trimmed
     }
 
     private static func dropTrailingEmptyLines(_ lines: [String]) -> [String] {
