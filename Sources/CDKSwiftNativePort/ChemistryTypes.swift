@@ -154,6 +154,25 @@ public struct MoleculeSgroupBracket: Hashable, Codable, Sendable {
     }
 }
 
+public struct MoleculeSgroupAttachmentPoint: Hashable, Codable, Sendable {
+    public var atomID: Int
+    public var leavingAtomID: Int?
+    public var label: String
+
+    public init(atomID: Int, leavingAtomID: Int? = nil, label: String) {
+        self.atomID = atomID
+        self.leavingAtomID = leavingAtomID
+        self.label = label
+    }
+
+    func remapped(using atomIDs: [Int: Int]) -> Self? {
+        guard let atomID = atomIDs[atomID],
+            leavingAtomID.map({ atomIDs[$0] != nil }) ?? true
+        else { return nil }
+        return Self(atomID: atomID, leavingAtomID: leavingAtomID.flatMap { atomIDs[$0] }, label: label)
+    }
+}
+
 public struct MoleculeSgroup: Hashable, Codable, Sendable {
     public enum Kind: String, Codable, Hashable, Sendable {
         case structureRepeatUnit
@@ -182,6 +201,8 @@ public struct MoleculeSgroup: Hashable, Codable, Sendable {
     public var expanded: Bool
     public var brackets: [MoleculeSgroupBracket]
     public var childGroupIndices: [Int]
+    public var attachmentPoints: [MoleculeSgroupAttachmentPoint]?
+    public var groupClass: String?
 
     public init(
         kind: Kind,
@@ -202,7 +223,9 @@ public struct MoleculeSgroup: Hashable, Codable, Sendable {
         componentNumber: Int? = nil,
         expanded: Bool = false,
         brackets: [MoleculeSgroupBracket] = [],
-        childGroupIndices: [Int] = []
+        childGroupIndices: [Int] = [],
+        attachmentPoints: [MoleculeSgroupAttachmentPoint]? = nil,
+        groupClass: String? = nil
     ) {
         self.kind = kind
         self.keyword = keyword
@@ -223,5 +246,7 @@ public struct MoleculeSgroup: Hashable, Codable, Sendable {
         self.expanded = expanded
         self.brackets = brackets
         self.childGroupIndices = childGroupIndices
+        self.attachmentPoints = attachmentPoints
+        self.groupClass = groupClass
     }
 }

@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.57
+
+- Preserve CTfile V3000 S-group `CLASS` and repeated `SAP` records, including
+  different labels at the same attachment atom and optional leaving atoms.
+- Select V3000 automatically for SDF records carrying these fields. Remap
+  attachment atoms when copying or combining CTfile and reaction components.
+- All 740 tests pass on macOS and Ubuntu.
+
 ## 1.4.56
 
 - Add a separate bounded unfinished-SMILES preview API with explicit complete,

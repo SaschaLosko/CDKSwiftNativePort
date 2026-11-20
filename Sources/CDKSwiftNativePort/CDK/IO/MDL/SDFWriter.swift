@@ -95,7 +95,9 @@ public enum CDKSDFWriter {
             }
         }
 
-        if molecule.sgroups.contains(where: { $0.kind == .extMulticenter }) {
+        if molecule.sgroups.contains(where: {
+            $0.kind == .extMulticenter || $0.attachmentPoints?.isEmpty == false || $0.groupClass != nil
+        }) {
             return true
         }
 

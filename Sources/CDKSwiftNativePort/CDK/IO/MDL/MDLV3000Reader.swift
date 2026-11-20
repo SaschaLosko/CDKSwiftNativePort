@@ -1030,7 +1030,11 @@ public enum CDKMDLV3000Reader {
                         componentNumber: parseIntAttribute("COMPNO", in: attributes),
                         expanded: attributes["ESTATE"]?.uppercased() == "E",
                         brackets: parseBrackets(attributeArrays["BRKXYZ"] ?? []),
-                        childGroupIndices: []
+                        childGroupIndices: [],
+                        attachmentPoints: attributeArrays["SAP"]?.compactMap { raw in
+                            parseSGroupAttachmentPoint(raw, atomIndexByID: atomIndexByID)
+                        },
+                        groupClass: parseQuotedOrBareString(attributes["CLASS"] ?? "")
                     )
                 ))
         }
@@ -1051,6 +1055,19 @@ public enum CDKMDLV3000Reader {
             }
             molecule.sgroups[parentMoleculeIndex].childGroupIndices.append(childMoleculeIndex)
         }
+    }
+
+    private static func parseSGroupAttachmentPoint(
+        _ raw: String, atomIndexByID: [Int: Int]
+    ) -> MoleculeSgroupAttachmentPoint? {
+        guard raw.hasPrefix("("), raw.hasSuffix(")") else { return nil }
+        let fields = tokenizeV30Payload(String(raw.dropFirst().dropLast()))
+        guard fields.count == 4, fields[0] == "3",
+            let atomID = Int(fields[1]), atomIndexByID[atomID] != nil,
+            let leavingAtomID = Int(fields[2]), leavingAtomID == 0 || atomIndexByID[leavingAtomID] != nil,
+            let label = parseQuotedOrBareString(fields[3])
+        else { return nil }
+        return .init(atomID: atomID, leavingAtomID: leavingAtomID == 0 ? nil : leavingAtomID, label: label)
     }
 
     private static func sgroupKind(for sgroupType: String) -> MoleculeSgroup.Kind {
@@ -1217,7 +1234,9 @@ public enum CDKMDLV3000Reader {
                     componentNumber: sgroup.componentNumber,
                     expanded: sgroup.expanded,
                     brackets: sgroup.brackets,
-                    childGroupIndices: sgroup.childGroupIndices)
+                    childGroupIndices: sgroup.childGroupIndices,
+                    attachmentPoints: sgroup.attachmentPoints?.compactMap { $0.remapped(using: atomMap) },
+                    groupClass: sgroup.groupClass)
             )
         }
     }

@@ -506,6 +506,16 @@ public enum CDKMDLV3000Writer {
             if let subtype = sgroup.subtype, !subtype.isEmpty {
                 payload += " SUBTYPE=\(quoteIfNeeded(subtype))"
             }
+            if let groupClass = sgroup.groupClass, !groupClass.isEmpty {
+                payload += " CLASS=\(quoteIfNeeded(groupClass))"
+            }
+            for point in sgroup.attachmentPoints ?? [] {
+                guard let atom = order.atomIndexByID[point.atomID],
+                    point.leavingAtomID.map({ order.atomIndexByID[$0] != nil }) ?? true
+                else { continue }
+                let leavingAtom = point.leavingAtomID.flatMap { order.atomIndexByID[$0] } ?? 0
+                payload += " SAP=(3 \(atom) \(leavingAtom) \(quoteIfNeeded(point.label)))"
+            }
             if let connectivity = sgroup.connectivity, !connectivity.isEmpty {
                 payload += " CONNECT=\(quoteIfNeeded(connectivity.uppercased()))"
             }

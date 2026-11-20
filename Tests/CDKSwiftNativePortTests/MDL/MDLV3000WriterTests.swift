@@ -9,6 +9,46 @@ import XCTest
 
 final class MDLV3000WriterTests: XCTestCase {
 
+    func testRepeatedSGroupAttachmentPointsSurviveV3000AndAutomaticSDF() throws {
+        let input = """
+            Attachment points
+              CDK
+
+              0  0  0     0  0            999 V3000
+            M  V30 BEGIN CTAB
+            M  V30 COUNTS 3 2 1 0 0
+            M  V30 BEGIN ATOM
+            M  V30 1 C 0 0 0 0
+            M  V30 2 O 1 0 0 0
+            M  V30 3 N 0 1 0 0
+            M  V30 END ATOM
+            M  V30 BEGIN BOND
+            M  V30 1 1 1 2
+            M  V30 2 1 1 3
+            M  V30 END BOND
+            M  V30 BEGIN SGROUP
+            M  V30 1 SUP 0 ATOMS=(2 1 2) XBONDS=(1 2) LABEL=Test CLASS=BASE-
+            M  V30  SAP=(3 1 0 Br) SAP=(3 1 0 Cx) SAP=(3 2 3 Al)
+            M  V30 END SGROUP
+            M  V30 END CTAB
+            M  END
+            """
+        let molecule = try CDKMDLV3000Reader.read(text: input)
+        let expected: [MoleculeSgroupAttachmentPoint] = [
+            .init(atomID: 1, label: "Br"),
+            .init(atomID: 1, label: "Cx"),
+            .init(atomID: 2, leavingAtomID: 3, label: "Al"),
+        ]
+        XCTAssertEqual(molecule.sgroups.first?.attachmentPoints, expected)
+        XCTAssertEqual(molecule.sgroups.first?.groupClass, "BASE")
+
+        let output = try CDKSDFWriter.write([molecule])
+        XCTAssertTrue(output.contains("V3000"))
+        let reopened = try XCTUnwrap(CDKIteratingSDFReader.read(text: output).first)
+        XCTAssertEqual(reopened.sgroups.first?.attachmentPoints, expected)
+        XCTAssertEqual(reopened.sgroups.first?.groupClass, "BASE")
+    }
+
     func testWritesBasicV3000Molfile() throws {
         let molecule = Molecule(
             name: "BasicV3000",

@@ -166,7 +166,11 @@ public enum CDKReactionManipulator {
                     componentNumber: sgroup.componentNumber,
                     expanded: sgroup.expanded,
                     brackets: sgroup.brackets,
-                    childGroupIndices: sgroup.childGroupIndices)
+                    childGroupIndices: sgroup.childGroupIndices,
+                    attachmentPoints: sgroup.attachmentPoints?.filter {
+                        $0.atomID != atom.id && $0.leavingAtomID != atom.id
+                    },
+                    groupClass: sgroup.groupClass)
             }
             updated.highlightedAtomIDs.removeAll { $0 == atom.id }
             updated.highlightedBondIDs.removeAll { bondID in
@@ -312,7 +316,9 @@ public enum CDKReactionManipulator {
                     componentNumber: sgroup.componentNumber,
                     expanded: sgroup.expanded,
                     brackets: sgroup.brackets,
-                    childGroupIndices: sgroup.childGroupIndices)
+                    childGroupIndices: sgroup.childGroupIndices,
+                    attachmentPoints: sgroup.attachmentPoints,
+                    groupClass: sgroup.groupClass)
             }
             updated.highlightedBondIDs.removeAll { $0 == bond.id }
             return updated
@@ -470,7 +476,11 @@ public enum CDKReactionManipulator {
                     componentNumber: sgroup.componentNumber,
                     expanded: sgroup.expanded,
                     brackets: sgroup.brackets,
-                    childGroupIndices: sgroup.childGroupIndices)
+                    childGroupIndices: sgroup.childGroupIndices,
+                    attachmentPoints: sgroup.attachmentPoints?.filter {
+                        atomIDSet.contains($0.atomID) && ($0.leavingAtomID.map(atomIDSet.contains) ?? true)
+                    },
+                    groupClass: sgroup.groupClass)
             }
 
             groups.append((groupID, role, groupAtoms, groupBonds, groupSgroups))
@@ -781,7 +791,9 @@ public enum CDKReactionManipulator {
                     componentNumber: sgroup.componentNumber,
                     expanded: sgroup.expanded,
                     brackets: sgroup.brackets,
-                    childGroupIndices: sgroup.childGroupIndices)
+                    childGroupIndices: sgroup.childGroupIndices,
+                    attachmentPoints: sgroup.attachmentPoints?.compactMap { $0.remapped(using: atomIDMap) },
+                    groupClass: sgroup.groupClass)
             )
         }
     }
