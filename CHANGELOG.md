@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.63
+
+- Draw resolved acyclic E/Z double bonds with the recorded 2D geometry.
+- Preserve SMILES directional metadata while displaying adjacent single bonds as ordinary lines.
+- Add Java CDK 2.13 references for chiral pairs, E/Z, crowded labels, and stereo reactions.
+- All 750 tests pass on macOS and all 749 portable tests pass on ARM64 Ubuntu.
+
 ## 1.4.62
 
 - Match all seven Java CDK 2.13 automatic reaction arrow shapes, including

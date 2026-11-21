@@ -39,3 +39,19 @@ normalize by stroke width or glyph height because the application caps the
 visual prominence of sparse molecules and uses compact-size stroke floors.
 Glyph metrics run on Core Text platforms. Linux runs the geometry checks
 using the package's portable text size estimates.
+
+`stereochemistry.json` adds the two enantiomers of
+`[13CH3][C@H](F)C(=O)[O-]`, the difluoroethene E/Z pair, a crowded charged
+isotope fixture, and two reactions pairing those isomers. Generate coordinates
+with Java `StructureDiagramGenerator` directly from each SMILES and depict with
+`withSize`, `withMargin(12)`, `withFillToFit`, and `withAtomNumbers` at 224 × 176
+and 560 × 418 px. For each SVG molecule group, count the atom outlines, bond
+lines, and filled wedge paths. Exclude reaction arrows and atom-number
+annotations from those counts. Read the solid or hashed bond display from
+`IBond.getDisplay()`. For each configured double bond, compare the signed side
+of the two `IDoubleBondStereochemistry` carrier atoms against the bond axis.
+The recorded counts and display forms agree at both canvas sizes.
+
+The Swift tests check stereobond display form, E/Z geometry and line topology,
+reaction participant labels, and crowded label clearance with a 32-point
+viewport margin. Layout and individual hatch spacing can differ from Java.

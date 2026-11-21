@@ -7,14 +7,15 @@ import Foundation
 public enum Depiction2DGenerator {
     public static func generate(for molecule: Molecule) -> Molecule {
         guard let collapsed = CDKHydrogenLayoutCollapse.collapse(in: molecule) else {
-            return CDKStructureDiagramGenerator.apply(to: molecule)
+            return CDKGeometricBondLayout.applying(to: CDKStructureDiagramGenerator.apply(to: molecule))
         }
 
         let laidOutScaffold = CDKStructureDiagramGenerator.apply(to: collapsed.scaffold)
-        return CDKHydrogenLayoutCollapse.restore(
+        let restored = CDKHydrogenLayoutCollapse.restore(
             original: molecule,
             from: laidOutScaffold,
             hydrogenAnchorByID: collapsed.hydrogenAnchorByID)
+        return CDKGeometricBondLayout.applying(to: restored)
     }
 }
 

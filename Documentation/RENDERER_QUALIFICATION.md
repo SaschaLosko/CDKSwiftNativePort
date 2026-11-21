@@ -39,3 +39,11 @@ Java CDK 2.13 SVG output. It checks polygon vertices, shaft and crossing
 segments, stroke width, the absence of fill on the retrosynthetic and
 undirected forms, and the fitted scene's zoom and rotation transforms.
 Render hosts consume the same filled scene polygons alongside strokes.
+
+The fourth milestone adds Java CDK 2.13 references for a tetrahedral pair, an
+E/Z pair, a crowded isotope and charge example, and two reactions at compact
+and fitted sizes. Newly generated 2D coordinates align resolvable acyclic
+double bonds with their stored E/Z configuration. The depiction draws the
+SMILES directional bonds as ordinary lines and preserves the graph for export.
+The layout pass leaves rings and fragments with fixed wedge constraints in
+place. The reference tests cover the stated fixtures and drawing sizes.

@@ -1,0 +1,111 @@
+{
+  "version": "2.13",
+  "revision": "3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d",
+  "canvases": [
+    {
+      "width": 224,
+      "height": 176
+    },
+    {
+      "width": 560,
+      "height": 418
+    }
+  ],
+  "samples": [
+    {
+      "name": "chiral-at",
+      "source": "[13CH3][C@H](F)C(=O)[O-]",
+      "participants": [
+        {
+          "labels": 4,
+          "bondLines": 5,
+          "solidWedges": 1,
+          "stereoDisplay": "solid"
+        }
+      ]
+    },
+    {
+      "name": "chiral-at-at",
+      "source": "[13CH3][C@@H](F)C(=O)[O-]",
+      "participants": [
+        {
+          "labels": 4,
+          "bondLines": 11,
+          "solidWedges": 0,
+          "stereoDisplay": "hashed"
+        }
+      ]
+    },
+    {
+      "name": "alkene-e",
+      "source": "F/C=C/F",
+      "participants": [
+        {
+          "labels": 2,
+          "bondLines": 4,
+          "solidWedges": 0,
+          "alkeneSides": "opposite"
+        }
+      ]
+    },
+    {
+      "name": "alkene-z",
+      "source": "F/C=C\\F",
+      "participants": [
+        {
+          "labels": 2,
+          "bondLines": 4,
+          "solidWedges": 0,
+          "alkeneSides": "same"
+        }
+      ]
+    },
+    {
+      "name": "crowded-labels",
+      "source": "[13CH3][NH2+]C(Cl)(F)C(=O)[O-]",
+      "participants": [
+        {
+          "labels": 6,
+          "bondLines": 8,
+          "solidWedges": 0
+        }
+      ]
+    },
+    {
+      "name": "chiral-reaction",
+      "source": "[13CH3][C@H](F)C(=O)[O-]>>[13CH3][C@@H](F)C(=O)[O-]",
+      "participants": [
+        {
+          "labels": 4,
+          "bondLines": 5,
+          "solidWedges": 1,
+          "stereoDisplay": "solid"
+        },
+        {
+          "labels": 4,
+          "bondLines": 11,
+          "solidWedges": 0,
+          "stereoDisplay": "hashed"
+        }
+      ]
+    },
+    {
+      "name": "alkene-reaction",
+      "source": "F/C=C/F>>F/C=C\\F",
+      "participants": [
+        {
+          "labels": 2,
+          "bondLines": 4,
+          "solidWedges": 0,
+          "alkeneSides": "opposite"
+        },
+        {
+          "labels": 2,
+          "bondLines": 4,
+          "solidWedges": 0,
+          "alkeneSides": "same"
+        }
+      ]
+    }
+  ]
+}

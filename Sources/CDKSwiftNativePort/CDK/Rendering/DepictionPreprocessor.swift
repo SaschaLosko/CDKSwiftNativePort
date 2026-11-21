@@ -6,7 +6,15 @@ import Foundation
 
 enum CDKDepictionPreprocessor {
     static func prepareForRendering(molecule: Molecule, style: RenderStyle) -> Molecule {
-        var prepared = displayShortcutsApplied(to: molecule)
+        var depiction = molecule
+        let directionCenters = CDKGeometricBondLayout.directionCenters(in: molecule)
+        if !directionCenters.isEmpty {
+            for index in depiction.bonds.indices
+            where CDKGeometricBondLayout.isDirectionMarker(depiction.bonds[index], centers: directionCenters) {
+                depiction.bonds[index].stereo = .none
+            }
+        }
+        var prepared = displayShortcutsApplied(to: depiction)
         if !style.showExplicitHydrogens {
             prepared = suppressibleHydrogensCollapsed(in: prepared)
         }
