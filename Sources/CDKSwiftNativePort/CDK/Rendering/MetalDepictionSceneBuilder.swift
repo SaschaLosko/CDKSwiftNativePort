@@ -290,8 +290,10 @@ public enum CDKMetalDepictionSceneBuilder {
         let stereoSolidWedgeHalfWidth = cdkDefaultStereoHalfWidth * stereoScale
         let stereoHashedWedgeHalfWidth = cdkDefaultStereoHalfWidth * stereoScale * hashedStereoScale
         let doubleBondSeparation =
-            (reactionMetrics.map { max($0.bondWidth * 1.8, $0.bondLength * 0.16) }
-                ?? max(3.4, style.bondWidth * 2.25 * viewportStrokeScale)) * zoomedStrokeScale
+            MetalDepictionMetrics.parallelBondSeparation(
+                stroke: layoutBondWidth,
+                bondLength: reactionMetrics?.bondLength ?? representativeBaseBondLength
+            ) * zoomedStrokeScale
         let doubleBondHalfSeparation = doubleBondSeparation * 0.5
         let tripleBondOffset =
             reactionMetrics == nil
@@ -766,16 +768,10 @@ public enum CDKMetalDepictionSceneBuilder {
             return CGVector(dx: cos(bestAngle), dy: sin(bestAngle))
         }
 
-        func estimateLabelSize(text: String, fontSize: CGFloat) -> CGSize {
-            let glyphCount = max(1, text.count)
-            let width = max(fontSize * 0.9, (CGFloat(glyphCount) * fontSize * 0.62) + 8)
-            let height = max(fontSize * 1.05, fontSize + 4)
-            return CGSize(width: width, height: height)
-        }
-
         func makeLabelRect(center: CGPoint, size: CGSize) -> CGRect {
-            let paddedWidth = size.width + 8
-            let paddedHeight = size.height + 6
+            let padding = max(1.0, layoutBondWidth * 0.60)
+            let paddedWidth = size.width + 2 * padding
+            let paddedHeight = size.height + 2 * padding
             return CGRect(
                 x: center.x - paddedWidth * 0.5,
                 y: center.y - paddedHeight * 0.5,
@@ -859,7 +855,7 @@ public enum CDKMetalDepictionSceneBuilder {
             let text = CDKLabelText.build(atom: atom, style: style, implicitHydrogenCount: implicitH)
 
             let neighborPositions = depictionMolecule.neighbors(of: atom.id).compactMap { basePositionByAtomID[$0] }
-            let estimated = estimateLabelSize(text: text, fontSize: labelLayoutFontSize)
+            let estimated = CDKLabelClipping.estimateLabelSize(text: text, fontSize: labelLayoutFontSize)
             let atomColor = CDKRenderingStyleResolver.atomColor(
                 for: atom,
                 style: style,
@@ -956,7 +952,7 @@ public enum CDKMetalDepictionSceneBuilder {
             placedRects.append(bestRect)
         }
 
-        let labelClipPadding = max(1.4, style.bondWidth * 0.55 * viewportStrokeScale) * zoomedStrokeScale
+        let labelClipPadding = baseBondWidth * 0.65
         let labelClipObstacles: [CDKLabelObstacle] = pendingLabels.compactMap { label in
             guard let center = resolvedCentersByAtomID[label.atomID] else { return nil }
             let renderedCenter = renderedPosition(for: label.atomID, basePosition: center)

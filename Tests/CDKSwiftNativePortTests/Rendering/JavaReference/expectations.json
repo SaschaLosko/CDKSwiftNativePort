@@ -15,5 +15,55 @@
     { "direction": "resonance", "shafts": 1, "leftHead": true, "rightHead": true, "crossStrokes": 0 },
     { "direction": "undirected", "shafts": 2, "leftHead": false, "rightHead": false, "crossStrokes": 0 }
   ],
-  "isotope": { "atomNumber": 1, "element": "C", "mass": 13, "visible": true }
+  "isotope": { "atomNumber": 1, "element": "C", "mass": 13, "visible": true },
+  "legibility": [
+    {
+      "width": 200,
+      "height": 100,
+      "singleStroke": 2.586,
+      "singleBondLength": 66.7131,
+      "oxygenInkHeight": 27.155,
+      "oxygenClearance": 4.02,
+      "carbon13InkHeight": 16.428,
+      "chargedNitrogenInkHeight": 20.979,
+      "doubleSeparation": 4.0972,
+      "doubleStroke": 0.992,
+      "aromaticSeparation": 0.9214,
+      "aromaticStroke": 0.223,
+      "stereoStroke": 1.048,
+      "stereoMaxHash": 4.7906
+    },
+    {
+      "width": 560,
+      "height": 418,
+      "singleStroke": 8.711,
+      "singleBondLength": 224.7191,
+      "oxygenInkHeight": 91.469,
+      "oxygenClearance": 13.542,
+      "carbon13InkHeight": 76.02,
+      "chargedNitrogenInkHeight": 97.1,
+      "doubleSeparation": 18.9601,
+      "doubleStroke": 4.593,
+      "aromaticSeparation": 3.1042,
+      "aromaticStroke": 0.752,
+      "stereoStroke": 7.457,
+      "stereoMaxHash": 34.0907
+    },
+    {
+      "width": 960,
+      "height": 720,
+      "singleStroke": 15.517,
+      "singleBondLength": 400.2797,
+      "oxygenInkHeight": 162.929,
+      "oxygenClearance": 24.122,
+      "carbon13InkHeight": 135.411,
+      "chargedNitrogenInkHeight": 172.96,
+      "doubleSeparation": 33.7721,
+      "doubleStroke": 8.182,
+      "aromaticSeparation": 5.5301,
+      "aromaticStroke": 1.34,
+      "stereoStroke": 13.544,
+      "stereoMaxHash": 61.9161
+    }
+  ]
 }

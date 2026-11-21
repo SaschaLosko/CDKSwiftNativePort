@@ -20,5 +20,19 @@ and display semantics from Java output.
   shows atom 1 with a superscript 13, including when ordinary carbon labels
   are implicit.
 
-The Swift suite tests proportional zoom, arrow meaning and isotope visibility.
-Font metrics, absolute coordinates and arrowhead fill can vary by renderer.
+The fitted legibility samples use the same coordinates and Java
+`withSize(width, height).withMargin(24).withFillToFit()` at 200 × 100, 560 ×
+418, and 960 × 720 px. The ethanol (`CCO`) and stereo (`C[C@H](O)Cl`)
+fixtures use the same MOL writer and reader workflow as the charged isotope.
+The reference compares inherited SVG stroke widths, perpendicular distance
+between parallel stroke centerlines, outline ink heights, and the minimum
+distance from the terminal C–O bond endpoint to the OH outline bounds. The
+widest hashed stereo stroke is measured perpendicular to the wedge axis.
+
+The Swift suite checks proportional zoom, arrow meaning, and isotope visibility,
+plus fitted single-bond weight, label ink height and clearance, parallel
+carbonyl and aromatic strokes, and hashed stereo spread. Fitted comparisons
+normalize by stroke width or glyph height because the application caps the
+visual prominence of sparse molecules and uses compact-size stroke floors.
+Glyph metrics run on Core Text platforms. Linux runs the geometry checks
+using the package's portable text size estimates.

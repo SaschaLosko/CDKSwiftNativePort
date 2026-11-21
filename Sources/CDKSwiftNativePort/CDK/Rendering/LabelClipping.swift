@@ -3,9 +3,6 @@ import Foundation
 #if canImport(CoreGraphics)
     import CoreGraphics
 #endif
-#if canImport(CoreText)
-    import CoreText
-#endif
 
 enum CDKLabelText {
     private static let superscriptDigits: [Character: Character] = [
@@ -152,20 +149,30 @@ enum CDKLabelText {
         implicitHydrogenCount: Int,
         fontSize: CGFloat
     ) -> CGVector {
-        // Keep the atom symbol centered on the atomic anchor even when
-        // suffix text (e.g. "H" in "OH") is displayed.
+        // Keep the element itself at the atom position when annotations extend the label.
         guard !style.showAtomIDs, !style.showAtomMapNumbers else { return .zero }
         guard queryDisplayText(for: atom) == nil else { return .zero }
-        let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
-        guard !hText.isEmpty else { return .zero }
 
         let fullLabel = build(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
-        let coreLabel = elementText(for: atom)
+        let isotopeAndElement = elementText(for: atom)
+        let isotope = atom.isotopeMassNumber.map { atom.symbolToDraw == "\($0)\(atom.element)" } ?? false
+        let coreLabel = isotope ? atom.element : isotopeAndElement
+        guard fullLabel != coreLabel else { return .zero }
 
-        let fullWidth = CDKLabelClipping.estimateLabelSize(text: fullLabel, fontSize: fontSize).width
-        let coreWidth = CDKLabelClipping.estimateLabelSize(text: coreLabel, fontSize: fontSize).width
-        let dx = max(0, (fullWidth - coreWidth) * 0.5)
-        return CGVector(dx: dx, dy: 0)
+        #if canImport(CoreText)
+            let full = CDKDepictionLabelLayout(
+                text: fullLabel, fontSize: fontSize, italicized: usesItalicRGroupFont(text: fullLabel))
+            let core = CDKDepictionLabelLayout(
+                text: coreLabel, fontSize: fontSize, italicized: usesItalicRGroupFont(text: fullLabel))
+            let prefixLength = isotopeAndElement.utf16.count - coreLabel.utf16.count
+            let coreX = full.horizontalOffset(atUTF16Index: prefixLength) + core.inkBounds.midX
+            return CGVector(dx: full.inkBounds.midX - coreX, dy: core.inkBounds.midY - full.inkBounds.midY)
+        #else
+            let fullWidth = CDKLabelClipping.estimateLabelSize(text: fullLabel, fontSize: fontSize).width
+            let coreWidth = CDKLabelClipping.estimateLabelSize(text: coreLabel, fontSize: fontSize).width
+            let prefixWidth = CGFloat(isotopeAndElement.count - coreLabel.count) * fontSize * 0.58
+            return CGVector(dx: (fullWidth - coreWidth) * 0.5 - prefixWidth, dy: 0)
+        #endif
     }
 
     private static func elementText(for atom: Atom) -> String {
@@ -201,10 +208,13 @@ struct CDKLabelObstacle {
 
 enum CDKLabelClipping {
     static func estimateLabelSize(text: String, fontSize: CGFloat) -> CGSize {
-        let glyphCount = max(1, text.count)
-        let width = max(fontSize * 0.9, (CGFloat(glyphCount) * fontSize * 0.62) + 8)
-        let height = max(fontSize * 1.05, fontSize + 4)
-        return CGSize(width: width, height: height)
+        #if canImport(CoreText)
+            CDKDepictionLabelLayout(
+                text: text, fontSize: fontSize, italicized: CDKLabelText.usesItalicRGroupFont(text: text)
+            ).inkBounds.size
+        #else
+            CGSize(width: max(fontSize * 0.50, CGFloat(text.count) * fontSize * 0.58), height: fontSize * 0.75)
+        #endif
     }
 
     static func makeLabelRect(center: CGPoint, estimatedTextSize: CGSize) -> CGRect {
@@ -223,37 +233,23 @@ enum CDKLabelClipping {
         fontSize: CGFloat,
         padding: CGFloat
     ) -> CDKLabelObstacle {
-        guard let glyphPath = makeGlyphPath(text: text, center: center, fontSize: fontSize) else {
-            let estimate = estimateLabelSize(text: text, fontSize: fontSize)
-            let rect = CGRect(
-                x: center.x - estimate.width * 0.5,
-                y: center.y - estimate.height * 0.5,
-                width: estimate.width,
-                height: estimate.height
-            )
-            .insetBy(dx: -padding, dy: -padding)
-            return CDKLabelObstacle(rect: rect)
-        }
-
-        let carrierInset = max(1.0, padding * 0.35)
-        let carrierRect = glyphPath.boundingBoxOfPath.insetBy(dx: -carrierInset, dy: -carrierInset)
-        let corner = max(2.0, fontSize * 0.16)
-        let carrierPath = CGPath(
-            roundedRect: carrierRect,
-            cornerWidth: corner,
-            cornerHeight: corner,
-            transform: nil)
-
-        if padding <= 0.0001 {
-            return CDKLabelObstacle(fillPath: carrierPath, clipPath: glyphPath)
-        }
-
-        let expanded = glyphPath.copy(
-            strokingWithWidth: max(0.2, padding * 2),
-            lineCap: .round,
-            lineJoin: .round,
-            miterLimit: 2.0)
-        return CDKLabelObstacle(fillPath: carrierPath, clipPath: expanded)
+        #if canImport(CoreText)
+            let layout = CDKDepictionLabelLayout(
+                text: text, fontSize: fontSize, italicized: CDKLabelText.usesItalicRGroupFont(text: text))
+            if let glyphPath = layout.outline(centeredAt: center, yDown: true) {
+                let carrierRect = layout.inkBounds.size.centered(at: center)
+                let carrierInset = padding * 0.35
+                let carrierPath = CGPath(
+                    rect: carrierRect.insetBy(dx: -carrierInset, dy: -carrierInset), transform: nil)
+                let expanded =
+                    padding > 0.0001
+                    ? glyphPath.copy(strokingWithWidth: padding * 2, lineCap: .round, lineJoin: .round, miterLimit: 2)
+                    : glyphPath
+                return CDKLabelObstacle(fillPath: carrierPath, clipPath: expanded)
+            }
+        #endif
+        let size = estimateLabelSize(text: text, fontSize: fontSize)
+        return CDKLabelObstacle(rect: size.centered(at: center).insetBy(dx: -padding, dy: -padding))
     }
 
     static func makeGlyphObstacles(
@@ -388,54 +384,10 @@ enum CDKLabelClipping {
         return nil
     }
 
-    private static func makeGlyphPath(text: String, center: CGPoint, fontSize: CGFloat) -> CGPath? {
-        #if canImport(CoreText)
-            guard !text.isEmpty else { return nil }
+}
 
-            let fontName = "Helvetica-Bold" as CFString
-            let ctFont = CTFontCreateWithName(fontName, max(6, fontSize), nil)
-            let attributes: [NSAttributedString.Key: Any] = [
-                NSAttributedString.Key(rawValue: kCTFontAttributeName as String): ctFont
-            ]
-            let attributed = NSAttributedString(string: text, attributes: attributes)
-            let line = CTLineCreateWithAttributedString(attributed)
-            let lineBounds = CTLineGetBoundsWithOptions(line, [.useGlyphPathBounds, .useOpticalBounds])
-            if lineBounds.isNull || lineBounds.isEmpty || !lineBounds.width.isFinite
-                || !lineBounds.height.isFinite
-            {
-                return nil
-            }
-
-            let lineOrigin = CGPoint(x: center.x - lineBounds.midX, y: center.y - lineBounds.midY)
-            let runs = CTLineGetGlyphRuns(line)
-            let runCount = CFArrayGetCount(runs)
-            let path = CGMutablePath()
-
-            for runIndex in 0..<runCount {
-                let runValue = CFArrayGetValueAtIndex(runs, runIndex)
-                let run = unsafeBitCast(runValue, to: CTRun.self)
-                let runAttributes = CTRunGetAttributes(run) as NSDictionary
-                let runFont = (runAttributes[kCTFontAttributeName] as! CTFont?) ?? ctFont
-                let glyphCount = CTRunGetGlyphCount(run)
-                if glyphCount <= 0 { continue }
-
-                var glyphs = Array(repeating: CGGlyph(), count: glyphCount)
-                var positions = Array(repeating: CGPoint.zero, count: glyphCount)
-                CTRunGetGlyphs(run, CFRangeMake(0, 0), &glyphs)
-                CTRunGetPositions(run, CFRangeMake(0, 0), &positions)
-
-                for i in 0..<glyphCount {
-                    guard let glyphPath = CTFontCreatePathForGlyph(runFont, glyphs[i], nil) else { continue }
-                    let p = positions[i]
-                    let transform = CGAffineTransform(translationX: lineOrigin.x + p.x, y: lineOrigin.y + p.y)
-                    path.addPath(glyphPath, transform: transform)
-                }
-            }
-
-            guard !path.isEmpty else { return nil }
-            return path.copy()
-        #else
-            return nil
-        #endif
+private extension CGSize {
+    func centered(at point: CGPoint) -> CGRect {
+        CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height)
     }
 }

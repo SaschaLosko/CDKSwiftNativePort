@@ -25,7 +25,8 @@ public struct CDKReactionDepictionMetrics {
         let proportion = bondLength / referenceBondLength
         // On very small canvases, leave room for the symbols and retain legibility when zoomed in.
         let compactScale = (bondLength / 18).clamped(to: 0.55...1)
-        bondWidth = (1.95 * proportion).clamped(to: (1.5 * compactScale)...3.25) * (style.bondWidth / 1.95)
+        let minimumStroke = max(0.90, 1.50 * compactScale)
+        bondWidth = (bondLength * 0.045).clamped(to: minimumStroke...3.35) * (style.bondWidth / 1.95)
         atomLabelFontSize = (14 * proportion).clamped(to: (12 * compactScale)...22) * (style.fontSize / 21)
     }
 }
@@ -157,14 +158,22 @@ enum MetalDepictionMetrics {
             bondCount: bondCount,
             visibleAtomLabelCount: visibleAtomLabelCount)
         let strokeProminenceBoost = 1.0 + ((prominenceBoost - 1.0) * 0.72)
-        let preferredMinimumRatio = ((style.bondWidth / 72.0) * densityScale).clamped(to: 0.016...0.026)
+        // Java CDK's 2.13 default is about 3.88% of a representative bond length.
+        let preferredMinimumRatio = 0.0388 * densityScale * (style.bondWidth / 1.95)
         let ratioFloorWidth = representativeBondLength * preferredMinimumRatio
         let prominenceWidth = baseViewportBondWidth * strokeProminenceBoost
         let boostedBondWidth = max(baseViewportBondWidth, max(ratioFloorWidth, prominenceWidth))
+        let minimumWidth = (representativeBondLength * 0.075).clamped(to: 1.0...1.45)
         let absoluteMaxBondWidth = max(
-            1.0,
+            minimumWidth,
             baseViewportBondWidth * (strokeProminenceBoost + 0.06).clamped(to: 1.10...1.34))
-        return boostedBondWidth.clamped(to: 1.0...absoluteMaxBondWidth)
+        return boostedBondWidth.clamped(to: minimumWidth...absoluteMaxBondWidth)
+    }
+
+    static func parallelBondSeparation(stroke: CGFloat, bondLength: CGFloat?) -> CGFloat {
+        let projectedSeparation = bondLength.map { $0 * 0.16 } ?? stroke * 2.25
+        // Leave a clear gap at small sizes and limit separation on very sparse drawings.
+        return projectedSeparation.clamped(to: (stroke * 1.85)...(stroke * 3.0))
     }
 
 }

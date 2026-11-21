@@ -99,6 +99,9 @@ The SVG path includes:
 
 - `CDKMetalDepictionSceneBuilder.build(molecule:style:canvasRect:zoom:pan:rotationDegrees:minimumLabelFontSize:includeAromaticCarbonLabelsWhenCarbonsHidden:includeTerminalCarbonLabelsWhenCarbonsHidden:) -> CDKMetalDepictionScene`
 - `CDKMetalReactionDepictionSceneBuilder.build(reaction:style:canvasRect:zoom:pan:rotationDegrees:highlightedParticipant:withOuterGlowHighlight:) -> CDKMetalDepictionScene`
+- `CDKDepictionLabelLayout(text:fontSize:italicized:)` shapes labels on Core
+  Text platforms. Use its ink bounds, centered drawing, and centered outlines
+  to match the scene builder's label placement and bond clearance.
 - `CDKMetalReactionDepictionSceneBuilder.participant(at:in:style:canvasRect:zoom:pan:rotationDegrees:) -> CDKReactionParticipantSelection?`
 
 These scene builders do not require `MetalKit`. They return geometry and label

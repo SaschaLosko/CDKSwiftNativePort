@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.61
+
+- Share Core Text label geometry for placement, bond clipping, drawing, and
+  vector export on Apple platforms.
+- Strengthen compact fitted bonds while preserving clear parallel and stereo
+  strokes. Extend the Java CDK 2.13 reference with fitted ink and bond metrics.
+- All 746 tests pass on macOS and all 745 portable tests pass on ARM64 Ubuntu.
+
+## 1.4.60
+
+- Keep reaction plus signs clear of neighboring isotope labels at narrow sizes.
+
+## 1.4.59
+
+- Qualify reaction zoom, isotope labels, and all seven automatic arrow directions
+  against Java CDK 2.13.
+
 ## 1.4.58
 
 - Unfold V3000 continuations without inserting a separator into split fields.

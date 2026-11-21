@@ -58,7 +58,7 @@ struct MetalBondPrimitives {
         appendSegment(
             a,
             b,
-            width: max(1.0, baseBondWidth * 0.8),
+            width: baseBondWidth * 0.8,
             opacity: 0.76,
             color: color,
             into: &segments)
@@ -97,7 +97,7 @@ struct MetalBondPrimitives {
         appendSegment(
             a,
             b,
-            width: max(1.05, baseBondWidth * 0.85),
+            width: baseBondWidth * 0.85,
             opacity: 0.88,
             color: color,
             into: &segments)

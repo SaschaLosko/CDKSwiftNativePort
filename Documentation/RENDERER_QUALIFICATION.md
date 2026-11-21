@@ -1,4 +1,4 @@
-# 2D reaction renderer qualification
+# 2D renderer qualification
 
 The renderer resolves shared stroke and symbol sizes from the median fitted bond
 length across reaction participants. Interactive zoom scales the reaction
@@ -21,9 +21,16 @@ offline reference suite with:
 swift test --filter JavaDepictionReferenceTests
 ```
 
-The Swift checks cover glyph visibility, arrow topology, and proportional zoom
-at document and compact sizes. Typography, arrowhead fill, and raster edge
-coverage have separate qualification requirements.
+The first milestone covers glyph visibility, arrow topology, and proportional
+zoom at document and compact sizes.
 
-The complete package suite ran 744 tests with zero failures on ARM64 macOS and
-ARM64 Ubuntu for this milestone.
+The second milestone shares Core Text ink metrics across placement, clipping,
+drawing, and vector outlines. Fitted stroke sizing keeps a readable floor for
+compact structures, retains the sparse-molecule cap, and scales parallel-stroke
+separation with bond width. The Java reference now covers measured ink height,
+terminal bond clearance, and single, carbonyl, aromatic, and hashed stereo
+strokes at 200 × 100, 560 × 418, and 960 × 720.
+
+The complete package suite ran 746 tests on ARM64 macOS and 745 on ARM64
+Ubuntu, with zero failures. The Core Text ink test runs on Apple platforms.
+Arrowhead fill and raster edge coverage have separate qualification requirements.
