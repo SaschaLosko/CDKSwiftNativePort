@@ -33,4 +33,9 @@ strokes at 200 × 100, 560 × 418, and 960 × 720.
 
 The complete package suite ran 746 tests on ARM64 macOS and 745 on ARM64
 Ubuntu, with zero failures. The Core Text ink test runs on Apple platforms.
-Arrowhead fill and raster edge coverage have separate qualification requirements.
+
+The third milestone matches the seven automatic arrow shapes measured from
+Java CDK 2.13 SVG output. It checks polygon vertices, shaft and crossing
+segments, stroke width, the absence of fill on the retrosynthetic and
+undirected forms, and the fitted scene's zoom and rotation transforms.
+Render hosts consume the same filled scene polygons alongside strokes.

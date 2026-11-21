@@ -39,6 +39,17 @@ public struct CDKMetalDepictionScene: Hashable {
         }
     }
 
+    /// A filled outline whose first vertex can anchor a triangle fan.
+    public struct FilledPolygon: Hashable {
+        public let points: [CGPoint]
+        public let color: CDKRenderColor
+
+        public init(points: [CGPoint], color: CDKRenderColor) {
+            self.points = points
+            self.color = color
+        }
+    }
+
     public struct AtomLabel: Identifiable, Hashable {
         public let id: Int
         public let text: String
@@ -80,16 +91,19 @@ public struct CDKMetalDepictionScene: Hashable {
     public let backgroundBoxes: [BackgroundBox]
     public let bondSegments: [LineSegment]
     public let labels: [AtomLabel]
+    public let filledPolygons: [FilledPolygon]
 
     public init(
         gridSegments: [LineSegment],
         backgroundBoxes: [BackgroundBox] = [],
         bondSegments: [LineSegment],
-        labels: [AtomLabel]
+        labels: [AtomLabel],
+        filledPolygons: [FilledPolygon] = []
     ) {
         self.gridSegments = gridSegments
         self.backgroundBoxes = backgroundBoxes
         self.bondSegments = bondSegments
         self.labels = labels
+        self.filledPolygons = filledPolygons
     }
 }

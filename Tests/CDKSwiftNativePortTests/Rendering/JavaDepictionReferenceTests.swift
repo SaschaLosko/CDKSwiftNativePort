@@ -11,11 +11,25 @@ final class JavaDepictionReferenceTests: XCTestCase {
         }
 
         struct ArrowSample: Decodable {
+            struct Point: Decodable {
+                let x: CGFloat
+                let y: CGFloat
+
+                var cgPoint: CGPoint { CGPoint(x: x, y: y) }
+            }
+
+            struct Stroke: Decodable {
+                let from: Point
+                let to: Point
+                let width: CGFloat
+            }
+
             let direction: CDKReactionDirection
-            let shafts: Int
-            let leftHead: Bool
-            let rightHead: Bool
-            let crossStrokes: Int
+            let start: Point
+            let end: Point
+            let height: CGFloat
+            let strokes: [Stroke]
+            let fills: [[Point]]
         }
 
         struct Isotope: Decodable {
@@ -78,36 +92,51 @@ final class JavaDepictionReferenceTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(try XCTUnwrap(document.bondSegments.first).width, 1.5)
     }
 
-    func testAutomaticReactionArrowMeaningMatchesJava() throws {
+    func testAutomaticReactionArrowShapesMatchJava() throws {
         let reference = try loadReference()
         XCTAssertEqual(Set(reference.arrowSamples.map(\.direction)), Set(CDKReactionDirection.allCases))
         var reaction = try CDKRXNReader.readReaction(text: fixture("participants", extension: "rxn"))
-        reaction.direction = .undirected
-        let undirected = try XCTUnwrap(reference.arrowSamples.first { $0.direction == .undirected })
-        let participants = scene(reaction).bondSegments.dropLast(undirected.shafts)
         for sample in reference.arrowSamples {
+            let arrow = CDKReactionArrowGeometry.build(
+                direction: sample.direction, start: sample.start.cgPoint, end: sample.end.cgPoint,
+                height: sample.height)
+            XCTAssertEqual(arrow.strokes.count, sample.strokes.count, "\(sample.direction) strokes")
+            XCTAssertEqual(arrow.fills.count, sample.fills.count, "\(sample.direction) fills")
+            for (actual, expected) in zip(arrow.strokes, sample.strokes) {
+                assertPoint(actual.from, matches: expected.from.cgPoint, direction: sample.direction)
+                assertPoint(actual.to, matches: expected.to.cgPoint, direction: sample.direction)
+                XCTAssertEqual(actual.width, expected.width, accuracy: 0.002)
+            }
+            for (actual, expected) in zip(arrow.fills, sample.fills) {
+                XCTAssertEqual(actual.points.count, expected.count)
+                for (point, expectedPoint) in zip(actual.points, expected) {
+                    assertPoint(point, matches: expectedPoint.cgPoint, direction: sample.direction)
+                }
+            }
+
             reaction.direction = sample.direction
-            let segments = scene(reaction).bondSegments
-            XCTAssertEqual(Array(segments.prefix(participants.count)), Array(participants), "\(sample.direction)")
-            let arrow = segments.dropFirst(participants.count)
-            let positions = arrow.flatMap { [$0.from.x, $0.to.x] }
-            let left = try XCTUnwrap(positions.min())
-            let right = try XCTUnwrap(positions.max())
-            let horizontal = arrow.filter { abs($0.from.y - $0.to.y) < 0.001 }
-            let diagonals = arrow.filter { abs($0.from.y - $0.to.y) >= 0.001 }
-            let leftHead = diagonals.contains { abs($0.to.x - left) < 0.001 }
-            let rightHead = diagonals.contains { abs($0.to.x - right) < 0.001 }
-            let crossStrokes = diagonals.count { $0.to.x > left + 0.001 && $0.to.x < right - 0.001 }
-            XCTAssertEqual(horizontal.count, sample.shafts, "\(sample.direction)")
-            XCTAssertEqual(leftHead, sample.leftHead, "\(sample.direction)")
-            XCTAssertEqual(rightHead, sample.rightHead, "\(sample.direction)")
-            XCTAssertEqual(crossStrokes, sample.crossStrokes, "\(sample.direction)")
-            if sample.direction == .bidirectional {
-                let leftTip = try XCTUnwrap(diagonals.first { abs($0.to.x - left) < 0.001 })
-                let rightTip = try XCTUnwrap(diagonals.first { abs($0.to.x - right) < 0.001 })
-                XCTAssertLessThan(rightTip.to.y, leftTip.to.y)
+            let canvas = CGSize(width: 560, height: 418)
+            let fitted = scene(reaction, canvas: canvas)
+            let zoomed = CDKMetalReactionDepictionSceneBuilder.build(
+                reaction: reaction, style: RenderStyle(), canvasRect: CGRect(origin: .zero, size: canvas),
+                zoom: 2, pan: CGSize(width: 5, height: -7), rotationDegrees: 90)
+            XCTAssertEqual(fitted.filledPolygons.map { $0.points.count }, sample.fills.map(\.count))
+            XCTAssertEqual(zoomed.filledPolygons.count, fitted.filledPolygons.count)
+            let center = CGPoint(x: canvas.width / 2, y: canvas.height / 2)
+            for (base, transformed) in zip(fitted.filledPolygons, zoomed.filledPolygons) {
+                for (point, actual) in zip(base.points, transformed.points) {
+                    let expected = CGPoint(
+                        x: center.x - 2 * (point.y - center.y) + 5,
+                        y: center.y + 2 * (point.x - center.x) - 7)
+                    assertPoint(actual, matches: expected, direction: sample.direction)
+                }
             }
         }
+    }
+
+    private func assertPoint(_ actual: CGPoint, matches expected: CGPoint, direction: CDKReactionDirection) {
+        XCTAssertEqual(actual.x, expected.x, accuracy: 0.004, "\(direction) x")
+        XCTAssertEqual(actual.y, expected.y, accuracy: 0.004, "\(direction) y")
     }
 
     func testIsotopeLabelRemainsVisibleWithImplicitCarbonsAsInJava() throws {

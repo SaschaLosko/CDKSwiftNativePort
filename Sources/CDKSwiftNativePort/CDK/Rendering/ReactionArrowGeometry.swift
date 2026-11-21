@@ -4,63 +4,68 @@
 import Foundation
 
 enum CDKReactionArrowGeometry {
-    static func segments(
-        direction: CDKReactionDirection, start: CGPoint, end: CGPoint, stroke: CGFloat, fontSize: CGFloat
-    ) -> [CDKMetalDepictionScene.LineSegment] {
-        let length = end.x - start.x
-        let head = min(length / 3, max(stroke * 3, fontSize * 0.65))
-        let halfHeight = head * 0.36
-        let lane = max(stroke, halfHeight * 0.58)
-        var segments: [CDKMetalDepictionScene.LineSegment] = []
+    static func build(
+        direction: CDKReactionDirection, start: CGPoint, end: CGPoint, height: CGFloat
+    ) -> (strokes: [CDKMetalDepictionScene.LineSegment], fills: [CDKMetalDepictionScene.FilledPolygon]) {
+        let thickness = height / 3
+        let stroke = height / 14
+        let centerY = start.y
+        let left = start.x
+        let right = end.x
+        var strokes: [CDKMetalDepictionScene.LineSegment] = []
+        var fills: [CDKMetalDepictionScene.FilledPolygon] = []
 
-        func line(_ a: CGPoint, _ b: CGPoint) {
-            segments.append(.init(from: a, to: b, width: stroke, opacity: 0.95, color: .ink))
+        func line(_ x1: CGFloat, _ y1: CGFloat, _ x2: CGFloat, _ y2: CGFloat) {
+            strokes.append(
+                .init(
+                    from: CGPoint(x: x1, y: centerY + y1), to: CGPoint(x: x2, y: centerY + y2),
+                    width: stroke, opacity: 1, color: .ink))
         }
 
-        func arrowhead(at tip: CGPoint, towardRight: Bool, side: CGFloat? = nil, height: CGFloat) {
-            let baseX = tip.x + (towardRight ? -head : head)
-            if let side {
-                line(CGPoint(x: baseX, y: tip.y + side * height), tip)
-            } else {
-                line(CGPoint(x: baseX, y: tip.y - height), tip)
-                line(CGPoint(x: baseX, y: tip.y + height), tip)
-            }
+        func fill(_ vertices: [(CGFloat, CGFloat)]) {
+            fills.append(.init(points: vertices.map { CGPoint(x: $0.0, y: centerY + $0.1) }, color: .ink))
         }
 
-        func shaft(offsetY: CGFloat = 0, endInset: CGFloat = 0) {
-            line(
-                CGPoint(x: start.x, y: start.y + offsetY),
-                CGPoint(x: end.x - endInset, y: end.y + offsetY))
+        func fullHead(tip: CGFloat, inward: CGFloat) {
+            fill([
+                (tip, 0),
+                (tip + inward * height, -thickness),
+                (tip + inward * height * 0.8, 0),
+                (tip + inward * height, thickness),
+            ])
         }
 
+        // CDK 2.13 uses closed, notched heads except for the outlined
+        // retrosynthetic head, the half-heads, and the headless parallel lines.
         switch direction {
         case .forward, .backward, .resonance, .noGo:
-            shaft()
-            if direction == .backward || direction == .resonance {
-                arrowhead(at: start, towardRight: false, height: halfHeight)
-            }
-            if direction != .backward {
-                arrowhead(at: end, towardRight: true, height: halfHeight)
-            }
+            let onLeft = direction == .backward || direction == .resonance
+            let onRight = direction != .backward
+            line(left + (onLeft ? height / 2 : 0), 0, right - (onRight ? height / 2 : 0), 0)
+            if onRight { fullHead(tip: right, inward: -1) }
+            if onLeft { fullHead(tip: left, inward: 1) }
             if direction == .noGo {
-                let x = (start.x + end.x) / 2
-                let d = halfHeight * 1.30
-                line(CGPoint(x: x - d, y: start.y - d), CGPoint(x: x + d, y: start.y + d))
-                line(CGPoint(x: x - d, y: start.y + d), CGPoint(x: x + d, y: start.y - d))
+                let middle = (left + right) / 2
+                line(middle - thickness, thickness, middle + thickness, -thickness)
+                line(middle - thickness, -thickness, middle + thickness, thickness)
             }
         case .bidirectional:
-            shaft(offsetY: -lane)
-            shaft(offsetY: lane)
-            arrowhead(at: CGPoint(x: end.x, y: end.y - lane), towardRight: true, side: -1, height: halfHeight)
-            arrowhead(at: CGPoint(x: start.x, y: start.y + lane), towardRight: false, side: 1, height: halfHeight)
+            let lane = thickness / 2
+            let tipOffset = lane - stroke / 2
+            line(left, -lane, right - height / 2, -lane)
+            line(left + height / 2, lane, right, lane)
+            fill([(right, -tipOffset), (right - height, -1.5 * thickness), (right - 0.8 * height, -tipOffset)])
+            fill([(left, tipOffset), (left + height, 1.5 * thickness), (left + 0.8 * height, tipOffset)])
         case .retroSynthetic:
-            shaft(offsetY: -lane, endInset: head * 0.5)
-            shaft(offsetY: lane, endInset: head * 0.5)
-            arrowhead(at: end, towardRight: true, height: lane * 2)
+            line(left, thickness, right - height / 2, thickness)
+            line(left, -thickness, right - height / 2, -thickness)
+            line(right - height, 2 * thickness, right, 0)
+            line(right, 0, right - height, -2 * thickness)
         case .undirected:
-            shaft(offsetY: -lane)
-            shaft(offsetY: lane)
+            let lane = thickness / 2
+            line(left + thickness, lane, right - 2 * thickness, lane)
+            line(left + thickness, -lane, right - 2 * thickness, -lane)
         }
-        return segments
+        return (strokes, fills)
     }
 }

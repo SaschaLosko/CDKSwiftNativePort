@@ -7,13 +7,83 @@
     { "zoom": 3, "firstBondLength": 78.30, "stroke": 3.035 }
   ],
   "arrowSamples": [
-    { "direction": "forward", "shafts": 1, "leftHead": false, "rightHead": true, "crossStrokes": 0 },
-    { "direction": "backward", "shafts": 1, "leftHead": true, "rightHead": false, "crossStrokes": 0 },
-    { "direction": "bidirectional", "shafts": 2, "leftHead": true, "rightHead": true, "crossStrokes": 0 },
-    { "direction": "noGo", "shafts": 1, "leftHead": false, "rightHead": true, "crossStrokes": 2 },
-    { "direction": "retroSynthetic", "shafts": 2, "leftHead": false, "rightHead": true, "crossStrokes": 0 },
-    { "direction": "resonance", "shafts": 1, "leftHead": true, "rightHead": true, "crossStrokes": 0 },
-    { "direction": "undirected", "shafts": 2, "leftHead": false, "rightHead": false, "crossStrokes": 0 }
+    {
+      "direction": "forward",
+      "start": {"x": 192.135,"y": 30.804},
+      "end": {"x": 273.991,"y": 30.804},
+      "height": 16.371,
+      "strokes": [
+        {"from": {"x": 192.135,"y": 30.804},"to": {"x": 265.806,"y": 30.804},"width": 1.169}
+      ],
+      "fills": [[{"x": 273.991,"y": 30.804},{"x": 257.62,"y": 25.347},{"x": 260.894,"y": 30.804},{"x": 257.62,"y": 36.261}]]
+    },
+    {
+      "direction": "backward",
+      "start": {"x": 191.55,"y": 30.804},
+      "end": {"x": 273.407,"y": 30.804},
+      "height": 16.371,
+      "strokes": [
+        {"from": {"x": 199.736,"y": 30.804},"to": {"x": 273.407,"y": 30.804},"width": 1.169}
+      ],
+      "fills": [[{"x": 191.55,"y": 30.804},{"x": 207.921,"y": 25.347},{"x": 204.647,"y": 30.804},{"x": 207.921,"y": 36.261}]]
+    },
+    {
+      "direction": "bidirectional",
+      "start": {"x": 192.13,"y": 30.804},
+      "end": {"x": 273.411,"y": 30.804},
+      "height": 16.256,
+      "strokes": [
+        {"from": {"x": 192.13,"y": 28.095},"to": {"x": 265.283,"y": 28.095},"width": 1.161},
+        {"from": {"x": 200.258,"y": 33.513},"to": {"x": 273.411,"y": 33.513},"width": 1.161}
+      ],
+      "fills": [[{"x": 273.411,"y": 28.675},{"x": 257.155,"y": 22.676},{"x": 260.406,"y": 28.675}],[{"x": 192.13,"y": 32.933},{"x": 208.386,"y": 38.932},{"x": 205.135,"y": 32.933}]]
+    },
+    {
+      "direction": "noGo",
+      "start": {"x": 192.135,"y": 30.804},
+      "end": {"x": 273.991,"y": 30.804},
+      "height": 16.371,
+      "strokes": [
+        {"from": {"x": 192.135,"y": 30.804},"to": {"x": 265.806,"y": 30.804},"width": 1.169},
+        {"from": {"x": 227.606,"y": 36.261},"to": {"x": 238.52,"y": 25.347},"width": 1.169},
+        {"from": {"x": 227.606,"y": 25.347},"to": {"x": 238.52,"y": 36.261},"width": 1.169}
+      ],
+      "fills": [[{"x": 273.991,"y": 30.804},{"x": 257.62,"y": 25.347},{"x": 260.894,"y": 30.804},{"x": 257.62,"y": 36.261}]]
+    },
+    {
+      "direction": "retroSynthetic",
+      "start": {"x": 192.135,"y": 30.804},
+      "end": {"x": 273.991,"y": 30.804},
+      "height": 16.371,
+      "strokes": [
+        {"from": {"x": 192.135,"y": 36.261},"to": {"x": 265.806,"y": 36.261},"width": 1.169},
+        {"from": {"x": 192.135,"y": 25.347},"to": {"x": 265.806,"y": 25.347},"width": 1.169},
+        {"from": {"x": 257.62,"y": 41.718},"to": {"x": 273.991,"y": 30.804},"width": 1.169},
+        {"from": {"x": 273.991,"y": 30.804},"to": {"x": 257.62,"y": 19.89},"width": 1.169}
+      ],
+      "fills": []
+    },
+    {
+      "direction": "resonance",
+      "start": {"x": 191.55,"y": 30.804},
+      "end": {"x": 273.991,"y": 30.804},
+      "height": 16.488,
+      "strokes": [
+        {"from": {"x": 199.794,"y": 30.804},"to": {"x": 265.747,"y": 30.804},"width": 1.178}
+      ],
+      "fills": [[{"x": 273.991,"y": 30.804},{"x": 257.503,"y": 25.308},{"x": 260.801,"y": 30.804},{"x": 257.503,"y": 36.3}],[{"x": 191.55,"y": 30.804},{"x": 208.038,"y": 25.308},{"x": 204.74,"y": 30.804},{"x": 208.038,"y": 36.3}]]
+    },
+    {
+      "direction": "undirected",
+      "start": {"x": 191.55,"y": 30.804},
+      "end": {"x": 228.038,"y": 30.804},
+      "height": 16.488,
+      "strokes": [
+        {"from": {"x": 197.046,"y": 33.552},"to": {"x": 217.046,"y": 33.552},"width": 1.178},
+        {"from": {"x": 197.046,"y": 28.056},"to": {"x": 217.046,"y": 28.056},"width": 1.178}
+      ],
+      "fills": []
+    }
   ],
   "isotope": { "atomNumber": 1, "element": "C", "mass": 13, "visible": true },
   "legibility": [

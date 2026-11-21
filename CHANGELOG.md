@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.62
+
+- Match all seven Java CDK 2.13 automatic reaction arrow shapes, including
+  filled notched heads, filled equilibrium half-heads, and open retro arrows.
+- Add filled polygons to depiction scenes and verify emitted vertices,
+  stroke widths, and viewport transforms against the Java SVG reference.
+- All 746 tests pass on macOS and all 745 portable tests pass on ARM64 Ubuntu.
+
 ## 1.4.61
 
 - Share Core Text label geometry for placement, bond clipping, drawing, and

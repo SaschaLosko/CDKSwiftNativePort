@@ -13,8 +13,11 @@ and display semantics from Java output.
   `toSvgStr(Depiction.UNITS_PX)`. Record the length and inherited stroke width
   of `mol1bnd1`, the unlabelled C–C single bond in the first reactant.
 - Set each `IReaction.Direction` and depict at default zoom. Between the
-  reactant and product SVG groups, record the horizontal shafts, head locations
-  and diagonal strokes crossing the shaft away from its ends.
+  reactant and product SVG groups, record centerline endpoints, stroke widths,
+  and the vertices of each filled path subpath. Record the open retrosynthetic
+  path as two connected strokes. Infer the nominal drawing frame from the
+  tips and shafts. Use the head's horizontal extent as the arrow height,
+  or three times the lane separation for the headless form.
 - Create `carbon-13.mol` from `[13CH3][NH2+]CC(=O)[O-]` using the same molecule
   parsing and coordinate generation, then `MDLV2000Writer`. The default Java SVG
   shows atom 1 with a superscript 13, including when ordinary carbon labels

@@ -221,9 +221,11 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             arrowEnd = CGPoint(x: mainRegion.midX + halfWidth, y: arrowY)
         }
 
-        baseBondSegments += CDKReactionArrowGeometry.segments(
+        let arrowHeight = min((arrowEnd.x - arrowStart.x) / 3, metrics.bondWidth * 14, metrics.atomLabelFontSize * 1.3)
+        let arrow = CDKReactionArrowGeometry.build(
             direction: reaction.direction, start: arrowStart, end: arrowEnd,
-            stroke: metrics.bondWidth, fontSize: metrics.atomLabelFontSize)
+            height: arrowHeight)
+        baseBondSegments += arrow.strokes
 
         let viewportCenter = CGPoint(x: canvasRect.midX, y: canvasRect.midY)
         let normalizedRotation = rotationDegrees.truncatingRemainder(dividingBy: 360)
@@ -280,7 +282,10 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             gridSegments: gridSegments,
             backgroundBoxes: transformedBoxes,
             bondSegments: transformedBonds,
-            labels: transformedLabels)
+            labels: transformedLabels,
+            filledPolygons: arrow.fills.map {
+                .init(points: $0.points.map(applyViewportTransform), color: $0.color)
+            })
     }
 
     public static func participant(
