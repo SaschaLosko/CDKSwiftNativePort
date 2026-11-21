@@ -219,98 +219,39 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
         XCTAssertGreaterThan(maxFont2, maxFont1 * 1.5)
     }
 
-    func testReactionSceneScalesStrokeAndLabelSizingWithCanvasResize() {
-        let reaction = CDKReaction(
-            reactants: [ethane(name: "R"), ethane(name: "R2")],
-            agents: [],
-            products: [ethane(name: "P")])
-        let style = RenderStyle(
-            showCarbons: true,
-            showImplicitHydrogens: false,
-            showAtomIDs: false,
-            bondWidth: 2.0,
-            fontSize: 14,
-            padding: 20)
+    func testReactionSceneScalesStrokeAndLabelSizingWithCanvasResize() throws {
+        let reaction = try CDKSmilesParser().parseReactionSmiles("CCO.OCC1=CC=CC=C1>>CCOCC1=CC=CC=C1")
+        let style = RenderStyle()
 
         let compact = CDKMetalReactionDepictionSceneBuilder.build(
-            reaction: reaction,
-            style: style,
-            canvasRect: CGRect(x: 0, y: 0, width: 760, height: 360),
-            zoom: 1.0,
-            pan: .zero,
-            rotationDegrees: 0)
+            reaction: reaction, style: style, canvasRect: CGRect(x: 0, y: 0, width: 428, height: 236),
+            zoom: 1, pan: .zero)
         let expanded = CDKMetalReactionDepictionSceneBuilder.build(
-            reaction: reaction,
-            style: style,
-            canvasRect: CGRect(x: 0, y: 0, width: 1320, height: 700),
-            zoom: 1.0,
-            pan: .zero,
-            rotationDegrees: 0)
+            reaction: reaction, style: style, canvasRect: CGRect(x: 0, y: 0, width: 960, height: 720),
+            zoom: 1, pan: .zero)
 
-        let compactWidths = compact.bondSegments
-            .map(\.width)
-            .filter { $0 > 0.01 }
-        let expandedWidths = expanded.bondSegments
-            .map(\.width)
-            .filter { $0 > 0.01 }
-        let compactAvgWidth = compactWidths.reduce(0, +) / CGFloat(max(1, compactWidths.count))
-        let expandedAvgWidth = expandedWidths.reduce(0, +) / CGFloat(max(1, expandedWidths.count))
         XCTAssertGreaterThan(
-            expandedAvgWidth, compactAvgWidth * 1.15,
-            "Reaction line widths should grow when the canvas auto-fit grows with window size.")
-
-        let compactMaxFont = compact.labels.map(\.fontSize).max() ?? 0
-        let expandedMaxFont = expanded.labels.map(\.fontSize).max() ?? 0
+            try XCTUnwrap(expanded.bondSegments.first).width, try XCTUnwrap(compact.bondSegments.first).width)
         XCTAssertGreaterThan(
-            expandedMaxFont, compactMaxFont * 1.15,
-            "Reaction label sizes should scale up with window-size auto-fit, not stay static.")
+            try XCTUnwrap(expanded.labels.first { $0.text == "OH" }).fontSize,
+            try XCTUnwrap(compact.labels.first { $0.text == "OH" }).fontSize)
     }
 
-    func testReactionSceneKeepsShrinkingOnVeryCompactCanvas() {
-        let reaction = CDKReaction(
-            reactants: [moleculeWithHeteroLabel(name: "R")],
-            agents: [],
-            products: [])
-        let style = RenderStyle(
-            showCarbons: true,
-            showImplicitHydrogens: false,
-            showAtomIDs: false,
-            bondWidth: 2.0,
-            fontSize: 14,
-            padding: 20)
-
+    func testReactionSceneKeepsShrinkingOnVeryCompactCanvas() throws {
+        let reaction = try CDKSmilesParser().parseReactionSmiles("CCO.OCC1=CC=CC=C1>>CCOCC1=CC=CC=C1")
+        let style = RenderStyle()
         let compact = CDKMetalReactionDepictionSceneBuilder.build(
-            reaction: reaction,
-            style: style,
-            canvasRect: CGRect(x: 0, y: 0, width: 760, height: 420),
-            zoom: 1.0,
-            pan: .zero,
-            rotationDegrees: 0)
-        let extraCompact = CDKMetalReactionDepictionSceneBuilder.build(
-            reaction: reaction,
-            style: style,
-            canvasRect: CGRect(x: 0, y: 0, width: 540, height: 340),
-            zoom: 1.0,
-            pan: .zero,
-            rotationDegrees: 0)
+            reaction: reaction, style: style, canvasRect: CGRect(x: 0, y: 0, width: 560, height: 418),
+            zoom: 1, pan: .zero)
+        let thumbnail = CDKMetalReactionDepictionSceneBuilder.build(
+            reaction: reaction, style: style, canvasRect: CGRect(x: 0, y: 0, width: 200, height: 100),
+            zoom: 1, pan: .zero)
 
-        let compactWidths = compact.bondSegments
-            .map(\.width)
-            .filter { $0 > 0.01 }
-        let extraCompactWidths = extraCompact.bondSegments
-            .map(\.width)
-            .filter { $0 > 0.01 }
-        let compactAvgWidth = compactWidths.reduce(0, +) / CGFloat(max(1, compactWidths.count))
-        let extraCompactAvgWidth = extraCompactWidths.reduce(0, +) / CGFloat(max(1, extraCompactWidths.count))
         XCTAssertLessThan(
-            extraCompactAvgWidth, compactAvgWidth * 0.72,
-            "Expected bond widths to keep shrinking on very compact reaction canvases.")
-
-        let compactMaxFont = compact.labels.map(\.fontSize).max() ?? 0
-        let extraCompactMaxFont = extraCompact.labels.map(\.fontSize).max() ?? 0
-        XCTAssertLessThanOrEqual(
-            extraCompactMaxFont, compactMaxFont,
-            "Expected reaction labels to never grow on very compact canvases.")
+            try XCTUnwrap(thumbnail.bondSegments.first).width, try XCTUnwrap(compact.bondSegments.first).width)
+        XCTAssertLessThan(
+            try XCTUnwrap(thumbnail.labels.first { $0.text == "OH" }).fontSize,
+            try XCTUnwrap(compact.labels.first { $0.text == "OH" }).fontSize)
     }
 
     func testHighlightedParticipantAddsOuterGlowForBondsAndLabels() {
@@ -606,7 +547,7 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
         XCTAssertNil(miss, "Point in the reaction arrow gap should not select any participant.")
     }
 
-    func testDenseReactionClampsLabelFontForCDKLikeReadability() {
+    func testDenseReactionFitsReadableLabelInk() {
         let hetero = moleculeWithHeteroLabel(name: "Het")
         let reaction = CDKReaction(
             reactants: [hetero, hetero, hetero],
@@ -628,10 +569,16 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
             pan: .zero,
             rotationDegrees: 0)
 
-        let maxAtomLabel = scene.labels.filter { $0.text != "+" }.map(\.fontSize).max() ?? 0
-        XCTAssertLessThanOrEqual(
-            maxAtomLabel, 16.0,
-            "Reaction atom labels should be compact and not explode with a large base font style.")
+        let labels = scene.labels.filter { $0.text != "+" }
+        XCTAssertFalse(labels.isEmpty)
+        for label in labels {
+            let size = CDKLabelClipping.estimateLabelSize(text: label.text, fontSize: label.fontSize)
+            let bounds = CGRect(
+                x: label.position.x - size.width / 2, y: label.position.y - size.height / 2,
+                width: size.width, height: size.height)
+            XCTAssertTrue(CGRect(x: 0, y: 0, width: 1440, height: 720).contains(bounds))
+            XCTAssertGreaterThanOrEqual(label.fontSize, 12)
+        }
     }
 
     func testLowQualityParticipantCoordinatesTriggerPerParticipantRelayout() throws {

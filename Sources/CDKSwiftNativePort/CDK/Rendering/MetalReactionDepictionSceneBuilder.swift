@@ -30,7 +30,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         let gridSegments: [CDKMetalDepictionScene.LineSegment] = []
-        let pad = style.padding
+        let pad = min(style.padding, min(canvasRect.width, canvasRect.height) * 0.12)
         let available = CGRect(
             x: canvasRect.minX + pad,
             y: canvasRect.minY + pad,
@@ -61,13 +61,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             agentCount: agents.count,
             productCount: products.count)
 
-        // CDK-like reaction depictions keep labels comparatively compact, even if the
-        // single-molecule depiction style uses a very large default atom font.
-        let participantMolecules = reactants + agents + products
-        let reactionStyle = compactReactionStyle(
-            base: style,
-            participants: participantMolecules,
-            in: available)
+        let reactionStyle = participantLayoutStyle(base: style, in: available)
 
         let mainRegion = available
         let splitRegions = reactionSideRegions(
@@ -90,6 +84,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         let participantScale = sharedParticipantScale(
             for: [reactantLayout, productLayout, agentLayout],
             style: reactionStyle)
+        let metrics = CDKReactionDepictionMetrics(
+            style: style, participants: reactants + agents + products,
+            coordinateScale: participantScale ?? 1)
 
         var baseBondSegments: [CDKMetalDepictionScene.LineSegment] = []
         baseBondSegments.reserveCapacity((reactants.count + products.count + agents.count) * 32)
@@ -116,7 +113,8 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                 canvasRect: renderRect,
                 zoom: 1.0,
                 pan: .zero,
-                rotationDegrees: 0)
+                rotationDegrees: 0,
+                reactionMetrics: metrics)
             let glowColor = CDKRenderColor.outerGlowHighlight.withAlpha(0.92)
             for box in scene.backgroundBoxes {
                 baseBackgroundBoxes.append(box)
@@ -125,7 +123,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                 if highlighted {
                     let glowWidth = max(
                         segment.width * 2.45,
-                        segment.width + max(1.8, reactionStyle.bondWidth * 1.95))
+                        segment.width + metrics.bondWidth * 1.95)
                     let glowOpacity = (0.16 + (segment.opacity * 0.26)).clamped(to: 0.16...0.44)
                     baseBondSegments.append(
                         CDKMetalDepictionScene.LineSegment(
@@ -153,7 +151,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                             id: nextLabelID,
                             text: label.text,
                             position: label.position,
-                            fontSize: max(7.2, label.fontSize),
+                            fontSize: label.fontSize,
                             aromatic: false,
                             color: CDKRenderColor.outerGlowHighlight.withAlpha(0.92),
                             italicized: label.italicized,
@@ -168,7 +166,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                         id: nextLabelID,
                         text: label.text,
                         position: label.position,
-                        fontSize: max(7.2, label.fontSize),
+                        fontSize: label.fontSize,
                         aromatic: label.aromatic,
                         color: label.color,
                         italicized: label.italicized,
@@ -198,7 +196,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                 highlighted: shouldGlow(role: .agent, index: index))
         }
 
-        let symbolFontSize = min(12, max(9, reactionStyle.fontSize * 0.66))
+        let symbolFontSize = metrics.atomLabelFontSize * 0.80
         for point in reactantLayout.plusPositions + productLayout.plusPositions + agentLayout.plusPositions {
             nextLabelID += 1
             baseLabels.append(
@@ -221,35 +219,9 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             arrowEnd = CGPoint(x: mainRegion.midX + halfWidth, y: arrowY)
         }
 
-        let arrowWidth = max(1.0, reactionStyle.bondWidth * 0.94)
-        baseBondSegments.append(
-            CDKMetalDepictionScene.LineSegment(
-                from: arrowStart,
-                to: arrowEnd,
-                width: arrowWidth,
-                opacity: 0.95,
-                color: .ink)
-        )
-
-        let headLength = max(11, reactionStyle.fontSize * 0.54)
-        let headHalf = headLength * 0.36
-        let headBack = CGPoint(x: arrowEnd.x - headLength, y: arrowEnd.y)
-        baseBondSegments.append(
-            CDKMetalDepictionScene.LineSegment(
-                from: CGPoint(x: headBack.x, y: headBack.y - headHalf),
-                to: arrowEnd,
-                width: arrowWidth,
-                opacity: 0.95,
-                color: .ink)
-        )
-        baseBondSegments.append(
-            CDKMetalDepictionScene.LineSegment(
-                from: CGPoint(x: headBack.x, y: headBack.y + headHalf),
-                to: arrowEnd,
-                width: arrowWidth,
-                opacity: 0.95,
-                color: .ink)
-        )
+        baseBondSegments += CDKReactionArrowGeometry.segments(
+            direction: reaction.direction, start: arrowStart, end: arrowEnd,
+            stroke: metrics.bondWidth, fontSize: metrics.atomLabelFontSize)
 
         let viewportCenter = CGPoint(x: canvasRect.midX, y: canvasRect.midY)
         let normalizedRotation = rotationDegrees.truncatingRemainder(dividingBy: 360)
@@ -268,34 +240,23 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             return CGPoint(x: zx, y: zy)
         }
 
-        // Keep line and label sizing coupled to reaction viewport auto-fit so resizing
-        // the window behaves similarly to explicit zooming.
-        let referenceMainRegion = CGSize(width: 760, height: 320)
-        let reactionFitScaleX = mainRegion.width / max(1, referenceMainRegion.width)
-        let reactionFitScaleY = mainRegion.height / max(1, referenceMainRegion.height)
-        // Keep an upper cap, but no lower clamp: compact windows should continue
-        // scaling line and label sizing down with geometry.
-        let reactionAutoFitScale = min(1.85, min(reactionFitScaleX, reactionFitScaleY))
-
         let transformedBonds = baseBondSegments.map { segment in
             CDKMetalDepictionScene.LineSegment(
                 from: applyViewportTransform(segment.from),
                 to: applyViewportTransform(segment.to),
-                width: max(0.75, segment.width * zoom * reactionAutoFitScale),
+                width: segment.width * zoom,
                 opacity: segment.opacity,
                 color: segment.color)
         }
         let transformedBoxes = baseBackgroundBoxes.map { box in
-            let minPoint = applyViewportTransform(CGPoint(x: box.rect.minX, y: box.rect.minY))
-            let maxPoint = applyViewportTransform(CGPoint(x: box.rect.maxX, y: box.rect.maxY))
-            let rect = CGRect(
-                x: min(minPoint.x, maxPoint.x),
-                y: min(minPoint.y, maxPoint.y),
-                width: abs(maxPoint.x - minPoint.x),
-                height: abs(maxPoint.y - minPoint.y))
+            let corners = [
+                CGPoint(x: box.rect.minX, y: box.rect.minY), CGPoint(x: box.rect.minX, y: box.rect.maxY),
+                CGPoint(x: box.rect.maxX, y: box.rect.minY), CGPoint(x: box.rect.maxX, y: box.rect.maxY),
+            ].map(applyViewportTransform)
+            let bounds = corners.reduce(CGRect.null) { $0.union(CGRect(origin: $1, size: .zero)) }
             return CDKMetalDepictionScene.BackgroundBox(
-                rect: rect,
-                cornerRadius: max(2.0, box.cornerRadius * zoom * reactionAutoFitScale),
+                rect: bounds,
+                cornerRadius: box.cornerRadius * zoom,
                 color: box.color,
                 opacity: box.opacity)
         }
@@ -304,7 +265,7 @@ public enum CDKMetalReactionDepictionSceneBuilder {
                 id: label.id,
                 text: label.text,
                 position: applyViewportTransform(label.position),
-                fontSize: (label.fontSize * zoom * reactionAutoFitScale).clamped(to: 7.0...16.0),
+                fontSize: label.fontSize * zoom,
                 aromatic: label.aromatic,
                 color: label.color,
                 italicized: label.italicized,
@@ -352,16 +313,13 @@ public enum CDKMetalReactionDepictionSceneBuilder {
             return nil
         }
 
-        let pad = style.padding
+        let pad = min(style.padding, min(canvasRect.width, canvasRect.height) * 0.12)
         let available = CGRect(
             x: canvasRect.minX + pad,
             y: canvasRect.minY + pad,
             width: max(1, canvasRect.width - 2 * pad),
             height: max(1, canvasRect.height - 2 * pad))
-        let reactionStyle = compactReactionStyle(
-            base: style,
-            participants: reactants + agents + products,
-            in: available)
+        let reactionStyle = participantLayoutStyle(base: style, in: available)
 
         let mainRegion = available
         let splitRegions = reactionSideRegions(
@@ -852,32 +810,12 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         return hypot(dx, dy)
     }
 
-    private static func compactReactionStyle(
-        base style: RenderStyle,
-        participants: [Molecule],
-        in available: CGRect
-    ) -> RenderStyle {
-        var compact = style
-        let participantCount = max(1, participants.count)
-        let totalAtoms = max(1, participants.reduce(0) { $0 + $1.atomCount })
-        let avgAtoms = CGFloat(totalAtoms) / CGFloat(participantCount)
-        let areaPerParticipant = max(1, (available.width * available.height) / CGFloat(participantCount))
-
-        // More participants + larger molecules => proportionally smaller labels.
-        let countScale = (1.0 / sqrt(CGFloat(participantCount) / 1.4)).clamped(to: 0.44...1.0)
-        let complexityScale = (14.0 / max(8, avgAtoms)).clamped(to: 0.46...1.0)
-        let areaScale = (sqrt(areaPerParticipant / 180_000.0)).clamped(to: 0.52...1.0)
-        let compactScale = min(countScale, complexityScale, areaScale) * 0.90
-
-        compact.fontSize = (style.fontSize * compactScale).clamped(to: 7.6...11.6)
-        compact.bondWidth = (style.bondWidth * (0.72 + (0.12 * compactScale))).clamped(to: 0.92...style.bondWidth)
-        compact.padding = max(6, style.padding * 0.42)
-        // Reaction depictions are denser than single-molecule scenes.
-        // Apply a reaction-only stereo attenuation to keep wedges/hashes CDK-like.
-        compact.stereoAttenuation = (0.62 + (0.14 * compactScale)).clamped(to: 0.56...0.78)
-        // Additional micro-attenuation for hashed wedges only in reaction mode.
-        compact.hashedStereoAttenuation = 0.82
-        return compact
+    private static func participantLayoutStyle(base style: RenderStyle, in available: CGRect) -> RenderStyle {
+        var layout = style
+        // Reserve space for normal-sized labels. Their final sizes come from the fitted bond length.
+        layout.fontSize *= 14.0 / 21.0
+        layout.padding = max(2, min(style.padding * 0.42, min(available.width, available.height) * 0.08))
+        return layout
     }
 
     private static func preferredWidthWeight(for molecule: Molecule) -> CGFloat {

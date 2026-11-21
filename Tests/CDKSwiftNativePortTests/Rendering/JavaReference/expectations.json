@@ -1,0 +1,19 @@
+{
+  "version": "2.13",
+  "revision": "3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d",
+  "zoomSamples": [
+    { "zoom": 1, "firstBondLength": 26.10, "stroke": 1.012 },
+    { "zoom": 2, "firstBondLength": 52.20, "stroke": 2.023 },
+    { "zoom": 3, "firstBondLength": 78.30, "stroke": 3.035 }
+  ],
+  "arrowSamples": [
+    { "direction": "forward", "shafts": 1, "leftHead": false, "rightHead": true, "crossStrokes": 0 },
+    { "direction": "backward", "shafts": 1, "leftHead": true, "rightHead": false, "crossStrokes": 0 },
+    { "direction": "bidirectional", "shafts": 2, "leftHead": true, "rightHead": true, "crossStrokes": 0 },
+    { "direction": "noGo", "shafts": 1, "leftHead": false, "rightHead": true, "crossStrokes": 2 },
+    { "direction": "retroSynthetic", "shafts": 2, "leftHead": false, "rightHead": true, "crossStrokes": 0 },
+    { "direction": "resonance", "shafts": 1, "leftHead": true, "rightHead": true, "crossStrokes": 0 },
+    { "direction": "undirected", "shafts": 2, "leftHead": false, "rightHead": false, "crossStrokes": 0 }
+  ],
+  "isotope": { "atomNumber": 1, "element": "C", "mass": 13, "visible": true }
+}

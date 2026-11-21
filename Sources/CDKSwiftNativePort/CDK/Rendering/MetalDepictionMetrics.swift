@@ -3,12 +3,43 @@
 #endif
 import Foundation
 
+/// Atom and bond dimensions shared by all participants in an already fitted reaction.
+public struct CDKReactionDepictionMetrics {
+    public let bondWidth: CGFloat
+    public let atomLabelFontSize: CGFloat
+    let bondLength: CGFloat
+
+    public init(style: RenderStyle, participants: [Molecule], coordinateScale: CGFloat) {
+        let lengths = participants.flatMap { molecule in
+            MetalDepictionMetrics.bondLengths(
+                molecule: molecule,
+                positionsByAtomID: Dictionary(
+                    uniqueKeysWithValues: molecule.atoms.map {
+                        ($0.id, $0.position)
+                    }))
+        }
+        let referenceBondLength: CGFloat = 26.1
+        let projectedLength = MetalDepictionMetrics.median(lengths).map { $0 * coordinateScale }
+        bondLength = projectedLength.flatMap { $0.isFinite && $0 > 0 ? $0 : nil } ?? referenceBondLength
+
+        let proportion = bondLength / referenceBondLength
+        // On very small canvases, leave room for the symbols and retain legibility when zoomed in.
+        let compactScale = (bondLength / 18).clamped(to: 0.55...1)
+        bondWidth = (1.95 * proportion).clamped(to: (1.5 * compactScale)...3.25) * (style.bondWidth / 1.95)
+        atomLabelFontSize = (14 * proportion).clamped(to: (12 * compactScale)...22) * (style.fontSize / 21)
+    }
+}
+
 enum MetalDepictionMetrics {
     static func representativeBondLength(
         molecule: Molecule,
         positionsByAtomID: [Int: CGPoint]
     ) -> CGFloat? {
-        let bondLengths = molecule.bonds.compactMap { bond -> CGFloat? in
+        median(bondLengths(molecule: molecule, positionsByAtomID: positionsByAtomID))
+    }
+
+    static func bondLengths(molecule: Molecule, positionsByAtomID: [Int: CGPoint]) -> [CGFloat] {
+        molecule.bonds.compactMap { bond -> CGFloat? in
             guard let p1 = positionsByAtomID[bond.a1],
                 let p2 = positionsByAtomID[bond.a2]
             else {
@@ -16,8 +47,11 @@ enum MetalDepictionMetrics {
             }
             let length = hypot(p2.x - p1.x, p2.y - p1.y)
             return (length.isFinite && length > 0.0001) ? length : nil
-        }.sorted()
+        }
+    }
 
+    static func median(_ values: [CGFloat]) -> CGFloat? {
+        let bondLengths = values.sorted()
         guard !bondLengths.isEmpty else { return nil }
         let mid = bondLengths.count / 2
         if bondLengths.count.isMultiple(of: 2) {

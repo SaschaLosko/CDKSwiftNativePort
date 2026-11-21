@@ -36,7 +36,8 @@ public enum CDKMetalDepictionSceneBuilder {
         rotationDegrees: CGFloat = 0,
         minimumLabelFontSize: CGFloat = 8.0,
         includeAromaticCarbonLabelsWhenCarbonsHidden: Bool = false,
-        includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = false
+        includeTerminalCarbonLabelsWhenCarbonsHidden: Bool = false,
+        reactionMetrics: CDKReactionDepictionMetrics? = nil
     ) -> CDKMetalDepictionScene {
         let prepared = MetalPreparedDepictionCache.preparedData(molecule: molecule, style: style)
         let depictionMolecule = prepared.depictionMolecule
@@ -73,7 +74,9 @@ public enum CDKMetalDepictionSceneBuilder {
         // makes labels/bonds stop shrinking while geometry keeps shrinking, which
         // visually reads as labels getting bigger again.
         let viewportAutoFitScale = min(1.90, scale / max(0.0001, referenceFitScale))
-        let viewportStrokeScale = viewportAutoFitScale
+        let viewportStrokeScale =
+            reactionMetrics.map { $0.bondWidth / max(0.01, style.bondWidth) }
+            ?? viewportAutoFitScale
 
         let center = CGPoint(x: available.midX, y: available.midY)
         let baseTransform = CGAffineTransform.identity
@@ -132,25 +135,34 @@ public enum CDKMetalDepictionSceneBuilder {
             positionsByAtomID: basePositionByAtomID)
         let clampedMinimumLabelFontSize = max(2.5, minimumLabelFontSize)
         let baseViewportLabelFontSize = max(clampedMinimumLabelFontSize, style.fontSize * viewportAutoFitScale)
-        let labelLayoutFontSize = MetalDepictionMetrics.autoFitLabelFontSize(
-            style: style,
-            baseViewportFontSize: baseViewportLabelFontSize,
-            representativeBondLength: representativeBaseBondLength,
-            atomCount: depictionMolecule.atomCount,
-            bondCount: depictionMolecule.bondCount,
-            visibleAtomLabelCount: visibleAtomLabelCount,
-            minimumLabelFontSize: clampedMinimumLabelFontSize)
+        let labelLayoutFontSize =
+            reactionMetrics?.atomLabelFontSize
+            ?? MetalDepictionMetrics.autoFitLabelFontSize(
+                style: style,
+                baseViewportFontSize: baseViewportLabelFontSize,
+                representativeBondLength: representativeBaseBondLength,
+                atomCount: depictionMolecule.atomCount,
+                bondCount: depictionMolecule.bondCount,
+                visibleAtomLabelCount: visibleAtomLabelCount,
+                minimumLabelFontSize: clampedMinimumLabelFontSize)
         // When the auto-fit view zooms out, keep labels and strokes from shrinking
         // as aggressively as the scaffold so sparse scenes stay readable.
-        let zoomedLabelScale = MetalDepictionMetrics.zoomVisualScale(
-            zoom,
-            zoomOutExponent: 0.62,
-            zoomInExponent: 1.18)
-        let zoomedStrokeScale = MetalDepictionMetrics.zoomVisualScale(
-            zoom,
-            zoomOutExponent: 0.68,
-            zoomInExponent: 1.14)
-        let renderedLabelFontSize = max(clampedMinimumLabelFontSize, labelLayoutFontSize * zoomedLabelScale)
+        let zoomedLabelScale =
+            reactionMetrics == nil
+            ? MetalDepictionMetrics.zoomVisualScale(
+                zoom,
+                zoomOutExponent: 0.62,
+                zoomInExponent: 1.18) : zoom
+        let zoomedStrokeScale =
+            reactionMetrics == nil
+            ? MetalDepictionMetrics.zoomVisualScale(
+                zoom,
+                zoomOutExponent: 0.68,
+                zoomInExponent: 1.14) : zoom
+        let renderedLabelFontSize =
+            reactionMetrics == nil
+            ? max(clampedMinimumLabelFontSize, labelLayoutFontSize * zoomedLabelScale)
+            : labelLayoutFontSize * zoomedLabelScale
         let stereoTerminalLabelInset = max(
             renderedLabelFontSize * 0.22,
             max(1.8, style.bondWidth * 0.85 * viewportStrokeScale) * zoomedStrokeScale)
@@ -258,14 +270,18 @@ public enum CDKMetalDepictionSceneBuilder {
         var aromaticEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         var conjugatedDoubleEdgeCenters: [MetalRenderEdgeKey: [CGPoint]] = [:]
         let baseViewportBondWidth = max(1.0, style.bondWidth * viewportStrokeScale)
-        let layoutBondWidth = MetalDepictionMetrics.autoFitBondWidth(
-            style: style,
-            baseViewportBondWidth: baseViewportBondWidth,
-            representativeBondLength: representativeBaseBondLength,
-            atomCount: depictionMolecule.atomCount,
-            bondCount: depictionMolecule.bondCount,
-            visibleAtomLabelCount: visibleAtomLabelCount)
-        let baseBondWidth = max(1.0, layoutBondWidth * zoomedStrokeScale)
+        let layoutBondWidth =
+            reactionMetrics?.bondWidth
+            ?? MetalDepictionMetrics.autoFitBondWidth(
+                style: style,
+                baseViewportBondWidth: baseViewportBondWidth,
+                representativeBondLength: representativeBaseBondLength,
+                atomCount: depictionMolecule.atomCount,
+                bondCount: depictionMolecule.bondCount,
+                visibleAtomLabelCount: visibleAtomLabelCount)
+        let baseBondWidth =
+            reactionMetrics == nil
+            ? max(1.0, layoutBondWidth * zoomedStrokeScale) : layoutBondWidth * zoomedStrokeScale
         let stereoScale = style.stereoAttenuation.clamped(to: 0.4...1.2)
         let hashedStereoScale = style.hashedStereoAttenuation.clamped(to: 0.5...1.05)
         // Match CDK's default standard generator more closely: the wide end of stereo wedges
@@ -273,9 +289,13 @@ public enum CDKMetalDepictionSceneBuilder {
         let cdkDefaultStereoHalfWidth = baseBondWidth * 3.0
         let stereoSolidWedgeHalfWidth = cdkDefaultStereoHalfWidth * stereoScale
         let stereoHashedWedgeHalfWidth = cdkDefaultStereoHalfWidth * stereoScale * hashedStereoScale
-        let doubleBondSeparation = max(3.4, style.bondWidth * 2.25 * viewportStrokeScale) * zoomedStrokeScale
+        let doubleBondSeparation =
+            (reactionMetrics.map { max($0.bondWidth * 1.8, $0.bondLength * 0.16) }
+                ?? max(3.4, style.bondWidth * 2.25 * viewportStrokeScale)) * zoomedStrokeScale
         let doubleBondHalfSeparation = doubleBondSeparation * 0.5
-        let tripleBondOffset = max(3.1, style.bondWidth * 2.2 * viewportStrokeScale) * zoomedStrokeScale
+        let tripleBondOffset =
+            reactionMetrics == nil
+            ? max(3.1, style.bondWidth * 2.2 * viewportStrokeScale) * zoomedStrokeScale : doubleBondSeparation
         let backgroundBoxes = CDKMarkushRendering.rGroupBoxes(
             molecule: depictionMolecule,
             positionsByAtomID: positionByAtomID,

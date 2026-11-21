@@ -54,7 +54,7 @@ let package = Package(
                 "Reaction/port_metadata.json",
                 "RInChI/UpstreamReference",
             ],
-            resources: [.copy("MDL/RGroupEnumerationFixtures")]
+            resources: [.copy("MDL/RGroupEnumerationFixtures"), .copy("Rendering/JavaReference")]
         ),
     ],
     swiftLanguageModes: [.v6]

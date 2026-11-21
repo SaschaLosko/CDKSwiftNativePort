@@ -34,7 +34,7 @@ enum CDKLabelText {
         if hasMapNumber && (style.showAtomMapNumbers || style.atomColoringMode == .atomMapHighlight) {
             return true
         }
-        if atom.element == "C" && !style.showCarbons && atom.charge == 0 {
+        if atom.element == "C" && !style.showCarbons && atom.charge == 0 && atom.isotopeMassNumber == nil {
             if atom.rGroupMembership != nil {
                 return false
             }
@@ -66,7 +66,9 @@ enum CDKLabelText {
     }
 
     static func hydrogenText(atom: Atom, style: RenderStyle, implicitHydrogenCount: Int) -> String {
-        let showH = style.showImplicitHydrogens && (atom.element != "C" || style.showCarbons)
+        let showH =
+            style.showImplicitHydrogens
+            && (atom.element != "C" || style.showCarbons || atom.isotopeMassNumber != nil)
         guard showH, implicitHydrogenCount > 0 else { return "" }
         return implicitHydrogenCount == 1 ? "H" : "H\(implicitHydrogenCount)"
     }
@@ -134,7 +136,7 @@ enum CDKLabelText {
         let chargeText = chargeText(for: atom)
         let hText = hydrogenText(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
 
-        var label = displayText(atom.symbolToDraw) + hText + chargeText
+        var label = elementText(for: atom) + hText + chargeText
         if style.showAtomMapNumbers, let mapNo = atom.atomMapNumber, mapNo > 0 {
             label += ":\(mapNo)"
         }
@@ -158,12 +160,20 @@ enum CDKLabelText {
         guard !hText.isEmpty else { return .zero }
 
         let fullLabel = build(atom: atom, style: style, implicitHydrogenCount: implicitHydrogenCount)
-        let coreLabel = displayText(atom.symbolToDraw)
+        let coreLabel = elementText(for: atom)
 
         let fullWidth = CDKLabelClipping.estimateLabelSize(text: fullLabel, fontSize: fontSize).width
         let coreWidth = CDKLabelClipping.estimateLabelSize(text: coreLabel, fontSize: fontSize).width
         let dx = max(0, (fullWidth - coreWidth) * 0.5)
         return CGVector(dx: dx, dy: 0)
+    }
+
+    private static func elementText(for atom: Atom) -> String {
+        let symbol = atom.symbolToDraw
+        if let mass = atom.isotopeMassNumber, mass > 0, symbol == "\(mass)\(atom.element)" {
+            return String(String(mass).compactMap { superscriptDigits[$0] }) + atom.element
+        }
+        return displayText(symbol)
     }
 }
 
