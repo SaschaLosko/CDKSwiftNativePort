@@ -197,13 +197,15 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         }
 
         let symbolFontSize = metrics.atomLabelFontSize * 0.80
+        let participantLabelBounds = baseLabels.filter { !$0.usesGlowOverlay }.map(labelBounds(for:))
         for point in reactantLayout.plusPositions + productLayout.plusPositions + agentLayout.plusPositions {
             nextLabelID += 1
             baseLabels.append(
                 CDKMetalDepictionScene.AtomLabel(
                     id: nextLabelID,
                     text: "+",
-                    position: point,
+                    position: separatorPosition(
+                        near: point, fontSize: symbolFontSize, avoiding: participantLabelBounds, in: available),
                     fontSize: symbolFontSize,
                     aromatic: false,
                     color: .ink)
@@ -816,6 +818,28 @@ public enum CDKMetalReactionDepictionSceneBuilder {
         layout.fontSize *= 14.0 / 21.0
         layout.padding = max(2, min(style.padding * 0.42, min(available.width, available.height) * 0.08))
         return layout
+    }
+
+    private static func labelBounds(for label: CDKMetalDepictionScene.AtomLabel) -> CGRect {
+        let size = CDKLabelClipping.estimateLabelSize(text: label.text, fontSize: label.fontSize)
+        return CGRect(
+            x: label.position.x - size.width / 2, y: label.position.y - size.height / 2,
+            width: size.width, height: size.height)
+    }
+
+    private static func separatorPosition(
+        near point: CGPoint, fontSize: CGFloat, avoiding labels: [CGRect], in available: CGRect
+    ) -> CGPoint {
+        let size = CDKLabelClipping.estimateLabelSize(text: "+", fontSize: fontSize)
+        let horizontalSpan = (point.x - size.width / 2)...(point.x + size.width / 2)
+        let nearby = labels.filter { $0.maxX >= horizontalSpan.lowerBound && $0.minX <= horizontalSpan.upperBound }
+        let clearance = size.height / 2 + 2
+        let candidates = [point.y] + nearby.flatMap { [$0.minY - clearance, $0.maxY + clearance] }
+        let y = candidates.filter { y in
+            y - size.height / 2 >= available.minY && y + size.height / 2 <= available.maxY
+                && nearby.allSatisfy { y + clearance <= $0.minY || y - clearance >= $0.maxY }
+        }.min { abs($0 - point.y) < abs($1 - point.y) }
+        return CGPoint(x: point.x, y: y ?? point.y)
     }
 
     private static func preferredWidthWeight(for molecule: Molecule) -> CGFloat {

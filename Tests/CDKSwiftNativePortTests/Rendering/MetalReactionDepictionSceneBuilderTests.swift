@@ -254,6 +254,23 @@ final class MetalReactionDepictionSceneBuilderTests: XCTestCase {
             try XCTUnwrap(compact.labels.first { $0.text == "OH" }).fontSize)
     }
 
+    func testSeparatorStaysClearOfAnIsotopeLabelInANarrowReactionCanvas() throws {
+        let reaction = try CDKSmilesParser().parseReactionSmiles("[13CH3]CO.OCC1=CC=CC=C1>>[13CH3]COCC1=CC=CC=C1")
+        for width: CGFloat in [560, 720, 800] {
+            let scene = CDKMetalReactionDepictionSceneBuilder.build(
+                reaction: reaction, style: RenderStyle(), canvasRect: CGRect(x: 0, y: 0, width: width, height: 329),
+                zoom: 1, pan: .zero)
+            let plus = try XCTUnwrap(scene.labels.first { $0.text == "+" })
+            let isotope = try XCTUnwrap(scene.labels.first { $0.text.hasPrefix("¹³C") })
+            let plusSize = CDKLabelClipping.estimateLabelSize(text: plus.text, fontSize: plus.fontSize)
+            let isotopeSize = CDKLabelClipping.estimateLabelSize(text: isotope.text, fontSize: isotope.fontSize)
+            XCTAssertTrue(
+                abs(plus.position.x - isotope.position.x) >= (plusSize.width + isotopeSize.width) / 2
+                    || abs(plus.position.y - isotope.position.y) >= (plusSize.height + isotopeSize.height) / 2,
+                "The separator must stay clear of the isotope label at width \(width).")
+        }
+    }
+
     func testHighlightedParticipantAddsOuterGlowForBondsAndLabels() {
         let reaction = CDKReaction(
             reactants: [ethane(name: "R1"), ethane(name: "R2")],

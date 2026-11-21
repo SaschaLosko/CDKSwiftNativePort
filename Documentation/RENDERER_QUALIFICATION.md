@@ -4,7 +4,8 @@ The renderer resolves shared stroke and symbol sizes from the median fitted bond
 length across reaction participants. Interactive zoom scales the reaction
 coordinates, strokes, and symbol sizes together. Very small canvases use a
 compact initial size. Projected atom coordinates retain a common scale across
-reactants, agents, and products.
+reactants, agents, and products. Separators use the nearest available position
+when a participant label occupies their usual location.
 
 Explicit isotope masses use superscripts in the atom label. An isotope-labelled
 carbon remains visible when the style hides ordinary carbon symbols. Automatic
@@ -24,5 +25,5 @@ The Swift checks cover glyph visibility, arrow topology, and proportional zoom
 at document and compact sizes. Typography, arrowhead fill, and raster edge
 coverage have separate qualification requirements.
 
-The complete package suite ran 743 tests with zero failures on ARM64 macOS and
+The complete package suite ran 744 tests with zero failures on ARM64 macOS and
 ARM64 Ubuntu for this milestone.
