@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.64
+
+- Publish the vendored IUPAC InChI 1.07.5 C library as the `IUPACInChI` library
+  product, with `iupac_inchi_api.h` exposing the official InChI and IXA API, so
+  dependent packages can share this copy instead of vendoring their own.
+- The InChI sources and the zero-initialized input buffers are unchanged.
+- All 750 tests pass on macOS and all 749 portable tests pass on ARM64 Ubuntu.
+
 ## 1.4.63
 
 - Draw resolved acyclic E/Z double bonds with the recorded 2D geometry.

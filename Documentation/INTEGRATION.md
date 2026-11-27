@@ -26,6 +26,11 @@ Then import it:
 import CDKSwiftNativePort
 ```
 
+Packages that need the raw IUPAC InChI C API can depend on the `IUPACInChI`
+product instead and `import IUPACInChI`. It provides the vendored InChI 1.07.5
+library with `inchi_api.h` (through `iupac_inchi_api.h`) and the package's
+`cdk_inchi_bridge.h`.
+
 For a full Swift-on-Linux walkthrough, including runnable executable-package
 examples, see [`LINUX.md`](LINUX.md).
 

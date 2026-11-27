@@ -177,6 +177,12 @@ runtime path; only a small source-preservation cache remains for unchanged
 InChI imports. The official reference parity harness is tracked in
 [`Documentation/INCHI_REFERENCE_GRADE.md`](Documentation/INCHI_REFERENCE_GRADE.md).
 
+The `IUPACInChI` library product exposes the same C library to other packages,
+so a dependent package can drive the InChI and IXA API directly without
+vendoring a second copy. Its module includes `cdk_inchi_bridge.h` and
+`iupac_inchi_api.h`, which re-exports the official `inchi_api.h` and adds
+`iupac_inchi_implicit_h()` for the `IXA_ATOMID_IMPLICIT_H` constant.
+
 ## Reaction Parity Status
 
 Reaction hierarchy and reaction-IO parity now have a committed upstream-derived

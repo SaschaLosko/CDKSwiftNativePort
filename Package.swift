@@ -12,7 +12,8 @@ let package = Package(
             name: "CDKSwiftNativePort",
             type: .dynamic,
             targets: ["CDKSwiftNativePort"]
-        )
+        ),
+        .library(name: "IUPACInChI", targets: ["IUPACInChI"]),
     ],
     targets: [
         .target(
