@@ -1,6 +1,6 @@
 {
-  "version": "2.13",
-  "revision": "3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d",
+  "version": "2.14.1",
+  "revision": "4253aa225f474a2a5b26ad9ed3ecf73262355693",
   "zoomSamples": [
     { "zoom": 1, "firstBondLength": 26.10, "stroke": 1.012 },
     { "zoom": 2, "firstBondLength": 52.20, "stroke": 2.023 },

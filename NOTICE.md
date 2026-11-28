@@ -9,7 +9,7 @@ Upstream project:
 Reference target used for parity work in this port:
 - CDK 2.14.1 (`cdk-2.14.1`, commit `4253aa225f474a2a5b26ad9ed3ecf73262355693`)
 
-Earlier parity work and the generated Java reference datasets used:
+Earlier parity work used, and the Java reference datasets were first generated with:
 - CDK 2.13 (`cdk-2.13`, commit `3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`)
 
 `CDKSwiftNativePort` also vendors the official IUPAC InChI source distribution

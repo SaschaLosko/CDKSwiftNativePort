@@ -166,18 +166,37 @@ public final class CDKSmilesGenerator {
             )
             let ringEdges = componentEdges.subtracting(treeEdges)
             let ringNumbers = assignRingNumbers(to: ringEdges)
+            let preorder = writtenOrder(root: root, treeAdjacency: treeAdjacency)
+            let directionalMarks =
+                flavor.contains(.isomeric)
+                ? doubleBondDirectionalMarks(
+                    preorder: preorder, treeEdges: treeEdges,
+                    adjacency: adjacency, bondByEdge: bondByEdge)
+                : [:]
 
             var ringClosuresByAtom: [Int: [RingClosure]] = [:]
             for edge in ringEdges {
                 guard let bond = bondByEdge[edge], let ringNumber = ringNumbers[edge] else {
                     continue
                 }
-                let symbol = bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs)
+                let symbol = bondToken(
+                    bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs,
+                    directionalMarks: directionalMarks)
+                // A directional mark is read from the atom that carries it toward the
+                // partner, so it is written once, at the closing (later) atom.
+                let closing = (preorder[edge.a] ?? 0) > (preorder[edge.b] ?? 0) ? edge.a : edge.b
+                let isDirectional = directionalMarks[bond.id] != nil
                 ringClosuresByAtom[edge.a, default: []].append(
-                    RingClosure(number: ringNumber, bondSymbol: symbol, partner: edge.b)
+                    RingClosure(
+                        number: ringNumber,
+                        bondSymbol: isDirectional && edge.a != closing ? "" : symbol,
+                        partner: edge.b)
                 )
                 ringClosuresByAtom[edge.b, default: []].append(
-                    RingClosure(number: ringNumber, bondSymbol: symbol, partner: edge.a)
+                    RingClosure(
+                        number: ringNumber,
+                        bondSymbol: isDirectional && edge.b != closing ? "" : symbol,
+                        partner: edge.a)
                 )
             }
 
@@ -197,6 +216,7 @@ public final class CDKSmilesGenerator {
                 bondByEdge: bondByEdge,
                 atomByID: atomByID,
                 aromaticBondIDs: aromaticBondIDs,
+                directionalMarks: directionalMarks,
                 atomOutputOrder: &atomOutputOrder,
                 visited: &visitedTreeAtoms)
             componentStrings.append(rendered)
@@ -727,6 +747,193 @@ public final class CDKSmilesGenerator {
         return (treeAdjacency, treeEdges)
     }
 
+    /// Atom positions in written order: a preorder walk with children ascending,
+    /// matching `renderTreeAtom`, which writes branches before the last child.
+    private func writtenOrder(root: Int, treeAdjacency: [Int: [Int]]) -> [Int: Int] {
+        var parentOf: [Int: Int] = [:]
+        var preorder: [Int: Int] = [:]
+        var stack = [root]
+        while let atomID = stack.popLast() {
+            preorder[atomID] = preorder.count
+            let children = treeAdjacency[atomID, default: []]
+                .filter { $0 != parentOf[atomID] }
+                .sorted()
+            for child in children { parentOf[child] = atomID }
+            stack.append(contentsOf: children.reversed())
+        }
+        return preorder
+    }
+
+    /// Assigns `/` and `\` to single bonds so that every defined cis/trans double bond
+    /// in the component is written with its configuration.
+    ///
+    /// A mark is read from the earlier written atom to the later one. For a
+    /// double-bond atom `a` and a marked neighbor `x`, the neighbor's side is the
+    /// mark when `x` is written before `a` and the inverted mark otherwise. Neighbors on
+    /// the same atom take opposite sides; across the double bond, cis neighbors
+    /// share a side. These pairwise parities are solved together so conjugated
+    /// systems share carrier bonds consistently. A double bond without a single
+    /// bond on each side, or whose parities conflict with another,
+    /// is written without a configuration rather than with a wrong one.
+    private func doubleBondDirectionalMarks(
+        preorder: [Int: Int],
+        treeEdges: Set<EdgeKey>,
+        adjacency: [Int: [Int]],
+        bondByEdge: [EdgeKey: Bond]
+    ) -> [Int: String] {
+
+        struct StereoDoubleBond {
+            let a: Int
+            let b: Int
+            /// +1 when the reference neighbors are cis, -1 when trans.
+            let parity: Int
+            let referenceA: Int
+            let referenceB: Int
+        }
+
+        func carrierBond(_ atom: Int, _ neighbor: Int) -> Bond? {
+            guard let bond = bondByEdge[EdgeKey(atom, neighbor)],
+                bond.order == .single, bond.queryType == nil
+            else { return nil }
+            return bond
+        }
+
+        var candidates: [StereoDoubleBond] = []
+        for (edge, bond) in bondByEdge.sorted(by: { $0.key < $1.key }) {
+            guard bond.order == .double, treeEdges.contains(edge),
+                let configuration = bond.doubleBondStereo,
+                let references = bond.stereoReferenceAtomIDs, references.count == 4
+            else { continue }
+            let a: Int
+            let b: Int
+            let referenceA: Int
+            let referenceB: Int
+            if references[1] == bond.a1 && references[2] == bond.a2 {
+                (a, b, referenceA, referenceB) = (bond.a1, bond.a2, references[0], references[3])
+            } else if references[1] == bond.a2 && references[2] == bond.a1 {
+                (a, b, referenceA, referenceB) = (bond.a2, bond.a1, references[0], references[3])
+            } else {
+                continue
+            }
+            let neighborsA = adjacency[a, default: []]
+            let neighborsB = adjacency[b, default: []]
+            guard neighborsA.contains(referenceA), neighborsB.contains(referenceB),
+                referenceA != b, referenceB != a
+            else { continue }
+            candidates.append(
+                StereoDoubleBond(
+                    a: a, b: b, parity: configuration == .cis ? 1 : -1,
+                    referenceA: referenceA, referenceB: referenceB))
+        }
+        guard !candidates.isEmpty else { return [:] }
+
+        func neighborSide(_ atom: Int, _ neighbor: Int, _ entry: StereoDoubleBond) -> Int {
+            // Relative side of `neighbor` versus the reference neighbor on `atom`.
+            let reference = atom == entry.a ? entry.referenceA : entry.referenceB
+            return neighbor == reference ? 1 : -1
+        }
+
+        func direction(of neighbor: Int, at atom: Int) -> Int {
+            // Tree marks are written before the child; ring-closure marks at the
+            // later atom. Either way the mark reads from the earlier atom.
+            (preorder[neighbor] ?? 0) < (preorder[atom] ?? 0) ? 1 : -1
+        }
+
+        var active = candidates.map { entry in
+            [entry.a, entry.b].allSatisfy { atom in
+                adjacency[atom, default: []].contains { neighbor in
+                    neighbor != (atom == entry.a ? entry.b : entry.a) && carrierBond(atom, neighbor) != nil
+                }
+            }
+        }
+
+        while true {
+            // Choose one carrier per side, preferring the stored reference neighbor.
+            var carriers: Set<Int> = []
+            for (index, entry) in candidates.enumerated() where active[index] {
+                for (atom, other, reference) in [
+                    (entry.a, entry.b, entry.referenceA), (entry.b, entry.a, entry.referenceB),
+                ] {
+                    let options = adjacency[atom, default: []].filter {
+                        $0 != other && carrierBond(atom, $0) != nil
+                    }
+                    let chosen = options.contains(reference) ? reference : options.min()!
+                    carriers.insert(carrierBond(atom, chosen)!.id)
+                }
+            }
+
+            // Parity union-find over marked bonds: value(e) = value(root) * parity(e).
+            var parent: [Int: Int] = [:]
+            var parityToParent: [Int: Int] = [:]
+            func find(_ id: Int) -> (root: Int, parity: Int) {
+                guard let next = parent[id], next != id else { return (id, 1) }
+                let result = find(next)
+                let parity = parityToParent[id, default: 1] * result.parity
+                parent[id] = result.root
+                parityToParent[id] = parity
+                return (result.root, parity)
+            }
+            func unite(_ first: Int, _ second: Int, _ product: Int) -> Bool {
+                let (rootFirst, parityFirst) = find(first)
+                let (rootSecond, paritySecond) = find(second)
+                if rootFirst == rootSecond { return parityFirst * paritySecond == product }
+                parent[rootSecond] = rootFirst
+                parityToParent[rootSecond] = parityFirst * paritySecond * product
+                return true
+            }
+
+            var conflict: Int?
+            outer: for (index, entry) in candidates.enumerated() where active[index] {
+                // Every marked bond at either end is read for this double bond.
+                var sides: [(bond: Int, side: Int)] = []
+                for (atom, other) in [(entry.a, entry.b), (entry.b, entry.a)] {
+                    for neighbor in adjacency[atom, default: []] where neighbor != other {
+                        guard let bond = carrierBond(atom, neighbor), carriers.contains(bond.id) else {
+                            continue
+                        }
+                        // side = direction * mark; express sides relative to the
+                        // reference neighbor of `a`, folding in the configuration.
+                        var relative = direction(of: neighbor, at: atom) * neighborSide(atom, neighbor, entry)
+                        if atom == entry.b { relative *= entry.parity }
+                        sides.append((bond.id, relative))
+                    }
+                }
+                guard let first = sides.first else { continue }
+                for other in sides.dropFirst() where !unite(first.bond, other.bond, first.side * other.side) {
+                    conflict = index
+                    break outer
+                }
+            }
+
+            if let conflict {
+                active[conflict] = false
+                continue
+            }
+
+            // Give each component's earliest written bond a forward slash.
+            let bondsByID = Dictionary(uniqueKeysWithValues: bondByEdge.values.map { ($0.id, $0) })
+            func writtenPosition(_ bondID: Int) -> Int {
+                guard let bond = bondsByID[bondID] else { return Int.max }
+                return max(preorder[bond.a1] ?? Int.max, preorder[bond.a2] ?? Int.max)
+            }
+            let ordered = carriers.sorted { lhs, rhs in
+                let l = writtenPosition(lhs)
+                let r = writtenPosition(rhs)
+                return l != r ? l < r : lhs < rhs
+            }
+            var rootMark: [Int: Int] = [:]
+            var marks: [Int: String] = [:]
+            for bondID in ordered {
+                let (componentRoot, parity) = find(bondID)
+                if rootMark[componentRoot] == nil {
+                    rootMark[componentRoot] = parity
+                }
+                marks[bondID] = rootMark[componentRoot]! * parity == 1 ? "/" : "\\"
+            }
+            return marks
+        }
+    }
+
     private func assignRingNumbers(to ringEdges: Set<EdgeKey>) -> [EdgeKey: Int] {
         var assignments: [EdgeKey: Int] = [:]
         var next = 1
@@ -748,6 +955,7 @@ public final class CDKSmilesGenerator {
         bondByEdge: [EdgeKey: Bond],
         atomByID: [Int: Atom],
         aromaticBondIDs: Set<Int>,
+        directionalMarks: [Int: String],
         atomOutputOrder: inout [Int],
         visited: inout Set<Int>
     ) -> String {
@@ -786,7 +994,10 @@ public final class CDKSmilesGenerator {
 
                     pending.append(.text("("))
                     pending.append(
-                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs))
+                        .text(
+                            bondToken(
+                                bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs,
+                                directionalMarks: directionalMarks))
                     )
                     pending.append(.atom(id: childID, parent: atomID))
                     pending.append(.text(")"))
@@ -795,7 +1006,10 @@ public final class CDKSmilesGenerator {
                 let edge = EdgeKey(atomID, mainChild)
                 if let bond = bondByEdge[edge] {
                     pending.append(
-                        .text(bondToken(bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs))
+                        .text(
+                            bondToken(
+                                bond, atomByID: atomByID, aromaticBondIDs: aromaticBondIDs,
+                                directionalMarks: directionalMarks))
                     )
                     pending.append(.atom(id: mainChild, parent: atomID))
                 }
@@ -1107,7 +1321,8 @@ public final class CDKSmilesGenerator {
     private func bondToken(
         _ bond: Bond,
         atomByID: [Int: Atom],
-        aromaticBondIDs: Set<Int>
+        aromaticBondIDs: Set<Int>,
+        directionalMarks: [Int: String]
     ) -> String {
         if bond.queryType != nil {
             return "-"
@@ -1115,15 +1330,10 @@ public final class CDKSmilesGenerator {
 
         switch bond.order {
         case .single:
-            if flavor.contains(.isomeric) {
-                switch bond.stereo {
-                case .up, .upReversed:
-                    return "/"
-                case .down, .downReversed:
-                    return "\\"
-                case .either, .none:
-                    break
-                }
+            // Directional marks are derived from the double-bond configuration.
+            // `bond.stereo` holds depiction wedges, which have no SMILES spelling.
+            if let mark = directionalMarks[bond.id] {
+                return mark
             }
 
             if flavor.contains(.useAromaticSymbols), aromaticBondIDs.contains(bond.id) {

@@ -2,8 +2,9 @@
 
 `CDKSwiftNativePort` now tracks a curated reaction parity corpus derived from
 upstream CDK `2.13` reaction model, reaction-IO, and reaction-manipulator
-tests. The package reference is now CDK `2.14.1`; the corpus keeps its `cdk-2.13`
-provenance until it is regenerated against 2.14.1.
+tests. The corpus reference is CDK `2.14.1`: those upstream tests are unchanged for
+these cases, and the official 2.14.1 jar reads every corpus input with the same
+participant counts as 2.13.
 
 ## Scope
 

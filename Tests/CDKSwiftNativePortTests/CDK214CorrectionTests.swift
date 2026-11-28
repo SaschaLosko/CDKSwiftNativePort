@@ -2,7 +2,8 @@ import Foundation
 import XCTest
 @testable import CDKSwiftNativePort
 
-/// Reference cases: cdk/cdk #1347, #1364, #1350, #1369 and #1379 (2.14.1).
+/// Reference cases: cdk/cdk #1347, #1364, #1350, #1369, #1379, #1317, #1322, #1367,
+/// #1335 and #1301 (2.14.1).
 final class CDK214CorrectionTests: XCTestCase {
     func testTPSAUpstreamCorrectionsAndControls() throws {
         for (smiles, expected) in [
@@ -101,5 +102,74 @@ final class CDK214CorrectionTests: XCTestCase {
         let rendered = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: RenderStyle())
         XCTAssertEqual(rendered.atoms.compactMap(\.aliasLabel), ["N2H4"])
         XCTAssertTrue(rendered.bonds.isEmpty)
+    }
+    func testSMARTSRingValueZeroMatchesChainAtoms() throws {
+        let parser = CDKSmilesParser(flavor: .cdkDefault, generateCoordinates: false)
+        func verdict(_ smarts: String, _ smiles: String) throws -> CDKMarkushMatchResult.Verdict {
+            CDKQueryMatcher.match(try CDKSmartsParser.parse(smarts), in: try parser.parseSmiles(smiles)).verdict
+        }
+        for (smarts, smiles, expected) in [
+            ("[r0]", "CC", CDKMarkushMatchResult.Verdict.match),
+            ("[r0;R]", "C1CC1", .noMatch),
+            ("[R0]", "CC", .match),
+            ("[x0]", "CC", .match),
+            ("[r0]", "C1CCCCC1", .noMatch),
+            ("[r0]C1CC1", "CC1CC1", .match),
+            ("[!r0]", "C1CC1", .match),
+            ("[!r0]", "CC", .noMatch),
+            // Spiro[2.5]octane: no five-membered ring, the spiro atom is in a three-ring.
+            ("[r5]", "C1CC11CCCCC1", .noMatch),
+            ("[r3]", "C1CC11CCCCC1", .match),
+            ("[R2;r3]", "C1C2CCC12", .match),
+            ("[R2;r4]", "C1C2CCC12", .noMatch),
+        ] {
+            XCTAssertEqual(try verdict(smarts, smiles), expected, "\(smarts) in \(smiles)")
+        }
+    }
+
+    func testPDBElementSymbolsAreRightJustifiedInColumns77And78() throws {
+        let molecule = try CDKSmilesParser().parseSmiles("ClC")
+        let atomLines = try CDKPDBWriter.write([molecule]).split(separator: "\n").filter { $0.hasPrefix("ATOM") }
+        let elements = atomLines.map { line -> String in
+            let characters = Array(line)
+            XCTAssertEqual(characters.count, 78, String(line))
+            return String(characters[76...77])
+        }
+        XCTAssertEqual(elements, ["CL", " C"])
+        let parsed = try XCTUnwrap(CDKPDBReader.read(text: try CDKPDBWriter.write([molecule])).first)
+        XCTAssertEqual(parsed.atoms.map(\.element).sorted(), ["C", "Cl"])
+    }
+    func testCongestedSubstituentsDoNotOverlap() throws {
+        let molecule = try CDKSmilesParser().parseSmiles(
+            "COC(=O)C=C(C(=O)O)C(CC1=C(Br)C(O)=C(O)C(Br)=C1Br)C(=O)O")
+        let bondLengths = molecule.bonds.map { bond -> CGFloat in
+            let p1 = molecule.atom(id: bond.a1)!.position
+            let p2 = molecule.atom(id: bond.a2)!.position
+            return hypot(p2.x - p1.x, p2.y - p1.y)
+        }.sorted()
+        let bondLength = bondLengths[bondLengths.count / 2]
+        for (index, first) in molecule.atoms.enumerated() {
+            for second in molecule.atoms[(index + 1)...] {
+                let distance = hypot(first.position.x - second.position.x, first.position.y - second.position.y)
+                XCTAssertGreaterThan(distance, bondLength / 4, "atoms \(first.id) and \(second.id)")
+            }
+        }
+    }
+
+    /// Hidden abbreviation atoms are removed before label placement, so a contracted
+    /// nitro group is aligned against its one visible bond.
+    func testContractedGroupKeepsOnlyVisibleNeighbors() throws {
+        var molecule = try CDKSmilesParser().parseSmiles("c1ccccc1[N+](=O)[O-]")
+        let ids = Set(molecule.atoms.filter { $0.element != "C" }.map(\.id))
+        molecule.sgroups = [
+            MoleculeSgroup(
+                kind: .generic, keyword: "SUP", atomIDs: ids.sorted(),
+                crossingBondIDs: molecule.bonds.filter { ids.contains($0.a1) != ids.contains($0.a2) }.map(\.id),
+                subscriptText: "NO2")
+        ]
+        let rendered = CDKDepictionPreprocessor.prepareForRendering(molecule: molecule, style: RenderStyle())
+        let label = try XCTUnwrap(rendered.atoms.first { $0.aliasLabel == "NO2" })
+        XCTAssertEqual(rendered.atoms.count, 7)
+        XCTAssertEqual(rendered.neighbors(of: label.id).count, 1)
     }
 }

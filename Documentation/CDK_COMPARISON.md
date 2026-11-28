@@ -18,10 +18,10 @@ CDK 2.14.1 (released 2026-11-10) is CDK 2.14 plus the abbreviation rendering fix
 [#1379](https://github.com/cdk/cdk/pull/1379). This section was assessed on
 2026-11-28 from the upstream release notes and the `cdk-2.13...cdk-2.14.1` diff,
 and checked against this package with behavior probes. It does not establish
-complete 2.14.1 parity. Generated Java reference datasets keep their `cdk-2.13`
-provenance until they are regenerated: the reaction corpus, the depiction
-references and the R-group enumeration comparison. The upstream R-group sources
-are behaviorally unchanged in 2.14.1.
+complete 2.14.1 parity. The Java reference datasets (reaction corpus, depiction
+references and R-group enumeration comparison) were rerun with the official
+`cdk-2.14.1.jar` and `cdk-2.13.jar` release assets; both produce identical output,
+so the datasets now carry 2.14.1 provenance.
 
 ### Adopted
 
@@ -34,20 +34,19 @@ are behaviorally unchanged in 2.14.1.
 | Agents below the arrow ([#1357](https://github.com/cdk/cdk/pull/1357)) | 1.4.54 |
 | Relaxed reader mode, as a display-only preview API | `SMILES_PREVIEW.md` |
 | MDL valence is set only when the file specifies it ([#1338](https://github.com/cdk/cdk/pull/1338), reader side) | already matched |
+| SMARTS ring value 0 matches chain atoms ([#1317](https://github.com/cdk/cdk/pull/1317), [#1322](https://github.com/cdk/cdk/pull/1322)) | Unreleased |
+| PDB element symbols right-justified in columns 77-78 ([#1367](https://github.com/cdk/cdk/pull/1367)) | Unreleased |
+| Cis/trans configuration kept when a carrier bond changes ([#1337](https://github.com/cdk/cdk/pull/1337)); SMILES output now derives `/` and `\` from the stored configuration | Unreleased |
 
-### Known differences on the supported surface
+### Checked, no change needed
 
-- SMARTS `[r0]` does not match chain atoms; upstream
-  [#1317](https://github.com/cdk/cdk/pull/1317) and
-  [#1322](https://github.com/cdk/cdk/pull/1322) make a ring value of 0 mean
-  "not in a ring". `[R0]` and `[x0]` already behave as upstream.
-- The PDB writer left-justifies one-letter element symbols in columns 77-78
-  (`C ` rather than ` C`). Upstream [#1367](https://github.com/cdk/cdk/pull/1367)
-  right-justifies them, as wwPDB requires.
-- Not yet checked against this package's own layout and label code:
-  the congestion fix [#1335](https://github.com/cdk/cdk/pull/1335) and the
-  contracted-group alignment fix [#1301](https://github.com/cdk/cdk/pull/1301).
-  Both implementations differ structurally from upstream.
+- Layout congestion ([#1335](https://github.com/cdk/cdk/pull/1335)): the upstream
+  regression molecule lays out with no atom pair closer than a quarter bond length.
+- Contracted-group alignment ([#1301](https://github.com/cdk/cdk/pull/1301)):
+  hidden abbreviation atoms are removed before label placement, so alignment
+  already uses only visible neighbors.
+
+Both are covered by regression tests in `CDK214CorrectionTests`.
 
 ### Unaffected by design
 
@@ -60,9 +59,8 @@ ported from them:
   sparse dictionary implementation.
 - Smallest-ring sizes in fused, spiro and bounded searches
   ([#1326](https://github.com/cdk/cdk/pull/1326),
-  [#1333](https://github.com/cdk/cdk/pull/1333)), SMARTS OR with an always-true
-  operand ([#1316](https://github.com/cdk/cdk/pull/1316)), and carrier inversion
-  when stereo moves to another bond ([#1337](https://github.com/cdk/cdk/pull/1337)).
+  [#1333](https://github.com/cdk/cdk/pull/1333)) and SMARTS OR with an always-true
+  operand ([#1316](https://github.com/cdk/cdk/pull/1316)).
 - Java object-model changes: the `HIDDEN` flag, `QueryAtomContainer.create`
   mutation, VF adjacency cache ([#1321](https://github.com/cdk/cdk/pull/1321)),
   identity-hash path skipping ([#1332](https://github.com/cdk/cdk/pull/1332)),

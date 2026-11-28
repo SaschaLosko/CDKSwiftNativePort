@@ -2,9 +2,9 @@
 
 Release 1.4.41 adds native molecular SMARTS expressions, direct variable-attachment
 matching and ordered coordination stereo. The reference is CDK 2.14.1, commit
-`4253aa225f474a2a5b26ad9ed3ecf73262355693` (ported from CDK 2.13). Known difference: upstream
-2.14 ([#1317](https://github.com/cdk/cdk/pull/1317)) makes `[r0]` match chain atoms;
-this package does not yet. Ring-size ranges such as `[r{0-6}]` and the CDK `Z`
+`4253aa225f474a2a5b26ad9ed3ecf73262355693` (ported from CDK 2.13). As in upstream
+2.14 ([#1317](https://github.com/cdk/cdk/pull/1317)), `[r0]` matches chain atoms.
+Ring-size ranges such as `[r{0-6}]` and the CDK `Z`
 primitive are unsupported and reported as such. This is a documented subset of the
 upstream query surface, not a claim that the entire SMARTS module is ported.
 

@@ -36,7 +36,7 @@ public enum CDKPDBWriter {
                 let y = Double(atom.position.y)
                 let z = atom.zPosition ?? 0.0
                 let line = String(
-                    format: "ATOM  %5d %-4@ MOL A%4d    %8.3f%8.3f%8.3f  1.00  0.00          %-2@",
+                    format: "ATOM  %5d %-4@ MOL A%4d    %8.3f%8.3f%8.3f  1.00  0.00          %@",
                     serial,
                     atomName as NSString,
                     1,
@@ -93,8 +93,9 @@ public enum CDKPDBWriter {
         return symbol.padding(toLength: 4, withPad: " ", startingAt: 0)
     }
 
+    /// wwPDB v3.3 right-justifies the element symbol in columns 77-78 (cdk/cdk #1367).
     private static func paddedElement(_ element: String) -> String {
-        let symbol = CDKDescriptorSupport.canonicalElementSymbol(element)
-        return String(symbol.prefix(2)).uppercased()
+        let symbol = String(CDKDescriptorSupport.canonicalElementSymbol(element).prefix(2)).uppercased()
+        return String(repeating: " ", count: 2 - symbol.count) + symbol
     }
 }

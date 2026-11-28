@@ -299,8 +299,8 @@ final class JavaDepictionReferenceTests: XCTestCase {
     private func loadReference() throws -> Reference {
         let reference = try JSONDecoder().decode(
             Reference.self, from: Data(fixture("expectations", extension: "json").utf8))
-        XCTAssertEqual(reference.version, "2.13")
-        XCTAssertEqual(reference.revision, "3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d")
+        XCTAssertEqual(reference.version, "2.14.1")
+        XCTAssertEqual(reference.revision, "4253aa225f474a2a5b26ad9ed3ecf73262355693")
         return reference
     }
 

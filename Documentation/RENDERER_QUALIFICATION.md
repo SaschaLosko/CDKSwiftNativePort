@@ -12,8 +12,7 @@ carbon remains visible when the style hides ordinary carbon symbols. Automatic
 reaction arrows distinguish forward, backward, bidirectional, no-go,
 retrosynthetic, resonance, and undirected reactions.
 
-The package reference is Java CDK 2.14.1; regenerating this data against it is
-pending. The [Java CDK 2.13 reference data](../Tests/CDKSwiftNativePortTests/Rendering/JavaReference/README.md)
+The [Java CDK 2.14.1 reference data](../Tests/CDKSwiftNativePortTests/Rendering/JavaReference/README.md)
 records measurements and arrow semantics from three Java zoom levels and seven
 reaction directions, plus isotope visibility in one labelled molecule. Run the
 offline reference suite with:
@@ -36,12 +35,12 @@ The complete package suite ran 746 tests on ARM64 macOS and 745 on ARM64
 Ubuntu, with zero failures. The Core Text ink test runs on Apple platforms.
 
 The third milestone matches the seven automatic arrow shapes measured from
-Java CDK 2.13 SVG output. It checks polygon vertices, shaft and crossing
+Java CDK SVG output. It checks polygon vertices, shaft and crossing
 segments, stroke width, the absence of fill on the retrosynthetic and
 undirected forms, and the fitted scene's zoom and rotation transforms.
 Render hosts consume the same filled scene polygons alongside strokes.
 
-The fourth milestone adds Java CDK 2.13 references for a tetrahedral pair, an
+The fourth milestone adds Java CDK references for a tetrahedral pair, an
 E/Z pair, a crowded isotope and charge example, and two reactions at compact
 and fitted sizes. Newly generated 2D coordinates align resolvable acyclic
 double bonds with their stored E/Z configuration. The depiction draws the

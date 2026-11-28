@@ -114,7 +114,8 @@ final class QueryGraphFacts {
         case .inRing: return .init(try rings(budget).contains { $0.atoms.contains(id) })
         case .ringCount(let value): return .init(try rings(budget).filter { $0.atoms.contains(id) }.count == value)
         case .smallestRing(let value):
-            return .init(try rings(budget).filter { $0.atoms.contains(id) }.map(\.size).min() == value)
+            // An atom outside every ring has smallest ring size 0 (cdk/cdk #1317).
+            return .init((try rings(budget).filter { $0.atoms.contains(id) }.map(\.size).min() ?? 0) == value)
         case .ringBonds(let value):
             let ringBonds = Set(try rings(budget).flatMap(\.bondIDs))
             return .init(adjacent.values.filter { ringBonds.contains($0.id) }.count == value)

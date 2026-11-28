@@ -73,7 +73,7 @@ final class RGroupEnumerationTests: XCTestCase {
         struct Reference: Decodable { let count: Int; let signatureCount: Int; let sha256: String }
         let url = try XCTUnwrap(
             Bundle.module.url(
-                forResource: "java-cdk-2.13", withExtension: "json", subdirectory: "RGroupEnumerationFixtures"))
+                forResource: "java-cdk-2.14.1", withExtension: "json", subdirectory: "RGroupEnumerationFixtures"))
         let references = try JSONDecoder().decode([String: Reference].self, from: Data(contentsOf: url))
         for number in [1, 2, 3, 4, 5, 7] {
             var histogram: [String: Int] = [:]
@@ -93,7 +93,7 @@ final class RGroupEnumerationTests: XCTestCase {
             let expected = try XCTUnwrap(references[String(number)])
             XCTAssertEqual(histogram.values.reduce(0, +), expected.count)
             XCTAssertEqual(histogram.count, expected.signatureCount)
-            XCTAssertEqual(digest, expected.sha256, "Java CDK 2.13 RGfile \(number)")
+            XCTAssertEqual(digest, expected.sha256, "Java CDK 2.14.1 RGfile \(number)")
         }
     }
 

@@ -3,7 +3,7 @@
 Available in CDKSwiftNativePort 1.4.35. The upstream reference is Java CDK 2.14.1
 (`cdk-2.14.1`, commit `4253aa225f474a2a5b26ad9ed3ecf73262355693`); the R-group
 sources are behaviorally unchanged from Java CDK 2.13 (`cdk-2.13`, commit
-`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`), against which the evidence below was produced, principally
+`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`), against which the evidence below was first produced, principally
 `RGroupQuery.getAllConfigurations`, `RGroupQueryReaderTest`, and
 `RGroupQueryManipulatorTest`.
 
@@ -83,7 +83,10 @@ independently with an external reference harness. For every configuration, the
 oracle records sorted element/charge/REST_H atom entries and sorted
 endpoint-element/bond-order entries. The Swift test recomputes each complete
 histogram and its SHA-256, comparing against the compact committed
-`java-cdk-2.13.json` reference. All **17,866** configurations agree. These
+`java-cdk-2.14.1.json` reference. All **17,866** configurations agree.
+On 2026-11-28 the official `cdk-2.14.1.jar` and `cdk-2.13.jar` release assets
+enumerated the seven fixtures to identical sorted canonical-SMILES configuration
+sets, so the reference carries over to 2.14.1 unchanged. These
 signatures are not graph-isomorphism certificates; separate Standard InChI
 checks verify aromatic substituents, both two-point attachment orders, scaffold
 and fragment stereochemistry, and flattened round trips.
@@ -91,7 +94,7 @@ and fragment stereochemistry, and flattened round trips.
 The repository contains no Java source or Maven build configuration. Reference
 regeneration is an external upstream-validation activity, not part of the Swift
 package build or tests. A reference harness must enumerate the six valid fixtures
-with official CDK 2.13 and reproduce the signature construction described above.
+with official CDK 2.14.1 and reproduce the signature construction described above.
 
 For each fixture, serialize the sorted histogram as `signature<TAB>count<LF>`
 and calculate SHA-256. The raw JSON evidence is retained at

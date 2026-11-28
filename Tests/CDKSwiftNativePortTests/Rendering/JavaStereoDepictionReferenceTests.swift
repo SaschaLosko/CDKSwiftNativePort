@@ -183,8 +183,8 @@ final class JavaStereoDepictionReferenceTests: XCTestCase {
         let url = try XCTUnwrap(
             Bundle.module.url(forResource: "stereochemistry", withExtension: "json", subdirectory: "JavaReference"))
         let reference = try JSONDecoder().decode(Reference.self, from: Data(contentsOf: url))
-        XCTAssertEqual(reference.version, "2.13")
-        XCTAssertEqual(reference.revision, "3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d")
+        XCTAssertEqual(reference.version, "2.14.1")
+        XCTAssertEqual(reference.revision, "4253aa225f474a2a5b26ad9ed3ecf73262355693")
         XCTAssertEqual(reference.canvases.map(\.width), [224, 560])
         return reference
     }

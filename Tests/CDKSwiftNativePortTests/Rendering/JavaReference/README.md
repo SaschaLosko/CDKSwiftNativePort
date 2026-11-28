@@ -1,7 +1,13 @@
 # Java CDK depiction reference
 
-Reference data generated using [Java CDK 2.13](https://github.com/cdk/cdk/tree/cdk-2.13)
-at `3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d` with OpenJDK 17 on macOS.
+Reference data for [Java CDK 2.14.1](https://github.com/cdk/cdk/tree/cdk-2.14.1)
+(`4253aa225f474a2a5b26ad9ed3ecf73262355693`). It was first generated with Java CDK 2.13
+(`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`) using OpenJDK 17 on macOS. On 2026-11-28 the
+official `cdk-2.14.1.jar` release asset (SHA-256
+`9b7b9b6b64b7cb0aeb9475ac3584a7ce4226fd922a9ebe8ba3da7b7653af2985`) was run on the
+same workflows below, next to `cdk-2.13.jar`. Every SVG, the regenerated MOL and
+RXN files (apart from their timestamp lines) and every bond display form were
+identical, so the recorded measurements stand unchanged for 2.14.1.
 The inputs are small purpose-built fixtures. The reference records measurements
 and display semantics from Java output.
 

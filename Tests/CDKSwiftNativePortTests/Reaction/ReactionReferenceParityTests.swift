@@ -108,7 +108,7 @@ final class ReactionReferenceParityTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(corpus.schemaVersion, 1)
         XCTAssertEqual(corpus.suite, "CDK Reaction Reference Corpus")
         XCTAssertEqual(corpus.referenceRepository, "https://github.com/cdk/cdk")
-        XCTAssertEqual(corpus.referenceTag, "cdk-2.13")
+        XCTAssertEqual(corpus.referenceTag, "cdk-2.14.1")
         XCTAssertEqual(corpus.referenceCommit.count, 40)
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("CML2Test.java") }))
         XCTAssertTrue(corpus.sourceTests.contains(where: { $0.contains("MDLRXNReaderTest.java") }))

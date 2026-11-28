@@ -9,8 +9,19 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Set Java CDK 2.14.1 (`cdk-2.14.1`) as the package's upstream reference in the
   documentation, notices and test-suite port metadata. Generated Java reference
   datasets keep their `cdk-2.13` provenance until they are regenerated.
-- Document the 2.14.1 adoption status, known differences and out-of-scope
-  upstream changes in `Documentation/CDK_COMPARISON.md`.
+- Write SMILES `/` and `\` marks from the stored cis/trans configuration. Edits
+  that move or remove a carrier bond, and alkenes read from molfiles, now keep
+  their configuration; depiction wedges are no longer written as `/` or `\`.
+  Conjugated and ring-closure carriers are solved together, and a configuration
+  that cannot be written consistently is omitted rather than inverted.
+- SMARTS `[r0]` matches atoms outside rings (cdk/cdk #1317, #1322).
+- Right-justify PDB element symbols in columns 77-78 (cdk/cdk #1367).
+- Add regressions for the upstream layout-congestion (#1335) and
+  contracted-group alignment (#1301) fixes; this package needed no change.
+- Move the Java reference datasets to 2.14.1 provenance after the official
+  2.13 and 2.14.1 jars produced identical output for every dataset input.
+- Document the 2.14.1 adoption status and out-of-scope upstream changes in
+  `Documentation/CDK_COMPARISON.md`.
 
 ## 1.4.65
 
