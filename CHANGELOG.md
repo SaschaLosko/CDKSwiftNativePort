@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.67
+
+- Restore hydrogen-complete InChI input for structures built atom by atom (CML
+  parity, stored alkene geometry, generated layouts) that list hydrogens
+  explicitly. 1.4.66 let the InChI library add hydrogens to their radical
+  centers, which changed the identifiers of radicals such as methyl and propyl.
+  Molfiles with only some explicit hydrogens keep the 1.4.66 fix: they no longer
+  carry ring cis/trans geometry and so use the molfile InChI path.
+- All 767 tests pass on macOS (two load-sensitive deadline tests re-run alone)
+  and all 766 portable tests pass on ARM64 Ubuntu.
+
 ## 1.4.66
 
 - Set Java CDK 2.14.1 (`cdk-2.14.1`) as the package's upstream reference in the
@@ -20,7 +31,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
   contracted-group alignment (#1301) fixes; this package needed no change.
 - Generate Standard InChI with implicit hydrogens on every heavy atom when a
   structure has only some explicit hydrogen atoms, as in many ChEBI molfiles;
-  such structures previously lost most of their hydrogens.
+  such structures previously lost most of their hydrogens. (Partly reverted in
+  1.4.67 for structures built atom by atom.)
 - Do not assign cis/trans geometry to double bonds in rings of fewer than eight
   atoms when reading molfiles; this kept wedge stereo out of the InChI.
 - Bound 2D layout cost for very large components: bond-flip refinement is

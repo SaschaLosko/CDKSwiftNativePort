@@ -80,6 +80,9 @@ enum CDKInChIOfficialLibraryGenerator {
         var isotopes: [Int32] = []
         var implicitHydrogens: [Int32] = []
 
+        let hasExplicitHydrogenAtoms = atoms.contains {
+            CDKDescriptorSupport.canonicalElementSymbol($0.element).uppercased() == "H"
+        }
         for (atomIndex, atom) in atoms.enumerated() {
             let symbol = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
             let encoded = Array(symbol.utf8.prefix(symbolStride - 1))
@@ -89,7 +92,12 @@ enum CDKInChIOfficialLibraryGenerator {
             charges.append(Int32(atom.charge))
             isotopes.append(Int32(atom.isotopeMassNumber ?? 0))
 
-            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" {
+            // Structures built atom by atom (CML parity, stored alkene geometry,
+            // generated layouts) that list any hydrogen explicitly are treated as
+            // hydrogen-complete, so radical centers do not gain hydrogens. Molfiles
+            // with only some explicit hydrogens use the molfile path instead.
+            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" || hasExplicitHydrogenAtoms
+            {
                 implicitHydrogens.append(0)
             } else if let explicitHydrogenCount = atom.explicitHydrogenCount {
                 implicitHydrogens.append(Int32(max(0, explicitHydrogenCount)))
