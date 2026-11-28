@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
-## Unreleased
+## 1.4.66
 
 - Set Java CDK 2.14.1 (`cdk-2.14.1`) as the package's upstream reference in the
   documentation, notices and test-suite port metadata. Generated Java reference
@@ -18,6 +18,23 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Right-justify PDB element symbols in columns 77-78 (cdk/cdk #1367).
 - Add regressions for the upstream layout-congestion (#1335) and
   contracted-group alignment (#1301) fixes; this package needed no change.
+- Generate Standard InChI with implicit hydrogens on every heavy atom when a
+  structure has only some explicit hydrogen atoms, as in many ChEBI molfiles;
+  such structures previously lost most of their hydrogens.
+- Do not assign cis/trans geometry to double bonds in rings of fewer than eight
+  atoms when reading molfiles; this kept wedge stereo out of the InChI.
+- Bound 2D layout cost for very large components: bond-flip refinement is
+  skipped above 256 atoms and the pairwise relaxation passes have a fixed
+  budget. A 4,000-atom branched chain previously never finished.
+- Make the longest-chain and ring-perception layout searches iterative, so long
+  chains and ring chains no longer overflow small secondary-thread stacks.
+- Reject InChI formulas and isotope layers above the InChI limit of 32,766
+  atoms, bound every number parsed from an InChI, clamp atom ranges before
+  iterating, and accept only ASCII digits; damaged identifiers can no longer
+  trap, hang or exhaust memory.
+- Reject molfile bonds when the counts line declares no atoms instead of
+  trapping.
+- All 767 tests pass on macOS and all 766 portable tests pass on ARM64 Ubuntu.
 - Move the Java reference datasets to 2.14.1 provenance after the official
   2.13 and 2.14.1 jars produced identical output for every dataset input.
 - Document the 2.14.1 adoption status and out-of-scope upstream changes in

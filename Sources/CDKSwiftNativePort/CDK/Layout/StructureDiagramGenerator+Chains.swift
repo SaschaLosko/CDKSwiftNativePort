@@ -175,43 +175,65 @@ extension CDKStructureDiagramGenerator {
             }
         }
 
-        func dfs(prev: Int, cur: Int, path: [Int]) {
-            if ringAtoms.contains(cur) {
-                updateBest(path)
-                return
-            }
-            guard chainEligibleAtom(cur, molecule: molecule, ringAtoms: ringAtoms) else {
-                updateBest(path)
-                return
-            }
-
+        // Depth-first search with an explicit stack: a chain can be thousands of
+        // atoms long, and Quick Look and import run layout on threads with small
+        // stacks. The visiting order and tie-breaking match the recursive form.
+        struct Frame {
+            let cur: Int
+            let neighbors: [Int]
+            var next = 0
             var extended = false
+        }
+        var path: [Int] = [anchor, start]
+        var stack: [Frame] = []
+
+        func enter(prev: Int, cur: Int) -> Bool {
+            if ringAtoms.contains(cur) || !chainEligibleAtom(cur, molecule: molecule, ringAtoms: ringAtoms) {
+                updateBest(path)
+                return false
+            }
             let neighbors = graph.neighbors(of: cur)
                 .filter {
                     component.contains($0) && $0 != prev && positions[$0] == nil && !visited.contains($0)
                 }
                 .sorted()
-
-            for nxt in neighbors {
-                if ringAtoms.contains(nxt) {
-                    updateBest(path + [nxt])
-                    continue
-                }
-                guard chainEligibleAtom(nxt, molecule: molecule, ringAtoms: ringAtoms) else { continue }
-                guard chainEligibleEdge(cur, nxt, graph: graph, ringEdges: ringEdges) else { continue }
-                visited.insert(nxt)
-                dfs(prev: cur, cur: nxt, path: path + [nxt])
-                visited.remove(nxt)
-                extended = true
-            }
-
-            if !extended { updateBest(path) }
+            stack.append(Frame(cur: cur, neighbors: neighbors))
+            return true
         }
 
         if ringAtoms.contains(start) {
             return best
         }
-        dfs(prev: anchor, cur: start, path: [anchor, start])
+        _ = enter(prev: anchor, cur: start)
+        while let top = stack.indices.last {
+            guard stack[top].next < stack[top].neighbors.count else {
+                let frame = stack.removeLast()
+                if !frame.extended { updateBest(path) }
+                if !stack.isEmpty {
+                    visited.remove(frame.cur)
+                    path.removeLast()
+                }
+                continue
+            }
+            let cur = stack[top].cur
+            let nxt = stack[top].neighbors[stack[top].next]
+            stack[top].next += 1
+            if ringAtoms.contains(nxt) {
+                path.append(nxt)
+                updateBest(path)
+                path.removeLast()
+                continue
+            }
+            guard chainEligibleAtom(nxt, molecule: molecule, ringAtoms: ringAtoms) else { continue }
+            guard chainEligibleEdge(cur, nxt, graph: graph, ringEdges: ringEdges) else { continue }
+            visited.insert(nxt)
+            path.append(nxt)
+            stack[top].extended = true
+            if !enter(prev: cur, cur: nxt) {
+                visited.remove(nxt)
+                path.removeLast()
+            }
+        }
         return best
     }
 

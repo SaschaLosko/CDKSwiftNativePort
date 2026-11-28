@@ -141,15 +141,27 @@ enum CDKRingSearch {
             return path
         }
 
-        func dfs(_ current: Int) {
-            visited.insert(current)
-            let neighbors = graph.neighbors(of: current).sorted()
-            for next in neighbors {
+        // Iterative depth-first search: long chains and ring chains would otherwise
+        // recurse once per atom and overflow small secondary-thread stacks. The
+        // neighbor order and cycle discovery order match the recursive form.
+        func dfs(_ root: Int) {
+            var stack: [(current: Int, neighbors: [Int], next: Int)] = []
+            visited.insert(root)
+            stack.append((root, graph.neighbors(of: root).sorted(), 0))
+            while let top = stack.indices.last {
+                guard stack[top].next < stack[top].neighbors.count else {
+                    stack.removeLast()
+                    continue
+                }
+                let current = stack[top].current
+                let next = stack[top].neighbors[stack[top].next]
+                stack[top].next += 1
                 if parent[current] == next { continue }
                 if !visited.contains(next) {
                     parent[next] = current
                     depth[next] = (depth[current] ?? 0) + 1
-                    dfs(next)
+                    visited.insert(next)
+                    stack.append((next, graph.neighbors(of: next).sorted(), 0))
                     continue
                 }
 

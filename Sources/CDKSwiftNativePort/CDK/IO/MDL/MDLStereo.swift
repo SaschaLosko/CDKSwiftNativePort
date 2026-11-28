@@ -24,9 +24,19 @@ enum CDKMDLStereo {
     /// double bonds and adjacent wavy bonds explicitly suppress assignment.
     static func attachDoubleBondGeometry(to molecule: inout Molecule) {
         guard molecule.atoms.allSatisfy({ abs($0.zPosition ?? 0) < 1e-8 }) else { return }
+        guard molecule.bonds.contains(where: { $0.order == .double }) else { return }
+        // A double bond in a ring of fewer than eight atoms has fixed geometry; like
+        // Java CDK and InChI, it carries no cis/trans configuration.
+        let smallRingBonds = Set(
+            molecule.simpleCycles(maxSize: 7).flatMap { cycle in
+                cycle.indices.map { index in
+                    UndirectedAtomPair(cycle[index], cycle[(index + 1) % cycle.count])
+                }
+            })
         for index in molecule.bonds.indices {
             var bond = molecule.bonds[index]
             guard bond.order == .double, bond.stereo == .none,
+                !smallRingBonds.contains(UndirectedAtomPair(bond.a1, bond.a2)),
                 bond.doubleBondStereo == nil,
                 !molecule.bonds(forAtom: bond.a1).contains(where: { $0.stereo == .either }),
                 !molecule.bonds(forAtom: bond.a2).contains(where: { $0.stereo == .either }),
@@ -136,5 +146,15 @@ enum CDKMDLStereo {
         let right = (b.x - a.x) * (points[3].y - a.y) - (b.y - a.y) * (points[3].x - a.x)
         guard abs(left) > 1e-8, abs(right) > 1e-8 else { return nil }
         return left * right > 0 ? .cis : .trans
+    }
+}
+
+private struct UndirectedAtomPair: Hashable {
+    let low: Int
+    let high: Int
+
+    init(_ first: Int, _ second: Int) {
+        low = min(first, second)
+        high = max(first, second)
     }
 }

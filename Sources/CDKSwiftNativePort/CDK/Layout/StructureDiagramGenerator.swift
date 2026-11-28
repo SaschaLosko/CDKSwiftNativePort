@@ -29,6 +29,14 @@ enum CDKStructureDiagramGenerator {
         static let branchOpenSpread: CGFloat = .pi * 1.0
         static let chainPassLimit: Int = 32
         static let bondFlipGainThreshold: CGFloat = 0.97
+
+        /// Bond-flip refinement scores every flip with an all-pairs layout penalty,
+        /// so its cost grows with the cube of the component size. Larger components
+        /// keep their constructed layout instead of stalling the caller.
+        static let bondFlipComponentLimit: Int = 256
+        /// Upper bound on non-bonded atom-pair visits across all relaxation
+        /// iterations: the full iteration count up to 512 atoms, fewer above.
+        static let relaxPairVisitBudget: Int = relaxIterations * (512 * 511 / 2)
     }
 
     static func apply(to molecule: Molecule) -> Molecule {

@@ -234,8 +234,9 @@ public enum CDKMDLV2000Reader {
         let reactingCenterCode =
             parseFixedInt(line, start: 18, length: 3) ?? parseInt(parts, index: 6) ?? 0
 
-        guard a1 == 0 || (1...atomCount).contains(a1),
-            a2 == 0 || (1...atomCount).contains(a2)
+        // Comparisons, not `1...atomCount`: a counts line may declare zero atoms.
+        guard a1 == 0 || (a1 >= 1 && a1 <= atomCount),
+            a2 == 0 || (a2 >= 1 && a2 <= atomCount)
         else {
             throw ChemError.parseFailed("Bond references unknown atom index.")
         }

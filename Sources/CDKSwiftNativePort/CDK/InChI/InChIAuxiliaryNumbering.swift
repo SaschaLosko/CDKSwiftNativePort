@@ -100,7 +100,7 @@ public enum CDKInChIAuxiliaryNumbering {
         atomCount: Int
     ) throws -> [Int] {
         try component.split(separator: ",").map { token in
-            guard let atomNumber = Int(token), (1...atomCount).contains(atomNumber) else {
+            guard let atomNumber = Int(token), atomNumber >= 1, atomNumber <= atomCount else {
                 throw ChemError.parseFailed("Invalid atom number '\(token)' in InChI AuxInfo.")
             }
             return atomNumber

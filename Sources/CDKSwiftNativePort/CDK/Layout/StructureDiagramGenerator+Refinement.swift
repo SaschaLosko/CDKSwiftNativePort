@@ -165,6 +165,7 @@ extension CDKStructureDiagramGenerator {
         ringEdges: Set<CDKEdgeKey>,
         bondLength: CGFloat
     ) {
+        guard component.count <= Tuning.bondFlipComponentLimit else { return }
         let candidateBonds = graph.edgeBonds.values
             .filter { component.contains($0.a1) && component.contains($0.a2) && $0.order == .single }
             .sorted { $0.id < $1.id }
@@ -302,7 +303,13 @@ extension CDKStructureDiagramGenerator {
             component.contains($0.a1) && component.contains($0.a2)
         }
 
-        for _ in 0..<max(1, iterations) {
+        // The overlap and crossing passes visit every atom pair and bond pair. Above
+        // the visit budget only bond springs run, which keeps very large structures
+        // (for example a damaged or hostile file) from stalling the caller.
+        let pairCount = atoms.count * (atoms.count - 1) / 2
+        let runsPairwisePasses = pairCount <= Tuning.relaxPairVisitBudget
+        let iterationCount = min(max(1, iterations), max(1, Tuning.relaxPairVisitBudget / pairCount))
+        for _ in 0..<iterationCount {
             for bond in bonds {
                 guard let p1 = positions[bond.a1], let p2 = positions[bond.a2] else { continue }
                 let dx = p2.x - p1.x
@@ -319,6 +326,8 @@ extension CDKStructureDiagramGenerator {
                     positions[bond.a2] = CGPoint(x: p2.x - ux * delta, y: p2.y - uy * delta)
                 }
             }
+
+            guard runsPairwisePasses else { continue }
 
             // Non-bonded overlap push.
             for i in 0..<atoms.count {

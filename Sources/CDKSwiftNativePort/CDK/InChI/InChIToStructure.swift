@@ -134,8 +134,8 @@ private enum CDKInChIParser {
             previousKey = key
         }
 
-        let heavyElements = parseHeavyAtomSequence(fromFormula: formulaLayer)
-        let hydrogenOnlyAtomCount = parseHydrogenOnlyAtomCount(fromFormula: formulaLayer)
+        let heavyElements = try parseHeavyAtomSequence(fromFormula: formulaLayer)
+        let hydrogenOnlyAtomCount = try parseHydrogenOnlyAtomCount(fromFormula: formulaLayer)
         let inferredStandaloneHydrogenCount = countStandaloneIsotopeHydrogens(in: isotopeHydrogenLayerParts)
 
         let atomElements: [String]
@@ -144,6 +144,10 @@ private enum CDKInChIParser {
         } else if hydrogenOnlyAtomCount > 0 {
             atomElements = Array(repeating: "H", count: hydrogenOnlyAtomCount)
         } else if inferredStandaloneHydrogenCount > 0 {
+            guard inferredStandaloneHydrogenCount <= maximumFormulaAtomCount else {
+                throw ChemError.parseFailed(
+                    "The InChI isotope layer exceeds the InChI limit of \(maximumFormulaAtomCount) atoms.")
+            }
             atomElements = Array(repeating: "H", count: inferredStandaloneHydrogenCount)
         } else {
             throw ChemError.parseFailed("InChI formula does not contain heavy atoms supported by this parser.")
@@ -240,21 +244,25 @@ private enum CDKInChIParser {
         return key.isLowercase && ["c", "h", "q", "p", "i", "b", "t", "m", "s", "f", "r"].contains(key)
     }
 
-    private static func parseHeavyAtomSequence(fromFormula formula: String) -> [String] {
-        parseFormulaElements(formula).filter { symbol in
+    /// The InChI library's own atom limit. A formula above it cannot come from a valid
+    /// identifier, and expanding it would allocate one atom per count.
+    static let maximumFormulaAtomCount = 32_766
+
+    private static func parseHeavyAtomSequence(fromFormula formula: String) throws -> [String] {
+        try parseFormulaElements(formula).filter { symbol in
             let upper = symbol.uppercased()
             return upper != "H" && upper != "D" && upper != "T"
         }
     }
 
-    private static func parseHydrogenOnlyAtomCount(fromFormula formula: String) -> Int {
-        let elements = parseFormulaElements(formula)
+    private static func parseHydrogenOnlyAtomCount(fromFormula formula: String) throws -> Int {
+        let elements = try parseFormulaElements(formula)
         guard !elements.isEmpty else { return 0 }
         return elements.allSatisfy { $0.uppercased() == "H" || $0.uppercased() == "D" || $0.uppercased() == "T" }
             ? elements.count : 0
     }
 
-    private static func parseFormulaElements(_ formula: String) -> [String] {
+    private static func parseFormulaElements(_ formula: String) throws -> [String] {
         let normalized = formula.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else { return [] }
 
@@ -263,7 +271,8 @@ private enum CDKInChIParser {
         let nsRange = NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
 
         var out: [String] = []
-        regex?.enumerateMatches(in: normalized, options: [], range: nsRange) { match, _, _ in
+        var exceedsLimit = false
+        regex?.enumerateMatches(in: normalized, options: [], range: nsRange) { match, _, stop in
             guard let match,
                 let componentRange = Range(match.range(at: 2), in: normalized)
             else {
@@ -271,28 +280,44 @@ private enum CDKInChIParser {
             }
 
             let multiplierRange = Range(match.range(at: 1), in: normalized)
-            let multiplier = multiplierRange.map { Int(normalized[$0]) ?? 1 } ?? 1
+            // Digits that overflow `Int` count as too many; the atom limit rejects them.
+            let multiplier = multiplierRange.map { Int(normalized[$0]) ?? Int.max } ?? 1
             let component = String(normalized[componentRange])
                 .replacingOccurrences(of: "+", with: "")
                 .replacingOccurrences(of: "-", with: "")
                 .replacingOccurrences(of: ";", with: "")
 
-            let expanded = expandFormulaComponent(component)
-            guard !expanded.isEmpty else { return }
+            let counts = expandFormulaComponent(component)
+            guard !counts.isEmpty else { return }
+            let componentAtoms = counts.reduce(0) { total, entry in
+                let sum = total.addingReportingOverflow(entry.count)
+                return sum.overflow ? Int.max : sum.partialValue
+            }
+            let added = componentAtoms.multipliedReportingOverflow(by: multiplier)
+            guard !added.overflow, out.count + added.partialValue <= maximumFormulaAtomCount else {
+                exceedsLimit = true
+                stop.pointee = true
+                return
+            }
             for _ in 0..<multiplier {
-                out.append(contentsOf: expanded)
+                for entry in counts {
+                    out.append(contentsOf: repeatElement(entry.symbol, count: entry.count))
+                }
             }
         }
-
+        if exceedsLimit {
+            throw ChemError.parseFailed(
+                "The InChI formula exceeds the InChI limit of \(maximumFormulaAtomCount) atoms.")
+        }
         return out
     }
 
-    private static func expandFormulaComponent(_ component: String) -> [String] {
+    private static func expandFormulaComponent(_ component: String) -> [(symbol: String, count: Int)] {
         let pattern = "([A-Z][a-z]?)(\\d*)"
         let regex = try? NSRegularExpression(pattern: pattern)
         let nsRange = NSRange(component.startIndex..<component.endIndex, in: component)
 
-        var out: [String] = []
+        var out: [(symbol: String, count: Int)] = []
         regex?.enumerateMatches(in: component, options: [], range: nsRange) { match, _, _ in
             guard let match,
                 let symbolRange = Range(match.range(at: 1), in: component),
@@ -303,10 +328,7 @@ private enum CDKInChIParser {
 
             let symbol = String(component[symbolRange])
             let countToken = String(component[countRange])
-            let count = max(1, Int(countToken) ?? 1)
-            for _ in 0..<count {
-                out.append(symbol)
-            }
+            out.append((symbol, countToken.isEmpty ? 1 : max(1, Int(countToken) ?? Int.max)))
         }
         return out
     }
@@ -314,7 +336,7 @@ private enum CDKInChIParser {
     private static func countStandaloneIsotopeHydrogens(in parts: [String]) -> Int {
         parts.reduce(into: 0) { total, part in
             if let counts = parseIsotopeHydrogenCounts(part) {
-                total += counts.deuterium + counts.tritium
+                total = saturatingSum(total, saturatingSum(counts.deuterium, counts.tritium))
             }
         }
     }
@@ -337,7 +359,7 @@ private enum CDKInChIParser {
 
             if ch.isNumber {
                 let atomIndex = parseInteger(layer, from: &idx)
-                guard (1...atomCount).contains(atomIndex) else {
+                guard atomIndex >= 1, atomIndex <= atomCount else {
                     throw ChemError.parseFailed(
                         "InChI connectivity references atom \(atomIndex) outside formula range 1...\(atomCount).")
                 }
@@ -425,7 +447,7 @@ private enum CDKInChIParser {
         var normalizedToken = token
         var multiplier = 1
         if let star = normalizedToken.firstIndex(of: "*"),
-            let prefix = Int(normalizedToken[..<star]),
+            let prefix = boundedInt(normalizedToken[..<star]),
             prefix > 0
         {
             multiplier = prefix
@@ -601,7 +623,7 @@ private enum CDKInChIParser {
 
         let atomSpec = String(token[..<signPos])
         let shiftPart = String(token[signPos...])
-        guard let shift = Int(shiftPart) else { return nil }
+        guard let shift = boundedInt(shiftPart) else { return nil }
 
         let atoms = parseAtomSpec(atomSpec, atomCount: atomCount)
         guard !atoms.isEmpty else { return nil }
@@ -655,6 +677,11 @@ private enum CDKInChIParser {
         return (atoms, counts.deuterium, counts.tritium)
     }
 
+    private static func saturatingSum(_ lhs: Int, _ rhs: Int) -> Int {
+        let sum = lhs.addingReportingOverflow(rhs)
+        return sum.overflow ? Int.max : sum.partialValue
+    }
+
     private static func parseIsotopeHydrogenCounts(_ token: String) -> (deuterium: Int, tritium: Int)? {
         let clean = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return nil }
@@ -671,11 +698,12 @@ private enum CDKInChIParser {
             while index < clean.endIndex, clean[index].isNumber {
                 index = clean.index(after: index)
             }
-            let magnitude = digitStart == index ? 1 : (Int(clean[digitStart..<index]) ?? 1)
+            let magnitude = digitStart == index ? 1 : (boundedInt(clean[digitStart..<index]) ?? 1)
+            // Saturate: untrusted counts must not trap on overflow.
             if symbol == "D" {
-                dCount += magnitude
+                dCount = saturatingSum(dCount, magnitude)
             } else {
-                tCount += magnitude
+                tCount = saturatingSum(tCount, magnitude)
             }
         }
 
@@ -860,14 +888,14 @@ private enum CDKInChIParser {
                 continue
             }
             if !current.isEmpty {
-                if let value = Int(current) {
+                if let value = boundedInt(current) {
                     values.append(value)
                     if values.count >= 2 { break }
                 }
                 current = ""
             }
         }
-        if values.count < 2, !current.isEmpty, let value = Int(current) {
+        if values.count < 2, !current.isEmpty, let value = boundedInt(current) {
             values.append(value)
         }
         guard values.count >= 2 else { return nil }
@@ -890,7 +918,7 @@ private enum CDKInChIParser {
         if let star = clean.firstIndex(of: "*") {
             let lhs = String(clean[..<star]).trimmingCharacters(in: .whitespaces)
             let rhs = String(clean[clean.index(after: star)...]).trimmingCharacters(in: .whitespaces)
-            if let count = Int(lhs), count > 0, let value = parseSignedInteger(rhs) {
+            if let count = boundedInt(lhs), count > 0, let value = parseSignedInteger(rhs) {
                 return Array(repeating: value, count: count)
             }
         }
@@ -1160,7 +1188,7 @@ private enum CDKInChIParser {
             guard !piece.isEmpty else { continue }
 
             let atomDigits = piece.prefix { $0.isNumber }
-            guard !atomDigits.isEmpty, let atomID = Int(atomDigits) else { continue }
+            guard !atomDigits.isEmpty, let atomID = boundedInt(atomDigits) else { continue }
 
             let suffix = piece.dropFirst(atomDigits.count)
             if suffix.contains("+") {
@@ -1479,21 +1507,18 @@ private enum CDKInChIParser {
             if let dash = token.firstIndex(of: "-") {
                 let left = token[..<dash]
                 let right = token[token.index(after: dash)...]
-                if let start = Int(left), let end = Int(right) {
-                    if start <= end {
-                        for id in start...end where (1...atomCount).contains(id) {
-                            out.append(id)
-                        }
-                    } else {
-                        for id in stride(from: start, through: end, by: -1) where (1...atomCount).contains(id) {
-                            out.append(id)
-                        }
+                if let start = boundedInt(left), let end = boundedInt(right) {
+                    // Clamp to the atom range before iterating: an untrusted range can be huge.
+                    let low = max(1, min(start, end))
+                    let high = min(atomCount, max(start, end))
+                    if low <= high {
+                        out.append(contentsOf: low...high)
                     }
                     continue
                 }
             }
 
-            if let id = Int(token), (1...atomCount).contains(id) {
+            if let id = boundedInt(token), id >= 1, id <= atomCount {
                 out.append(id)
             }
         }
@@ -1502,33 +1527,44 @@ private enum CDKInChIParser {
     }
 
     private static func parseLeadingInt(_ token: String) -> Int? {
-        let digits = token.prefix { $0.isNumber }
+        let digits = token.prefix { $0.isASCII && $0.isNumber }
         guard !digits.isEmpty else { return nil }
-        return Int(digits)
+        return boundedInt(digits)
     }
 
     private static func parseSignedInteger(_ token: String) -> Int? {
         let clean = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return nil }
 
-        if let value = Int(clean) {
+        if let value = boundedInt(clean) {
             return value
         }
 
         guard let first = clean.first, (first == "+" || first == "-") else { return nil }
         let magnitudeToken = String(clean.dropFirst())
-        guard let magnitude = Int(magnitudeToken) else { return nil }
+        guard let magnitude = boundedInt(magnitudeToken) else { return nil }
         return first == "-" ? -magnitude : magnitude
     }
 
     private static func parseInteger(_ text: String, from index: inout String.Index) -> Int {
         var number = 0
         var idx = index
-        while idx < text.endIndex, text[idx].isNumber {
-            number = number * 10 + Int(String(text[idx]))!
+        while idx < text.endIndex, text[idx].isASCII, let digit = text[idx].wholeNumberValue {
+            // Saturate instead of overflowing; no valid atom number comes close.
+            number = min(maximumParsedInteger + 1, number * 10 + digit)
             idx = text.index(after: idx)
         }
         index = idx
         return number
+    }
+
+    /// Integers in a valid InChI are atom numbers, counts, charges and mass shifts,
+    /// all far below this bound. Larger values in untrusted text are rejected so
+    /// later arithmetic and loops stay bounded.
+    private static let maximumParsedInteger = 10_000_000
+
+    private static func boundedInt<S: StringProtocol>(_ text: S) -> Int? {
+        guard let value = Int(text), abs(value) <= maximumParsedInteger else { return nil }
+        return value
     }
 }

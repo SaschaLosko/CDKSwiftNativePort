@@ -80,9 +80,6 @@ enum CDKInChIOfficialLibraryGenerator {
         var isotopes: [Int32] = []
         var implicitHydrogens: [Int32] = []
 
-        let hasExplicitHydrogenAtoms = atoms.contains {
-            CDKDescriptorSupport.canonicalElementSymbol($0.element).uppercased() == "H"
-        }
         for (atomIndex, atom) in atoms.enumerated() {
             let symbol = CDKDescriptorSupport.canonicalElementSymbol(atom.element)
             let encoded = Array(symbol.utf8.prefix(symbolStride - 1))
@@ -92,8 +89,7 @@ enum CDKInChIOfficialLibraryGenerator {
             charges.append(Int32(atom.charge))
             isotopes.append(Int32(atom.isotopeMassNumber ?? 0))
 
-            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" || hasExplicitHydrogenAtoms
-            {
+            if CDKDescriptorSupport.canonicalElementSymbol(atom.element).uppercased() == "H" {
                 implicitHydrogens.append(0)
             } else if let explicitHydrogenCount = atom.explicitHydrogenCount {
                 implicitHydrogens.append(Int32(max(0, explicitHydrogenCount)))
