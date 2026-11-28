@@ -1,8 +1,10 @@
 {
   "schemaVersion": 2,
   "suite": "CDK MDL/SDF Port",
-  "cdkReferenceVersion": "2.13",
-  "cdkReferenceTag": "cdk-2.13",
+  "cdkReferenceVersion": "2.14.1",
+  "cdkReferenceTag": "cdk-2.14.1",
+  "cdkReferenceCommit": "4253aa225f474a2a5b26ad9ed3ecf73262355693",
+  "cdkPortedFromTag": "cdk-2.13",
   "sourceTests": [
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000ReaderTest.java",
     "storage/ctab/src/test/java/org/openscience/cdk/io/MDLV2000WriterTest.java",

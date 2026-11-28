@@ -217,7 +217,7 @@ let markushScene = CDKMetalDepictionSceneBuilder.build(
 )
 ```
 
-Current CDK 2.13-style CX coverage in the supported path includes:
+Current CDK 2.14.1-style CX coverage in the supported path includes:
 
 - atom labels and atom values
 - coordinates
@@ -321,7 +321,7 @@ its public APIs.
 ## R-group enumeration (1.4.35)
 
 Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
-`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
-configuration semantics without a Java dependency. See the [API, limits and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.14.1 R-group
+configuration semantics (unchanged from 2.13) without a Java dependency. See the [API, limits and
 Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
 remain separate capabilities.

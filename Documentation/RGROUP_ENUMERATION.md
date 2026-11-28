@@ -1,7 +1,9 @@
 # Native R-group enumeration
 
-Available in CDKSwiftNativePort 1.4.35. The upstream reference is Java CDK 2.13
-(`cdk-2.13`, commit `3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`), principally
+Available in CDKSwiftNativePort 1.4.35. The upstream reference is Java CDK 2.14.1
+(`cdk-2.14.1`, commit `4253aa225f474a2a5b26ad9ed3ecf73262355693`); the R-group
+sources are behaviorally unchanged from Java CDK 2.13 (`cdk-2.13`, commit
+`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`), against which the evidence below was produced, principally
 `RGroupQuery.getAllConfigurations`, `RGroupQueryReaderTest`, and
 `RGroupQueryManipulatorTest`.
 

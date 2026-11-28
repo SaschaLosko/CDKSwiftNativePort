@@ -1,8 +1,11 @@
 # Molecular query matching
 
 Release 1.4.41 adds native molecular SMARTS expressions, direct variable-attachment
-matching and ordered coordination stereo. The reference is CDK 2.13, commit
-`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`. This is a documented subset of the
+matching and ordered coordination stereo. The reference is CDK 2.14.1, commit
+`4253aa225f474a2a5b26ad9ed3ecf73262355693` (ported from CDK 2.13). Known difference: upstream
+2.14 ([#1317](https://github.com/cdk/cdk/pull/1317)) makes `[r0]` match chain atoms;
+this package does not yet. Ring-size ranges such as `[r{0-6}]` and the CDK `Z`
+primitive are unsupported and reported as such. This is a documented subset of the
 upstream query surface, not a claim that the entire SMARTS module is ported.
 
 ```swift
@@ -118,12 +121,12 @@ attachment choices requiring backtracking. Every SP/TB/OH carrier permutation
 (24 + 120 + 720) is checked against the attributed upstream table data, including
 rejection of all other configuration classes for distinct ligands.
 
-Sources: [Expr](https://github.com/cdk/cdk/blob/cdk-2.13/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/matchers/Expr.java),
-[VarAttachFilter](https://github.com/cdk/cdk/blob/cdk-2.13/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/VarAttachFilter.java),
-[QueryStereoFilter](https://github.com/cdk/cdk/blob/cdk-2.13/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/QueryStereoFilter.java),
-[SquarePlanar](https://github.com/cdk/cdk/blob/cdk-2.13/base/core/src/main/java/org/openscience/cdk/stereo/SquarePlanar.java),
-[TrigonalBipyramidal](https://github.com/cdk/cdk/blob/cdk-2.13/base/core/src/main/java/org/openscience/cdk/stereo/TrigonalBipyramidal.java),
-[Octahedral](https://github.com/cdk/cdk/blob/cdk-2.13/base/core/src/main/java/org/openscience/cdk/stereo/Octahedral.java).
+Sources: [Expr](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/matchers/Expr.java),
+[VarAttachFilter](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/VarAttachFilter.java),
+[QueryStereoFilter](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/QueryStereoFilter.java),
+[SquarePlanar](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/core/src/main/java/org/openscience/cdk/stereo/SquarePlanar.java),
+[TrigonalBipyramidal](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/core/src/main/java/org/openscience/cdk/stereo/TrigonalBipyramidal.java),
+[Octahedral](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/core/src/main/java/org/openscience/cdk/stereo/Octahedral.java).
 The package consumes reference data and contains no upstream-language source or runtime dependency.
 
 Release qualification on 2026-11-02: the complete macOS and Apple-container

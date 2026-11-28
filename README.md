@@ -465,8 +465,11 @@ with Swift 6.3.2.
 
 `CDKSwiftNativePort` includes code derived from and inspired by the Chemistry
 Development Kit (CDK). The current parity target for the supported workflows in
-this package is CDK `2.13` (`cdk-2.13`, commit
-`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`).
+this package is CDK `2.14.1` (`cdk-2.14.1`, commit
+`4253aa225f474a2a5b26ad9ed3ecf73262355693`). Earlier
+qualification used CDK `2.13` (`cdk-2.13`, commit
+`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`); the 2.14.1 adoption status and
+remaining differences are listed in [CDK_COMPARISON.md](Documentation/CDK_COMPARISON.md#cdk-2141-reference-status).
 
 Upstream project:
 
@@ -499,8 +502,8 @@ entry points throw an unsupported-format error and are excluded from the format 
 ## R-group enumeration (1.4.35)
 
 Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
-`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
-configuration semantics without a Java dependency. See the [API, limits and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.14.1 R-group
+configuration semantics (unchanged from 2.13) without a Java dependency. See the [API, limits and
 Java parity evidence](Documentation/RGROUP_ENUMERATION.md). Finite repeat expansion is available through `CDKMarkushEnumerator`; the
 [membership API](Documentation/MARKUSH_MATCHING.md) is separate from
 ordinary substructure search.

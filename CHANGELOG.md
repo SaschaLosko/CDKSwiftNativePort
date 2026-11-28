@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## Unreleased
+
+- Set Java CDK 2.14.1 (`cdk-2.14.1`) as the package's upstream reference in the
+  documentation, notices and test-suite port metadata. Generated Java reference
+  datasets keep their `cdk-2.13` provenance until they are regenerated.
+- Document the 2.14.1 adoption status, known differences and out-of-scope
+  upstream changes in `Documentation/CDK_COMPARISON.md`.
+
 ## 1.4.65
 
 - Declare `Sendable` on the public value types that were missing it, including

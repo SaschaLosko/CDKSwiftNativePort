@@ -26,8 +26,8 @@ final class SmilesPortMetadataTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(metadata.schemaVersion, 1)
         XCTAssertFalse(metadata.suite.isEmpty)
-        XCTAssertEqual(metadata.cdkReferenceVersion, "2.13")
-        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.13")
+        XCTAssertEqual(metadata.cdkReferenceVersion, "2.14.1")
+        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.14.1")
 
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("SmilesParserTest.java") }))
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("SmilesGeneratorTest.java") }))

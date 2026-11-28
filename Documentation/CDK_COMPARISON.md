@@ -6,8 +6,81 @@ Upstream reference: <https://github.com/cdk/cdk>
 
 `CDKSwiftNativePort` includes code derived from and inspired by the Chemistry
 Development Kit (CDK). The current parity target for the supported surface in
-this package is CDK `2.13` (`cdk-2.13`, commit
-`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`).
+this package is CDK `2.14.1` (`cdk-2.14.1`, commit
+`4253aa225f474a2a5b26ad9ed3ecf73262355693`). Earlier
+qualification used CDK `2.13` (`cdk-2.13`, commit
+`3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`); the 2.14.1 adoption status and
+remaining differences are listed in [CDK 2.14.1 reference status](#cdk-2141-reference-status).
+
+## CDK 2.14.1 reference status
+
+CDK 2.14.1 (released 2026-11-10) is CDK 2.14 plus the abbreviation rendering fix
+[#1379](https://github.com/cdk/cdk/pull/1379). This section was assessed on
+2026-11-28 from the upstream release notes and the `cdk-2.13...cdk-2.14.1` diff,
+and checked against this package with behavior probes. It does not establish
+complete 2.14.1 parity. Generated Java reference datasets keep their `cdk-2.13`
+provenance until they are regenerated: the reaction corpus, the depiction
+references and the R-group enumeration comparison. The upstream R-group sources
+are behaviorally unchanged in 2.14.1.
+
+### Adopted
+
+| Upstream change | Package release |
+| --- | --- |
+| TPSA sulfur/phosphorus rows ([#1347](https://github.com/cdk/cdk/pull/1347), [#1364](https://github.com/cdk/cdk/pull/1364)), CTfile isotope offsets ([#1350](https://github.com/cdk/cdk/pull/1350)), reaction stereogroups ([#1369](https://github.com/cdk/cdk/pull/1369)), nested abbreviations ([#1379](https://github.com/cdk/cdk/pull/1379)) | 1.4.50 |
+| 0D molfile parity ([#1340](https://github.com/cdk/cdk/pull/1340)), unknown InChI alkene parity ([#1370](https://github.com/cdk/cdk/pull/1370)) | 1.4.51 |
+| Isotope data and API ([#1343](https://github.com/cdk/cdk/pull/1343), [#1344](https://github.com/cdk/cdk/pull/1344), [#1345](https://github.com/cdk/cdk/pull/1345), [#1368](https://github.com/cdk/cdk/pull/1368)) | 1.4.52 |
+| MCS API ([#1314](https://github.com/cdk/cdk/pull/1314), [#1323](https://github.com/cdk/cdk/pull/1323)) | 1.4.53 |
+| Agents below the arrow ([#1357](https://github.com/cdk/cdk/pull/1357)) | 1.4.54 |
+| Relaxed reader mode, as a display-only preview API | `SMILES_PREVIEW.md` |
+| MDL valence is set only when the file specifies it ([#1338](https://github.com/cdk/cdk/pull/1338), reader side) | already matched |
+
+### Known differences on the supported surface
+
+- SMARTS `[r0]` does not match chain atoms; upstream
+  [#1317](https://github.com/cdk/cdk/pull/1317) and
+  [#1322](https://github.com/cdk/cdk/pull/1322) make a ring value of 0 mean
+  "not in a ring". `[R0]` and `[x0]` already behave as upstream.
+- The PDB writer left-justifies one-letter element symbols in columns 77-78
+  (`C ` rather than ` C`). Upstream [#1367](https://github.com/cdk/cdk/pull/1367)
+  right-justifies them, as wwPDB requires.
+- Not yet checked against this package's own layout and label code:
+  the congestion fix [#1335](https://github.com/cdk/cdk/pull/1335) and the
+  contracted-group alignment fix [#1301](https://github.com/cdk/cdk/pull/1301).
+  Both implementations differ structurally from upstream.
+
+### Unaffected by design
+
+These upstream bugs have no counterpart here. Regression tests can still be
+ported from them:
+
+- CXSMILES stereo-group indices ([#1336](https://github.com/cdk/cdk/pull/1336)):
+  the generator writes atoms in input order.
+- Count Tanimoto trailing bins ([#1325](https://github.com/cdk/cdk/pull/1325)):
+  sparse dictionary implementation.
+- Smallest-ring sizes in fused, spiro and bounded searches
+  ([#1326](https://github.com/cdk/cdk/pull/1326),
+  [#1333](https://github.com/cdk/cdk/pull/1333)), SMARTS OR with an always-true
+  operand ([#1316](https://github.com/cdk/cdk/pull/1316)), and carrier inversion
+  when stereo moves to another bond ([#1337](https://github.com/cdk/cdk/pull/1337)).
+- Java object-model changes: the `HIDDEN` flag, `QueryAtomContainer.create`
+  mutation, VF adjacency cache ([#1321](https://github.com/cdk/cdk/pull/1321)),
+  identity-hash path skipping ([#1332](https://github.com/cdk/cdk/pull/1332)),
+  cached-pattern alignment ([#1327](https://github.com/cdk/cdk/pull/1327)),
+  and null-safety cleanups.
+
+### Outside the supported surface
+
+These are not ported. They would be new features rather than parity fixes:
+atom-pair, extended and substructure-count fingerprints
+([#1305](https://github.com/cdk/cdk/pull/1305), [#1328](https://github.com/cdk/cdk/pull/1328),
+[#1330](https://github.com/cdk/cdk/pull/1330), [#1331](https://github.com/cdk/cdk/pull/1331));
+ALOGP, bond-count, FMF and small-ring descriptors
+([#1356](https://github.com/cdk/cdk/pull/1356), [#1359](https://github.com/cdk/cdk/pull/1359),
+[#1360](https://github.com/cdk/cdk/pull/1360), [#1363](https://github.com/cdk/cdk/pull/1363));
+the RDKit atropisomer extension ([#1366](https://github.com/cdk/cdk/pull/1366));
+SMARTS ring-size ranges and the `Z` primitive; the MDL option to write default
+valences; and 3D `AtomTools` ([#1355](https://github.com/cdk/cdk/pull/1355)).
 
 ## Selected CDK 2.14.1 adoption
 
@@ -80,7 +153,7 @@ That does not mean every CDK module is ported.
 
 - molecule and reaction model types
 - SMILES and reaction SMILES parsing/generation
-- CXSMILES layers used by CDK 2.13-backed host workflows:
+- CXSMILES layers used by CDK 2.14.1-backed host workflows:
   - atom labels and atom values
   - coordinates
   - radicals
@@ -192,8 +265,8 @@ SMILES, and the maintained reaction manipulator surface.
 ## R-group enumeration (1.4.35)
 
 Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
-`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
-configuration semantics without a Java dependency. See the [API, limits and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.14.1 R-group
+configuration semantics (unchanged from 2.13) without a Java dependency. See the [API, limits and
 Java parity evidence](RGROUP_ENUMERATION.md). Repeat-unit expansion and family-aware search
 remain separate capabilities.
 

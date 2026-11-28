@@ -24,8 +24,8 @@ final class ReactionPortMetadataTests: XCTestCase {
         let metadata = try JSONDecoder().decode(CDKReactionPortMetadata.self, from: data)
 
         XCTAssertGreaterThanOrEqual(metadata.schemaVersion, 1)
-        XCTAssertEqual(metadata.cdkReferenceVersion, "2.13")
-        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.13")
+        XCTAssertEqual(metadata.cdkReferenceVersion, "2.14.1")
+        XCTAssertEqual(metadata.cdkReferenceTag, "cdk-2.14.1")
         XCTAssertTrue(metadata.sourceTests.contains(where: { $0.contains("MDLRXNReaderTest.java") }))
         XCTAssertTrue(
             metadata.sourceTests.contains(where: { $0.contains("MDLRXNV2000ReaderTest.java") }))

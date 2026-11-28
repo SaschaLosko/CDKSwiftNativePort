@@ -7,6 +7,9 @@ Upstream project:
 - https://github.com/cdk/cdk
 
 Reference target used for parity work in this port:
+- CDK 2.14.1 (`cdk-2.14.1`, commit `4253aa225f474a2a5b26ad9ed3ecf73262355693`)
+
+Earlier parity work and the generated Java reference datasets used:
 - CDK 2.13 (`cdk-2.13`, commit `3bc6efe84119e5da0d00804bd4cf5f3bdd9c3d6d`)
 
 `CDKSwiftNativePort` also vendors the official IUPAC InChI source distribution
@@ -64,7 +67,7 @@ Licensing:
 - When redistributing binaries or modified source, ensure LGPL obligations
   (including notice and source availability requirements) are satisfied.
 
-Molecular query and coordination-stereo work follows CDK 2.13:
+Molecular query and coordination-stereo work follows CDK 2.14.1 (ported from 2.13):
 - VarAttachFilter: Copyright (c) 2025 NextMove Software Ltd.
 - Expr: Copyright (c) 2018 NextMove Software.
 - QueryStereoFilter: Copyright (c) 2013 EMBL-EBI / John May; 2018 John Mayfield.
@@ -74,7 +77,8 @@ Molecular query and coordination-stereo work follows CDK 2.13:
   data from those classes at the pinned upstream revision. No upstream source
   runtime is required by the package or tests. See `Documentation/QUERY_MATCHING.md`.
 
-R-group enumeration and its upstream regression fixtures derive from CDK 2.13:
+R-group enumeration and its upstream regression fixtures derive from CDK 2.13
+(the upstream R-group code is behaviorally unchanged in 2.14.1):
 - Copyright (C) 2010 Mark Rijnbeek <mark_rynbeek@users.sf.net>.
 - Copyright (C) 2026 John Mayfield (explicit attachment-point support).
 - Licensed LGPL-2.1-or-later. The notices in `RGroupEnumeration.swift` and its

@@ -99,7 +99,7 @@ The most useful package characteristics for a macOS app today are:
 ## R-group enumeration (1.4.35)
 
 Native `CDKRGroupQuery.getAllConfigurations(maximumConfigurations:)` and
-`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.13 R-group
-configuration semantics without a Java dependency. See the [API, limits and
+`enumerateConfigurations(maximumConfigurations:_:)` implement CDK 2.14.1 R-group
+configuration semantics (unchanged from 2.13) without a Java dependency. See the [API, limits and
 Java parity evidence](RGROUP_ENUMERATION.md). Finite repeat expansion and the unreleased
 [membership API](MARKUSH_MATCHING.md) have separate documented contracts.

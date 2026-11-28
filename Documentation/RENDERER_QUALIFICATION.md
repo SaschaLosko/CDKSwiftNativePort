@@ -12,7 +12,8 @@ carbon remains visible when the style hides ordinary carbon symbols. Automatic
 reaction arrows distinguish forward, backward, bidirectional, no-go,
 retrosynthetic, resonance, and undirected reactions.
 
-The [Java CDK 2.13 reference data](../Tests/CDKSwiftNativePortTests/Rendering/JavaReference/README.md)
+The package reference is Java CDK 2.14.1; regenerating this data against it is
+pending. The [Java CDK 2.13 reference data](../Tests/CDKSwiftNativePortTests/Rendering/JavaReference/README.md)
 records measurements and arrow semantics from three Java zoom levels and seven
 reaction directions, plus isotope visibility in one labelled molecule. Run the
 offline reference suite with:

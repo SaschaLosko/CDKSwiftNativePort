@@ -3,7 +3,8 @@
 `CDKMCS` implements a bounded, portable exact reference search inspired by the
 [CDK 2.14.1 MCS contract](https://github.com/cdk/cdk/blob/cdk-2.14.1/base/isomorphism/src/main/java/org/openscience/cdk/isomorphism/MCS.java).
 It is implemented in Swift and needs no upstream runtime or native search dependency.
-The package's broader baseline remains CDK 2.13 with selected later changes.
+The package's broader reference is CDK 2.14.1; see
+[CDK_COMPARISON.md](CDK_COMPARISON.md#cdk-2141-reference-status) for its adoption status.
 
 ```swift
 let parser = CDKSmilesParser(generateCoordinates: false)
