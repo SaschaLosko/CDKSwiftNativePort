@@ -4,8 +4,8 @@ import Foundation
     import CoreGraphics
 #endif
 
-public struct CDKMDLV3000Scaffold: Hashable, Codable {
-    public struct AtomRecord: Hashable, Codable {
+public struct CDKMDLV3000Scaffold: Hashable, Codable, Sendable {
+    public struct AtomRecord: Hashable, Codable, Sendable {
         public let index: Int
         public let symbol: String
         public let x: Double?
@@ -14,7 +14,7 @@ public struct CDKMDLV3000Scaffold: Hashable, Codable {
         public let raw: String
     }
 
-    public struct BondRecord: Hashable, Codable {
+    public struct BondRecord: Hashable, Codable, Sendable {
         public let index: Int
         public let type: String
         public let a1: Int

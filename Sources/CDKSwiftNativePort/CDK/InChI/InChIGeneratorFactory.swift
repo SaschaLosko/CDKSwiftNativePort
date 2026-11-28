@@ -15,7 +15,7 @@ public final class CDKInChIGeneratorFactory: @unchecked Sendable {
     }
 }
 
-public enum CDKInChIStatus: Equatable {
+public enum CDKInChIStatus: Equatable, Sendable {
     case success
     case warning
     case error

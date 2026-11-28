@@ -4,7 +4,7 @@ import Foundation
     import CoreGraphics
 #endif
 
-public enum ChemError: LocalizedError {
+public enum ChemError: LocalizedError, Sendable {
     case emptyInput
     case unsupported(String)
     case parseFailed(String)

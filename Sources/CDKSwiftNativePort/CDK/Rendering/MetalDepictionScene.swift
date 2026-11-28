@@ -3,8 +3,8 @@
 #endif
 import Foundation
 
-public struct CDKMetalDepictionScene: Hashable {
-    public struct BackgroundBox: Hashable {
+public struct CDKMetalDepictionScene: Hashable, Sendable {
+    public struct BackgroundBox: Hashable, Sendable {
         public let rect: CGRect
         public let cornerRadius: CGFloat
         public let color: CDKRenderColor
@@ -23,7 +23,7 @@ public struct CDKMetalDepictionScene: Hashable {
         }
     }
 
-    public struct LineSegment: Hashable {
+    public struct LineSegment: Hashable, Sendable {
         public let from: CGPoint
         public let to: CGPoint
         public let width: CGFloat
@@ -40,7 +40,7 @@ public struct CDKMetalDepictionScene: Hashable {
     }
 
     /// A filled outline whose first vertex can anchor a triangle fan.
-    public struct FilledPolygon: Hashable {
+    public struct FilledPolygon: Hashable, Sendable {
         public let points: [CGPoint]
         public let color: CDKRenderColor
 
@@ -50,7 +50,7 @@ public struct CDKMetalDepictionScene: Hashable {
         }
     }
 
-    public struct AtomLabel: Identifiable, Hashable {
+    public struct AtomLabel: Identifiable, Hashable, Sendable {
         public let id: Int
         public let text: String
         public let position: CGPoint

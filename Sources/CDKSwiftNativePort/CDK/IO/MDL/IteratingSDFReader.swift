@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CDKIteratingSDFReaderOptions {
+public struct CDKIteratingSDFReaderOptions: Sendable {
     public var skipInvalidRecords: Bool
     public var forceReadAs3DCoordinates: Bool
 

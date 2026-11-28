@@ -1,7 +1,7 @@
 import Foundation
 
 public enum CDKMDLV2000Writer {
-    public struct Options {
+    public struct Options: Sendable {
         public var programName: String?
 
         public init(programName: String? = nil) {

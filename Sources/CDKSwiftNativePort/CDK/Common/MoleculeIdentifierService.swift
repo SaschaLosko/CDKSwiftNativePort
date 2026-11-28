@@ -1,7 +1,7 @@
 import Foundation
 
 /// Convenience facade that bundles common molecule identifiers produced by CDK-style generators.
-public struct CDKMoleculeIdentifiers: Equatable {
+public struct CDKMoleculeIdentifiers: Equatable, Sendable {
     public let smiles: String
     public let isoSmiles: String
     public let inchi: String

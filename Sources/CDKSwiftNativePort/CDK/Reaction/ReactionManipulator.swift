@@ -24,7 +24,7 @@ public struct CDKReactionBondReference: Equatable, Hashable, Sendable {
     }
 }
 
-public enum CDKReactionChemObject: Equatable {
+public enum CDKReactionChemObject: Equatable, Sendable {
     case reaction(CDKReaction)
     case reactionSet(CDKReactionSet)
     case reactionList(CDKReactionList)

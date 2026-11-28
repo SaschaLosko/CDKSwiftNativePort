@@ -3,14 +3,14 @@ import Foundation
     import CoreGraphics
 #endif
 
-public enum CDKHighlightStyle: String, CaseIterable, Hashable {
+public enum CDKHighlightStyle: String, CaseIterable, Hashable, Sendable {
     case none
     case colored
     case outerGlow
     case outerGlowWhiteEdge
 }
 
-public struct RenderStyle: Hashable {
+public struct RenderStyle: Hashable, Sendable {
     public var showCarbons: Bool = false
     public var showImplicitHydrogens: Bool = true
     public var showExplicitHydrogens: Bool = false

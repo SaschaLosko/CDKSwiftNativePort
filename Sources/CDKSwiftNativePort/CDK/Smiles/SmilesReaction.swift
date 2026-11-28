@@ -51,7 +51,7 @@ public struct CDKReactionParticipant: Equatable, Hashable, Codable, Sendable {
     }
 }
 
-public struct CDKReaction: Equatable {
+public struct CDKReaction: Equatable, Sendable {
     public var id: String? = nil
     public var reactantParticipants: [CDKReactionParticipant]
     public var agentParticipants: [CDKReactionParticipant]

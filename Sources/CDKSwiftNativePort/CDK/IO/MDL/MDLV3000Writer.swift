@@ -2,7 +2,7 @@ import Foundation
 
 /// Swift counterpart for CDK-style MDL V3000 writing used by native import/export flows.
 public enum CDKMDLV3000Writer {
-    public struct Options {
+    public struct Options: Sendable {
         public var programName: String?
         public var includeDataFields: Bool
         public var acceptedDataFieldNames: Set<String>?

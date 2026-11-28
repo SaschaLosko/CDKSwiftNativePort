@@ -2,7 +2,7 @@ import Foundation
 
 /// CDK-style MDL RDF writer wrapping embedded RXN payloads.
 public enum CDKRDFWriter {
-    public struct Options {
+    public struct Options: Sendable {
         public var rxnOptions: CDKRXNWriter.Options
         public var fixedTimestamp: Date?
 

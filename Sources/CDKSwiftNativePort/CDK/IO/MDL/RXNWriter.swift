@@ -2,7 +2,7 @@ import Foundation
 
 /// CDK-style MDL RXN writer with V2000 and V3000 support.
 public enum CDKRXNWriter {
-    public struct Options {
+    public struct Options: Sendable {
         public var alwaysV3000: Bool
         public var programName: String?
 

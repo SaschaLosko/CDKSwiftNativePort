@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CDKSDFWriterOptions {
+public struct CDKSDFWriterOptions: Sendable {
     public var alwaysV3000: Bool
     public var writeDataFields: Bool
     public var acceptedDataFieldNames: Set<String>?

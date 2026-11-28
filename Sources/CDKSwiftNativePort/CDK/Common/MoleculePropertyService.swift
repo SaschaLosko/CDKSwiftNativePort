@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CDKRuleOfFiveResult: Equatable {
+public struct CDKRuleOfFiveResult: Equatable, Sendable {
     public let molecularWeight: Double
     public let hBondDonorCount: Int
     public let hBondAcceptorCount: Int
@@ -39,7 +39,7 @@ public struct CDKRuleOfFiveResult: Equatable {
     }
 }
 
-public struct CDKMolecularProperties: Equatable {
+public struct CDKMolecularProperties: Equatable, Sendable {
     public let formula: String
     public let molecularWeight: Double
     public let molarMass: Double

@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## 1.4.65
+
+- Declare `Sendable` on the public value types that were missing it, including
+  `CDKReaction`, `CDKMolecularProperties`, `CDKRuleOfFiveResult`,
+  `CDKMoleculeIdentifiers`, the reaction set, list and scheme hierarchy,
+  `CDKInChIStatus`, `ChemError`, the MDL V3000 scaffold records, the SDF and
+  file-export option types and the Metal depiction scene. Consumers can pass
+  these values across concurrency domains without unchecked wrappers.
+- No behavior changes.
+- All 750 tests pass on macOS and all 749 portable tests pass on ARM64 Ubuntu.
+
 ## 1.4.64
 
 - Publish the vendored IUPAC InChI 1.07.5 C library as the `IUPACInChI` library

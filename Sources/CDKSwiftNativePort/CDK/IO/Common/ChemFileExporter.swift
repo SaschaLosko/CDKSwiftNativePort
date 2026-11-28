@@ -52,7 +52,7 @@ public struct CDKFileExporterFormat: Hashable, Identifiable, Sendable {
     }
 }
 
-public struct CDKFileExportOptions {
+public struct CDKFileExportOptions: Sendable {
     public var smilesFlavor: CDKSmiFlavor
     public var isomericSmilesFlavor: CDKSmiFlavor
     public var cxSmilesFlavor: CDKSmiFlavor

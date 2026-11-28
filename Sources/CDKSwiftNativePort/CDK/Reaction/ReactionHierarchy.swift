@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CDKReactionSet: Equatable {
+public struct CDKReactionSet: Equatable, Sendable {
     public var id: String?
     public var name: String?
     public var members: [CDKReactionSetMember]
@@ -36,7 +36,7 @@ public struct CDKReactionSet: Equatable {
     }
 }
 
-public indirect enum CDKReactionSetMember: Equatable {
+public indirect enum CDKReactionSetMember: Equatable, Sendable {
     case reaction(CDKReaction)
     case list(CDKReactionList)
     case scheme(CDKReactionScheme)
@@ -53,7 +53,7 @@ public indirect enum CDKReactionSetMember: Equatable {
     }
 }
 
-public struct CDKReactionList: Equatable {
+public struct CDKReactionList: Equatable, Sendable {
     public var id: String?
     public var name: String?
     public var entries: [CDKReactionListEntry]
@@ -99,7 +99,7 @@ public struct CDKReactionList: Equatable {
     }
 }
 
-public indirect enum CDKReactionListEntry: Equatable {
+public indirect enum CDKReactionListEntry: Equatable, Sendable {
     case reaction(CDKReaction)
     case list(CDKReactionList)
     case scheme(CDKReactionScheme)
@@ -116,7 +116,7 @@ public indirect enum CDKReactionListEntry: Equatable {
     }
 }
 
-public struct CDKReactionScheme: Equatable {
+public struct CDKReactionScheme: Equatable, Sendable {
     public var id: String?
     public var name: String?
     public var entries: [CDKReactionSchemeEntry]
@@ -139,7 +139,7 @@ public struct CDKReactionScheme: Equatable {
     }
 }
 
-public indirect enum CDKReactionSchemeEntry: Equatable {
+public indirect enum CDKReactionSchemeEntry: Equatable, Sendable {
     case reaction(CDKReaction)
     case list(CDKReactionList)
     case scheme(CDKReactionScheme)
@@ -156,7 +156,7 @@ public indirect enum CDKReactionSchemeEntry: Equatable {
     }
 }
 
-public enum CDKReactionHierarchy: Equatable {
+public enum CDKReactionHierarchy: Equatable, Sendable {
     case reaction(CDKReaction)
     case list(CDKReactionList)
     case scheme(CDKReactionScheme)
